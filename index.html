@@ -133,6 +133,34 @@
       outline: none;
     }
     .main-input::placeholder { color: #475569; }
+    .autocomplete-wrap { position: relative; flex: 1; }
+    .autocomplete-wrap .main-input { width: 100%; }
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0; right: 0;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .suggestion-item {
+      padding: 11px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #cbd5e1;
+      cursor: pointer;
+      border-bottom: 1px solid #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.1s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:active, .suggestion-item.highlighted { background: #334155; color: #f1f5f9; }
+    .suggestion-match { color: #fbbf24; font-weight: 800; }
     .main-input:focus { border-color: #fbbf24; }
     .qty-box {
       display: flex; align-items: center; gap: 4px;
@@ -308,7 +336,10 @@
 
     <div class="add-card">
       <div class="input-row">
-        <input class="main-input" id="itemInput" type="text" placeholder="Añadir artículo..." autocomplete="off" />
+        <div class="autocomplete-wrap">
+          <input class="main-input" id="itemInput" type="text" placeholder="Añadir artículo..." autocomplete="off" />
+          <div class="suggestions" id="suggestions" style="display:none"></div>
+        </div>
       </div>
       <div class="cats" id="catContainer"></div>
       <div class="qty-row">
@@ -414,10 +445,110 @@
     });
 
     buildCatButtons();
-    document.getElementById('itemInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter') addItem();
+    initAutocomplete();
+  }
+
+  // ── AUTOCOMPLETE ─────────────────────────────────────────
+  const BASE_SUGGESTIONS = [
+    "Aceite de oliva","Aceitunas","Agua mineral","Ajo","Albóndigas","Alcachofas","Almejas","Alubias","Anchoas","Arroz",
+    "Atún en lata","Azúcar","Bacon","Berenjena","Bizcochos","Brócoli","Café","Calabacín","Caldo de pollo","Carne picada",
+    "Cebolla","Cereales","Cerveza","Champiñones","Chocolate","Chorizo","Chuletas de cerdo","Cigalas","Coliflor","Conservas de tomate",
+    "Crema de cacao","Detergente","Dorada","Espárragos","Espinacas","Fiambre de pavo","Filetes de ternera","Fresas","Galletas",
+    "Gambas","Garbanzos","Gel de ducha","Guisantes","Harina","Huevos","Jamón cocido","Jamón serrano","Judías verdes","Ketchup",
+    "Leche entera","Leche desnatada","Lechuga","Lentejas","Limones","Lubina","Macarrones","Mantequilla","Manzanas","Margarina",
+    "Mayonesa","Mejillones","Merluza","Mermelada","Mozzarella","Muslos de pollo","Naranjas","Nata para cocinar","Palomitas",
+    "Pan de molde","Pan integral","Pasta","Patatas","Pechuga de pollo","Pepino","Pera","Perejil","Pescadilla","Pimientos",
+    "Plátanos","Pollo entero","Queso manchego","Queso en lonchas","Rape","Refresco","Sal","Salchichas","Salmón","Sardinas",
+    "Servilletas","Sopa","Suavizante","Ternera","Tomates","Tortillas de maíz","Uvas","Vinagre","Vino blanco","Vino tinto",
+    "Yogur","Zanahoria","Zumo de naranja","Zumo de piña","Papel higiénico","Papel de cocina","Lejía","Lavavajillas",
+    "Champú","Acondicionador","Pasta de dientes","Jabón de manos","Ambientador","Bolsas de basura","Film transparente",
+    "Papel de aluminio","Hielo","Levadura","Bicarbonato","Canela","Pimentón","Orégano","Tomillo","Laurel"
+  ];
+
+  let highlightedIndex = -1;
+
+  function initAutocomplete() {
+    const input = document.getElementById('itemInput');
+    const box = document.getElementById('suggestions');
+
+    input.addEventListener('input', () => {
+      highlightedIndex = -1;
+      showSuggestions(input.value);
+    });
+
+    input.addEventListener('keydown', e => {
+      const visible = box.style.display !== 'none';
+      const suggs = box.querySelectorAll('.suggestion-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightedIndex = Math.min(highlightedIndex + 1, suggs.length - 1);
+        updateHighlight(suggs);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightedIndex = Math.max(highlightedIndex - 1, -1);
+        updateHighlight(suggs);
+      } else if (e.key === 'Enter') {
+        if (visible && highlightedIndex >= 0 && suggs[highlightedIndex]) {
+          selectSuggestion(suggs[highlightedIndex].dataset.value);
+        } else {
+          hideSuggestions();
+          addItem();
+        }
+      } else if (e.key === 'Escape') {
+        hideSuggestions();
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.autocomplete-wrap')) hideSuggestions();
     });
   }
+
+  function updateHighlight(suggs) {
+    suggs.forEach((s, i) => s.classList.toggle('highlighted', i === highlightedIndex));
+  }
+
+  function getAllSuggestions() {
+    const fromItems = Object.values(items).map(i => i.name).filter(Boolean);
+    const combined = [...new Set([...fromItems, ...BASE_SUGGESTIONS])];
+    return combined;
+  }
+
+  function showSuggestions(query) {
+    const box = document.getElementById('suggestions');
+    const q = query.trim().toLowerCase();
+    if (q.length < 1) { hideSuggestions(); return; }
+
+    const all = getAllSuggestions();
+    const matches = all.filter(s => s.toLowerCase().includes(q)).slice(0, 5);
+
+    if (matches.length === 0) { hideSuggestions(); return; }
+
+    box.innerHTML = matches.map(s => {
+      const idx = s.toLowerCase().indexOf(q);
+      const before = escHtml(s.slice(0, idx));
+      const match  = escHtml(s.slice(idx, idx + q.length));
+      const after  = escHtml(s.slice(idx + q.length));
+      return `<div class="suggestion-item" data-value="${escHtml(s)}" ontouchstart="selectSuggestion('${escHtml(s)}')" onclick="selectSuggestion('${escHtml(s)}')">
+        <span>🔍</span>
+        <span>${before}<span class="suggestion-match">${match}</span>${after}</span>
+      </div>`;
+    }).join('');
+
+    box.style.display = 'block';
+  }
+
+  function hideSuggestions() {
+    const box = document.getElementById('suggestions');
+    if (box) box.style.display = 'none';
+    highlightedIndex = -1;
+  }
+
+  window.selectSuggestion = function(value) {
+    document.getElementById('itemInput').value = value;
+    hideSuggestions();
+    document.getElementById('itemInput').focus();
+  };
 
   // ── SYNC STATUS ──────────────────────────────────────────
   function setSyncStatus(state, text) {
@@ -458,6 +589,7 @@
     setSyncStatus('syncing', 'Guardando...');
     push(itemsRef, { name, category: selectedCat, checked: false, qty, ts: Date.now() });
     input.value = '';
+    hideSuggestions();
     qty = 1;
     document.getElementById('qtyNum').textContent = '1';
     input.focus();
