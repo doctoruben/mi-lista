@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mi Lista" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>🛒 Mi Lista de la Compra</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      font-family: 'Nunito', sans-serif;
+      color: #f1f5f9;
+      overscroll-behavior: none;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+    .app { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; }
+
+    /* SETUP SCREEN */
+    .setup-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .setup-card {
+      background: #1e293b;
+      border-radius: 24px;
+      padding: 28px 24px;
+      border: 1px solid #334155;
+      max-width: 440px;
+      width: 100%;
+    }
+    .setup-card h2 { font-family: 'Abril Fatface', serif; font-size: 26px; margin-bottom: 6px; color: #f8fafc; }
+    .setup-card p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    .setup-field { margin-bottom: 12px; text-align: left; }
+    .setup-field label { display: block; font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; letter-spacing: 0.5px; }
+    .setup-field input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #f1f5f9;
+      font-size: 13px;
+      font-family: 'Courier New', monospace;
+      outline: none;
+    }
+    .setup-field input:focus { border-color: #fbbf24; }
+    .setup-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      color: #78350f;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .setup-btn:active { opacity: 0.85; }
+    .setup-hint {
+      margin-top: 16px;
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+    }
+    .setup-hint p { color: #475569; font-size: 12px; line-height: 1.7; margin: 0; }
+    .setup-hint a { color: #818cf8; text-decoration: none; }
+    .step { display: inline-block; background: #1e293b; border-radius: 4px; padding: 1px 6px; font-weight: 800; color: #fbbf24; font-size: 11px; }
+
+    /* SYNC STATUS */
+    .sync-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 0 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .sync-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #475569;
+      transition: background 0.3s;
+    }
+    .sync-dot.online { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
+    .sync-dot.syncing { background: #fbbf24; animation: pulse 0.8s infinite; }
+    .sync-dot.error { background: #f87171; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .header { padding: 28px 0 16px; }
+    .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .header .emoji { font-size: 38px; flex-shrink: 0; }
+    .header h1 { font-family: 'Abril Fatface', serif; font-size: 36px; color: #f8fafc; line-height: 1; }
+    .stats { color: #64748b; font-size: 14px; margin-left: 2px; }
+    .stats .pending { color: #fbbf24; font-weight: 800; }
+    .stats .done { color: #4ade80; font-weight: 800; }
+
+    .add-card {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      margin-bottom: 14px;
+    }
+    .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .main-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #f1f5f9;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+    }
+    .main-input::placeholder { color: #475569; }
+    .autocomplete-wrap { position: relative; flex: 1; }
+    .autocomplete-wrap .main-input { width: 100%; }
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0; right: 0;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .suggestion-item {
+      padding: 11px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #cbd5e1;
+      cursor: pointer;
+      border-bottom: 1px solid #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.1s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:active, .suggestion-item.highlighted { background: #334155; color: #f1f5f9; }
+    .suggestion-match { color: #fbbf24; font-weight: 800; }
+    .main-input:focus { border-color: #fbbf24; }
+    .qty-box {
+      display: flex; align-items: center; gap: 4px;
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 0 10px;
+    }
+    .qty-btn {
+      background: none; border: none; color: #94a3b8; font-size: 22px;
+      cursor: pointer; width: 28px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; font-family: inherit;
+    }
+    .qty-btn:active { background: #334155; }
+    .qty-num { color: #f1f5f9; font-weight: 800; min-width: 22px; text-align: center; font-size: 15px; }
+
+    .cat-select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 11px 14px;
+      color: #f1f5f9;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+    .cat-select:focus { border-color: #fbbf24; }
+    .cat-select option { background: #1e293b; color: #f1f5f9; font-weight: 600; }
+
+    .qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 4px 12px 4px 14px;
+    }
+    .qty-label { color: #64748b; font-size: 13px; font-weight: 700; }
+    .qty-box { border: none; background: none; padding: 0; }
+    .add-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      color: #78350f; border: none; border-radius: 14px;
+      padding: 14px; font-size: 16px; font-weight: 900;
+      font-family: inherit; cursor: pointer; transition: transform 0.1s;
+    }
+    .add-btn:active { transform: scale(0.97); }
+    .scan-btn {
+      width: 100%; margin-top: 8px;
+      background: #0f172a; color: #64748b;
+      border: 1px dashed #334155; border-radius: 14px;
+      padding: 11px; font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .scan-btn:active { border-color: #fbbf24; color: #fbbf24; }
+
+    .filters { display: flex; gap: 8px; margin-bottom: 14px; }
+    .filter-btn {
+      flex: 1; padding: 10px 0; border-radius: 12px;
+      font-size: 12px; font-weight: 800; font-family: inherit;
+      background: #1e293b; color: #64748b; border: 1px solid #334155;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .filter-btn.active { background: #f1f5f9; color: #0f172a; border-color: #f1f5f9; }
+
+    .group-header { display: flex; align-items: center; gap: 8px; padding: 14px 4px 8px; }
+    .group-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .group-title { font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #94a3b8; white-space: nowrap; }
+    .group-line { flex: 1; height: 1px; background: #1e293b; }
+    .group-count { font-size: 11px; font-weight: 800; color: #475569; background: #1e293b; border-radius: 20px; padding: 2px 8px; }
+
+    .items { display: flex; flex-direction: column; gap: 8px; }
+    .empty { text-align: center; color: #475569; padding: 40px 0; font-size: 15px; }
+
+    .item {
+      display: flex; align-items: center; gap: 12px;
+      background: #1e293b; border-radius: 16px; padding: 14px;
+      border: 1px solid #334155; transition: all 0.25s;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .item.checked { background: #0f172a; border-color: #1e293b; opacity: 0.5; }
+
+    .check-btn {
+      width: 30px; height: 30px; border-radius: 9px;
+      border: 2px solid #475569; background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s; font-size: 16px;
+    }
+    .check-btn.checked { border-color: var(--accent); background: var(--accent); }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-name {
+      font-weight: 700; font-size: 16px; color: #f1f5f9;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s;
+    }
+    .item-name.checked { text-decoration: line-through; color: #475569; }
+    .qty-badge {
+      margin-left: 7px; background: #334155; color: #94a3b8;
+      border-radius: 6px; padding: 1px 7px; font-size: 11px; font-weight: 800;
+    }
+
+    .del-btn {
+      background: #450a0a; border: none; color: #fca5a5;
+      border-radius: 10px; width: 34px; height: 34px; cursor: pointer;
+      font-size: 20px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s;
+    }
+    .del-btn:active { background: #7f1d1d; }
+
+    .clear-btn {
+      width: 100%; margin-top: 10px; background: none;
+      border: 1px dashed #334155; border-radius: 12px; color: #475569;
+      padding: 12px; font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .clear-btn:active { border-color: #f87171; color: #f87171; }
+
+    .reset-btn {
+      display: block; margin: 16px auto 0; background: none; border: none;
+      color: #334155; font-size: 11px; font-family: inherit; cursor: pointer;
+      text-decoration: underline;
+    }
+
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .app { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setupScreen" class="setup-screen" style="display:none">
+  <div class="setup-card">
+    <div style="font-size:36px;margin-bottom:10px">🔥</div>
+    <h2>Conectar a Firebase</h2>
+    <p>Introduce los datos de tu proyecto Firebase para sincronizar la lista entre dispositivos.</p>
+
+    <div class="setup-field">
+      <label>API KEY</label>
+      <input id="f_apiKey" placeholder="AIzaSy..." />
+    </div>
+    <div class="setup-field">
+      <label>PROJECT ID</label>
+      <input id="f_projectId" placeholder="mi-lista-xxxxx" />
+    </div>
+    <div class="setup-field">
+      <label>APP ID</label>
+      <input id="f_appId" placeholder="1:123456:web:abcdef" />
+    </div>
+    <div class="setup-field">
+      <label>DATABASE URL</label>
+      <input id="f_dbUrl" placeholder="https://mi-proyecto-default-rtdb.firebaseio.com" />
+    </div>
+
+    <button class="setup-btn" onclick="saveConfig()">✓ Guardar y conectar</button>
+
+    <div class="setup-hint">
+      <p>
+        <span class="step">1</span> Ve a <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>
+        <span class="step">2</span> Crea un proyecto nuevo (nombre libre)<br>
+        <span class="step">3</span> En el proyecto → <b>Configuración ⚙️</b> → <b>Tus apps</b> → añade una app web <b>&lt;/&gt;</b><br>
+        <span class="step">4</span> Copia <b>apiKey</b>, <b>projectId</b>, <b>appId</b> y <b>databaseURL</b><br>
+        <span class="step">5</span> Ve a <b>Realtime Database</b> → la URL aparece arriba en la pestaña Datos<br>
+        <span class="step">6</span> Pega los datos aquí ↑ y guarda
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="app">
+    <div class="header">
+      <div class="header-top">
+        <span class="emoji">🛒</span>
+        <h1>Mi Lista</h1>
+      </div>
+      <p class="stats">
+        <span class="pending" id="pendingCount">0</span> pendientes ·
+        <span class="done" id="doneCount">0</span> comprados
+      </p>
+      <div class="sync-bar">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncText">Conectando...</span>
+      </div>
+    </div>
+
+    <div class="add-card">
+      <div class="input-row">
+        <div class="autocomplete-wrap">
+          <input class="main-input" id="itemInput" type="text" placeholder="Añadir artículo..." autocomplete="off" />
+          <div class="suggestions" id="suggestions" style="display:none"></div>
+        </div>
+      </div>
+      <select class="cat-select" id="catSelect" onchange="selectedCat = this.value"></select>
+      <div class="qty-row">
+        <span class="qty-label">Cantidad</span>
+        <div class="qty-box">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <span class="qty-num" id="qtyNum">1</span>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addItem()">+ Añadir a la lista</button>
+      <button class="scan-btn" onclick="openScanner()">📷 Escanear código de barras</button>
+    </div>
+
+    <!-- SCANNER MODAL -->
+    <div id="scannerModal" style="display:none; position:fixed; inset:0; background:#0f172a; z-index:999; flex-direction:column; align-items:center; justify-content:flex-start;">
+      <div style="width:100%; max-width:480px; padding:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc;">📷 Escanear</h2>
+          <button onclick="closeScanner()" style="background:#334155; border:none; color:#f1f5f9; border-radius:10px; width:36px; height:36px; font-size:20px; cursor:pointer;">×</button>
+        </div>
+        <div style="position:relative; border-radius:16px; overflow:hidden; background:#000; aspect-ratio:1;">
+          <video id="scanVideo" style="width:100%; height:100%; object-fit:cover;" playsinline autoplay muted></video>
+          <canvas id="scanCanvas" style="display:none;"></canvas>
+          <!-- Viewfinder overlay -->
+          <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+            <div style="width:65%; aspect-ratio:2; border:3px solid #fbbf24; border-radius:8px; box-shadow:0 0 0 9999px rgba(0,0,0,0.45);"></div>
+          </div>
+        </div>
+        <p id="scanStatus" style="text-align:center; color:#64748b; font-size:13px; margin-top:12px; font-weight:700;">Apunta al código de barras</p>
+        <div id="scanNotFound" style="display:none; background:#1e293b; border-radius:16px; padding:16px; margin-top:14px; border:1px solid #334155; text-align:center; color:#475569; font-size:14px; font-weight:700;">
+          😕 Producto no encontrado.<br>Puedes añadirlo manualmente.
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT INFO POPUP -->
+    <div id="productPopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:90vh; overflow-y:auto; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <!-- Handle -->
+        <div style="display:flex; justify-content:center; padding:12px 0 0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <!-- Header with image -->
+        <div style="padding:16px 20px 0; display:flex; gap:14px; align-items:flex-start;">
+          <img id="ppImage" src="" alt="" style="width:80px; height:80px; object-fit:contain; border-radius:12px; background:#1e293b; border:1px solid #334155; flex-shrink:0; display:none;" />
+          <div style="flex:1; min-width:0;">
+            <div id="ppBrand" style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;"></div>
+            <div id="ppName" style="font-size:20px; font-weight:900; color:#f8fafc; line-height:1.2; margin-bottom:6px;"></div>
+            <div id="ppQuantity" style="font-size:13px; color:#94a3b8;"></div>
+          </div>
+        </div>
+
+        <!-- Nutriscore + Nova -->
+        <div id="ppScores" style="display:flex; gap:8px; padding:14px 20px 0; flex-wrap:wrap;"></div>
+
+        <!-- Nutrition table -->
+        <div id="ppNutritionWrap" style="margin:14px 20px 0; background:#1e293b; border-radius:16px; overflow:hidden; border:1px solid #334155; display:none;">
+          <div style="padding:10px 14px; font-size:11px; font-weight:900; color:#64748b; letter-spacing:1px; border-bottom:1px solid #334155;">INFORMACIÓN NUTRICIONAL (por 100g)</div>
+          <div id="ppNutrition" style="padding:4px 0;"></div>
+        </div>
+
+        <!-- Allergens -->
+        <div id="ppAllergenWrap" style="margin:12px 20px 0; display:none;">
+          <div style="font-size:11px; font-weight:900; color:#64748b; letter-spacing:1px; margin-bottom:6px;">ALÉRGENOS</div>
+          <div id="ppAllergens" style="font-size:13px; color:#fbbf24; font-weight:700; line-height:1.6;"></div>
+        </div>
+
+        <!-- Ingredients -->
+        <div id="ppIngWrap" style="margin:12px 20px 0; display:none;">
+          <div style="font-size:11px; font-weight:900; color:#64748b; letter-spacing:1px; margin-bottom:6px;">INGREDIENTES</div>
+          <div id="ppIngredients" style="font-size:12px; color:#94a3b8; line-height:1.6;"></div>
+        </div>
+
+        <!-- Add to list button -->
+        <div style="padding:16px 20px 20px; margin-top:4px;">
+          <button onclick="addScannedItem()" style="width:100%; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:900; font-family:inherit; cursor:pointer;">+ Añadir a la lista</button>
+          <button onclick="closeProductPopup()" style="width:100%; margin-top:8px; background:none; border:1px solid #334155; border-radius:14px; padding:12px; font-size:14px; font-weight:700; font-family:inherit; color:#64748b; cursor:pointer;">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('todos', this)">Todos</button>
+      <button class="filter-btn" onclick="setFilter('pendientes', this)">Pendientes</button>
+      <button class="filter-btn" onclick="setFilter('comprados', this)">Comprados</button>
+    </div>
+
+    <div class="items" id="itemList"></div>
+    <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
+    <button class="reset-btn" onclick="resetConfig()">⚙ Cambiar configuración Firebase</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, push, remove, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ── CATEGORIES ──────────────────────────────────────────
+  const CATEGORIES = {
+    "🥦 Frutas/Verduras":      ["#4ade80", "#14532d"],
+    "🥩 Carnicería/Pescadería":["#f87171", "#7f1d1d"],
+    "🍞 Panadería":            ["#fbbf24", "#78350f"],
+    "🥛 Lácteos":              ["#93c5fd", "#1e3a5f"],
+    "🧊 Congelados":           ["#67e8f9", "#164e63"],
+    "🥤 Bebidas":              ["#818cf8", "#1e1b4b"],
+    "🥫 Alimentación":         ["#fb923c", "#7c2d12"],
+    "🧴 Higiene":              ["#c084fc", "#4a044e"],
+    "🧹 Limpieza/Hogar":       ["#34d399", "#064e3b"],
+    "🐾 Mascotas":             ["#f9a8d4", "#831843"],
+    "🛒 Otros":                ["#94a3b8", "#1e293b"],
+  };
+  const CAT_NAMES = Object.keys(CATEGORIES);
+
+  let db, itemsRef, historyRef;
+  let history = {};
+  let items = {};
+  let qty = 1;
+  let selectedCat = "🛒 Otros";
+  let currentFilter = "todos";
+
+  // ── CONFIG ───────────────────────────────────────────────
+  function loadConfig() {
+    try { return JSON.parse(localStorage.getItem('fbConfig') || 'null'); } catch { return null; }
+  }
+
+  function saveConfig() {
+    const apiKey    = document.getElementById("f_apiKey").value.trim();
+    const projectId = document.getElementById("f_projectId").value.trim();
+    const appId     = document.getElementById("f_appId").value.trim();
+    const dbUrl     = document.getElementById("f_dbUrl").value.trim();
+    if (!apiKey || !projectId || !appId || !dbUrl) { alert("Rellena todos los campos"); return; }
+    const config = { apiKey, projectId, appId,
+      authDomain: `${projectId}.firebaseapp.com`,
+      databaseURL: dbUrl,
+    };
+    localStorage.setItem("fbConfig", JSON.stringify(config));
+    window.location.reload();
+  }
+  window.saveConfig = saveConfig;
+
+  function resetConfig() {
+    if (confirm('¿Cambiar la configuración de Firebase?')) {
+      localStorage.removeItem('fbConfig');
+      window.location.reload();
+    }
+  }
+  window.resetConfig = resetConfig;
+
+  // ── INIT ─────────────────────────────────────────────────
+  const config = loadConfig();
+  if (!config) {
+    document.getElementById('setupScreen').style.display = 'flex';
+  } else {
+    document.getElementById('mainApp').style.display = 'block';
+    initApp(config);
+  }
+
+  function initApp(config) {
+    const app = initializeApp(config);
+    db = getDatabase(app);
+    itemsRef = ref(db, 'items');
+    historyRef = ref(db, 'history');
+
+    setSyncStatus('syncing', 'Conectando...');
+
+    onValue(itemsRef, (snapshot) => {
+      items = snapshot.val() || {};
+      setSyncStatus('online', 'Sincronizado');
+      render();
+    }, (error) => {
+      setSyncStatus('error', 'Error de conexión');
+    });
+
+    onValue(historyRef, (snapshot) => {
+      history = snapshot.val() || {};
+    });
+
+    buildCatButtons();
+    initAutocomplete();
+  }
+
+  // ── AUTOCOMPLETE ─────────────────────────────────────────
+  // [nombre, categoría]
+  const BASE_SUGGESTIONS = [
+    ["Aceite de oliva","🥫 Alimentación"],["Aceitunas","🥫 Alimentación"],["Agua mineral","🥤 Bebidas"],
+    ["Ajo","🥦 Frutas/Verduras"],["Albóndigas","🥩 Carnicería/Pescadería"],["Alcachofas","🥦 Frutas/Verduras"],
+    ["Almejas","🥩 Carnicería/Pescadería"],["Alubias","🥫 Alimentación"],["Anchoas","🥫 Alimentación"],
+    ["Arroz","🥫 Alimentación"],["Atún en lata","🥫 Alimentación"],["Azúcar","🥫 Alimentación"],
+    ["Bacon","🥩 Carnicería/Pescadería"],["Berenjena","🥦 Frutas/Verduras"],["Bizcochos","🥫 Alimentación"],
+    ["Brócoli","🥦 Frutas/Verduras"],["Café","🥤 Bebidas"],["Calabacín","🥦 Frutas/Verduras"],
+    ["Caldo de pollo","🥫 Alimentación"],["Carne picada","🥩 Carnicería/Pescadería"],
+    ["Cebolla","🥦 Frutas/Verduras"],["Cereales","🥫 Alimentación"],["Cerveza","🥤 Bebidas"],
+    ["Champiñones","🥦 Frutas/Verduras"],["Chocolate","🥫 Alimentación"],["Chorizo","🥩 Carnicería/Pescadería"],
+    ["Chuletas de cerdo","🥩 Carnicería/Pescadería"],["Cigalas","🥩 Carnicería/Pescadería"],
+    ["Coliflor","🥦 Frutas/Verduras"],["Conservas de tomate","🥫 Alimentación"],
+    ["Crema de cacao","🥫 Alimentación"],["Detergente","🧹 Limpieza/Hogar"],["Dorada","🥩 Carnicería/Pescadería"],
+    ["Espárragos","🥦 Frutas/Verduras"],["Espinacas","🥦 Frutas/Verduras"],["Fiambre de pavo","🥩 Carnicería/Pescadería"],
+    ["Filetes de ternera","🥩 Carnicería/Pescadería"],["Fresas","🥦 Frutas/Verduras"],["Galletas","🥫 Alimentación"],
+    ["Gambas","🥩 Carnicería/Pescadería"],["Garbanzos","🥫 Alimentación"],["Gel de ducha","🧴 Higiene"],
+    ["Guisantes","🥦 Frutas/Verduras"],["Harina","🥫 Alimentación"],["Huevos","🥛 Lácteos"],
+    ["Jamón cocido","🥩 Carnicería/Pescadería"],["Jamón serrano","🥩 Carnicería/Pescadería"],
+    ["Judías verdes","🥦 Frutas/Verduras"],["Ketchup","🥫 Alimentación"],
+    ["Leche entera","🥛 Lácteos"],["Leche desnatada","🥛 Lácteos"],["Lechuga","🥦 Frutas/Verduras"],
+    ["Lentejas","🥫 Alimentación"],["Limones","🥦 Frutas/Verduras"],["Lubina","🥩 Carnicería/Pescadería"],
+    ["Macarrones","🥫 Alimentación"],["Mantequilla","🥛 Lácteos"],["Manzanas","🥦 Frutas/Verduras"],
+    ["Margarina","🥛 Lácteos"],["Mayonesa","🥫 Alimentación"],["Mejillones","🥩 Carnicería/Pescadería"],
+    ["Merluza","🥩 Carnicería/Pescadería"],["Mermelada","🥫 Alimentación"],["Mozzarella","🥛 Lácteos"],
+    ["Muslos de pollo","🥩 Carnicería/Pescadería"],["Naranjas","🥦 Frutas/Verduras"],
+    ["Nata para cocinar","🥛 Lácteos"],["Palomitas","🥫 Alimentación"],
+    ["Pan de molde","🍞 Panadería"],["Pan integral","🍞 Panadería"],["Pasta","🥫 Alimentación"],
+    ["Patatas","🥦 Frutas/Verduras"],["Pechuga de pollo","🥩 Carnicería/Pescadería"],
+    ["Pepino","🥦 Frutas/Verduras"],["Pera","🥦 Frutas/Verduras"],["Perejil","🥦 Frutas/Verduras"],
+    ["Pescadilla","🥩 Carnicería/Pescadería"],["Pimientos","🥦 Frutas/Verduras"],
+    ["Plátanos","🥦 Frutas/Verduras"],["Pollo entero","🥩 Carnicería/Pescadería"],
+    ["Queso manchego","🥛 Lácteos"],["Queso en lonchas","🥛 Lácteos"],["Rape","🥩 Carnicería/Pescadería"],
+    ["Refresco","🥤 Bebidas"],["Sal","🥫 Alimentación"],["Salchichas","🥩 Carnicería/Pescadería"],
+    ["Salmón","🥩 Carnicería/Pescadería"],["Sardinas","🥫 Alimentación"],
+    ["Servilletas","🧹 Limpieza/Hogar"],["Sopa","🥫 Alimentación"],["Suavizante","🧹 Limpieza/Hogar"],
+    ["Ternera","🥩 Carnicería/Pescadería"],["Tomates","🥦 Frutas/Verduras"],
+    ["Tortillas de maíz","🥫 Alimentación"],["Uvas","🥦 Frutas/Verduras"],
+    ["Vinagre","🥫 Alimentación"],["Vino blanco","🥤 Bebidas"],["Vino tinto","🥤 Bebidas"],
+    ["Yogur","🥛 Lácteos"],["Zanahoria","🥦 Frutas/Verduras"],["Zumo de naranja","🥤 Bebidas"],
+    ["Zumo de piña","🥤 Bebidas"],["Papel higiénico","🧴 Higiene"],["Papel de cocina","🧹 Limpieza/Hogar"],
+    ["Lejía","🧹 Limpieza/Hogar"],["Lavavajillas","🧹 Limpieza/Hogar"],
+    ["Champú","🧴 Higiene"],["Acondicionador","🧴 Higiene"],["Pasta de dientes","🧴 Higiene"],
+    ["Jabón de manos","🧴 Higiene"],["Ambientador","🧹 Limpieza/Hogar"],["Bolsas de basura","🧹 Limpieza/Hogar"],
+    ["Film transparente","🧹 Limpieza/Hogar"],["Papel de aluminio","🧹 Limpieza/Hogar"],
+    ["Hielo","🧊 Congelados"],["Helado","🧊 Congelados"],["Pizza congelada","🧊 Congelados"],
+    ["Verduras congeladas","🧊 Congelados"],["Levadura","🍞 Panadería"],
+    ["Bicarbonato","🥫 Alimentación"],["Canela","🥫 Alimentación"],["Pimentón","🥫 Alimentación"],
+    ["Orégano","🥫 Alimentación"],["Tomillo","🥫 Alimentación"],["Laurel","🥫 Alimentación"],
+    ["Pienso perro","🐾 Mascotas"],["Pienso gato","🐾 Mascotas"],["Arena para gatos","🐾 Mascotas"],
+    ["Snacks mascotas","🐾 Mascotas"],["Croissant","🍞 Panadería"],["Baguette","🍞 Panadería"],
+    ["Bollería","🍞 Panadería"],["Tostadas","🍞 Panadería"]
+  ];
+
+  let highlightedIndex = -1;
+
+  function initAutocomplete() {
+    const input = document.getElementById('itemInput');
+    const box = document.getElementById('suggestions');
+
+    input.addEventListener('input', () => {
+      highlightedIndex = -1;
+      showSuggestions(input.value);
+    });
+
+    input.addEventListener('keydown', e => {
+      const visible = box.style.display !== 'none';
+      const suggs = box.querySelectorAll('.suggestion-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightedIndex = Math.min(highlightedIndex + 1, suggs.length - 1);
+        updateHighlight(suggs);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightedIndex = Math.max(highlightedIndex - 1, -1);
+        updateHighlight(suggs);
+      } else if (e.key === 'Enter') {
+        if (visible && highlightedIndex >= 0 && suggs[highlightedIndex]) {
+          selectSuggestion(suggs[highlightedIndex].dataset.value, suggs[highlightedIndex].dataset.cat);
+        } else {
+          hideSuggestions();
+          addItem();
+        }
+      } else if (e.key === 'Escape') {
+        hideSuggestions();
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.autocomplete-wrap')) hideSuggestions();
+    });
+  }
+
+  function updateHighlight(suggs) {
+    suggs.forEach((s, i) => s.classList.toggle('highlighted', i === highlightedIndex));
+  }
+
+  function getAllSuggestions() {
+    // History: all items ever added by the user
+    const fromHistory = Object.values(history).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
+    // Merge with base suggestions (user history takes priority)
+    const seen = new Set(fromHistory.map(i => i.name.toLowerCase()));
+    const base = BASE_SUGGESTIONS.filter(([n]) => !seen.has(n.toLowerCase())).map(([n, c]) => ({ name: n, category: c }));
+    return [...fromHistory, ...base];
+  }
+
+  function showSuggestions(query) {
+    const box = document.getElementById('suggestions');
+    const q = query.trim().toLowerCase();
+    if (q.length < 1) { hideSuggestions(); return; }
+
+    const all = getAllSuggestions();
+    const matches = all.filter(s => s.name.toLowerCase().includes(q)).slice(0, 5);
+
+    if (matches.length === 0) { hideSuggestions(); return; }
+
+    box.innerHTML = matches.map(({ name: s, category: cat }) => {
+      const idx = s.toLowerCase().indexOf(q);
+      const before = escHtml(s.slice(0, idx));
+      const match  = escHtml(s.slice(idx, idx + q.length));
+      const after  = escHtml(s.slice(idx + q.length));
+      const safeS = escHtml(s);
+      const safeCat = escHtml(cat || '');
+      return `<div class="suggestion-item" data-value="${safeS}" data-cat="${safeCat}" ontouchstart="selectSuggestion('${safeS}','${safeCat}')" onclick="selectSuggestion('${safeS}','${safeCat}')">
+        <span>🔍</span>
+        <span>${before}<span class="suggestion-match">${match}</span>${after}</span>
+      </div>`;
+    }).join('');
+
+    box.style.display = 'block';
+  }
+
+  function hideSuggestions() {
+    const box = document.getElementById('suggestions');
+    if (box) box.style.display = 'none';
+    highlightedIndex = -1;
+  }
+
+  window.selectSuggestion = function(value, category) {
+    document.getElementById('itemInput').value = value;
+    if (category && CATEGORIES[category]) {
+      selectedCat = category;
+      const sel = document.getElementById('catSelect');
+      if (sel) sel.value = category;
+    }
+    hideSuggestions();
+    document.getElementById('itemInput').focus();
+  };
+
+  // ── SYNC STATUS ──────────────────────────────────────────
+  function setSyncStatus(state, text) {
+    const dot = document.getElementById('syncDot');
+    dot.className = 'sync-dot ' + state;
+    document.getElementById('syncText').textContent = text;
+  }
+
+  // ── CATEGORIES ──────────────────────────────────────────
+  function buildCatButtons() {
+    const select = document.getElementById('catSelect');
+    CAT_NAMES.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      if (cat === selectedCat) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', () => { selectedCat = select.value; });
+  }
+
+  // ── ACTIONS ──────────────────────────────────────────────
+  window.changeQty = function(d) {
+    qty = Math.max(1, qty + d);
+    document.getElementById('qtyNum').textContent = qty;
+  };
+
+  window.addItem = function() {
+    const input = document.getElementById('itemInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    setSyncStatus('syncing', 'Guardando...');
+    push(itemsRef, { name, category: selectedCat, checked: false, qty, ts: Date.now() });
+    // Save to history for future autocomplete suggestions
+    const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    set(ref(db, 'history/' + nameKey), { name, category: selectedCat });
+    input.value = '';
+    hideSuggestions();
+    qty = 1;
+    document.getElementById('qtyNum').textContent = '1';
+    input.focus();
+  };
+
+  window.toggleItem = function(id) {
+    setSyncStatus('syncing', 'Guardando...');
+    const item = items[id];
+    if (item) update(ref(db, 'items/' + id), { checked: !item.checked });
+  };
+
+  window.removeItem = function(id) {
+    setSyncStatus('syncing', 'Guardando...');
+    remove(ref(db, 'items/' + id));
+  };
+
+  window.clearChecked = function() {
+    setSyncStatus('syncing', 'Guardando...');
+    Object.entries(items).forEach(([id, item]) => {
+      if (item.checked) remove(ref(db, 'items/' + id));
+    });
+  };
+
+  window.setFilter = function(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  };
+
+  // ── RENDER ───────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderItem(id, item) {
+    const [accent] = CATEGORIES[item.category] || ["#94a3b8"];
+    return `
+      <div class="item${item.checked ? ' checked' : ''}">
+        <button class="check-btn${item.checked ? ' checked' : ''}" style="--accent:${accent}" onclick="toggleItem('${id}')">
+          ${item.checked ? '✓' : ''}
+        </button>
+        <div class="item-info">
+          <div class="item-name${item.checked ? ' checked' : ''}">
+            ${escHtml(item.name)}
+            ${item.qty > 1 ? `<span class="qty-badge">×${item.qty}</span>` : ''}
+          </div>
+        </div>
+        <button class="del-btn" onclick="removeItem('${id}')">×</button>
+      </div>`;
+  }
+
+  function groupHeader(label, color, count) {
+    return `
+      <div class="group-header">
+        <div class="group-dot" style="background:${color}"></div>
+        <span class="group-title">${label}</span>
+        <div class="group-line"></div>
+        <span class="group-count">${count}</span>
+      </div>`;
+  }
+
+  function renderGrouped(itemEntries) {
+    const groups = {};
+    CAT_NAMES.forEach(cat => { groups[cat] = []; });
+    itemEntries.forEach(([id, item]) => {
+      const cat = CATEGORIES[item.category] ? item.category : "🛒 Otros";
+      groups[cat].push([id, item]);
+    });
+    let html = '';
+    CAT_NAMES.forEach(cat => {
+      if (!groups[cat] || groups[cat].length === 0) return;
+      const [accent] = CATEGORIES[cat];
+      html += groupHeader(cat, accent, groups[cat].length);
+      html += groups[cat].map(([id, item]) => renderItem(id, item)).join('');
+    });
+    return html;
+  }
+
+  function render() {
+    const allEntries = Object.entries(items).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+    const pendingEntries = allEntries.filter(([,i]) => !i.checked);
+    const doneEntries    = allEntries.filter(([,i]) => i.checked);
+
+    document.getElementById('pendingCount').textContent = pendingEntries.length;
+    document.getElementById('doneCount').textContent    = doneEntries.length;
+    const clearBtn = document.getElementById('clearBtn');
+    clearBtn.style.display = doneEntries.length > 0 ? 'block' : 'none';
+    clearBtn.textContent = `🗑 Eliminar ${doneEntries.length} artículo${doneEntries.length !== 1 ? 's' : ''} comprado${doneEntries.length !== 1 ? 's' : ''}`;
+
+    const list = document.getElementById('itemList');
+
+    if (currentFilter === 'pendientes') {
+      list.innerHTML = pendingEntries.length === 0
+        ? `<div class="empty">¡Todo comprado! 🎉</div>`
+        : renderGrouped(pendingEntries);
+      return;
+    }
+
+    if (currentFilter === 'comprados') {
+      list.innerHTML = doneEntries.length === 0
+        ? `<div class="empty">¡Nada comprado aún!</div>`
+        : doneEntries.map(([id,item]) => renderItem(id, item)).join('');
+      return;
+    }
+
+    // Todos
+    if (allEntries.length === 0) {
+      list.innerHTML = `<div class="empty">¡Lista vacía! Añade algo 🎉</div>`;
+      return;
+    }
+    let html = '';
+    if (pendingEntries.length > 0) html += renderGrouped(pendingEntries);
+    if (doneEntries.length > 0) {
+      html += groupHeader('Comprados', '#4ade80', doneEntries.length);
+      html += doneEntries.map(([id,item]) => renderItem(id, item)).join('');
+    }
+    list.innerHTML = html;
+  }
+
+  // ── BARCODE SCANNER ──────────────────────────────────────
+  let scanStream = null;
+  let scanInterval = null;
+  let scannedProduct = null;
+
+  window.openScanner = function() {
+    const modal = document.getElementById('scannerModal');
+    modal.style.display = 'flex';
+    document.getElementById('scanNotFound').style.display = 'none';
+    document.getElementById('scanStatus').textContent = 'Apunta al código de barras';
+    scannedProduct = null;
+    startCamera();
+  };
+
+  window.closeScanner = function() {
+    stopCamera();
+    document.getElementById('scannerModal').style.display = 'none';
+  };
+
+  async function startCamera() {
+    try {
+      scanStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      const video = document.getElementById('scanVideo');
+      video.srcObject = scanStream;
+      await video.play();
+      scanInterval = setInterval(captureFrame, 400);
+    } catch(e) {
+      document.getElementById('scanStatus').textContent = '⚠️ No se puede acceder a la cámara';
+    }
+  }
+
+  function stopCamera() {
+    clearInterval(scanInterval);
+    scanInterval = null;
+    if (scanStream) {
+      scanStream.getTracks().forEach(t => t.stop());
+      scanStream = null;
+    }
+  }
+
+  async function captureFrame() {
+    const video = document.getElementById('scanVideo');
+    const canvas = document.getElementById('scanCanvas');
+    if (!video.videoWidth) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    // Use BarcodeDetector if available (Chrome/Android)
+    if ('BarcodeDetector' in window) {
+      try {
+        const detector = new BarcodeDetector({ formats: ['ean_13','ean_8','upc_a','upc_e','code_128','code_39'] });
+        const barcodes = await detector.detect(canvas);
+        if (barcodes.length > 0) {
+          const code = barcodes[0].rawValue;
+          clearInterval(scanInterval);
+          scanInterval = null;
+          lookupBarcode(code);
+        }
+      } catch(e) {}
+    } else {
+      // Fallback: show manual entry hint
+      document.getElementById('scanStatus').textContent = '⚠️ Tu navegador no soporta escaneo. Prueba con Chrome en Android.';
+      clearInterval(scanInterval);
+    }
+  }
+
+  async function lookupBarcode(code) {
+    document.getElementById('scanStatus').textContent = '🔍 Buscando producto...';
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+      const data = await res.json();
+      if (data.status === 1 && data.product) {
+        const p = data.product;
+        const name = p.product_name_es || p.product_name || p.abbreviated_product_name || '';
+        const brand = p.brands || '';
+        const cats = (p.categories_tags || []).join(' ');
+
+        // Auto-detect category
+        let detectedCat = '🛒 Otros';
+        if (/fruit|vegetal|verdura|fruta|tomate|lechuga|manzana|naranja|platano|patata/i.test(cats+name)) detectedCat = '🥦 Frutas/Verduras';
+        else if (/meat|carne|pollo|ternera|cerdo|jamon|salchich|embutido|fish|pescado|salmon|merluza|atun/i.test(cats+name)) detectedCat = '🥩 Carnicería/Pescadería';
+        else if (/bread|pan|baguette|bolleri|pastel|croissant|bakery/i.test(cats+name)) detectedCat = '🍞 Panadería';
+        else if (/milk|leche|yogur|queso|cheese|dairy|lacteo|mantequilla|nata/i.test(cats+name)) detectedCat = '🥛 Lácteos';
+        else if (/frozen|congelado|helado/i.test(cats+name)) detectedCat = '🧊 Congelados';
+        else if (/beverage|bebida|agua|zumo|refresco|cerveza|vino|cafe|te/i.test(cats+name)) detectedCat = '🥤 Bebidas';
+        else if (/hygiene|higiene|champu|gel|jabon|denta|cosmet/i.test(cats+name)) detectedCat = '🧴 Higiene';
+        else if (/cleaning|limpieza|detergente|lejia|suavizante/i.test(cats+name)) detectedCat = '🧹 Limpieza/Hogar';
+        else if (/pet|mascota|perro|gato|pienso/i.test(cats+name)) detectedCat = '🐾 Mascotas';
+        else if (name) detectedCat = '🥫 Alimentación';
+
+        if (!name) {
+          document.getElementById('scanNotFound').style.display = 'block';
+          document.getElementById('scanStatus').textContent = `Código: ${code}`;
+          return;
+        }
+
+        scannedProduct = { name: name.trim(), category: detectedCat, brand };
+        document.getElementById('scanProductName').textContent = name.trim();
+        document.getElementById('scanProductBrand').textContent = brand ? `${brand}` : '';
+        document.getElementById('scanResult').style.display = 'block';
+        document.getElementById('scanNotFound').style.display = 'none';
+        document.getElementById('scanStatus').textContent = `✓ Código: ${code}`;
+      } else {
+        document.getElementById('scanNotFound').style.display = 'block';
+        document.getElementById('scanResult').style.display = 'none';
+        document.getElementById('scanStatus').textContent = `Código: ${code} — no encontrado`;
+      }
+    } catch(e) {
+      document.getElementById('scanStatus').textContent = '⚠️ Error al buscar el producto';
+    }
+  }
+
+  window.addScannedItem = function() {
+    if (!scannedProduct) return;
+    setSyncStatus('syncing', 'Guardando...');
+    push(itemsRef, { name: scannedProduct.name, category: scannedProduct.category, checked: false, qty: 1, ts: Date.now() });
+    const nameKey = scannedProduct.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    set(ref(db, 'history/' + nameKey), { name: scannedProduct.name, category: scannedProduct.category });
+    scannedProduct = null;
+    document.getElementById('productPopup').style.display = 'none';
+    closeScanner();
+  };
+</script>
+</body>
+</html>
