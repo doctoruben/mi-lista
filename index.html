@@ -176,16 +176,29 @@
     .qty-btn:active { background: #334155; }
     .qty-num { color: #f1f5f9; font-weight: 800; min-width: 22px; text-align: center; font-size: 15px; }
 
-    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-    .cat-tag {
-      background: #0f172a; color: #94a3b8; border: 1px solid #334155;
-      border-radius: 12px; padding: 10px 8px; font-size: 12px; font-weight: 700;
-      font-family: inherit; cursor: pointer; transition: all 0.15s;
-      text-align: center; display: flex; align-items: center; justify-content: center;
-      gap: 5px; line-height: 1.2;
+    .cat-select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 11px 14px;
+      color: #f1f5f9;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
     }
-    .cat-tag:active { transform: scale(0.97); }
-    .cat-tag.active { color: var(--dark); background: var(--accent); border-color: var(--accent); }
+    .cat-select:focus { border-color: #fbbf24; }
+    .cat-select option { background: #1e293b; color: #f1f5f9; font-weight: 600; }
 
     .qty-row {
       display: flex;
@@ -199,7 +212,6 @@
     }
     .qty-label { color: #64748b; font-size: 13px; font-weight: 700; }
     .qty-box { border: none; background: none; padding: 0; }
-    .cats-label { font-size: 12px; font-weight: 800; color: #475569; letter-spacing: 0.5px; margin: 14px 0 8px 2px; }
     .add-btn {
       width: 100%;
       background: linear-gradient(90deg, #fbbf24, #f59e0b);
@@ -348,6 +360,7 @@
           <div class="suggestions" id="suggestions" style="display:none"></div>
         </div>
       </div>
+      <select class="cat-select" id="catSelect" onchange="selectedCat = this.value"></select>
       <div class="qty-row">
         <span class="qty-label">Cantidad</span>
         <div class="qty-box">
@@ -357,8 +370,6 @@
         </div>
       </div>
       <button class="add-btn" onclick="addItem()">+ Añadir a la lista</button>
-      <div class="cats-label">Categoría</div>
-      <div class="cats" id="catContainer"></div>
     </div>
 
     <div class="filters">
@@ -568,21 +579,15 @@
 
   // ── CATEGORIES ──────────────────────────────────────────
   function buildCatButtons() {
-    const container = document.getElementById('catContainer');
+    const select = document.getElementById('catSelect');
     CAT_NAMES.forEach(cat => {
-      const [accent, dark] = CATEGORIES[cat];
-      const btn = document.createElement('button');
-      btn.className = 'cat-tag' + (cat === selectedCat ? ' active' : '');
-      btn.style.setProperty('--accent', accent);
-      btn.style.setProperty('--dark', dark);
-      btn.textContent = cat;
-      btn.onclick = () => {
-        selectedCat = cat;
-        document.querySelectorAll('.cat-tag').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      };
-      container.appendChild(btn);
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      if (cat === selectedCat) opt.selected = true;
+      select.appendChild(opt);
     });
+    select.addEventListener('change', () => { selectedCat = select.value; });
   }
 
   // ── ACTIONS ──────────────────────────────────────────────
