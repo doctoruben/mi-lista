@@ -175,12 +175,15 @@
     .qty-btn:active { background: #334155; }
     .qty-num { color: #f1f5f9; font-weight: 800; min-width: 22px; text-align: center; font-size: 15px; }
 
-    .cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
     .cat-tag {
       background: #0f172a; color: #94a3b8; border: 1px solid #334155;
-      border-radius: 20px; padding: 5px 11px; font-size: 11px; font-weight: 700;
+      border-radius: 12px; padding: 10px 8px; font-size: 12px; font-weight: 700;
       font-family: inherit; cursor: pointer; transition: all 0.15s;
+      text-align: center; display: flex; align-items: center; justify-content: center;
+      gap: 5px; line-height: 1.2;
     }
+    .cat-tag:active { transform: scale(0.97); }
     .cat-tag.active { color: var(--dark); background: var(--accent); border-color: var(--accent); }
 
     .qty-row {
@@ -373,16 +376,17 @@
 
   // ── CATEGORIES ──────────────────────────────────────────
   const CATEGORIES = {
-    "🧹 Limpieza":   ["#34d399", "#064e3b"],
-    "🧴 Higiene":    ["#c084fc", "#4a044e"],
-    "🥩 Carnicería": ["#f87171", "#7f1d1d"],
-    "🍎 Frutería":   ["#86efac", "#14532d"],
-    "🍞 Panadería":  ["#fbbf24", "#78350f"],
-    "🐟 Pescadería": ["#67e8f9", "#164e63"],
-    "🥤 Bebidas":    ["#818cf8", "#1e1b4b"],
-    "🥫 Conservas":  ["#fb923c", "#7c2d12"],
-    "🥛 Lácteos":    ["#93c5fd", "#1e3a5f"],
-    "🛒 Otros":      ["#94a3b8", "#1e293b"],
+    "🥦 Frutas/Verduras":      ["#4ade80", "#14532d"],
+    "🥩 Carnicería/Pescadería":["#f87171", "#7f1d1d"],
+    "🍞 Panadería":            ["#fbbf24", "#78350f"],
+    "🥛 Lácteos":              ["#93c5fd", "#1e3a5f"],
+    "🧊 Congelados":           ["#67e8f9", "#164e63"],
+    "🥤 Bebidas":              ["#818cf8", "#1e1b4b"],
+    "🥫 Alimentación":         ["#fb923c", "#7c2d12"],
+    "🧴 Higiene":              ["#c084fc", "#4a044e"],
+    "🧹 Limpieza/Hogar":       ["#34d399", "#064e3b"],
+    "🐾 Mascotas":             ["#f9a8d4", "#831843"],
+    "🛒 Otros":                ["#94a3b8", "#1e293b"],
   };
   const CAT_NAMES = Object.keys(CATEGORIES);
 
