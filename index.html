@@ -406,7 +406,8 @@
   };
   const CAT_NAMES = Object.keys(CATEGORIES);
 
-  let db, itemsRef;
+  let db, itemsRef, historyRef;
+  let history = {};
   let items = {};
   let qty = 1;
   let selectedCat = "🛒 Otros";
@@ -453,6 +454,7 @@
     const app = initializeApp(config);
     db = getDatabase(app);
     itemsRef = ref(db, 'items');
+    historyRef = ref(db, 'history');
 
     setSyncStatus('syncing', 'Conectando...');
 
@@ -462,6 +464,10 @@
       render();
     }, (error) => {
       setSyncStatus('error', 'Error de conexión');
+    });
+
+    onValue(historyRef, (snapshot) => {
+      history = snapshot.val() || {};
     });
 
     buildCatButtons();
@@ -567,12 +573,12 @@
   }
 
   function getAllSuggestions() {
-    // Items already added by user (name + their saved category)
-    const fromItems = Object.values(items).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
-    // Merge: user items first, then base (deduplicated by name)
-    const seen = new Set(fromItems.map(i => i.name.toLowerCase()));
+    // History: all items ever added by the user
+    const fromHistory = Object.values(history).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
+    // Merge with base suggestions (user history takes priority)
+    const seen = new Set(fromHistory.map(i => i.name.toLowerCase()));
     const base = BASE_SUGGESTIONS.filter(([n]) => !seen.has(n.toLowerCase())).map(([n, c]) => ({ name: n, category: c }));
-    return [...fromItems, ...base];
+    return [...fromHistory, ...base];
   }
 
   function showSuggestions(query) {
@@ -650,6 +656,9 @@
     if (!name) { input.focus(); return; }
     setSyncStatus('syncing', 'Guardando...');
     push(itemsRef, { name, category: selectedCat, checked: false, qty, ts: Date.now() });
+    // Save to history for future autocomplete suggestions
+    const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    set(ref(db, 'history/' + nameKey), { name, category: selectedCat });
     input.value = '';
     hideSuggestions();
     qty = 1;
