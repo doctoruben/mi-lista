@@ -469,20 +469,58 @@
   }
 
   // ── AUTOCOMPLETE ─────────────────────────────────────────
+  // [nombre, categoría]
   const BASE_SUGGESTIONS = [
-    "Aceite de oliva","Aceitunas","Agua mineral","Ajo","Albóndigas","Alcachofas","Almejas","Alubias","Anchoas","Arroz",
-    "Atún en lata","Azúcar","Bacon","Berenjena","Bizcochos","Brócoli","Café","Calabacín","Caldo de pollo","Carne picada",
-    "Cebolla","Cereales","Cerveza","Champiñones","Chocolate","Chorizo","Chuletas de cerdo","Cigalas","Coliflor","Conservas de tomate",
-    "Crema de cacao","Detergente","Dorada","Espárragos","Espinacas","Fiambre de pavo","Filetes de ternera","Fresas","Galletas",
-    "Gambas","Garbanzos","Gel de ducha","Guisantes","Harina","Huevos","Jamón cocido","Jamón serrano","Judías verdes","Ketchup",
-    "Leche entera","Leche desnatada","Lechuga","Lentejas","Limones","Lubina","Macarrones","Mantequilla","Manzanas","Margarina",
-    "Mayonesa","Mejillones","Merluza","Mermelada","Mozzarella","Muslos de pollo","Naranjas","Nata para cocinar","Palomitas",
-    "Pan de molde","Pan integral","Pasta","Patatas","Pechuga de pollo","Pepino","Pera","Perejil","Pescadilla","Pimientos",
-    "Plátanos","Pollo entero","Queso manchego","Queso en lonchas","Rape","Refresco","Sal","Salchichas","Salmón","Sardinas",
-    "Servilletas","Sopa","Suavizante","Ternera","Tomates","Tortillas de maíz","Uvas","Vinagre","Vino blanco","Vino tinto",
-    "Yogur","Zanahoria","Zumo de naranja","Zumo de piña","Papel higiénico","Papel de cocina","Lejía","Lavavajillas",
-    "Champú","Acondicionador","Pasta de dientes","Jabón de manos","Ambientador","Bolsas de basura","Film transparente",
-    "Papel de aluminio","Hielo","Levadura","Bicarbonato","Canela","Pimentón","Orégano","Tomillo","Laurel"
+    ["Aceite de oliva","🥫 Alimentación"],["Aceitunas","🥫 Alimentación"],["Agua mineral","🥤 Bebidas"],
+    ["Ajo","🥦 Frutas/Verduras"],["Albóndigas","🥩 Carnicería/Pescadería"],["Alcachofas","🥦 Frutas/Verduras"],
+    ["Almejas","🥩 Carnicería/Pescadería"],["Alubias","🥫 Alimentación"],["Anchoas","🥫 Alimentación"],
+    ["Arroz","🥫 Alimentación"],["Atún en lata","🥫 Alimentación"],["Azúcar","🥫 Alimentación"],
+    ["Bacon","🥩 Carnicería/Pescadería"],["Berenjena","🥦 Frutas/Verduras"],["Bizcochos","🥫 Alimentación"],
+    ["Brócoli","🥦 Frutas/Verduras"],["Café","🥤 Bebidas"],["Calabacín","🥦 Frutas/Verduras"],
+    ["Caldo de pollo","🥫 Alimentación"],["Carne picada","🥩 Carnicería/Pescadería"],
+    ["Cebolla","🥦 Frutas/Verduras"],["Cereales","🥫 Alimentación"],["Cerveza","🥤 Bebidas"],
+    ["Champiñones","🥦 Frutas/Verduras"],["Chocolate","🥫 Alimentación"],["Chorizo","🥩 Carnicería/Pescadería"],
+    ["Chuletas de cerdo","🥩 Carnicería/Pescadería"],["Cigalas","🥩 Carnicería/Pescadería"],
+    ["Coliflor","🥦 Frutas/Verduras"],["Conservas de tomate","🥫 Alimentación"],
+    ["Crema de cacao","🥫 Alimentación"],["Detergente","🧹 Limpieza/Hogar"],["Dorada","🥩 Carnicería/Pescadería"],
+    ["Espárragos","🥦 Frutas/Verduras"],["Espinacas","🥦 Frutas/Verduras"],["Fiambre de pavo","🥩 Carnicería/Pescadería"],
+    ["Filetes de ternera","🥩 Carnicería/Pescadería"],["Fresas","🥦 Frutas/Verduras"],["Galletas","🥫 Alimentación"],
+    ["Gambas","🥩 Carnicería/Pescadería"],["Garbanzos","🥫 Alimentación"],["Gel de ducha","🧴 Higiene"],
+    ["Guisantes","🥦 Frutas/Verduras"],["Harina","🥫 Alimentación"],["Huevos","🥛 Lácteos"],
+    ["Jamón cocido","🥩 Carnicería/Pescadería"],["Jamón serrano","🥩 Carnicería/Pescadería"],
+    ["Judías verdes","🥦 Frutas/Verduras"],["Ketchup","🥫 Alimentación"],
+    ["Leche entera","🥛 Lácteos"],["Leche desnatada","🥛 Lácteos"],["Lechuga","🥦 Frutas/Verduras"],
+    ["Lentejas","🥫 Alimentación"],["Limones","🥦 Frutas/Verduras"],["Lubina","🥩 Carnicería/Pescadería"],
+    ["Macarrones","🥫 Alimentación"],["Mantequilla","🥛 Lácteos"],["Manzanas","🥦 Frutas/Verduras"],
+    ["Margarina","🥛 Lácteos"],["Mayonesa","🥫 Alimentación"],["Mejillones","🥩 Carnicería/Pescadería"],
+    ["Merluza","🥩 Carnicería/Pescadería"],["Mermelada","🥫 Alimentación"],["Mozzarella","🥛 Lácteos"],
+    ["Muslos de pollo","🥩 Carnicería/Pescadería"],["Naranjas","🥦 Frutas/Verduras"],
+    ["Nata para cocinar","🥛 Lácteos"],["Palomitas","🥫 Alimentación"],
+    ["Pan de molde","🍞 Panadería"],["Pan integral","🍞 Panadería"],["Pasta","🥫 Alimentación"],
+    ["Patatas","🥦 Frutas/Verduras"],["Pechuga de pollo","🥩 Carnicería/Pescadería"],
+    ["Pepino","🥦 Frutas/Verduras"],["Pera","🥦 Frutas/Verduras"],["Perejil","🥦 Frutas/Verduras"],
+    ["Pescadilla","🥩 Carnicería/Pescadería"],["Pimientos","🥦 Frutas/Verduras"],
+    ["Plátanos","🥦 Frutas/Verduras"],["Pollo entero","🥩 Carnicería/Pescadería"],
+    ["Queso manchego","🥛 Lácteos"],["Queso en lonchas","🥛 Lácteos"],["Rape","🥩 Carnicería/Pescadería"],
+    ["Refresco","🥤 Bebidas"],["Sal","🥫 Alimentación"],["Salchichas","🥩 Carnicería/Pescadería"],
+    ["Salmón","🥩 Carnicería/Pescadería"],["Sardinas","🥫 Alimentación"],
+    ["Servilletas","🧹 Limpieza/Hogar"],["Sopa","🥫 Alimentación"],["Suavizante","🧹 Limpieza/Hogar"],
+    ["Ternera","🥩 Carnicería/Pescadería"],["Tomates","🥦 Frutas/Verduras"],
+    ["Tortillas de maíz","🥫 Alimentación"],["Uvas","🥦 Frutas/Verduras"],
+    ["Vinagre","🥫 Alimentación"],["Vino blanco","🥤 Bebidas"],["Vino tinto","🥤 Bebidas"],
+    ["Yogur","🥛 Lácteos"],["Zanahoria","🥦 Frutas/Verduras"],["Zumo de naranja","🥤 Bebidas"],
+    ["Zumo de piña","🥤 Bebidas"],["Papel higiénico","🧴 Higiene"],["Papel de cocina","🧹 Limpieza/Hogar"],
+    ["Lejía","🧹 Limpieza/Hogar"],["Lavavajillas","🧹 Limpieza/Hogar"],
+    ["Champú","🧴 Higiene"],["Acondicionador","🧴 Higiene"],["Pasta de dientes","🧴 Higiene"],
+    ["Jabón de manos","🧴 Higiene"],["Ambientador","🧹 Limpieza/Hogar"],["Bolsas de basura","🧹 Limpieza/Hogar"],
+    ["Film transparente","🧹 Limpieza/Hogar"],["Papel de aluminio","🧹 Limpieza/Hogar"],
+    ["Hielo","🧊 Congelados"],["Helado","🧊 Congelados"],["Pizza congelada","🧊 Congelados"],
+    ["Verduras congeladas","🧊 Congelados"],["Levadura","🍞 Panadería"],
+    ["Bicarbonato","🥫 Alimentación"],["Canela","🥫 Alimentación"],["Pimentón","🥫 Alimentación"],
+    ["Orégano","🥫 Alimentación"],["Tomillo","🥫 Alimentación"],["Laurel","🥫 Alimentación"],
+    ["Pienso perro","🐾 Mascotas"],["Pienso gato","🐾 Mascotas"],["Arena para gatos","🐾 Mascotas"],
+    ["Snacks mascotas","🐾 Mascotas"],["Croissant","🍞 Panadería"],["Baguette","🍞 Panadería"],
+    ["Bollería","🍞 Panadería"],["Tostadas","🍞 Panadería"]
   ];
 
   let highlightedIndex = -1;
@@ -509,7 +547,7 @@
         updateHighlight(suggs);
       } else if (e.key === 'Enter') {
         if (visible && highlightedIndex >= 0 && suggs[highlightedIndex]) {
-          selectSuggestion(suggs[highlightedIndex].dataset.value);
+          selectSuggestion(suggs[highlightedIndex].dataset.value, suggs[highlightedIndex].dataset.cat);
         } else {
           hideSuggestions();
           addItem();
@@ -529,9 +567,12 @@
   }
 
   function getAllSuggestions() {
-    const fromItems = Object.values(items).map(i => i.name).filter(Boolean);
-    const combined = [...new Set([...fromItems, ...BASE_SUGGESTIONS])];
-    return combined;
+    // Items already added by user (name + their saved category)
+    const fromItems = Object.values(items).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
+    // Merge: user items first, then base (deduplicated by name)
+    const seen = new Set(fromItems.map(i => i.name.toLowerCase()));
+    const base = BASE_SUGGESTIONS.filter(([n]) => !seen.has(n.toLowerCase())).map(([n, c]) => ({ name: n, category: c }));
+    return [...fromItems, ...base];
   }
 
   function showSuggestions(query) {
@@ -540,16 +581,18 @@
     if (q.length < 1) { hideSuggestions(); return; }
 
     const all = getAllSuggestions();
-    const matches = all.filter(s => s.toLowerCase().includes(q)).slice(0, 5);
+    const matches = all.filter(s => s.name.toLowerCase().includes(q)).slice(0, 5);
 
     if (matches.length === 0) { hideSuggestions(); return; }
 
-    box.innerHTML = matches.map(s => {
+    box.innerHTML = matches.map(({ name: s, category: cat }) => {
       const idx = s.toLowerCase().indexOf(q);
       const before = escHtml(s.slice(0, idx));
       const match  = escHtml(s.slice(idx, idx + q.length));
       const after  = escHtml(s.slice(idx + q.length));
-      return `<div class="suggestion-item" data-value="${escHtml(s)}" ontouchstart="selectSuggestion('${escHtml(s)}')" onclick="selectSuggestion('${escHtml(s)}')">
+      const safeS = escHtml(s);
+      const safeCat = escHtml(cat || '');
+      return `<div class="suggestion-item" data-value="${safeS}" data-cat="${safeCat}" ontouchstart="selectSuggestion('${safeS}','${safeCat}')" onclick="selectSuggestion('${safeS}','${safeCat}')">
         <span>🔍</span>
         <span>${before}<span class="suggestion-match">${match}</span>${after}</span>
       </div>`;
@@ -564,8 +607,13 @@
     highlightedIndex = -1;
   }
 
-  window.selectSuggestion = function(value) {
+  window.selectSuggestion = function(value, category) {
     document.getElementById('itemInput').value = value;
+    if (category && CATEGORIES[category]) {
+      selectedCat = category;
+      const sel = document.getElementById('catSelect');
+      if (sel) sel.value = category;
+    }
     hideSuggestions();
     document.getElementById('itemInput').focus();
   };
