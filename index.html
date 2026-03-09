@@ -258,6 +258,10 @@
       <label>APP ID</label>
       <input id="f_appId" placeholder="1:123456:web:abcdef" />
     </div>
+    <div class="setup-field">
+      <label>DATABASE URL</label>
+      <input id="f_dbUrl" placeholder="https://mi-proyecto-default-rtdb.firebaseio.com" />
+    </div>
 
     <button class="setup-btn" onclick="saveConfig()">✓ Guardar y conectar</button>
 
@@ -266,8 +270,8 @@
         <span class="step">1</span> Ve a <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>
         <span class="step">2</span> Crea un proyecto nuevo (nombre libre)<br>
         <span class="step">3</span> En el proyecto → <b>Configuración ⚙️</b> → <b>Tus apps</b> → añade una app web <b>&lt;/&gt;</b><br>
-        <span class="step">4</span> Copia <b>apiKey</b>, <b>projectId</b> y <b>appId</b> de la configuración<br>
-        <span class="step">5</span> Ve a <b>Realtime Database</b> → Crear base de datos → modo <b>prueba</b><br>
+        <span class="step">4</span> Copia <b>apiKey</b>, <b>projectId</b>, <b>appId</b> y <b>databaseURL</b><br>
+        <span class="step">5</span> Ve a <b>Realtime Database</b> → la URL aparece arriba en la pestaña Datos<br>
         <span class="step">6</span> Pega los datos aquí ↑ y guarda
       </p>
     </div>
@@ -348,15 +352,16 @@
   }
 
   function saveConfig() {
-    const apiKey    = document.getElementById('f_apiKey').value.trim();
-    const projectId = document.getElementById('f_projectId').value.trim();
-    const appId     = document.getElementById('f_appId').value.trim();
-    if (!apiKey || !projectId || !appId) { alert('Rellena todos los campos'); return; }
+    const apiKey    = document.getElementById("f_apiKey").value.trim();
+    const projectId = document.getElementById("f_projectId").value.trim();
+    const appId     = document.getElementById("f_appId").value.trim();
+    const dbUrl     = document.getElementById("f_dbUrl").value.trim();
+    if (!apiKey || !projectId || !appId || !dbUrl) { alert("Rellena todos los campos"); return; }
     const config = { apiKey, projectId, appId,
       authDomain: `${projectId}.firebaseapp.com`,
-      databaseURL: `https://${projectId}-default-rtdb.firebaseio.com`,
+      databaseURL: dbUrl,
     };
-    localStorage.setItem('fbConfig', JSON.stringify(config));
+    localStorage.setItem("fbConfig", JSON.stringify(config));
     window.location.reload();
   }
   window.saveConfig = saveConfig;
