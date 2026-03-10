@@ -220,6 +220,32 @@
       font-family: inherit; cursor: pointer; transition: transform 0.1s;
     }
     .add-btn:active { transform: scale(0.97); }
+    .freq-btn {
+      width: 100%; margin-top: 8px;
+      background: #0f172a; color: #818cf8;
+      border: 1px solid #312e81; border-radius: 14px;
+      padding: 11px; font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .freq-btn:active { background: #1e1b4b; }
+    .freq-item {
+      display: flex; align-items: center; gap: 12px;
+      background: #1e293b; border-radius: 14px; padding: 12px 14px;
+      margin-bottom: 8px; border: 2px solid transparent;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .freq-item.selected { border-color: #818cf8; background: #1e1b4b; }
+    .freq-check {
+      width: 24px; height: 24px; border-radius: 7px;
+      border: 2px solid #475569; background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.15s; font-size: 14px;
+    }
+    .freq-item.selected .freq-check { background: #818cf8; border-color: #818cf8; color: #fff; }
+    .freq-info { flex: 1; min-width: 0; }
+    .freq-name { font-size: 15px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .freq-meta { font-size: 11px; color:#475569; margin-top: 2px; }
+    .freq-count { font-size: 12px; font-weight: 800; color: #475569; background: #0f172a; border-radius: 20px; padding: 2px 8px; flex-shrink: 0; }
 
     .filters { display: flex; gap: 8px; margin-bottom: 14px; }
     .filter-btn {
@@ -370,6 +396,29 @@
         </div>
       </div>
       <button class="add-btn" onclick="addItem()">+ Añadir a la lista</button>
+      <button class="freq-btn" onclick="openFrequent()">⭐ Artículos frecuentes</button>
+    </div>
+
+    <!-- FREQUENT ITEMS POPUP -->
+    <div id="freqPopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:85vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <!-- Handle -->
+        <div style="display:flex; justify-content:center; padding:12px 0 0; flex-shrink:0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <!-- Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0;">
+          <div>
+            <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc; line-height:1;">⭐ Frecuentes</h2>
+            <p style="color:#475569; font-size:12px; margin-top:3px;">Selecciona los que quieras añadir</p>
+          </div>
+          <button onclick="closeFrequent()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:10px; width:34px; height:34px; font-size:18px; cursor:pointer;">×</button>
+        </div>
+        <!-- List -->
+        <div id="freqList" style="overflow-y:auto; flex:1; padding:0 16px;"></div>
+        <!-- Footer -->
+        <div style="padding:14px 16px; flex-shrink:0; border-top:1px solid #1e293b;">
+          <button onclick="addFrequentItems()" id="freqAddBtn" style="width:100%; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:900; font-family:inherit; cursor:pointer; opacity:0.4;" disabled>Añadir seleccionados</button>
+        </div>
+      </div>
     </div>
 
     <div class="filters">
@@ -656,9 +705,11 @@
     if (!name) { input.focus(); return; }
     setSyncStatus('syncing', 'Guardando...');
     push(itemsRef, { name, category: selectedCat, checked: false, qty, ts: Date.now() });
-    // Save to history for future autocomplete suggestions
+    // Save to history with count for frequent items
     const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
-    set(ref(db, 'history/' + nameKey), { name, category: selectedCat });
+    const existing = history[nameKey];
+    const count = existing ? (existing.count || 1) + 1 : 1;
+    set(ref(db, 'history/' + nameKey), { name, category: selectedCat, count });
     input.value = '';
     hideSuggestions();
     qty = 1;
@@ -780,6 +831,90 @@
     }
     list.innerHTML = html;
   }
+
+  // ── FREQUENT ITEMS ───────────────────────────────────────
+  let freqSelected = new Set();
+
+  window.openFrequent = function() {
+    freqSelected.clear();
+    const popup = document.getElementById('freqPopup');
+    popup.style.display = 'flex';
+
+    // Get top 20 from history sorted by count
+    const sorted = Object.values(history)
+      .filter(i => i.name && i.count)
+      .sort((a, b) => (b.count || 0) - (a.count || 0))
+      .slice(0, 20);
+
+    const list = document.getElementById('freqList');
+    if (sorted.length === 0) {
+      list.innerHTML = '<div style="text-align:center; color:#475569; padding:40px 0; font-size:14px;">Aún no hay artículos frecuentes.<br>Añade artículos para que aparezcan aquí.</div>';
+      return;
+    }
+
+    list.innerHTML = sorted.map((item, i) => {
+      const [accent] = CATEGORIES[item.category] || ['#94a3b8'];
+      const times = item.count === 1 ? '1 vez' : `${item.count} veces`;
+      return `<div class="freq-item" id="freq-${i}" onclick="toggleFreq(${i}, '${escHtml(item.name)}', '${escHtml(item.category)}')">
+        <div class="freq-check" id="freq-check-${i}"></div>
+        <div class="freq-info">
+          <div class="freq-name">${escHtml(item.name)}</div>
+          <div class="freq-meta" style="color:${accent}">${item.category}</div>
+        </div>
+        <span class="freq-count">🔁 ${times}</span>
+      </div>`;
+    }).join('');
+  };
+
+  window.toggleFreq = function(i, name, category) {
+    const key = name;
+    const el = document.getElementById('freq-' + i);
+    const check = document.getElementById('freq-check-' + i);
+    if (freqSelected.has(key)) {
+      freqSelected.delete(key);
+      el.classList.remove('selected');
+      check.textContent = '';
+    } else {
+      freqSelected.add(key);
+      el.classList.add('selected');
+      check.textContent = '✓';
+    }
+    // Update add button
+    const addBtn = document.getElementById('freqAddBtn');
+    if (freqSelected.size > 0) {
+      addBtn.disabled = false;
+      addBtn.style.opacity = '1';
+      addBtn.textContent = `Añadir ${freqSelected.size} artículo${freqSelected.size > 1 ? 's' : ''}`;
+    } else {
+      addBtn.disabled = true;
+      addBtn.style.opacity = '0.4';
+      addBtn.textContent = 'Añadir seleccionados';
+    }
+  };
+
+  window.addFrequentItems = function() {
+    if (freqSelected.size === 0) return;
+    setSyncStatus('syncing', 'Guardando...');
+    // Find full item data from history
+    const historyByName = {};
+    Object.values(history).forEach(h => { if (h.name) historyByName[h.name] = h; });
+    freqSelected.forEach(name => {
+      const h = historyByName[name];
+      const cat = (h && h.category) ? h.category : '🛒 Otros';
+      push(itemsRef, { name, category: cat, checked: false, qty: 1, ts: Date.now() });
+      // Increment count
+      const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+      const existing = history[nameKey];
+      const count = existing ? (existing.count || 1) + 1 : 1;
+      set(ref(db, 'history/' + nameKey), { name, category: cat, count });
+    });
+    closeFrequent();
+  };
+
+  window.closeFrequent = function() {
+    document.getElementById('freqPopup').style.display = 'none';
+    freqSelected.clear();
+  };
 </script>
 </body>
 </html>
