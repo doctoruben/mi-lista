@@ -464,6 +464,12 @@
     <button class="manage-btn" onclick="openManage()">📋 Gestión histórico artículos</button>
     <button class="reset-btn" onclick="resetConfig()">⚙ Cambiar configuración Firebase</button>
 
+    <!-- IMAGE VIEWER -->
+    <div id="imgViewer" onclick="closeImgViewer()" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; cursor:zoom-out;">
+      <img id="imgViewerImg" src="" style="max-width:90vw; max-height:85vh; border-radius:16px; object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,0.8);" />
+      <button onclick="closeImgViewer()" style="position:absolute; top:20px; right:20px; background:#1e293b; border:1px solid #334155; color:#f1f5f9; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;">×</button>
+    </div>
+
     <!-- MANAGE ARTICLES POPUP -->
     <div id="managePopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
       <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:90vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
@@ -824,7 +830,7 @@
         <button class="check-btn${item.checked ? ' checked' : ''}" style="--accent:${accent}" onclick="toggleItem('${id}')">
           ${item.checked ? '✓' : ''}
         </button>
-        ${thumb ? `<img src="${thumb}" style="width:36px; height:36px; border-radius:8px; object-fit:cover; flex-shrink:0; opacity:${item.checked ? '0.4' : '1'};" />` : ''}
+        ${thumb ? `<img src="${thumb}" onclick="event.stopPropagation(); openImgViewer('${thumb.replace(/'/g, "&#39;")}')" style="width:36px; height:36px; border-radius:8px; object-fit:cover; flex-shrink:0; opacity:${item.checked ? '0.4' : '1'}; cursor:zoom-in;" />` : ''}
         <div class="item-info">
           <div class="item-name${item.checked ? ' checked' : ''}">
             ${escHtml(item.name)}
@@ -1277,6 +1283,18 @@
     remove(ref(db, 'history/' + key));
     const q = document.getElementById('manageSearch').value;
     renderManage(q);
+  };
+
+  // ── IMAGE VIEWER ─────────────────────────────────────────
+  window.openImgViewer = function(src) {
+    document.getElementById('imgViewerImg').src = src;
+    document.getElementById('imgViewer').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeImgViewer = function() {
+    document.getElementById('imgViewer').style.display = 'none';
+    document.body.style.overflow = '';
   };
 
 </script>
