@@ -809,11 +809,16 @@
 
   function renderItem(id, item) {
     const [accent] = CATEGORIES[item.category] || ["#94a3b8"];
+    // Look up image from history
+    const nameKey = item.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    const histEntry = userHistory[nameKey];
+    const thumb = histEntry && histEntry.image ? histEntry.image : null;
     return `
       <div class="item${item.checked ? ' checked' : ''}">
         <button class="check-btn${item.checked ? ' checked' : ''}" style="--accent:${accent}" onclick="toggleItem('${id}')">
           ${item.checked ? '✓' : ''}
         </button>
+        ${thumb ? `<img src="${thumb}" style="width:36px; height:36px; border-radius:8px; object-fit:cover; flex-shrink:0; opacity:${item.checked ? '0.4' : '1'};" />` : ''}
         <div class="item-info">
           <div class="item-name${item.checked ? ' checked' : ''}">
             ${escHtml(item.name)}
@@ -1137,6 +1142,7 @@
         <div id="mitem-${h.key}" style="background:#1e293b; border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
           <!-- View mode -->
           <div id="mview-${h.key}" style="display:flex; align-items:center; gap:10px;">
+            ${h.image ? `<img src="${h.image}" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0; border:1px solid #334155;" />` : `<div style="width:44px; height:44px; border-radius:10px; background:#0f172a; border:1px solid #334155; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px;">📦</div>`}
             <div style="flex:1; min-width:0;">
               <div style="font-size:15px; font-weight:700; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escHtml(h.name)}</div>
               <div style="font-size:11px; color:${accent}; margin-top:2px;">${escHtml(h.category)} · 🔁 ${times}</div>
@@ -1151,9 +1157,25 @@
             <input id="medit-name-${h.key}" value="${escHtml(h.name)}"
               style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:8px;" />
             <select id="medit-cat-${h.key}"
-              style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:14px; font-family:inherit; outline:none; margin-bottom:10px;">
+              style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:14px; font-family:inherit; outline:none; margin-bottom:8px;">
               ${catOptions}
             </select>
+            <!-- Image picker -->
+            <div style="margin-bottom:10px;">
+              <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:6px;">IMAGEN</div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div id="medit-imgpreview-${h.key}" style="width:52px; height:52px; border-radius:10px; background:#0f172a; border:1px solid #334155; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:22px;">
+                  ${h.image ? `<img src="${h.image}" style="width:100%; height:100%; object-fit:cover;" />` : '📦'}
+                </div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                  <label style="display:flex; align-items:center; justify-content:center; gap:6px; background:#1e3a5f; color:#93c5fd; border:none; border-radius:10px; padding:8px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer;">
+                    📷 Elegir foto
+                    <input type="file" accept="image/*" style="display:none;" onchange="previewImage('${h.key}', this)" />
+                  </label>
+                  ${h.image ? `<button onclick="removeImage('${h.key}')" style="background:#450a0a; border:none; color:#fca5a5; border-radius:10px; padding:7px; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer;">🗑 Quitar imagen</button>` : ''}
+                </div>
+              </div>
+            </div>
             <div style="display:flex; gap:8px;">
               <button onclick="saveEdit('${h.key}')"
                 style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
@@ -1182,12 +1204,54 @@
     document.getElementById(`medit-${key}`).style.display = 'none';
   };
 
+  // Temp storage for pending image data per key
+  const pendingImages = {};
+
+  window.previewImage = function(key, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      // Resize to max 200x200 thumbnail
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxSize = 200;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+        else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        pendingImages[key] = dataUrl;
+        // Update preview
+        const preview = document.getElementById(`medit-imgpreview-${key}`);
+        if (preview) preview.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:cover;" />`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.removeImage = function(key) {
+    pendingImages[key] = null;
+    const preview = document.getElementById(`medit-imgpreview-${key}`);
+    if (preview) preview.innerHTML = '📦';
+  };
+
   window.saveEdit = function(key) {
     const newName = document.getElementById(`medit-name-${key}`).value.trim();
     const newCat  = document.getElementById(`medit-cat-${key}`).value;
     if (!newName) return;
     const existing = userHistory[key] || {};
-    set(ref(db, 'history/' + key), { ...existing, name: newName, category: newCat });
+    const updated = { ...existing, name: newName, category: newCat };
+    // Handle image
+    if (key in pendingImages) {
+      if (pendingImages[key] === null) delete updated.image;
+      else updated.image = pendingImages[key];
+      delete pendingImages[key];
+    }
+    set(ref(db, 'history/' + key), updated);
     cancelEdit(key);
   };
 
