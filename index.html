@@ -107,11 +107,11 @@
     .sync-dot.error { background: #f87171; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    .header { padding: 28px 0 16px; }
-    .header-top { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .header { padding: 28px 0 16px; text-align: center; }
+    .header-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
     .header .emoji { font-size: 38px; flex-shrink: 0; }
     .header h1 { font-family: 'Abril Fatface', serif; font-size: 36px; color: #f8fafc; line-height: 1; }
-    .stats { color: #64748b; font-size: 14px; margin-left: 2px; }
+    .stats { color: #64748b; font-size: 14px; text-align: center; }
     .stats .pending { color: #fbbf24; font-weight: 800; }
     .stats .done { color: #4ade80; font-weight: 800; }
 
@@ -461,7 +461,7 @@
 
     <div class="items" id="itemList"></div>
     <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
-    <button class="manage-btn" onclick="openManage()">📋 Gestionar artículos</button>
+    <button class="manage-btn" onclick="openManage()">📋 Gestión histórico artículos</button>
     <button class="reset-btn" onclick="resetConfig()">⚙ Cambiar configuración Firebase</button>
 
     <!-- MANAGE ARTICLES POPUP -->
