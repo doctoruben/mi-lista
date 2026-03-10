@@ -572,6 +572,11 @@
 
     onValue(historyRef, (snapshot) => {
       history = snapshot.val() || {};
+      // Refresh manage panel if open
+      if (document.getElementById('managePopup').style.display !== 'none') {
+        const q = document.getElementById('manageSearch').value;
+        renderManage(q);
+      }
     });
 
     buildCatButtons();
