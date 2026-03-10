@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Mi Lista" />
   <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.png" />
   <title>🛒 Mi Lista de la Compra</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
   <style>
@@ -283,6 +285,7 @@
       animation: slideIn 0.25s ease;
     }
     @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
     .item.checked { background: #0f172a; border-color: #1e293b; opacity: 0.5; }
 
     .check-btn {
@@ -807,6 +810,7 @@
       if (!groups[cat] || groups[cat].length === 0) return;
       const [accent] = CATEGORIES[cat];
       html += groupHeader(cat, accent, groups[cat].length);
+      groups[cat].sort((a, b) => a[1].name.localeCompare(b[1].name, 'es'));
       html += groups[cat].map(([id, item]) => renderItem(id, item)).join('');
     });
     return html;
@@ -960,6 +964,108 @@
     if (!q) return;
     window.open(`https://www.hiperdino.es/c9498/search/?q=${encodeURIComponent(q)}`, '_blank');
   };
+
+  // ── WEB SHARE TARGET ─────────────────────────────────────
+  function handleSharedUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl = params.get('shared_url') || params.get('url') || params.get('text') || '';
+    if (!sharedUrl) return;
+
+    // Extract product name from Mercadona or Hiperdino URL
+    let productName = '';
+
+    // Mercadona: https://tienda.mercadona.es/product/8500/chocolate-valor-sin-gluten
+    const mercaMatch = sharedUrl.match(/mercadona\.es\/product\/[^/]+\/([^/?#]+)/);
+    if (mercaMatch) {
+      productName = mercaMatch[1]
+        .replace(/-/g, ' ')
+        .replace(/\w/g, l => l.toUpperCase());
+    }
+
+    // Hiperdino: https://www.hiperdino.es/producto/chocolate-valor/
+    const hiperMatch = sharedUrl.match(/hiperdino\.es\/(?:producto|product)\/([^/?#]+)/);
+    if (hiperMatch) {
+      productName = hiperMatch[1]
+        .replace(/-/g, ' ')
+        .replace(/\w/g, l => l.toUpperCase());
+    }
+
+    // If nothing matched but we have a URL, try extracting last path segment
+    if (!productName && sharedUrl.startsWith('http')) {
+      try {
+        const u = new URL(sharedUrl);
+        const segments = u.pathname.split('/').filter(Boolean);
+        const last = segments[segments.length - 1];
+        if (last && last.length > 2 && !/^\d+$/.test(last)) {
+          productName = last.replace(/-/g, ' ').replace(/\w/g, l => l.toUpperCase());
+        }
+      } catch(e) {}
+    }
+
+    if (!productName) return;
+
+    // Wait for app to be ready then fill input and show toast
+    const tryFill = setInterval(() => {
+      const input = document.getElementById('itemInput');
+      const mainApp = document.getElementById('mainApp');
+      if (!input || mainApp.style.display === 'none') return;
+      clearInterval(tryFill);
+
+      input.value = productName;
+      input.focus();
+
+      // Show toast notification
+      showShareToast(productName, sharedUrl);
+
+      // Clean URL without reload
+      window.history.replaceState({}, '', '/');
+    }, 300);
+  }
+
+  function showShareToast(name, url) {
+    // Remove existing toast
+    const existing = document.getElementById('shareToast');
+    if (existing) existing.remove();
+
+    const source = url.includes('mercadona') ? '🟢 Mercadona' : url.includes('hiperdino') ? '🟠 Hiperdino' : '🔗 Compartido';
+
+    const toast = document.createElement('div');
+    toast.id = 'shareToast';
+    toast.style.cssText = `
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      background: #1e293b; border: 1px solid #334155; border-radius: 16px;
+      padding: 14px 18px; z-index: 9999; max-width: 340px; width: calc(100% - 32px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: slideUp 0.3s ease;
+    `;
+    toast.innerHTML = `
+      <div style="font-size:11px; color:#64748b; font-weight:800; letter-spacing:0.5px; margin-bottom:4px;">${source}</div>
+      <div style="font-size:15px; font-weight:700; color:#f1f5f9; margin-bottom:10px;">📦 ${escHtml(name)}</div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="document.getElementById('shareToast').remove(); addItem();"
+          style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:10px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">
+          + Añadir a la lista
+        </button>
+        <button onclick="document.getElementById('shareToast').remove();"
+          style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">
+          ✕
+        </button>
+      </div>
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-dismiss after 15 seconds
+    setTimeout(() => { if (document.getElementById('shareToast')) toast.remove(); }, 15000);
+  }
+
+  // Run on load
+  handleSharedUrl();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
 </script>
 </body>
 </html>
