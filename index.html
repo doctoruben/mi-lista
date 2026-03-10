@@ -323,6 +323,14 @@
     }
     .clear-btn:active { border-color: #f87171; color: #f87171; }
 
+    .manage-btn {
+      width: 100%; margin-top: 10px;
+      background: #0f172a; color: #94a3b8;
+      border: 1px solid #334155; border-radius: 12px;
+      padding: 12px; font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .manage-btn:active { border-color: #94a3b8; }
     .reset-btn {
       display: block; margin: 16px auto 0; background: none; border: none;
       color: #334155; font-size: 11px; font-family: inherit; cursor: pointer;
@@ -453,7 +461,30 @@
 
     <div class="items" id="itemList"></div>
     <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
+    <button class="manage-btn" onclick="openManage()">📋 Gestionar artículos</button>
     <button class="reset-btn" onclick="resetConfig()">⚙ Cambiar configuración Firebase</button>
+
+    <!-- MANAGE ARTICLES POPUP -->
+    <div id="managePopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:90vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <div style="display:flex; justify-content:center; padding:12px 0 0; flex-shrink:0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0;">
+          <div>
+            <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc; line-height:1;">📋 Mis artículos</h2>
+            <p id="manageCount" style="color:#475569; font-size:12px; margin-top:3px;"></p>
+          </div>
+          <button onclick="closeManage()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:10px; width:34px; height:34px; font-size:18px; cursor:pointer;">×</button>
+        </div>
+        <!-- Search -->
+        <div style="padding:0 16px 10px; flex-shrink:0;">
+          <input id="manageSearch" type="text" placeholder="Buscar artículo..." autocomplete="off"
+            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 14px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none;"
+            oninput="filterManage()" />
+        </div>
+        <!-- List -->
+        <div id="manageList" style="overflow-y:auto; flex:1; padding:0 16px 16px;"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1066,6 +1097,62 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     });
   }
+
+  // ── GESTIONAR ARTÍCULOS ───────────────────────────────────
+  window.openManage = function() {
+    document.getElementById('managePopup').style.display = 'flex';
+    document.getElementById('manageSearch').value = '';
+    renderManage('');
+  };
+
+  window.closeManage = function() {
+    document.getElementById('managePopup').style.display = 'none';
+  };
+
+  window.filterManage = function() {
+    const q = document.getElementById('manageSearch').value;
+    renderManage(q);
+  };
+
+  function renderManage(query) {
+    const q = query.trim().toLowerCase();
+    const all = Object.entries(history)
+      .map(([key, h]) => ({ key, ...h }))
+      .filter(h => h.name)
+      .filter(h => !q || h.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+    document.getElementById('manageCount').textContent =
+      `${all.length} artículo${all.length !== 1 ? 's' : ''} en el historial`;
+
+    const list = document.getElementById('manageList');
+    if (all.length === 0) {
+      list.innerHTML = '<div style="text-align:center; color:#475569; padding:40px 0; font-size:14px;">No se encontraron artículos</div>';
+      return;
+    }
+
+    list.innerHTML = all.map(h => {
+      const [accent] = CATEGORIES[h.category] || ['#94a3b8'];
+      const times = h.count ? (h.count === 1 ? '1 vez' : `${h.count} veces`) : '1 vez';
+      return `
+        <div style="display:flex; align-items:center; gap:10px; background:#1e293b; border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:15px; font-weight:700; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escHtml(h.name)}</div>
+            <div style="font-size:11px; color:${accent}; margin-top:2px;">${escHtml(h.category)} · 🔁 ${times}</div>
+          </div>
+          <button onclick="deleteHistoryItem('${h.key}')"
+            style="background:#450a0a; border:none; color:#fca5a5; border-radius:8px; width:30px; height:30px; font-size:16px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">×</button>
+        </div>`;
+    }).join('');
+  }
+
+  window.deleteHistoryItem = function(key) {
+    if (!confirm('¿Eliminar este artículo del historial?')) return;
+    remove(ref(db, 'history/' + key));
+    // history will update via onValue listener automatically
+    const q = document.getElementById('manageSearch').value;
+    renderManage(q);
+  };
 </script>
 </body>
 </html>
