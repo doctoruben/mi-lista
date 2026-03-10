@@ -511,7 +511,7 @@
   const CAT_NAMES = Object.keys(CATEGORIES);
 
   let db, itemsRef, historyRef;
-  let history = {};
+  let userHistory = {};
   let items = {};
   let qty = 1;
   let selectedCat = "🛒 Otros";
@@ -571,7 +571,7 @@
     });
 
     onValue(historyRef, (snapshot) => {
-      history = snapshot.val() || {};
+      userHistory = snapshot.val() || {};
       // Refresh manage panel if open
       if (document.getElementById('managePopup').style.display !== 'none') {
         const q = document.getElementById('manageSearch').value;
@@ -683,7 +683,7 @@
 
   function getAllSuggestions() {
     // History: all items ever added by the user
-    const fromHistory = Object.values(history).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
+    const fromHistory = Object.values(userHistory).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
     // Merge with base suggestions (user history takes priority)
     const seen = new Set(fromHistory.map(i => i.name.toLowerCase()));
     const base = BASE_SUGGESTIONS.filter(([n]) => !seen.has(n.toLowerCase())).map(([n, c]) => ({ name: n, category: c }));
@@ -767,7 +767,7 @@
     push(itemsRef, { name, category: selectedCat, checked: false, qty, ts: Date.now() });
     // Save to history with count for frequent items
     const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
-    const existing = history[nameKey];
+    const existing = userHistory[nameKey];
     const count = existing ? (existing.count || 1) + 1 : 1;
     set(ref(db, 'history/' + nameKey), { name, category: selectedCat, count });
     input.value = '';
@@ -901,8 +901,8 @@
     const popup = document.getElementById('freqPopup');
     popup.style.display = 'flex';
 
-    // Get top 20 from history sorted by count
-    const sorted = Object.values(history)
+    // Get top 20 from userHistory sorted by count
+    const sorted = Object.values(userHistory)
       .filter(i => i.name && i.count)
       .sort((a, b) => (b.count || 0) - (a.count || 0))
       .slice(0, 20);
@@ -956,16 +956,16 @@
   window.addFrequentItems = function() {
     if (freqSelected.size === 0) return;
     setSyncStatus('syncing', 'Guardando...');
-    // Find full item data from history
+    // Find full item data from userHistory
     const historyByName = {};
-    Object.values(history).forEach(h => { if (h.name) historyByName[h.name] = h; });
+    Object.values(userHistory).forEach(h => { if (h.name) historyByName[h.name] = h; });
     freqSelected.forEach(name => {
       const h = historyByName[name];
       const cat = (h && h.category) ? h.category : '🛒 Otros';
       push(itemsRef, { name, category: cat, checked: false, qty: 1, ts: Date.now() });
       // Increment count
       const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
-      const existing = history[nameKey];
+      const existing = userHistory[nameKey];
       const count = existing ? (existing.count || 1) + 1 : 1;
       set(ref(db, 'history/' + nameKey), { name, category: cat, count });
     });
@@ -1121,7 +1121,7 @@
 
   function renderManage(query) {
     const q = query.trim().toLowerCase();
-    const all = Object.entries(history)
+    const all = Object.entries(userHistory)
       .map(([key, h]) => ({ key, ...h }))
       .filter(h => h.name)
       .filter(h => !q || h.name.toLowerCase().includes(q))
@@ -1154,7 +1154,7 @@
   window.deleteHistoryItem = function(key) {
     if (!confirm('¿Eliminar este artículo del historial?')) return;
     remove(ref(db, 'history/' + key));
-    // history will update via onValue listener automatically
+    // userHistory will update via onValue listener automatically
     const q = document.getElementById('manageSearch').value;
     renderManage(q);
   };
