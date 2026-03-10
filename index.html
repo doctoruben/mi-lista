@@ -572,6 +572,8 @@
 
     onValue(historyRef, (snapshot) => {
       userHistory = snapshot.val() || {};
+      // Re-render list so thumbnails show up
+      render();
       // Refresh manage panel if open
       if (document.getElementById('managePopup').style.display !== 'none') {
         const q = document.getElementById('manageSearch').value;
@@ -764,12 +766,16 @@
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
     setSyncStatus('syncing', 'Guardando...');
-    push(itemsRef, { name, category: selectedCat, checked: false, qty, ts: Date.now() });
-    // Save to history with count for frequent items
+    // Look up image from history to embed in item
     const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
     const existing = userHistory[nameKey];
+    const image = (existing && existing.image) ? existing.image : null;
+    const itemData = { name, category: selectedCat, checked: false, qty, ts: Date.now() };
+    if (image) itemData.image = image;
+    push(itemsRef, itemData);
+    // Save to history with count for frequent items
     const count = existing ? (existing.count || 1) + 1 : 1;
-    set(ref(db, 'history/' + nameKey), { name, category: selectedCat, count });
+    set(ref(db, 'history/' + nameKey), { name, category: selectedCat, count, ...(image ? { image } : {}) });
     input.value = '';
     hideSuggestions();
     qty = 1;
@@ -809,10 +815,10 @@
 
   function renderItem(id, item) {
     const [accent] = CATEGORIES[item.category] || ["#94a3b8"];
-    // Look up image from history
+    // Use image embedded in item, fallback to history lookup
     const nameKey = item.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
     const histEntry = userHistory[nameKey];
-    const thumb = histEntry && histEntry.image ? histEntry.image : null;
+    const thumb = item.image || (histEntry && histEntry.image) || null;
     return `
       <div class="item${item.checked ? ' checked' : ''}">
         <button class="check-btn${item.checked ? ' checked' : ''}" style="--accent:${accent}" onclick="toggleItem('${id}')">
@@ -967,7 +973,9 @@
     freqSelected.forEach(name => {
       const h = historyByName[name];
       const cat = (h && h.category) ? h.category : '🛒 Otros';
-      push(itemsRef, { name, category: cat, checked: false, qty: 1, ts: Date.now() });
+      const itemData = { name, category: cat, checked: false, qty: 1, ts: Date.now() };
+      if (h && h.image) itemData.image = h.image;
+      push(itemsRef, itemData);
       // Increment count
       const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
       const existing = userHistory[nameKey];
@@ -1216,13 +1224,13 @@
       const img = new Image();
       img.onload = function() {
         const canvas = document.createElement('canvas');
-        const maxSize = 200;
+        const maxSize = 120;
         let w = img.width, h = img.height;
         if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
         else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
         pendingImages[key] = dataUrl;
         // Update preview
         const preview = document.getElementById(`medit-imgpreview-${key}`);
@@ -1252,6 +1260,15 @@
       delete pendingImages[key];
     }
     set(ref(db, 'history/' + key), updated);
+    // Also update image in current list items with same name
+    const updatedName = updated.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    Object.entries(items).forEach(([itemId, item]) => {
+      const itemKey = item.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+      if (itemKey === updatedName || itemKey === key) {
+        if (updated.image) update(ref(db, 'items/' + itemId), { image: updated.image });
+        else if (!updated.image && item.image) update(ref(db, 'items/' + itemId), { image: null });
+      }
+    });
     cancelEdit(key);
   };
 
