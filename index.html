@@ -1095,14 +1095,6 @@
 
   // Run on load
   handleSharedUrl();
-</script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    });
-  }
-
   // ── GESTIONAR ARTÍCULOS ───────────────────────────────────
   window.openManage = function() {
     document.getElementById('managePopup').style.display = 'flex';
@@ -1154,10 +1146,19 @@
   window.deleteHistoryItem = function(key) {
     if (!confirm('¿Eliminar este artículo del historial?')) return;
     remove(ref(db, 'history/' + key));
-    // userHistory will update via onValue listener automatically
     const q = document.getElementById('manageSearch').value;
     renderManage(q);
   };
+
+</script>
+<script>
+  if ('serviceWorker'` in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
+
 </script>
 </body>
 </html>
