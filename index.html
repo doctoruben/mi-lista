@@ -228,6 +228,17 @@
       font-family: inherit; cursor: pointer; transition: all 0.15s;
     }
     .freq-btn:active { background: #1e1b4b; }
+    .super-row { display: flex; gap: 8px; margin-top: 8px; }
+    .super-btn {
+      flex: 1; background: #0f172a; border-radius: 14px;
+      padding: 11px 8px; font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .merca-btn { color: #4ade80; border: 1px solid #14532d; }
+    .merca-btn:active { background: #052e16; }
+    .hiper-btn { color: #fb923c; border: 1px solid #7c2d12; }
+    .hiper-btn:active { background: #431407; }
     .freq-item {
       display: flex; align-items: center; gap: 12px;
       background: #1e293b; border-radius: 14px; padding: 12px 14px;
@@ -397,6 +408,16 @@
       </div>
       <button class="add-btn" onclick="addItem()">+ Añadir a la lista</button>
       <button class="freq-btn" onclick="openFrequent()">⭐ Artículos frecuentes</button>
+      <div class="super-row">
+        <button class="super-btn merca-btn" onclick="searchMercadona()">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Mercadona_logo.svg/200px-Mercadona_logo.svg.png" style="height:18px; object-fit:contain;" onerror="this.style.display='none'" />
+          Mercadona
+        </button>
+        <button class="super-btn hiper-btn" onclick="searchHiperdino()">
+          <img src="https://www.hiperdino.es/skin/frontend/rwd/hiperdino/images/logo.png" style="height:18px; object-fit:contain;" onerror="this.style.display='none'" />
+          Hiperdino
+        </button>
+      </div>
     </div>
 
     <!-- FREQUENT ITEMS POPUP -->
@@ -914,6 +935,30 @@
   window.closeFrequent = function() {
     document.getElementById('freqPopup').style.display = 'none';
     freqSelected.clear();
+  };
+
+  // ── BUSCAR EN SUPERMERCADOS ──────────────────────────────
+  function getSearchQuery() {
+    const input = document.getElementById('itemInput');
+    const query = input.value.trim();
+    if (!query) {
+      input.focus();
+      input.placeholder = 'Escribe un artículo primero...';
+      setTimeout(() => { input.placeholder = 'Añadir artículo...'; }, 2000);
+    }
+    return query;
+  }
+
+  window.searchMercadona = function() {
+    const q = getSearchQuery();
+    if (!q) return;
+    window.open(`https://tienda.mercadona.es/search-results?query=${encodeURIComponent(q)}`, '_blank');
+  };
+
+  window.searchHiperdino = function() {
+    const q = getSearchQuery();
+    if (!q) return;
+    window.open(`https://www.hiperdino.es/c9498/search/?q=${encodeURIComponent(q)}`, '_blank');
   };
 </script>
 </body>
