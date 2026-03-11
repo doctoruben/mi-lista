@@ -504,18 +504,23 @@
   import { getDatabase, ref, onValue, set, push, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-  // ── GOOGLE IMAGE SEARCH ─────────────────────────────────
-  const GOOGLE_API_KEY = 'AIzaSyBLuv5qnarZyjmlz2bmrNN47Zs8nVocVsQ';
-  const GOOGLE_CX      = '81f8a22ba17c4480e';
-
+  // ── OPEN FOOD FACTS IMAGE SEARCH ────────────────────────
   async function fetchProductImage(name) {
     try {
-      const query = encodeURIComponent(`${name} producto fondo blanco`);
-      const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&q=${query}&searchType=image&num=1&imgSize=medium&imgType=photo&safe=active`;
-      const res  = await fetch(url);
-      const data = await res.json();
-      if (data.items && data.items.length > 0) {
-        return data.items[0].link;
+      // Search by product name in Spanish first, then global
+      const query = encodeURIComponent(name);
+      const urls = [
+        `https://es.openfoodfacts.org/cgi/search.pl?search_terms=${query}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,image_front_small_url,image_url`,
+        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${query}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,image_front_small_url,image_url`
+      ];
+      for (const url of urls) {
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (data.products && data.products.length > 0) {
+          // Pick first product that has an image
+          const product = data.products.find(p => p.image_front_small_url || p.image_url);
+          if (product) return product.image_front_small_url || product.image_url;
+        }
       }
     } catch(e) {}
     return null;
