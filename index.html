@@ -1291,22 +1291,33 @@
     if (!newName) return;
     const existing = userHistory[key] || {};
     const updated = { ...existing, name: newName, category: newCat };
+
     // Handle image
     if (key in pendingImages) {
       if (pendingImages[key] === null) delete updated.image;
       else updated.image = pendingImages[key];
       delete pendingImages[key];
     }
-    set(ref(db, 'history/' + key), updated);
-    // Also update image in current list items with same name
-    const updatedName = updated.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+
+    const newKey = newName.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+
+    // If name changed, delete old history key and create new one
+    if (newKey !== key) {
+      remove(ref(db, 'history/' + key));
+    }
+    set(ref(db, 'history/' + newKey), updated);
+
+    // Update ALL current list items that matched the OLD name (by key)
     Object.entries(items).forEach(([itemId, item]) => {
       const itemKey = item.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
-      if (itemKey === updatedName || itemKey === key) {
-        if (updated.image) update(ref(db, 'items/' + itemId), { image: updated.image });
-        else if (!updated.image && item.image) update(ref(db, 'items/' + itemId), { image: null });
+      if (itemKey === key) {
+        const itemUpdate = { name: newName, category: newCat };
+        if (updated.image) itemUpdate.image = updated.image;
+        else if (item.image) itemUpdate.image = null;
+        update(ref(db, 'items/' + itemId), itemUpdate);
       }
     });
+
     cancelEdit(key);
   };
 
