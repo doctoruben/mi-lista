@@ -45,7 +45,7 @@
       width: 100%;
     }
     .setup-card h2 { font-family: 'Abril Fatface', serif; font-size: 26px; margin-bottom: 6px; color: #f8fafc; }
-    .setup-card p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    .setup-card p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
     .setup-field { margin-bottom: 12px; text-align: left; }
     .setup-field label { display: block; font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; letter-spacing: 0.5px; }
     .setup-field input {
@@ -344,42 +344,22 @@
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
-<div id="setupScreen" class="setup-screen" style="display:none">
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="setup-screen" style="display:none">
   <div class="setup-card">
-    <div style="font-size:36px;margin-bottom:10px">🔥</div>
-    <h2>Conectar a Firebase</h2>
-    <p>Introduce los datos de tu proyecto Firebase para sincronizar la lista entre dispositivos.</p>
-
+    <div style="font-size:48px;margin-bottom:12px">🛒</div>
+    <h2>Mi Lista</h2>
+    <p>Introduce tu usuario y contraseña para acceder.</p>
     <div class="setup-field">
-      <label>API KEY</label>
-      <input id="f_apiKey" placeholder="AIzaSy..." />
-    </div>
-    <div class="setup-field">
-      <label>PROJECT ID</label>
-      <input id="f_projectId" placeholder="mi-lista-xxxxx" />
+      <label>USUARIO</label>
+      <input id="l_user" placeholder="Tu nombre..." autocomplete="username" autocapitalize="none" />
     </div>
     <div class="setup-field">
-      <label>APP ID</label>
-      <input id="f_appId" placeholder="1:123456:web:abcdef" />
+      <label>CONTRASEÑA</label>
+      <input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
-    <div class="setup-field">
-      <label>DATABASE URL</label>
-      <input id="f_dbUrl" placeholder="https://mi-proyecto-default-rtdb.firebaseio.com" />
-    </div>
-
-    <button class="setup-btn" onclick="saveConfig()">✓ Guardar y conectar</button>
-
-    <div class="setup-hint">
-      <p>
-        <span class="step">1</span> Ve a <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>
-        <span class="step">2</span> Crea un proyecto nuevo (nombre libre)<br>
-        <span class="step">3</span> En el proyecto → <b>Configuración ⚙️</b> → <b>Tus apps</b> → añade una app web <b>&lt;/&gt;</b><br>
-        <span class="step">4</span> Copia <b>apiKey</b>, <b>projectId</b>, <b>appId</b> y <b>databaseURL</b><br>
-        <span class="step">5</span> Ve a <b>Realtime Database</b> → la URL aparece arriba en la pestaña Datos<br>
-        <span class="step">6</span> Pega los datos aquí ↑ y guarda
-      </p>
-    </div>
+    <p id="loginError" style="color:#f87171; font-size:13px; font-weight:700; margin-bottom:12px; display:none;">Usuario o contraseña incorrectos</p>
+    <button class="setup-btn" onclick="doLogin()">Entrar</button>
   </div>
 </div>
 
@@ -391,6 +371,7 @@
         <span class="emoji">🛒</span>
         <h1>Mi Lista</h1>
       </div>
+      <div id="userBadge" style="font-size:13px; color:#64748b; font-weight:700; margin-bottom:4px;"></div>
       <p class="stats">
         <span class="pending" id="pendingCount">0</span> pendientes ·
         <span class="done" id="doneCount">0</span> comprados
@@ -462,7 +443,7 @@
     <div class="items" id="itemList"></div>
     <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
     <button class="manage-btn" onclick="openManage()">📋 Gestión histórico artículos</button>
-    <button class="reset-btn" onclick="resetConfig()">⚙ Cambiar configuración Firebase</button>
+    <button class="reset-btn" onclick="resetConfig()">🚪 Cerrar sesión</button>
 
     <!-- IMAGE VIEWER -->
     <div id="imgViewer" onclick="closeImgViewer()" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; cursor:zoom-out;">
@@ -529,48 +510,76 @@
   let selectedCat = "🛒 Otros";
   let currentFilter = "todos";
 
-  // ── CONFIG ───────────────────────────────────────────────
-  function loadConfig() {
-    try { return JSON.parse(localStorage.getItem('fbConfig') || 'null'); } catch { return null; }
+  // ── FIREBASE CONFIG (hardcoded) ──────────────────────────
+  const FB_CONFIG = {
+    apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
+    projectId:   'lista-compra-9d6f5',
+    appId:       '1:241322134457:web:1b765857911f94d69cc468',
+    authDomain:  'lista-compra-9d6f5.firebaseapp.com',
+    databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
+  };
+
+  // ── LOGIN ─────────────────────────────────────────────────
+  let currentUser = null;
+
+  function loadSession() {
+    try { return JSON.parse(localStorage.getItem('mlSession') || 'null'); } catch { return null; }
   }
 
-  function saveConfig() {
-    const apiKey    = document.getElementById("f_apiKey").value.trim();
-    const projectId = document.getElementById("f_projectId").value.trim();
-    const appId     = document.getElementById("f_appId").value.trim();
-    const dbUrl     = document.getElementById("f_dbUrl").value.trim();
-    if (!apiKey || !projectId || !appId || !dbUrl) { alert("Rellena todos los campos"); return; }
-    const config = { apiKey, projectId, appId,
-      authDomain: `${projectId}.firebaseapp.com`,
-      databaseURL: dbUrl,
-    };
-    localStorage.setItem("fbConfig", JSON.stringify(config));
+  window.doLogin = async function() {
+    const user = document.getElementById('l_user').value.trim().toLowerCase();
+    const pass = document.getElementById('l_pass').value.trim();
+    if (!user || !pass) return;
+    // Check credentials against Firebase
+    const app = initializeApp(FB_CONFIG);
+    db = getDatabase(app);
+    const snap = await new Promise(res => {
+      const r = ref(db, `usuarios_config/${user}`);
+      onValue(r, res, { onlyOnce: true });
+    });
+    const userData = snap.val();
+    if (!userData || userData.password !== pass) {
+      document.getElementById('loginError').style.display = 'block';
+      return;
+    }
+    // Save session
+    localStorage.setItem('mlSession', JSON.stringify({ user, lista: userData.lista }));
     window.location.reload();
-  }
-  window.saveConfig = saveConfig;
+  };
 
   function resetConfig() {
-    if (confirm('¿Cambiar la configuración de Firebase?')) {
-      localStorage.removeItem('fbConfig');
+    if (confirm('¿Cerrar sesión?')) {
+      localStorage.removeItem('mlSession');
       window.location.reload();
     }
   }
   window.resetConfig = resetConfig;
 
   // ── INIT ─────────────────────────────────────────────────
-  const config = loadConfig();
-  if (!config) {
-    document.getElementById('setupScreen').style.display = 'flex';
+  const session = loadSession();
+  if (!session) {
+    // Init Firebase just to validate login later
+    document.getElementById('loginScreen').style.display = 'flex';
+    // Allow pressing Enter on password field
+    document.getElementById('l_pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('l_user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('l_pass').focus(); });
   } else {
+    currentUser = session.user;
     document.getElementById('mainApp').style.display = 'block';
-    initApp(config);
+    const _app = initializeApp(FB_CONFIG);
+    db = getDatabase(_app);
+    initApp(FB_CONFIG, session);
   }
 
-  function initApp(config) {
-    const app = initializeApp(config);
-    db = getDatabase(app);
-    itemsRef = ref(db, 'items');
-    historyRef = ref(db, 'history');
+  function initApp(config, session) {
+    // db already initialized before calling initApp
+    const lista = session.lista || 'mi_lista';
+    currentUser = session.user;
+    // Show username in header
+    const badge = document.getElementById('userBadge');
+    if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
+    itemsRef = ref(db, `listas/${lista}/items`);
+    historyRef = ref(db, `listas/${lista}/history`);
 
     setSyncStatus('syncing', 'Conectando...');
 
