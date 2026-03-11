@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Migración inicial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    body { background:#0f172a; font-family:'Nunito',sans-serif; color:#f1f5f9; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+    .card { background:#1e293b; border-radius:20px; padding:28px; max-width:440px; width:100%; border:1px solid #334155; }
+    h2 { font-size:22px; margin-bottom:8px; }
+    p { color:#64748b; font-size:14px; line-height:1.6; margin-bottom:20px; }
+    .log { background:#0f172a; border-radius:12px; padding:14px; font-size:13px; line-height:1.8; color:#94a3b8; margin-top:16px; min-height:80px; border:1px solid #334155; }
+    .log .ok  { color:#4ade80; }
+    .log .err { color:#f87171; }
+    button { width:100%; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:12px; padding:13px; font-size:15px; font-weight:900; font-family:inherit; cursor:pointer; }
+    button:disabled { opacity:0.4; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>🔧 Migración inicial</h2>
+  <p>Esta página realiza dos cosas en tu base de datos Firebase:<br>
+  1. Crea los usuarios <b>Ruben</b> y <b>Rita</b> con contraseña <b>Mimi</b><br>
+  2. Migra los datos existentes de <code>/items</code> y <code>/history</code> a <code>/listas/mi_lista/</code><br><br>
+  Ejecútala <b>una sola vez</b>. Después puedes borrar este archivo de GitHub.</p>
+  <button id="migrateBtn" onclick="runMigration()">Ejecutar migración</button>
+  <div class="log" id="log">Esperando...</div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const FB_CONFIG = {
+    apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
+    projectId:   'lista-compra-9d6f5',
+    appId:       '1:241322134457:web:1b765857911f94d69cc468',
+    authDomain:  'lista-compra-9d6f5.firebaseapp.com',
+    databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
+  };
+
+  function log(msg, type='') {
+    const el = document.getElementById('log');
+    el.innerHTML += `<div class="${type}">${msg}</div>`;
+  }
+
+  window.runMigration = async function() {
+    const btn = document.getElementById('migrateBtn');
+    btn.disabled = true;
+    document.getElementById('log').innerHTML = '';
+
+    const app = initializeApp(FB_CONFIG);
+    const db  = getDatabase(app);
+
+    const get = path => new Promise(res => onValue(ref(db, path), snap => res(snap.val()), { onlyOnce: true }));
+
+    try {
+      // 1. Read existing items and history
+      log('📦 Leyendo datos existentes...');
+      const items   = await get('items');
+      const history = await get('history');
+
+      // 2. Write to new path
+      log('📋 Creando lista "mi_lista"...');
+      await set(ref(db, 'listas/mi_lista/_created'), Date.now());
+
+      if (items) {
+        await set(ref(db, 'listas/mi_lista/items'), items);
+        log(`✅ Migrados ${Object.keys(items).length} artículos`, 'ok');
+      } else {
+        log('ℹ️ No había artículos en /items');
+      }
+
+      if (history) {
+        await set(ref(db, 'listas/mi_lista/history'), history);
+        log(`✅ Migrado historial con ${Object.keys(history).length} entradas`, 'ok');
+      } else {
+        log('ℹ️ No había historial en /history');
+      }
+
+      // 3. Create users
+      log('👤 Creando usuario Ruben...');
+      await set(ref(db, 'usuarios_config/ruben'), { password: 'Mimi', lista: 'mi_lista' });
+      log('✅ Usuario Ruben creado', 'ok');
+
+      log('👤 Creando usuario Rita...');
+      await set(ref(db, 'usuarios_config/rita'), { password: 'Mimi', lista: 'mi_lista' });
+      log('✅ Usuario Rita creado', 'ok');
+
+      // 4. Optionally clean old paths
+      log('🗑 Limpiando rutas antiguas /items y /history...');
+      await remove(ref(db, 'items'));
+      await remove(ref(db, 'history'));
+      log('✅ Limpieza completada', 'ok');
+
+      log('');
+      log('🎉 Migración completada. Ya puedes borrar este archivo de GitHub.', 'ok');
+    } catch(e) {
+      log(`❌ Error: ${e.message}`, 'err');
+      btn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>
