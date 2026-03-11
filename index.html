@@ -483,7 +483,7 @@
 
 <!-- Firebase SDK -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, set, push, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
@@ -528,25 +528,30 @@
     try { return JSON.parse(localStorage.getItem('mlSession') || 'null'); } catch { return null; }
   }
 
+  // Initialize Firebase once at module level
+  let _fbApp;
+  try { _fbApp = initializeApp(FB_CONFIG); } catch(e) { _fbApp = getApp(); }
+  db = getDatabase(_fbApp);
+
   window.doLogin = async function() {
     const user = document.getElementById('l_user').value.trim().toLowerCase();
     const pass = document.getElementById('l_pass').value.trim();
     if (!user || !pass) return;
-    // Check credentials against Firebase
-    const app = initializeApp(FB_CONFIG);
-    db = getDatabase(app);
-    const snap = await new Promise(res => {
-      const r = ref(db, `usuarios_config/${user}`);
-      onValue(r, res, { onlyOnce: true });
-    });
-    const userData = snap.val();
-    if (!userData || userData.password !== pass) {
+    document.getElementById('loginError').style.display = 'none';
+    try {
+      const snap = await new Promise((res, rej) => {
+        onValue(ref(db, `usuarios_config/${user}`), res, { onlyOnce: true });
+      });
+      const userData = snap.val();
+      if (!userData || userData.password !== pass) {
+        document.getElementById('loginError').style.display = 'block';
+        return;
+      }
+      localStorage.setItem('mlSession', JSON.stringify({ user, lista: userData.lista }));
+      window.location.reload();
+    } catch(e) {
       document.getElementById('loginError').style.display = 'block';
-      return;
     }
-    // Save session
-    localStorage.setItem('mlSession', JSON.stringify({ user, lista: userData.lista }));
-    window.location.reload();
   };
 
   function resetConfig() {
@@ -568,8 +573,6 @@
   } else {
     currentUser = session.user;
     document.getElementById('mainApp').style.display = 'block';
-    const _app = initializeApp(FB_CONFIG);
-    db = getDatabase(_app);
     initApp(FB_CONFIG, session);
   }
 
