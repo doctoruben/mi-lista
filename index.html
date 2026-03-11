@@ -371,7 +371,10 @@
         <span class="emoji">🛒</span>
         <h1>Mi Lista</h1>
       </div>
-      <div id="userBadge" style="font-size:13px; color:#64748b; font-weight:700; margin-bottom:4px;"></div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:4px;">
+        <div id="userBadge" style="font-size:13px; color:#64748b; font-weight:700;"></div>
+        <button id="logoutBtn" onclick="resetConfig()" style="display:none; background:none; border:1px solid #1e293b; border-radius:6px; color:#334155; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4;">salir</button>
+      </div>
       <p class="stats">
         <span class="pending" id="pendingCount">0</span> pendientes ·
         <span class="done" id="doneCount">0</span> comprados
@@ -443,7 +446,6 @@
     <div class="items" id="itemList"></div>
     <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
     <button class="manage-btn" onclick="openManage()">📋 Gestión histórico artículos</button>
-    <button class="reset-btn" onclick="resetConfig()">🚪 Cerrar sesión</button>
 
     <!-- IMAGE VIEWER -->
     <div id="imgViewer" onclick="closeImgViewer()" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; cursor:zoom-out;">
@@ -578,6 +580,8 @@
     // Show username in header
     const badge = document.getElementById('userBadge');
     if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.style.display = 'inline-block';
     itemsRef = ref(db, `listas/${lista}/items`);
     historyRef = ref(db, `listas/${lista}/history`);
 
