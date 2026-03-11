@@ -504,6 +504,23 @@
   import { getDatabase, ref, onValue, set, push, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+  // ── GOOGLE IMAGE SEARCH ─────────────────────────────────
+  const GOOGLE_API_KEY = 'AIzaSyBLuv5qnarZyjmlz2bmrNN47Zs8nVocVsQ';
+  const GOOGLE_CX      = '81f8a22ba17c4480e';
+
+  async function fetchProductImage(name) {
+    try {
+      const query = encodeURIComponent(`${name} producto fondo blanco`);
+      const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${GOOGLE_CX}&q=${query}&searchType=image&num=1&imgSize=medium&imgType=photo&safe=active`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (data.items && data.items.length > 0) {
+        return data.items[0].link;
+      }
+    } catch(e) {}
+    return null;
+  }
+
   // ── CATEGORIES ──────────────────────────────────────────
   const CATEGORIES = {
     "🥦 Frutas/Verduras":      ["#4ade80", "#14532d"],
@@ -771,11 +788,11 @@
     document.getElementById('qtyNum').textContent = qty;
   };
 
-  window.addItem = function() {
+  window.addItem = async function() {
     const input = document.getElementById('itemInput');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
-    // Check for duplicate (case-insensitive, only among unchecked items)
+    // Check for duplicate
     const duplicate = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === name.toLowerCase());
     if (duplicate) {
       input.style.border = '2px solid #f87171';
@@ -785,21 +802,27 @@
       return;
     }
     setSyncStatus('syncing', 'Guardando...');
-    // Look up image from history to embed in item
-    const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
-    const existing = userHistory[nameKey];
-    const image = (existing && existing.image) ? existing.image : null;
-    const itemData = { name, category: selectedCat, checked: false, qty, ts: Date.now() };
-    if (image) itemData.image = image;
-    push(itemsRef, itemData);
-    // Save to history with count for frequent items
-    const count = existing ? (existing.count || 1) + 1 : 1;
-    set(ref(db, 'history/' + nameKey), { name, category: selectedCat, count, ...(image ? { image } : {}) });
     input.value = '';
     hideSuggestions();
     qty = 1;
     document.getElementById('qtyNum').textContent = '1';
     input.focus();
+
+    // Look up image from history first
+    const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    const existing = userHistory[nameKey];
+    let image = (existing && existing.image) ? existing.image : null;
+
+    // If no image in history, search Google automatically
+    if (!image) image = await fetchProductImage(name);
+
+    const itemData = { name, category: selectedCat, checked: false, qty, ts: Date.now() };
+    if (image) itemData.image = image;
+    push(itemsRef, itemData);
+
+    // Save to history
+    const count = existing ? (existing.count || 1) + 1 : 1;
+    set(ref(db, 'history/' + nameKey), { name, category: selectedCat, count, ...(image ? { image } : {}) });
   };
 
   window.toggleItem = function(id) {
