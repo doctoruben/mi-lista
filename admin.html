@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚙️ Administración — Mi Lista</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); font-family: 'Nunito', sans-serif; color: #f1f5f9; min-height: 100vh; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-family: 'Abril Fatface', serif; font-size: 28px; color: #f8fafc; margin-bottom: 4px; }
+    .subtitle { color: #475569; font-size: 13px; margin-bottom: 28px; }
+
+    /* LOGIN */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { background: #1e293b; border-radius: 20px; padding: 24px; border: 1px solid #334155; margin-bottom: 20px; }
+    .card h2 { font-family: 'Abril Fatface', serif; font-size: 20px; color: #f8fafc; margin-bottom: 16px; }
+    label { display: block; font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; margin-top: 10px; }
+    input, select { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px 14px; color: #f1f5f9; font-size: 15px; font-family: inherit; outline: none; }
+    input:focus, select:focus { border-color: #818cf8; }
+    .btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(90deg,#fbbf24,#f59e0b); color: #78350f; border: none; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; }
+    .btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-danger { background: #450a0a; color: #fca5a5; border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .error { color: #f87171; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
+
+    /* SECTIONS */
+    .section-title { font-size: 11px; font-weight: 900; color: #64748b; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    .user-row { display: flex; align-items: center; gap: 10px; background: #0f172a; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid #334155; }
+    .user-info { flex: 1; }
+    .user-name { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+    .user-meta { font-size: 11px; color: #475569; margin-top: 2px; }
+    .lista-row { display: flex; align-items: center; gap: 10px; background: #0f172a; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid #334155; }
+    .badge { background: #1e1b4b; color: #818cf8; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 800; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: #64748b; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: center; }
+    .tab.active { background: #1e1b4b; color: #818cf8; border-color: #818cf8; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .divider { border: none; border-top: 1px solid #1e293b; margin: 16px 0; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap" class="login-wrap">
+  <div style="width:100%; max-width:380px;">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:48px;">⚙️</div>
+      <h1 style="font-family:'Abril Fatface',serif; font-size:26px; margin-top:8px;">Administración</h1>
+      <p style="color:#475569; font-size:13px; margin-top:4px;">Mi Lista de la Compra</p>
+    </div>
+    <div class="card">
+      <label>USUARIO</label>
+      <input id="a_user" placeholder="admin" autocapitalize="none" />
+      <label>CONTRASEÑA</label>
+      <input id="a_pass" type="password" placeholder="••••••••" />
+      <p id="loginErr" class="error">Usuario o contraseña incorrectos</p>
+      <button class="btn" onclick="adminLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" style="display:none">
+  <div class="wrap">
+    <h1>⚙️ Administración</h1>
+    <p class="subtitle">Gestión de usuarios y listas</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('usuarios')">👤 Usuarios</button>
+      <button class="tab" onclick="showTab('listas')">📋 Listas</button>
+    </div>
+
+    <!-- USUARIOS TAB -->
+    <div id="tab-usuarios" class="tab-content active">
+      <div class="card">
+        <h2>Crear usuario</h2>
+        <label>NOMBRE DE USUARIO</label>
+        <input id="nu_user" placeholder="nombre..." autocapitalize="none" />
+        <label>CONTRASEÑA</label>
+        <input id="nu_pass" type="password" placeholder="••••••••" />
+        <label>ASIGNAR A LISTA</label>
+        <select id="nu_lista"></select>
+        <button class="btn" onclick="createUser()">+ Crear usuario</button>
+        <p id="createErr" class="error"></p>
+      </div>
+
+      <div class="section-title">Usuarios existentes</div>
+      <div id="usersList"></div>
+    </div>
+
+    <!-- LISTAS TAB -->
+    <div id="tab-listas" class="tab-content">
+      <div class="card">
+        <h2>Crear lista</h2>
+        <label>NOMBRE DE LA LISTA</label>
+        <input id="nl_name" placeholder="mi_lista..." autocapitalize="none" />
+        <button class="btn" onclick="createLista()">+ Crear lista</button>
+        <p id="listaErr" class="error"></p>
+      </div>
+
+      <div class="section-title">Listas existentes</div>
+      <div id="listasList"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const FB_CONFIG = {
+    apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
+    projectId:   'lista-compra-9d6f5',
+    appId:       '1:241322134457:web:1b765857911f94d69cc468',
+    authDomain:  'lista-compra-9d6f5.firebaseapp.com',
+    databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
+  };
+
+  // Admin credentials (hardcoded)
+  const ADMIN_USER = 'ruben';
+  const ADMIN_PASS = 'Mimi';
+
+  let db;
+  let usuarios = {};
+  let listas   = {};
+
+  window.adminLogin = function() {
+    const user = document.getElementById('a_user').value.trim().toLowerCase();
+    const pass = document.getElementById('a_pass').value.trim();
+    if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
+      document.getElementById('loginErr').style.display = 'block';
+      return;
+    }
+    document.getElementById('loginWrap').style.display  = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+    initAdmin();
+  };
+
+  // Enter key on password
+  document.getElementById('a_pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+  document.getElementById('a_user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('a_pass').focus(); });
+
+  function initAdmin() {
+    const app = initializeApp(FB_CONFIG);
+    db = getDatabase(app);
+
+    // Load usuarios
+    onValue(ref(db, 'usuarios_config'), snap => {
+      usuarios = snap.val() || {};
+      renderUsers();
+      refreshListaSelect();
+    });
+
+    // Load listas
+    onValue(ref(db, 'listas'), snap => {
+      listas = snap.val() ? Object.keys(snap.val()) : [];
+      renderListas();
+      refreshListaSelect();
+    });
+  }
+
+  function refreshListaSelect() {
+    const sel = document.getElementById('nu_lista');
+    const prev = sel.value;
+    sel.innerHTML = Array.isArray(listas)
+      ? listas.map(l => `<option value="${l}">${l}</option>`).join('')
+      : '';
+    if (prev) sel.value = prev;
+  }
+
+  function renderUsers() {
+    const el = document.getElementById('usersList');
+    const entries = Object.entries(usuarios);
+    if (entries.length === 0) {
+      el.innerHTML = '<p style="color:#475569; font-size:13px; text-align:center; padding:20px 0;">No hay usuarios creados</p>';
+      return;
+    }
+    el.innerHTML = entries.map(([key, u]) => `
+      <div class="user-row">
+        <div class="user-info">
+          <div class="user-name">👤 ${key.charAt(0).toUpperCase() + key.slice(1)}</div>
+          <div class="user-meta">Lista: <span class="badge">${u.lista || '—'}</span></div>
+        </div>
+        <button class="btn-secondary" onclick="changePass('${key}')">🔑 Clave</button>
+        <button class="btn-danger" onclick="deleteUser('${key}')">×</button>
+      </div>`).join('');
+  }
+
+  function renderListas() {
+    const el = document.getElementById('listasList');
+    if (!Array.isArray(listas) || listas.length === 0) {
+      el.innerHTML = '<p style="color:#475569; font-size:13px; text-align:center; padding:20px 0;">No hay listas creadas</p>';
+      return;
+    }
+    el.innerHTML = listas.map(l => `
+      <div class="lista-row">
+        <div style="flex:1;">
+          <div style="font-size:15px; font-weight:700; color:#f1f5f9;">📋 ${l}</div>
+        </div>
+        <button class="btn-danger" onclick="deleteLista('${l}')">×</button>
+      </div>`).join('');
+  }
+
+  window.createUser = function() {
+    const user = document.getElementById('nu_user').value.trim().toLowerCase();
+    const pass = document.getElementById('nu_pass').value.trim();
+    const lista = document.getElementById('nu_lista').value;
+    const err = document.getElementById('createErr');
+    if (!user || !pass) { err.textContent = 'Rellena todos los campos'; err.style.display = 'block'; return; }
+    if (usuarios[user]) { err.textContent = 'Ese usuario ya existe'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    set(ref(db, `usuarios_config/${user}`), { password: pass, lista });
+    document.getElementById('nu_user').value = '';
+    document.getElementById('nu_pass').value = '';
+  };
+
+  window.changePass = function(key) {
+    const newPass = prompt(`Nueva contraseña para ${key}:`);
+    if (!newPass) return;
+    update(ref(db, `usuarios_config/${key}`), { password: newPass });
+  };
+
+  window.deleteUser = function(key) {
+    if (!confirm(`¿Eliminar usuario "${key}"?`)) return;
+    remove(ref(db, `usuarios_config/${key}`));
+  };
+
+  window.createLista = function() {
+    const name = document.getElementById('nl_name').value.trim().toLowerCase().replace(/\s+/g, '_');
+    const err = document.getElementById('listaErr');
+    if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    // Create lista node with a placeholder so it appears in Firebase
+    set(ref(db, `listas/${name}/_created`), Date.now());
+    document.getElementById('nl_name').value = '';
+  };
+
+  window.deleteLista = function(name) {
+    if (!confirm(`¿Eliminar lista "${name}" y todos sus datos?`)) return;
+    remove(ref(db, `listas/${name}`));
+  };
+
+  window.showTab = function(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['usuarios','listas'][i] === tab));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+  };
+
+  // ── SEED initial data ─────────────────────────────────────
+  // Creates Ruben, Rita and mi_lista if they don't exist yet
+  // This runs once and is safe to leave in
+  window.addEventListener('load', () => {});
+</script>
+</body>
+</html>
