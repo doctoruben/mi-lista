@@ -1341,8 +1341,6 @@
   window.deleteHistoryItem = function(key) {
     if (!confirm('¿Eliminar este artículo del historial?')) return;
     remove(ref(db, `${window._listaPath}/history/${key}`));
-    const q = document.getElementById('manageSearch').value;
-    renderManage(q);
   };
 
   // ── IMAGE VIEWER ─────────────────────────────────────────
