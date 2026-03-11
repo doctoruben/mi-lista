@@ -484,7 +484,7 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, child, onValue, set, push, remove, update }
+  import { getDatabase, ref, onValue, set, push, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 
@@ -585,6 +585,7 @@
     if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    window._listaPath = `listas/${lista}`;
     itemsRef = ref(db, `listas/${lista}/items`);
     historyRef = ref(db, `listas/${lista}/history`);
 
@@ -810,7 +811,7 @@
     if (image) itemData.image = image;
     push(itemsRef, itemData);
     const count = existing ? (existing.count || 1) + 1 : 1;
-    set(child(historyRef, nameKey), { name, category: selectedCat, count, ...(image ? { image } : {}) });
+    set(ref(db, `${window._listaPath}/history/${nameKey}`), { name, category: selectedCat, count, ...(image ? { image } : {}) });
     input.value = '';
     hideSuggestions();
     qty = 1;
@@ -821,18 +822,18 @@
   window.toggleItem = function(id) {
     setSyncStatus('syncing', 'Guardando...');
     const item = items[id];
-    if (item) update(child(itemsRef, id), { checked: !item.checked });
+    if (item) update(ref(db, `${window._listaPath}/items/${id}`), { checked: !item.checked });
   };
 
   window.removeItem = function(id) {
     setSyncStatus('syncing', 'Guardando...');
-    remove(child(itemsRef, id));
+    remove(ref(db, `${window._listaPath}/items/${id}`));
   };
 
   window.clearChecked = function() {
     setSyncStatus('syncing', 'Guardando...');
     Object.entries(items).forEach(([id, item]) => {
-      if (item.checked) remove(child(itemsRef, id));
+      if (item.checked) remove(ref(db, `${window._listaPath}/items/${id}`));
     });
   };
 
@@ -1319,9 +1320,9 @@
 
     // If name changed, delete old history key and create new one
     if (newKey !== key) {
-      remove(child(historyRef, key));
+      remove(ref(db, `${window._listaPath}/history/${key}`));
     }
-    set(child(historyRef, newKey), updated);
+    set(ref(db, `${window._listaPath}/history/${newKey}`), updated);
 
     // Update ALL current list items that matched the OLD name (by key)
     Object.entries(items).forEach(([itemId, item]) => {
@@ -1330,7 +1331,7 @@
         const itemUpdate = { name: newName, category: newCat };
         if (updated.image) itemUpdate.image = updated.image;
         else if (item.image) itemUpdate.image = null;
-        update(child(itemsRef, itemId), itemUpdate);
+        update(ref(db, `${window._listaPath}/items/${itemId}`), itemUpdate);
       }
     });
 
@@ -1339,7 +1340,7 @@
 
   window.deleteHistoryItem = function(key) {
     if (!confirm('¿Eliminar este artículo del historial?')) return;
-    remove(ref(db, 'history/' + key));
+    remove(ref(db, `${window._listaPath}/history/${key}`));
     const q = document.getElementById('manageSearch').value;
     renderManage(q);
   };
