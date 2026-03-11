@@ -486,6 +486,10 @@
           <input id="manageSearch" type="text" placeholder="Buscar artículo..." autocomplete="off"
             style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 14px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none;"
             oninput="filterManage()" />
+          <label onclick="filterManage(true)" style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer; user-select:none;">
+            <div id="noPhotoCheck" style="width:20px; height:20px; border-radius:6px; border:2px solid #475569; background:transparent; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all 0.15s;"></div>
+            <span style="font-size:13px; color:#94a3b8; font-weight:700;">Solo artículos sin foto</span>
+          </label>
         </div>
         <!-- List -->
         <div id="manageList" style="overflow-y:auto; flex:1; padding:0 16px 16px;"></div>
@@ -771,6 +775,15 @@
     const input = document.getElementById('itemInput');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
+    // Check for duplicate (case-insensitive, only among unchecked items)
+    const duplicate = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+      input.style.border = '2px solid #f87171';
+      input.placeholder = '⚠️ Ya está en la lista';
+      input.value = '';
+      setTimeout(() => { input.style.border = ''; input.placeholder = 'Añadir artículo...'; input.focus(); }, 2000);
+      return;
+    }
     setSyncStatus('syncing', 'Guardando...');
     // Look up image from history to embed in item
     const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
@@ -977,6 +990,9 @@
     const historyByName = {};
     Object.values(userHistory).forEach(h => { if (h.name) historyByName[h.name] = h; });
     freqSelected.forEach(name => {
+      // Skip duplicates
+      const duplicate = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === name.toLowerCase());
+      if (duplicate) return;
       const h = historyByName[name];
       const cat = (h && h.category) ? h.category : '🛒 Otros';
       const itemData = { name, category: cat, checked: false, qty: 1, ts: Date.now() };
@@ -1125,7 +1141,22 @@
     document.getElementById('managePopup').style.display = 'none';
   };
 
-  window.filterManage = function() {
+  let filterNoPhoto = false;
+
+  window.filterManage = function(togglePhoto) {
+    if (togglePhoto) {
+      filterNoPhoto = !filterNoPhoto;
+      const check = document.getElementById('noPhotoCheck');
+      if (filterNoPhoto) {
+        check.style.background = '#818cf8';
+        check.style.borderColor = '#818cf8';
+        check.textContent = '✓';
+      } else {
+        check.style.background = 'transparent';
+        check.style.borderColor = '#475569';
+        check.textContent = '';
+      }
+    }
     const q = document.getElementById('manageSearch').value;
     renderManage(q);
   };
@@ -1136,6 +1167,7 @@
       .map(([key, h]) => ({ key, ...h }))
       .filter(h => h.name)
       .filter(h => !q || h.name.toLowerCase().includes(q))
+      .filter(h => !filterNoPhoto || !h.image)
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 
     document.getElementById('manageCount').textContent =
