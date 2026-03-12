@@ -449,6 +449,30 @@
     <div class="items" id="itemList"></div>
     <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
     <button class="manage-btn" onclick="openManage()">📋 Gestión histórico artículos</button>
+    <button class="manage-btn" style="margin-top:8px;" onclick="openCategories()">🏷️ Gestionar categorías</button>
+
+    <!-- CATEGORIES POPUP -->
+    <div id="catPopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:90vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <div style="display:flex; justify-content:center; padding:12px 0 0; flex-shrink:0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0;">
+          <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc;">🏷️ Categorías</h2>
+          <button onclick="closeCategories()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:10px; width:34px; height:34px; font-size:18px; cursor:pointer;">×</button>
+        </div>
+        <!-- Nueva categoría -->
+        <div style="padding:0 16px 12px; flex-shrink:0; border-bottom:1px solid #1e293b;">
+          <div style="display:flex; gap:8px;">
+            <input id="newCatInput" placeholder="Nueva categoría... (ej: 🧃 Zumos)" autocomplete="off"
+              style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 14px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none;" />
+            <button onclick="addCategory()"
+              style="background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:12px; padding:10px 16px; font-size:15px; font-weight:900; font-family:inherit; cursor:pointer;">+</button>
+          </div>
+          <p id="catErr" style="color:#f87171; font-size:12px; font-weight:700; margin-top:6px; display:none;"></p>
+        </div>
+        <!-- Lista de categorías -->
+        <div id="catList" style="overflow-y:auto; flex:1; padding:12px 16px 16px;"></div>
+      </div>
+    </div>
 
     <!-- IMAGE VIEWER -->
     <div id="imgViewer" onclick="closeImgViewer()" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; cursor:zoom-out;">
@@ -495,22 +519,66 @@
 
 
   // ── CATEGORIES ──────────────────────────────────────────
-  const CATEGORIES = {
-    "🥦 Frutas/Verduras":      ["#4ade80", "#14532d"],
-    "🥩 Carnicería/Pescadería":["#f87171", "#7f1d1d"],
-    "🍞 Panadería":            ["#fbbf24", "#78350f"],
-    "🥛 Lácteos":              ["#93c5fd", "#1e3a5f"],
-    "🧊 Congelados":           ["#67e8f9", "#164e63"],
-    "🥤 Bebidas":              ["#818cf8", "#1e1b4b"],
-    "🥫 Alimentación":         ["#fb923c", "#7c2d12"],
-    "🧴 Higiene":              ["#c084fc", "#4a044e"],
-    "🧹 Limpieza/Hogar":       ["#34d399", "#064e3b"],
-    "🐾 Mascotas":             ["#f9a8d4", "#831843"],
-    "🛒 Otros":                ["#94a3b8", "#1e293b"],
-  };
-  const CAT_NAMES = Object.keys(CATEGORIES);
+  // Categoría fija que siempre existe
+  const CAT_OTROS = "🛒 Otros";
+  const CAT_OTROS_COLOR = ["#94a3b8", "#1e293b"];
 
-  let db, auth, itemsRef, historyRef;
+  // Categorías predeterminadas para migración automática de listas existentes
+  const DEFAULT_CATEGORIES = {
+    "🥦 Frutas/Verduras":       ["#4ade80", "#14532d"],
+    "🥩 Carnicería/Pescadería": ["#f87171", "#7f1d1d"],
+    "🍞 Panadería":             ["#fbbf24", "#78350f"],
+    "🥛 Lácteos":               ["#93c5fd", "#1e3a5f"],
+    "🧊 Congelados":            ["#67e8f9", "#164e63"],
+    "🥤 Bebidas":               ["#818cf8", "#1e1b4b"],
+    "🥫 Alimentación":          ["#fb923c", "#7c2d12"],
+    "🧴 Higiene":               ["#c084fc", "#4a044e"],
+    "🧹 Limpieza/Hogar":        ["#34d399", "#064e3b"],
+    "🐾 Mascotas":              ["#f9a8d4", "#831843"],
+  };
+
+  // Paleta de colores para categorías nuevas
+  const COLOR_PALETTE = [
+    ["#4ade80","#14532d"], ["#f87171","#7f1d1d"], ["#fbbf24","#78350f"],
+    ["#93c5fd","#1e3a5f"], ["#67e8f9","#164e63"], ["#818cf8","#1e1b4b"],
+    ["#fb923c","#7c2d12"], ["#c084fc","#4a044e"], ["#34d399","#064e3b"],
+    ["#f9a8d4","#831843"], ["#a3e635","#365314"], ["#38bdf8","#0c4a6e"],
+  ];
+
+  // CATEGORIES y CAT_NAMES son dinámicos, se llenan desde Firebase
+  let CATEGORIES = { [CAT_OTROS]: CAT_OTROS_COLOR };
+  let CAT_NAMES  = [CAT_OTROS];
+
+  function applyCategories(data) {
+    CATEGORIES = {};
+    if (data) {
+      Object.entries(data).forEach(([key, color]) => {
+        const name = decodeURIComponent(key);
+        if (name !== CAT_OTROS) CATEGORIES[name] = color;
+      });
+    }
+    // "Otros" siempre al final y no modificable
+    CATEGORIES[CAT_OTROS] = CAT_OTROS_COLOR;
+    CAT_NAMES = Object.keys(CATEGORIES);
+    rebuildCatSelect();
+  }
+
+  function rebuildCatSelect() {
+    const select = document.getElementById('catSelect');
+    if (!select) return;
+    const prev = select.value || selectedCat;
+    select.innerHTML = '';
+    CAT_NAMES.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      select.appendChild(opt);
+    });
+    select.value = CAT_NAMES.includes(prev) ? prev : CAT_OTROS;
+    selectedCat = select.value;
+  }
+
+  let db, auth, itemsRef, historyRef, categoriesRef;
   let userHistory = {};
   let items = {};
   let qty = 1;
@@ -664,8 +732,25 @@
     }, { onlyOnce: true });
 
     window._listaPath = `listas/${lista}`;
-    itemsRef = ref(db, `listas/${lista}/items`);
-    historyRef = ref(db, `listas/${lista}/history`);
+    itemsRef      = ref(db, `listas/${lista}/items`);
+    historyRef    = ref(db, `listas/${lista}/history`);
+    categoriesRef = ref(db, `listas/${lista}/categories`);
+
+    // Cargar categorías de Firebase — migrar automáticamente si la lista no tiene ninguna
+    onValue(categoriesRef, (snap) => {
+      if (!snap.val()) {
+        // Lista sin categorías: escribir las predeterminadas en Firebase
+        const toSave = {};
+        Object.entries(DEFAULT_CATEGORIES).forEach(([name, color]) => {
+          toSave[encodeURIComponent(name)] = color;
+        });
+        set(categoriesRef, toSave);
+        // applyCategories se llamará de nuevo cuando Firebase confirme el set
+      } else {
+        applyCategories(snap.val());
+        render();
+      }
+    });
 
     setSyncStatus('syncing', 'Conectando...');
 
@@ -852,13 +937,7 @@
   // ── CATEGORIES ──────────────────────────────────────────
   function buildCatButtons() {
     const select = document.getElementById('catSelect');
-    CAT_NAMES.forEach(cat => {
-      const opt = document.createElement('option');
-      opt.value = cat;
-      opt.textContent = cat;
-      if (cat === selectedCat) opt.selected = true;
-      select.appendChild(opt);
-    });
+    rebuildCatSelect();
     select.addEventListener('change', () => { selectedCat = select.value; });
   }
 
@@ -1433,6 +1512,117 @@
   window.closeImgViewer = function() {
     document.getElementById('imgViewer').style.display = 'none';
     document.body.style.overflow = '';
+  };
+
+  // ── CATEGORIES MANAGEMENT ────────────────────────────────
+  window.openCategories = function() {
+    document.getElementById('catPopup').style.display = 'flex';
+    renderCatList();
+  };
+
+  window.closeCategories = function() {
+    document.getElementById('catPopup').style.display = 'none';
+  };
+
+  function renderCatList() {
+    const list = document.getElementById('catList');
+    const cats = CAT_NAMES.filter(c => c !== CAT_OTROS);
+    if (cats.length === 0) {
+      list.innerHTML = `
+        <div style="text-align:center; color:#475569; padding:20px 0; font-size:14px;">No hay categorías personalizadas</div>
+        <div style="background:#1e293b; border-radius:12px; padding:12px 14px; border:1px solid #334155; display:flex; align-items:center; gap:10px;">
+          <div style="width:10px; height:10px; border-radius:50%; background:${CAT_OTROS_COLOR[0]}; flex-shrink:0;"></div>
+          <span style="flex:1; font-size:15px; font-weight:700; color:#64748b;">${CAT_OTROS} <span style="font-size:11px; color:#334155;">(fija)</span></span>
+        </div>`;
+      return;
+    }
+    list.innerHTML = cats.map(cat => {
+      const [color] = CATEGORIES[cat] || CAT_OTROS_COLOR;
+      return `
+        <div id="catrow-${escHtml(cat)}" style="background:#1e293b; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+          <!-- Vista -->
+          <div id="catview-${escHtml(cat)}" style="display:flex; align-items:center; gap:10px;">
+            <div style="width:10px; height:10px; border-radius:50%; background:${color}; flex-shrink:0;"></div>
+            <span style="flex:1; font-size:15px; font-weight:700; color:#f1f5f9;">${escHtml(cat)}</span>
+            <button onclick="toggleEditCat('${escHtml(cat)}')"
+              style="background:#1e3a5f; border:none; color:#93c5fd; border-radius:8px; width:30px; height:30px; font-size:14px; cursor:pointer;">✏️</button>
+            <button onclick="deleteCategory('${escHtml(cat)}')"
+              style="background:#450a0a; border:none; color:#fca5a5; border-radius:8px; width:30px; height:30px; font-size:16px; cursor:pointer;">×</button>
+          </div>
+          <!-- Edición -->
+          <div id="catedit-${escHtml(cat)}" style="display:none; margin-top:10px;">
+            <input id="catedit-input-${escHtml(cat)}" value="${escHtml(cat)}"
+              style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:8px;" />
+            <div style="display:flex; gap:8px;">
+              <button onclick="saveCatEdit('${escHtml(cat)}')"
+                style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+              <button onclick="toggleEditCat('${escHtml(cat)}')"
+                style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + `
+      <div style="background:#1e293b; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155; display:flex; align-items:center; gap:10px;">
+        <div style="width:10px; height:10px; border-radius:50%; background:${CAT_OTROS_COLOR[0]}; flex-shrink:0;"></div>
+        <span style="flex:1; font-size:15px; font-weight:700; color:#64748b;">${CAT_OTROS} <span style="font-size:11px; color:#334155;">(fija)</span></span>
+      </div>`;
+  }
+
+  window.toggleEditCat = function(cat) {
+    const view = document.getElementById(`catview-${cat}`);
+    const edit = document.getElementById(`catedit-${cat}`);
+    const isEditing = edit.style.display !== 'none';
+    view.style.display = isEditing ? 'flex' : 'none';
+    edit.style.display = isEditing ? 'none' : 'block';
+    if (!isEditing) document.getElementById(`catedit-input-${cat}`).focus();
+  };
+
+  window.addCategory = function() {
+    const input = document.getElementById('newCatInput');
+    const name  = input.value.trim();
+    const err   = document.getElementById('catErr');
+    if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
+    if (CAT_NAMES.includes(name)) { err.textContent = 'Esa categoría ya existe'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    // Asignar color de la paleta
+    const usedColors = Object.values(CATEGORIES).map(c => c[0]);
+    const color = COLOR_PALETTE.find(c => !usedColors.includes(c[0])) || COLOR_PALETTE[0];
+    set(ref(db, `${window._listaPath}/categories/${encodeURIComponent(name)}`), color);
+    input.value = '';
+  };
+
+  window.saveCatEdit = function(oldName) {
+    const newName = document.getElementById(`catedit-input-${oldName}`).value.trim();
+    if (!newName) return;
+    if (newName === oldName) { toggleEditCat(oldName); return; }
+    if (CAT_NAMES.includes(newName)) { alert('Esa categoría ya existe'); return; }
+    const color = CATEGORIES[oldName] || CAT_OTROS_COLOR;
+    // Guardar nueva, borrar vieja
+    set(ref(db, `${window._listaPath}/categories/${encodeURIComponent(newName)}`), color);
+    remove(ref(db, `${window._listaPath}/categories/${encodeURIComponent(oldName)}`));
+    // Actualizar artículos e historial con la categoría vieja
+    Object.entries(items).forEach(([id, item]) => {
+      if (item.category === oldName) update(ref(db, `${window._listaPath}/items/${id}`), { category: newName });
+    });
+    Object.entries(userHistory).forEach(([key, h]) => {
+      if (h.category === oldName) update(ref(db, `${window._listaPath}/history/${key}`), { category: newName });
+    });
+  };
+
+  window.deleteCategory = function(cat) {
+    const affectedItems = Object.values(items).filter(i => i.category === cat);
+    const msg = affectedItems.length > 0
+      ? `¿Eliminar la categoría "${cat}"?\n\n${affectedItems.length} artículo${affectedItems.length > 1 ? 's' : ''} pasará${affectedItems.length > 1 ? 'n' : ''} a "${CAT_OTROS}".`
+      : `¿Eliminar la categoría "${cat}"?`;
+    if (!confirm(msg)) return;
+    remove(ref(db, `${window._listaPath}/categories/${encodeURIComponent(cat)}`));
+    // Mover artículos a "Otros"
+    Object.entries(items).forEach(([id, item]) => {
+      if (item.category === cat) update(ref(db, `${window._listaPath}/items/${id}`), { category: CAT_OTROS });
+    });
+    Object.entries(userHistory).forEach(([key, h]) => {
+      if (h.category === cat) update(ref(db, `${window._listaPath}/history/${key}`), { category: CAT_OTROS });
+    });
   };
 
 </script>
