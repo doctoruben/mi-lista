@@ -235,8 +235,12 @@
     if (newListas.length === 0) { alert('Selecciona al menos una lista'); return; }
     const existing = usuarios[key] || {};
     const updated = { uid: existing.uid, listas: newListas };
-    await set(ref(db, `usuarios_config/${key}`), updated);
-    toggleEditUser(key);
+    try {
+      await set(ref(db, `usuarios_config/${key}`), updated);
+      // renderUsers se llamará solo desde el listener onValue
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
+    }
   };
 
   function renderListas() {
@@ -361,7 +365,7 @@
 
   // ── LISTAS ───────────────────────────────────────────────
   window.createLista = function() {
-    const name = document.getElementById('nl_name').value.trim().toLowerCase().replace(/\s+/g, '_');
+    const name = document.getElementById('nl_name').value.trim().replace(/\s+/g, '_');
     const err  = document.getElementById('listaErr');
     if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
     err.style.display = 'none';
