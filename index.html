@@ -26,6 +26,55 @@
     ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
     .app { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; }
 
+    /* LOGIN SCREEN */
+    .setup-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .setup-card {
+      background: #1e293b;
+      border-radius: 24px;
+      padding: 28px 24px;
+      border: 1px solid #334155;
+      max-width: 440px;
+      width: 100%;
+    }
+    .setup-card h2 { font-family: 'Abril Fatface', serif; font-size: 26px; margin-bottom: 6px; color: #f8fafc; }
+    .setup-card p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+    .setup-field { margin-bottom: 12px; text-align: left; }
+    .setup-field label { display: block; font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; letter-spacing: 0.5px; }
+    .setup-field input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #f1f5f9;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+    }
+    .setup-field input:focus { border-color: #fbbf24; }
+    .setup-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      color: #78350f;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .setup-btn:active { opacity: 0.85; }
+
     /* SYNC STATUS */
     .sync-bar {
       display: flex;
