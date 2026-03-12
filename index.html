@@ -354,6 +354,16 @@
   </div>
 </div>
 
+<!-- LISTA PICKER SCREEN -->
+<div id="listaPickerScreen" class="setup-screen" style="display:none">
+  <div class="setup-card">
+    <div style="font-size:48px;margin-bottom:12px">📋</div>
+    <h2>¿Qué lista abrimos?</h2>
+    <p>Selecciona la lista que quieres ver.</p>
+    <div id="listaPickerList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+  </div>
+</div>
+
 <!-- MAIN APP -->
 <div id="mainApp" style="display:none">
   <div class="app">
@@ -364,6 +374,7 @@
       </div>
       <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:4px;">
         <div id="userBadge" style="font-size:13px; color:#64748b; font-weight:700;"></div>
+        <button id="cambiarListaBtn" onclick="cambiarLista()" style="display:none; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#94a3b8; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4;"></button>
         <button id="logoutBtn" onclick="resetConfig()" style="display:none; background:none; border:1px solid #1e293b; border-radius:6px; color:#334155; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4;">salir</button>
         <a id="adminBtn" href="admin.html" style="display:none; background:#1e1b4b; border:1px solid #312e81; border-radius:6px; color:#818cf8; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4; text-decoration:none;">⚙️ admin</a>
       </div>
@@ -544,11 +555,44 @@
         await signOut(auth);
         return;
       }
-      localStorage.setItem('mlSession', JSON.stringify({ user, lista: userData.lista }));
-      window.location.reload();
+      // Soporte para array de listas o lista única (legacy)
+      const listas = Array.isArray(userData.listas)
+        ? userData.listas
+        : (userData.lista ? [userData.lista] : []);
+
+      if (listas.length === 0) {
+        document.getElementById('loginError').style.display = 'block';
+        await signOut(auth);
+        return;
+      }
+
+      if (listas.length === 1) {
+        // Una sola lista — entrar directamente
+        localStorage.setItem('mlSession', JSON.stringify({ user, lista: listas[0] }));
+        window.location.reload();
+      } else {
+        // Varias listas — mostrar selector
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('listaPickerScreen').style.display = 'flex';
+        const container = document.getElementById('listaPickerList');
+        container.innerHTML = listas.map(l => `
+          <button onclick="selectLista('${user}', '${l}')"
+            style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:14px;
+                   padding:14px 16px; font-size:16px; font-weight:700; font-family:inherit;
+                   color:#f1f5f9; cursor:pointer; text-align:left; transition:all 0.15s;"
+            onmouseover="this.style.borderColor='#fbbf24'"
+            onmouseout="this.style.borderColor='#334155'">
+            📋 ${l}
+          </button>`).join('');
+      }
     } catch(e) {
       document.getElementById('loginError').style.display = 'block';
     }
+  };
+
+  window.selectLista = function(user, lista) {
+    localStorage.setItem('mlSession', JSON.stringify({ user, lista }));
+    window.location.reload();
   };
 
   function resetConfig() {
@@ -559,6 +603,11 @@
     }
   }
   window.resetConfig = resetConfig;
+
+  window.cambiarLista = function() {
+    localStorage.removeItem('mlSession');
+    window.location.reload();
+  };
 
   function setupLoginListeners() {
     document.getElementById('l_pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
@@ -579,13 +628,24 @@
   function initApp(session) {
     const lista = session.lista || 'mi_lista';
     currentUser = session.user;
-    // Show username in header
     const badge = document.getElementById('userBadge');
     if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.style.display = 'inline-block';
     const adminBtn = document.getElementById('adminBtn');
     if (adminBtn && session.user === 'ruben') adminBtn.style.display = 'inline-block';
+
+    // Mostrar botón cambiar lista si el usuario tiene varias
+    onValue(ref(db, `usuarios_config/${session.user}`), (snap) => {
+      const userData = snap.val();
+      const listas = Array.isArray(userData?.listas) ? userData.listas : (userData?.lista ? [userData.lista] : []);
+      const cambiarBtn = document.getElementById('cambiarListaBtn');
+      if (cambiarBtn && listas.length > 1) {
+        cambiarBtn.style.display = 'inline-block';
+        cambiarBtn.textContent = `📋 ${lista}`;
+      }
+    }, { onlyOnce: true });
+
     window._listaPath = `listas/${lista}`;
     itemsRef = ref(db, `listas/${lista}/items`);
     historyRef = ref(db, `listas/${lista}/history`);

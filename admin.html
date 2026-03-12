@@ -82,8 +82,8 @@
         <input id="nu_user" placeholder="nombre..." autocapitalize="none" />
         <label>CONTRASEÑA</label>
         <input id="nu_pass" type="password" placeholder="••••••••" />
-        <label>ASIGNAR A LISTA</label>
-        <select id="nu_lista"></select>
+        <label>ASIGNAR A LISTAS</label>
+        <div id="nu_listas" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
         <button class="btn" onclick="createUser()">+ Crear usuario</button>
         <p id="createErr" class="error"></p>
       </div>
@@ -110,7 +110,7 @@
 
 <script type="module">
   import { initializeApp }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, remove }
+  import { getDatabase, ref, onValue, set, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
            updatePassword, deleteUser as fbDeleteUser, signOut }
@@ -167,12 +167,15 @@
   }
 
   function refreshListaSelect() {
-    const sel  = document.getElementById('nu_lista');
-    const prev = sel.value;
-    sel.innerHTML = Array.isArray(listas)
-      ? listas.map(l => `<option value="${l}">${l}</option>`).join('')
-      : '';
-    if (prev) sel.value = prev;
+    const container = document.getElementById('nu_listas');
+    if (!container) return;
+    container.innerHTML = Array.isArray(listas) && listas.length > 0
+      ? listas.map(l => `
+        <label style="display:flex; align-items:center; gap:8px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; cursor:pointer;">
+          <input type="checkbox" value="${l}" style="width:16px; height:16px; accent-color:#818cf8; cursor:pointer;" />
+          <span style="font-size:14px; font-weight:600; color:#f1f5f9;">📋 ${l}</span>
+        </label>`).join('')
+      : '<p style="color:#475569; font-size:13px;">No hay listas creadas aún</p>';
   }
 
   function renderUsers() {
@@ -182,16 +185,57 @@
       el.innerHTML = '<p style="color:#475569; font-size:13px; text-align:center; padding:20px 0;">No hay usuarios creados</p>';
       return;
     }
-    el.innerHTML = entries.map(([key, u]) => `
-      <div class="user-row">
-        <div class="user-info">
-          <div class="user-name">👤 ${key.charAt(0).toUpperCase() + key.slice(1)}</div>
-          <div class="user-meta">Lista: <span class="badge">${u.lista || '—'}</span></div>
+    el.innerHTML = entries.map(([key, u]) => {
+      const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+      const listasText = userListas.length > 0
+        ? userListas.map(l => `<span class="badge">${l}</span>`).join(' ')
+        : '—';
+      const checkboxes = Array.isArray(listas) ? listas.map(l => `
+        <label style="display:flex; align-items:center; gap:8px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; cursor:pointer;">
+          <input type="checkbox" value="${l}" ${userListas.includes(l) ? 'checked' : ''} style="width:16px; height:16px; accent-color:#818cf8; cursor:pointer;" />
+          <span style="font-size:14px; font-weight:600; color:#f1f5f9;">📋 ${l}</span>
+        </label>`).join('') : '';
+      return `
+      <div style="background:#0f172a; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+        <!-- Vista normal -->
+        <div id="uview-${key}" style="display:flex; align-items:center; gap:10px;">
+          <div class="user-info">
+            <div class="user-name">👤 ${key.charAt(0).toUpperCase() + key.slice(1)}</div>
+            <div class="user-meta" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">Listas: ${listasText}</div>
+          </div>
+          <button class="btn-secondary" onclick="toggleEditUser('${key}')">✏️</button>
+          <button class="btn-secondary" onclick="changePass('${key}')">🔑</button>
+          <button class="btn-danger" onclick="deleteUser('${key}')">×</button>
         </div>
-        <button class="btn-secondary" onclick="changePass('${key}')">🔑 Clave</button>
-        <button class="btn-danger" onclick="deleteUser('${key}')">×</button>
-      </div>`).join('');
+        <!-- Modo edición -->
+        <div id="uedit-${key}" style="display:none; margin-top:10px;">
+          <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">LISTAS ASIGNADAS</div>
+          <div id="uedit-listas-${key}" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">${checkboxes}</div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="saveUserListas('${key}')" style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+            <button onclick="toggleEditUser('${key}')" style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
   }
+
+  window.toggleEditUser = function(key) {
+    const view = document.getElementById(`uview-${key}`);
+    const edit = document.getElementById(`uedit-${key}`);
+    const isEditing = edit.style.display !== 'none';
+    view.style.display = isEditing ? 'flex' : 'none';
+    edit.style.display = isEditing ? 'none' : 'block';
+  };
+
+  window.saveUserListas = async function(key) {
+    const checked = [...document.querySelectorAll(`#uedit-listas-${key} input[type=checkbox]:checked`)];
+    const newListas = checked.map(c => c.value);
+    if (newListas.length === 0) { alert('Selecciona al menos una lista'); return; }
+    const existing = usuarios[key] || {};
+    await set(ref(db, `usuarios_config/${key}`), { ...existing, listas: newListas, lista: undefined });
+    toggleEditUser(key);
+  };
 
   function renderListas() {
     const el = document.getElementById('listasList');
@@ -200,33 +244,82 @@
       return;
     }
     el.innerHTML = listas.map(l => `
-      <div class="lista-row">
-        <div style="flex:1;">
-          <div style="font-size:15px; font-weight:700; color:#f1f5f9;">📋 ${l}</div>
+      <div style="background:#0f172a; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+        <!-- Vista normal -->
+        <div id="lview-${l}" style="display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; font-size:15px; font-weight:700; color:#f1f5f9;">📋 ${l}</div>
+          <button class="btn-secondary" onclick="toggleEditLista('${l}')">✏️</button>
+          <button class="btn-danger" onclick="deleteLista('${l}')">×</button>
         </div>
-        <button class="btn-danger" onclick="deleteLista('${l}')">×</button>
+        <!-- Modo edición -->
+        <div id="ledit-${l}" style="display:none; margin-top:10px;">
+          <input id="ledit-input-${l}" value="${l}"
+            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:8px;" />
+          <div style="display:flex; gap:8px;">
+            <button onclick="renameLista('${l}')" style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+            <button onclick="toggleEditLista('${l}')" style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+          </div>
+        </div>
       </div>`).join('');
   }
+
+  window.toggleEditLista = function(l) {
+    const view = document.getElementById(`lview-${l}`);
+    const edit = document.getElementById(`ledit-${l}`);
+    const isEditing = edit.style.display !== 'none';
+    view.style.display = isEditing ? 'flex' : 'none';
+    edit.style.display = isEditing ? 'none' : 'block';
+    if (!isEditing) document.getElementById(`ledit-input-${l}`).focus();
+  };
+
+  window.renameLista = async function(oldName) {
+    const newName = document.getElementById(`ledit-input-${oldName}`).value.trim().toLowerCase().replace(/\s+/g, '_');
+    if (!newName) { alert('Escribe un nombre válido'); return; }
+    if (newName === oldName) { toggleEditLista(oldName); return; }
+    if (listas.includes(newName)) { alert('Ya existe una lista con ese nombre'); return; }
+    try {
+      // Copiar datos de la lista antigua a la nueva
+      const snap = await new Promise(res => onValue(ref(db, `listas/${oldName}`), res, { onlyOnce: true }));
+      const data = snap.val();
+      await set(ref(db, `listas/${newName}`), data);
+      await remove(ref(db, `listas/${oldName}`));
+      // Actualizar usuarios que tenían la lista antigua
+      const updates = {};
+      Object.entries(usuarios).forEach(([uKey, u]) => {
+        const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+        if (userListas.includes(oldName)) {
+          const newListas = userListas.map(l => l === oldName ? newName : l);
+          updates[`usuarios_config/${uKey}/listas`] = newListas;
+        }
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db, '/'), updates);
+      }
+    } catch(e) {
+      alert('Error al renombrar: ' + e.message);
+    }
+  };
 
   // ── CREAR USUARIO ────────────────────────────────────────
   window.createUser = async function() {
     const user  = document.getElementById('nu_user').value.trim().toLowerCase();
     const pass  = document.getElementById('nu_pass').value.trim();
-    const lista = document.getElementById('nu_lista').value;
     const err   = document.getElementById('createErr');
-    if (!user || !pass) { err.textContent = 'Rellena todos los campos'; err.style.display = 'block'; return; }
+    // Recoger listas seleccionadas
+    const checked = [...document.querySelectorAll('#nu_listas input[type=checkbox]:checked')];
+    const listas_sel = checked.map(c => c.value);
+    if (!user || !pass) { err.textContent = 'Rellena nombre y contraseña'; err.style.display = 'block'; return; }
+    if (listas_sel.length === 0) { err.textContent = 'Selecciona al menos una lista'; err.style.display = 'block'; return; }
     if (usuarios[user]) { err.textContent = 'Ese usuario ya existe'; err.style.display = 'block'; return; }
     err.style.display = 'none';
     try {
-      // Crear en Firebase Auth con email ficticio
       const email = `${user}@milista.app`;
       const cred  = await createUserWithEmailAndPassword(auth, email, pass);
       const uid   = cred.user.uid;
-      // Guardar en DB: uid, lista (sin contraseña)
-      await set(ref(db, `usuarios_config/${user}`), { uid, lista });
+      await set(ref(db, `usuarios_config/${user}`), { uid, listas: listas_sel });
       document.getElementById('nu_user').value = '';
       document.getElementById('nu_pass').value = '';
-      // Volver a hacer login como admin (createUser cambia el usuario activo en Auth)
+      document.querySelectorAll('#nu_listas input[type=checkbox]').forEach(c => c.checked = false);
       await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass);
     } catch(e) {
       err.textContent = e.code === 'auth/email-already-in-use'
