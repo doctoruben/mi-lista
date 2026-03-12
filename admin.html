@@ -275,7 +275,7 @@
   };
 
   window.renameLista = async function(oldName) {
-    const newName = document.getElementById(`ledit-input-${oldName}`).value.trim().toLowerCase().replace(/\s+/g, '_');
+    const newName = document.getElementById(`ledit-input-${oldName}`).value.trim().replace(/\s+/g, '_');
     if (!newName) { alert('Escribe un nombre válido'); return; }
     if (newName === oldName) { toggleEditLista(oldName); return; }
     if (listas.includes(newName)) { alert('Ya existe una lista con ese nombre'); return; }
@@ -365,7 +365,11 @@
     const err  = document.getElementById('listaErr');
     if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
     err.style.display = 'none';
-    set(ref(db, `listas/${name}/_created`), Date.now());
+    // Nueva lista solo con categoría "Otros" por defecto
+    set(ref(db, `listas/${name}`), {
+      _created: Date.now(),
+      categories: { '%F0%9F%9B%92%20Otros': ["#94a3b8","#1e293b"] }
+    });
     document.getElementById('nl_name').value = '';
   };
 
