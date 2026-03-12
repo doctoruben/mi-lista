@@ -406,12 +406,12 @@
       </div>
       <button class="add-btn" onclick="addItem()">+ Añadir a la lista</button>
       <button class="freq-btn" onclick="openFrequent()">⭐ Artículos frecuentes</button>
-      <div class="super-row">
-        <button class="super-btn merca-btn" onclick="searchMercadona()">
+      <div class="super-row" id="superRow">
+        <button id="mercaBtn" class="super-btn merca-btn" onclick="searchMercadona()">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Mercadona_logo.svg/200px-Mercadona_logo.svg.png" style="height:18px; object-fit:contain;" onerror="this.style.display='none'" />
           Buscar en Mercadona
         </button>
-        <button class="super-btn hiper-btn" onclick="searchHiperdino()">
+        <button id="hiperBtn" class="super-btn hiper-btn" onclick="searchHiperdino()">
           <img src="https://www.hiperdino.es/skin/frontend/rwd/hiperdino/images/logo.png" style="height:18px; object-fit:contain;" onerror="this.style.display='none'" />
           Buscar en Hiperdino
         </button>
@@ -735,6 +735,19 @@
     itemsRef      = ref(db, `listas/${lista}/items`);
     historyRef    = ref(db, `listas/${lista}/history`);
     categoriesRef = ref(db, `listas/${lista}/categories`);
+
+    // Cargar config de supermercados
+    onValue(ref(db, `listas/${lista}/_config`), (snap) => {
+      const cfg = snap.val() || {};
+      const showMerca = cfg.mercadona !== false;
+      const showHiper  = cfg.hiperdino !== false;
+      const mercaBtn = document.getElementById('mercaBtn');
+      const hiperBtn = document.getElementById('hiperBtn');
+      const superRow = document.getElementById('superRow');
+      if (mercaBtn) mercaBtn.style.display = showMerca ? '' : 'none';
+      if (hiperBtn) hiperBtn.style.display = showHiper ? '' : 'none';
+      if (superRow) superRow.style.display = (!showMerca && !showHiper) ? 'none' : '';
+    });
 
     // Cargar categorías de Firebase — migrar automáticamente solo si es la primera vez
     onValue(categoriesRef, (snap) => {

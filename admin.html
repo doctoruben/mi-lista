@@ -130,8 +130,9 @@
   const db   = getDatabase(app);
   const auth = getAuth(app);
 
-  let usuarios = {};
-  let listas   = {};
+  let usuarios    = {};
+  let listas      = {};
+  let listasConfig = {};
 
   // ── LOGIN ────────────────────────────────────────────────
   window.adminLogin = async function() {
@@ -160,10 +161,16 @@
       refreshListaSelect();
     });
     onValue(ref(db, 'listas'), snap => {
-      listas = snap.val() ? Object.keys(snap.val()) : [];
+      const data = snap.val() || {};
+      listas = Object.keys(data);
+      // Cargar config de cada lista (_config)
+      listasConfig = {};
+      listas.forEach(l => {
+        if (data[l] && data[l]._config) listasConfig[l] = data[l]._config;
+      });
       renderListas();
       refreshListaSelect();
-      renderUsers(); // re-render usuarios para que los checkboxes de edición tengan las listas
+      renderUsers();
     });
   }
 
@@ -249,7 +256,11 @@
       el.innerHTML = '<p style="color:#475569; font-size:13px; text-align:center; padding:20px 0;">No hay listas creadas</p>';
       return;
     }
-    el.innerHTML = listas.map(l => `
+    el.innerHTML = listas.map(l => {
+      const cfg = listasConfig[l] || {};
+      const merca = cfg.mercadona !== false;
+      const hiper  = cfg.hiperdino !== false;
+      return `
       <div style="background:#0f172a; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
         <!-- Vista normal -->
         <div id="lview-${l}" style="display:flex; align-items:center; gap:10px;">
@@ -260,13 +271,23 @@
         <!-- Modo edición -->
         <div id="ledit-${l}" style="display:none; margin-top:10px;">
           <input id="ledit-input-${l}" value="${l}"
-            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:8px;" />
+            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:10px;" />
+          <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">BOTONES DE SUPERMERCADO</div>
+          <label style="display:flex; align-items:center; gap:8px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:8px 12px; margin-bottom:6px; cursor:pointer;">
+            <input type="checkbox" id="ledit-merca-${l}" ${merca ? 'checked' : ''} style="width:16px; height:16px; accent-color:#4ade80; cursor:pointer;" />
+            <span style="font-size:14px; font-weight:600; color:#f1f5f9;">🟢 Mostrar botón Mercadona</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:8px 12px; margin-bottom:10px; cursor:pointer;">
+            <input type="checkbox" id="ledit-hiper-${l}" ${hiper ? 'checked' : ''} style="width:16px; height:16px; accent-color:#fb923c; cursor:pointer;" />
+            <span style="font-size:14px; font-weight:600; color:#f1f5f9;">🟠 Mostrar botón Hiperdino</span>
+          </label>
           <div style="display:flex; gap:8px;">
-            <button onclick="renameLista('${l}')" style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+            <button onclick="saveListaConfig('${l}')" style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
             <button onclick="toggleEditLista('${l}')" style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
           </div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   window.toggleEditLista = function(l) {
@@ -276,6 +297,34 @@
     view.style.display = isEditing ? 'flex' : 'none';
     edit.style.display = isEditing ? 'none' : 'block';
     if (!isEditing) document.getElementById(`ledit-input-${l}`).focus();
+  };
+
+  window.saveListaConfig = async function(oldName) {
+    const newName  = document.getElementById(`ledit-input-${oldName}`).value.trim().replace(/\s+/g, '_');
+    const mercadona = document.getElementById(`ledit-merca-${oldName}`).checked;
+    const hiperdino = document.getElementById(`ledit-hiper-${oldName}`).checked;
+    if (!newName) { alert('Escribe un nombre válido'); return; }
+    try {
+      // Guardar config de supermercados
+      await set(ref(db, `listas/${oldName}/_config`), { mercadona, hiperdino });
+      // Renombrar si cambió el nombre
+      if (newName !== oldName) {
+        const snap = await new Promise(res => onValue(ref(db, `listas/${oldName}`), res, { onlyOnce: true }));
+        const data = snap.val();
+        await set(ref(db, `listas/${newName}`), data);
+        await remove(ref(db, `listas/${oldName}`));
+        const updates = {};
+        Object.entries(usuarios).forEach(([uKey, u]) => {
+          const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+          if (userListas.includes(oldName)) {
+            updates[`usuarios_config/${uKey}/listas`] = userListas.map(l => l === oldName ? newName : l);
+          }
+        });
+        if (Object.keys(updates).length > 0) await update(ref(db, '/'), updates);
+      }
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
+    }
   };
 
   window.renameLista = async function(oldName) {
