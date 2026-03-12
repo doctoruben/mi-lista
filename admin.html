@@ -234,7 +234,8 @@
     const newListas = checked.map(c => c.value);
     if (newListas.length === 0) { alert('Selecciona al menos una lista'); return; }
     const existing = usuarios[key] || {};
-    await set(ref(db, `usuarios_config/${key}`), { ...existing, listas: newListas, lista: undefined });
+    const updated = { uid: existing.uid, listas: newListas };
+    await set(ref(db, `usuarios_config/${key}`), updated);
     toggleEditUser(key);
   };
 
