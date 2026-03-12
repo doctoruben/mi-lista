@@ -605,8 +605,25 @@
   window.resetConfig = resetConfig;
 
   window.cambiarLista = function() {
-    localStorage.removeItem('mlSession');
-    window.location.reload();
+    const session = loadSession();
+    if (!session) return;
+    onValue(ref(db, `usuarios_config/${session.user}`), (snap) => {
+      const userData = snap.val();
+      const listas = Array.isArray(userData?.listas) ? userData.listas : (userData?.lista ? [userData.lista] : []);
+      // Ocultar app y mostrar selector
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('listaPickerScreen').style.display = 'flex';
+      const container = document.getElementById('listaPickerList');
+      container.innerHTML = listas.map(l => `
+        <button onclick="selectLista('${session.user}', '${l}')"
+          style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:14px;
+                 padding:14px 16px; font-size:16px; font-weight:700; font-family:inherit;
+                 color:#f1f5f9; cursor:pointer; text-align:left; transition:all 0.15s;"
+          onmouseover="this.style.borderColor='#fbbf24'"
+          onmouseout="this.style.borderColor='#334155'">
+          📋 ${l}
+        </button>`).join('');
+    }, { onlyOnce: true });
   };
 
   function setupLoginListeners() {
