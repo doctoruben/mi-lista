@@ -163,6 +163,7 @@
       listas = snap.val() ? Object.keys(snap.val()) : [];
       renderListas();
       refreshListaSelect();
+      renderUsers(); // re-render usuarios para que los checkboxes de edición tengan las listas
     });
   }
 
