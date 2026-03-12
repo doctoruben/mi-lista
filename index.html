@@ -736,20 +736,29 @@
     historyRef    = ref(db, `listas/${lista}/history`);
     categoriesRef = ref(db, `listas/${lista}/categories`);
 
-    // Cargar categorías de Firebase — migrar automáticamente si la lista no tiene ninguna
+    // Cargar categorías de Firebase — migrar automáticamente solo si es la primera vez
     onValue(categoriesRef, (snap) => {
-      if (!snap.val()) {
-        // Lista sin categorías: escribir las predeterminadas en Firebase
-        const toSave = {};
-        Object.entries(DEFAULT_CATEGORIES).forEach(([name, color]) => {
-          toSave[encodeURIComponent(name)] = color;
-        });
-        set(categoriesRef, toSave);
-        // applyCategories se llamará de nuevo cuando Firebase confirme el set
+      const data = snap.val();
+      if (!data) {
+        // Comprobar si ya fue migrada antes (bandera en Firebase)
+        onValue(ref(db, `${window._listaPath}/_migrated`), (mSnap) => {
+          if (!mSnap.val()) {
+            // Primera vez: escribir categorías predeterminadas y marcar como migrada
+            const toSave = {};
+            Object.entries(DEFAULT_CATEGORIES).forEach(([name, color]) => {
+              toSave[encodeURIComponent(name)] = color;
+            });
+            set(categoriesRef, toSave);
+            set(ref(db, `${window._listaPath}/_migrated`), true);
+          } else {
+            // Ya migrada, simplemente no hay categorías personalizadas
+            applyCategories(null);
+            render();
+          }
+        }, { onlyOnce: true });
       } else {
-        applyCategories(snap.val());
+        applyCategories(data);
         render();
-        // Refrescar popup si está abierto
         if (document.getElementById('catPopup').style.display !== 'none') {
           renderCatList();
         }
