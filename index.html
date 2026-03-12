@@ -749,6 +749,10 @@
       } else {
         applyCategories(snap.val());
         render();
+        // Refrescar popup si está abierto
+        if (document.getElementById('catPopup').style.display !== 'none') {
+          renderCatList();
+        }
       }
     });
 
