@@ -26,65 +26,6 @@
     ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
     .app { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; }
 
-    /* SETUP SCREEN */
-    .setup-screen {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-    }
-    .setup-card {
-      background: #1e293b;
-      border-radius: 24px;
-      padding: 28px 24px;
-      border: 1px solid #334155;
-      max-width: 440px;
-      width: 100%;
-    }
-    .setup-card h2 { font-family: 'Abril Fatface', serif; font-size: 26px; margin-bottom: 6px; color: #f8fafc; }
-    .setup-card p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
-    .setup-field { margin-bottom: 12px; text-align: left; }
-    .setup-field label { display: block; font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; letter-spacing: 0.5px; }
-    .setup-field input {
-      width: 100%;
-      background: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: #f1f5f9;
-      font-size: 13px;
-      font-family: 'Courier New', monospace;
-      outline: none;
-    }
-    .setup-field input:focus { border-color: #fbbf24; }
-    .setup-btn {
-      width: 100%;
-      background: linear-gradient(90deg, #fbbf24, #f59e0b);
-      color: #78350f;
-      border: none;
-      border-radius: 12px;
-      padding: 13px;
-      font-size: 15px;
-      font-weight: 900;
-      font-family: inherit;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-    .setup-btn:active { opacity: 0.85; }
-    .setup-hint {
-      margin-top: 16px;
-      background: #0f172a;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: left;
-    }
-    .setup-hint p { color: #475569; font-size: 12px; line-height: 1.7; margin: 0; }
-    .setup-hint a { color: #818cf8; text-decoration: none; }
-    .step { display: inline-block; background: #1e293b; border-radius: 4px; padding: 1px 6px; font-weight: 800; color: #fbbf24; font-size: 11px; }
-
     /* SYNC STATUS */
     .sync-bar {
       display: flex;
@@ -345,32 +286,6 @@
 <body>
 
 
-<!-- SETUP SCREEN: Firebase config (primera vez) -->
-<div id="setupScreen" class="setup-screen" style="display:none">
-  <div class="setup-card">
-    <div style="font-size:48px;margin-bottom:12px">🔥</div>
-    <h2>Configuración</h2>
-    <p>Introduce los datos de tu proyecto Firebase para conectar la app. Solo se hace una vez.</p>
-    <div class="setup-field">
-      <label>DATABASE URL</label>
-      <input id="cfg_dburl" placeholder="https://tu-proyecto.firebaseio.com" autocomplete="off" autocapitalize="none" spellcheck="false" />
-    </div>
-    <div class="setup-field">
-      <label>API KEY</label>
-      <input id="cfg_apikey" placeholder="AIzaSy..." autocomplete="off" autocapitalize="none" spellcheck="false" />
-    </div>
-    <div class="setup-field">
-      <label>PROJECT ID</label>
-      <input id="cfg_projectid" placeholder="mi-proyecto-12345" autocomplete="off" autocapitalize="none" spellcheck="false" />
-    </div>
-    <p id="cfgError" style="color:#f87171; font-size:13px; font-weight:700; margin-bottom:12px; display:none;"></p>
-    <button id="cfgSaveBtn" class="setup-btn" onclick="doSaveConfig()">Guardar y conectar</button>
-    <div class="setup-hint">
-      <p>Encuentra estos datos en <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → tu proyecto → Configuración → Aplicaciones web.</p>
-    </div>
-  </div>
-</div>
-
 <!-- LOGIN SCREEN -->
 <div id="loginScreen" class="setup-screen" style="display:none">
   <div class="setup-card">
@@ -401,7 +316,7 @@
       <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:4px;">
         <div id="userBadge" style="font-size:13px; color:#64748b; font-weight:700;"></div>
         <button id="logoutBtn" onclick="resetConfig()" style="display:none; background:none; border:1px solid #1e293b; border-radius:6px; color:#334155; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4;">salir</button>
-        <button onclick="resetFirebaseConfig()" style="background:none; border:none; color:#1e293b; font-size:10px; font-weight:700; font-family:inherit; padding:2px 4px; cursor:pointer; line-height:1.4;" title="Cambiar configuración Firebase">⚙️</button>
+        <a id="adminBtn" href="admin.html" style="display:none; background:#1e1b4b; border:1px solid #312e81; border-radius:6px; color:#818cf8; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4; text-decoration:none;">⚙️ admin</a>
       </div>
       <p class="stats">
         <span class="pending" id="pendingCount">0</span> pendientes ·
@@ -542,13 +457,14 @@
   let selectedCat = "🛒 Otros";
   let currentFilter = "todos";
 
-  // ── FIREBASE CONFIG (desde localStorage) ─────────────────
-  function loadFbConfig() {
-    try { return JSON.parse(localStorage.getItem('mlFirebaseConfig') || 'null'); } catch { return null; }
-  }
-  function saveFbConfig(cfg) {
-    localStorage.setItem('mlFirebaseConfig', JSON.stringify(cfg));
-  }
+  // ── FIREBASE CONFIG ───────────────────────────────────────
+  const FB_CONFIG = {
+    apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
+    projectId:   'lista-compra-9d6f5',
+    appId:       '1:241322134457:web:1b765857911f94d69cc468',
+    authDomain:  'lista-compra-9d6f5.firebaseapp.com',
+    databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
+  };
 
   // ── LOGIN ─────────────────────────────────────────────────
   let currentUser = null;
@@ -557,55 +473,10 @@
     try { return JSON.parse(localStorage.getItem('mlSession') || 'null'); } catch { return null; }
   }
 
-  function initFirebase(cfg) {
-    let _fbApp;
-    try { _fbApp = initializeApp(cfg); } catch(e) { _fbApp = getApp(); }
-    db   = getDatabase(_fbApp);
-    auth = getAuth(_fbApp);
-  }
-
-  window.doSaveConfig = async function() {
-    const databaseURL = document.getElementById('cfg_dburl').value.trim();
-    const apiKey      = document.getElementById('cfg_apikey').value.trim();
-    const projectId   = document.getElementById('cfg_projectid').value.trim();
-    const errEl       = document.getElementById('cfgError');
-    const btn         = document.getElementById('cfgSaveBtn');
-
-    if (!databaseURL || !apiKey || !projectId) {
-      errEl.textContent = 'Rellena todos los campos.';
-      errEl.style.display = 'block';
-      return;
-    }
-    errEl.style.display = 'none';
-    btn.textContent = 'Verificando...';
-    btn.disabled = true;
-
-    const cfg = {
-      apiKey,
-      projectId,
-      authDomain:  `${projectId}.firebaseapp.com`,
-      databaseURL,
-      appId: 'web'
-    };
-
-    try {
-      initFirebase(cfg);
-      await new Promise((res, rej) => {
-        const connRef = ref(db, '.info/connected');
-        onValue(connRef, (snap) => { res(snap); }, { onlyOnce: true });
-        setTimeout(() => rej(new Error('timeout')), 8000);
-      });
-      saveFbConfig(cfg);
-      document.getElementById('setupScreen').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
-      setupLoginListeners();
-    } catch(e) {
-      errEl.textContent = 'No se pudo conectar. Revisa los datos e inténtalo de nuevo.';
-      errEl.style.display = 'block';
-      btn.textContent = 'Guardar y conectar';
-      btn.disabled = false;
-    }
-  };
+  let _fbApp;
+  try { _fbApp = initializeApp(FB_CONFIG); } catch(e) { _fbApp = getApp(); }
+  db   = getDatabase(_fbApp);
+  auth = getAuth(_fbApp);
 
   window.doLogin = async function() {
     const user = document.getElementById('l_user').value.trim().toLowerCase();
@@ -613,11 +484,9 @@
     if (!user || !pass) return;
     document.getElementById('loginError').style.display = 'none';
     try {
-      // Autenticar con Firebase Auth usando email ficticio
       const email = `${user}@milista.app`;
       await signInWithEmailAndPassword(auth, email, pass);
-      // Obtener lista asignada desde la base de datos
-      const snap = await new Promise((res, rej) => {
+      const snap = await new Promise((res) => {
         onValue(ref(db, `usuarios_config/${user}`), res, { onlyOnce: true });
       });
       const userData = snap.val();
@@ -642,38 +511,20 @@
   }
   window.resetConfig = resetConfig;
 
-  window.resetFirebaseConfig = function() {
-    if (confirm('¿Borrar la configuración de Firebase y cerrar sesión?')) {
-      localStorage.removeItem('mlFirebaseConfig');
-      localStorage.removeItem('mlSession');
-      window.location.reload();
-    }
-  };
-
   function setupLoginListeners() {
     document.getElementById('l_pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
     document.getElementById('l_user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('l_pass').focus(); });
   }
 
   // ── INIT ─────────────────────────────────────────────────
-  const fbConfig  = loadFbConfig();
-  const session   = loadSession();
-
-  if (!fbConfig) {
-    document.getElementById('setupScreen').style.display = 'flex';
-    document.getElementById('cfg_dburl').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('cfg_apikey').focus(); });
-    document.getElementById('cfg_apikey').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('cfg_projectid').focus(); });
-    document.getElementById('cfg_projectid').addEventListener('keydown', e => { if (e.key === 'Enter') doSaveConfig(); });
+  const session = loadSession();
+  if (!session) {
+    document.getElementById('loginScreen').style.display = 'flex';
+    setupLoginListeners();
   } else {
-    initFirebase(fbConfig);
-    if (!session) {
-      document.getElementById('loginScreen').style.display = 'flex';
-      setupLoginListeners();
-    } else {
-      currentUser = session.user;
-      document.getElementById('mainApp').style.display = 'block';
-      initApp(session);
-    }
+    currentUser = session.user;
+    document.getElementById('mainApp').style.display = 'block';
+    initApp(session);
   }
 
   function initApp(session) {
@@ -684,6 +535,8 @@
     if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn && session.user === 'ruben') adminBtn.style.display = 'inline-block';
     window._listaPath = `listas/${lista}`;
     itemsRef = ref(db, `listas/${lista}/items`);
     historyRef = ref(db, `listas/${lista}/history`);
