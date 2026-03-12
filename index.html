@@ -751,9 +751,12 @@
             set(categoriesRef, toSave);
             set(ref(db, `${window._listaPath}/_migrated`), true);
           } else {
-            // Ya migrada, simplemente no hay categorías personalizadas
+            // Ya migrada, el usuario ha eliminado todas las categorías
             applyCategories(null);
             render();
+            if (document.getElementById('catPopup').style.display !== 'none') {
+              renderCatList();
+            }
           }
         }, { onlyOnce: true });
       } else {
