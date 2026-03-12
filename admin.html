@@ -51,11 +51,10 @@
       <p style="color:#475569; font-size:13px; margin-top:4px;">Mi Lista de la Compra</p>
     </div>
     <div class="card">
-      <label>USUARIO</label>
-      <input id="a_user" placeholder="admin" autocapitalize="none" />
-      <label>CONTRASEÑA</label>
+      <label>CONTRASEÑA DE ADMINISTRADOR</label>
+      <input id="a_user" style="display:none" />
       <input id="a_pass" type="password" placeholder="••••••••" />
-      <p id="loginErr" class="error">Usuario o contraseña incorrectos</p>
+      <p id="loginErr" class="error">Contraseña incorrecta</p>
       <button class="btn" onclick="adminLogin()">Entrar</button>
     </div>
   </div>
@@ -107,9 +106,12 @@
 </div>
 
 <script type="module">
-  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, remove, update }
+  import { initializeApp }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+           updatePassword, deleteUser as fbDeleteUser, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const FB_CONFIG = {
     apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
@@ -119,42 +121,41 @@
     databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
   };
 
-  // Admin credentials (hardcoded)
-  const ADMIN_USER = 'ruben';
-  const ADMIN_PASS = 'Mimi';
+  const ADMIN_EMAIL = 'admin@milista.app';
 
-  let db;
+  const app  = initializeApp(FB_CONFIG);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
   let usuarios = {};
   let listas   = {};
 
-  window.adminLogin = function() {
-    const user = document.getElementById('a_user').value.trim().toLowerCase();
+  // ── LOGIN ────────────────────────────────────────────────
+  window.adminLogin = async function() {
     const pass = document.getElementById('a_pass').value.trim();
-    if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
-      document.getElementById('loginErr').style.display = 'block';
-      return;
+    const err  = document.getElementById('loginErr');
+    err.style.display = 'none';
+    if (!pass) return;
+    try {
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, pass);
+      document.getElementById('loginWrap').style.display  = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      initAdmin();
+    } catch(e) {
+      err.style.display = 'block';
     }
-    document.getElementById('loginWrap').style.display  = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-    initAdmin();
   };
 
-  // Enter key on password
   document.getElementById('a_pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
-  document.getElementById('a_user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('a_pass').focus(); });
+  document.getElementById('a_user').style.display = 'none'; // solo necesitamos contraseña
+  document.querySelector('label[for="a_user"]') && (document.querySelector('label').style.display = 'none');
 
   function initAdmin() {
-    const app = initializeApp(FB_CONFIG);
-    db = getDatabase(app);
-
-    // Load usuarios
     onValue(ref(db, 'usuarios_config'), snap => {
       usuarios = snap.val() || {};
       renderUsers();
       refreshListaSelect();
     });
-
-    // Load listas
     onValue(ref(db, 'listas'), snap => {
       listas = snap.val() ? Object.keys(snap.val()) : [];
       renderListas();
@@ -163,7 +164,7 @@
   }
 
   function refreshListaSelect() {
-    const sel = document.getElementById('nu_lista');
+    const sel  = document.getElementById('nu_lista');
     const prev = sel.value;
     sel.innerHTML = Array.isArray(listas)
       ? listas.map(l => `<option value="${l}">${l}</option>`).join('')
@@ -204,36 +205,68 @@
       </div>`).join('');
   }
 
-  window.createUser = function() {
-    const user = document.getElementById('nu_user').value.trim().toLowerCase();
-    const pass = document.getElementById('nu_pass').value.trim();
+  // ── CREAR USUARIO ────────────────────────────────────────
+  window.createUser = async function() {
+    const user  = document.getElementById('nu_user').value.trim().toLowerCase();
+    const pass  = document.getElementById('nu_pass').value.trim();
     const lista = document.getElementById('nu_lista').value;
-    const err = document.getElementById('createErr');
+    const err   = document.getElementById('createErr');
     if (!user || !pass) { err.textContent = 'Rellena todos los campos'; err.style.display = 'block'; return; }
     if (usuarios[user]) { err.textContent = 'Ese usuario ya existe'; err.style.display = 'block'; return; }
     err.style.display = 'none';
-    set(ref(db, `usuarios_config/${user}`), { password: pass, lista });
-    document.getElementById('nu_user').value = '';
-    document.getElementById('nu_pass').value = '';
+    try {
+      // Crear en Firebase Auth con email ficticio
+      const email = `${user}@milista.app`;
+      const cred  = await createUserWithEmailAndPassword(auth, email, pass);
+      const uid   = cred.user.uid;
+      // Guardar en DB: uid, lista (sin contraseña)
+      await set(ref(db, `usuarios_config/${user}`), { uid, lista });
+      document.getElementById('nu_user').value = '';
+      document.getElementById('nu_pass').value = '';
+      // Volver a hacer login como admin (createUser cambia el usuario activo en Auth)
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass);
+    } catch(e) {
+      err.textContent = e.code === 'auth/email-already-in-use'
+        ? 'Ese usuario ya existe en el sistema'
+        : `Error: ${e.message}`;
+      err.style.display = 'block';
+    }
   };
 
-  window.changePass = function(key) {
+  // ── CAMBIAR CONTRASEÑA ───────────────────────────────────
+  window.changePass = async function(key) {
     const newPass = prompt(`Nueva contraseña para ${key}:`);
     if (!newPass) return;
-    update(ref(db, `usuarios_config/${key}`), { password: newPass });
+    const userData = usuarios[key];
+    if (!userData || !userData.uid) { alert('No se encontró el UID del usuario'); return; }
+    try {
+      // Necesitamos re-autenticar al usuario para cambiar su contraseña
+      // Como admin, usamos la API REST de Firebase Admin no disponible en cliente
+      // Alternativa: guardar email y usar updatePassword via sign-in temporal
+      const email = `${key}@milista.app`;
+      alert(`Para cambiar la contraseña de ${key}, ve a Firebase Console → Authentication → Users → busca ${email} → editar.`);
+    } catch(e) {
+      alert('Error al cambiar contraseña: ' + e.message);
+    }
   };
 
-  window.deleteUser = function(key) {
+  // ── ELIMINAR USUARIO ─────────────────────────────────────
+  window.deleteUser = async function(key) {
     if (!confirm(`¿Eliminar usuario "${key}"?`)) return;
-    remove(ref(db, `usuarios_config/${key}`));
+    try {
+      await remove(ref(db, `usuarios_config/${key}`));
+      // Nota: el usuario en Firebase Auth queda inactivo (no puede entrar sin entrada en usuarios_config)
+    } catch(e) {
+      alert('Error al eliminar: ' + e.message);
+    }
   };
 
+  // ── LISTAS ───────────────────────────────────────────────
   window.createLista = function() {
     const name = document.getElementById('nl_name').value.trim().toLowerCase().replace(/\s+/g, '_');
-    const err = document.getElementById('listaErr');
+    const err  = document.getElementById('listaErr');
     if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
     err.style.display = 'none';
-    // Create lista node with a placeholder so it appears in Firebase
     set(ref(db, `listas/${name}/_created`), Date.now());
     document.getElementById('nl_name').value = '';
   };
@@ -249,10 +282,9 @@
     document.getElementById(`tab-${tab}`).classList.add('active');
   };
 
-  // ── SEED initial data ─────────────────────────────────────
-  // Creates Ruben, Rita and mi_lista if they don't exist yet
-  // This runs once and is safe to leave in
-  window.addEventListener('load', () => {});
+  // Guardar pass admin en memoria para re-login tras crear usuario
+  let _adminPass = '';
+  document.getElementById('a_pass').addEventListener('input', e => { _adminPass = e.target.value; });
 </script>
 </body>
 </html>

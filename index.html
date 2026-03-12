@@ -514,6 +514,8 @@
   import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, set, push, remove, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 
 
@@ -533,7 +535,7 @@
   };
   const CAT_NAMES = Object.keys(CATEGORIES);
 
-  let db, itemsRef, historyRef;
+  let db, auth, itemsRef, historyRef;
   let userHistory = {};
   let items = {};
   let qty = 1;
@@ -558,7 +560,8 @@
   function initFirebase(cfg) {
     let _fbApp;
     try { _fbApp = initializeApp(cfg); } catch(e) { _fbApp = getApp(); }
-    db = getDatabase(_fbApp);
+    db   = getDatabase(_fbApp);
+    auth = getAuth(_fbApp);
   }
 
   window.doSaveConfig = async function() {
@@ -610,12 +613,17 @@
     if (!user || !pass) return;
     document.getElementById('loginError').style.display = 'none';
     try {
+      // Autenticar con Firebase Auth usando email ficticio
+      const email = `${user}@milista.app`;
+      await signInWithEmailAndPassword(auth, email, pass);
+      // Obtener lista asignada desde la base de datos
       const snap = await new Promise((res, rej) => {
         onValue(ref(db, `usuarios_config/${user}`), res, { onlyOnce: true });
       });
       const userData = snap.val();
-      if (!userData || userData.password !== pass) {
+      if (!userData) {
         document.getElementById('loginError').style.display = 'block';
+        await signOut(auth);
         return;
       }
       localStorage.setItem('mlSession', JSON.stringify({ user, lista: userData.lista }));
@@ -627,6 +635,7 @@
 
   function resetConfig() {
     if (confirm('¿Cerrar sesión?')) {
+      if (auth) signOut(auth);
       localStorage.removeItem('mlSession');
       window.location.reload();
     }
