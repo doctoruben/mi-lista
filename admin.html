@@ -403,12 +403,24 @@
 
   // ── ELIMINAR USUARIO ─────────────────────────────────────
   window.deleteUser = async function(key) {
-    if (!confirm(`¿Eliminar usuario "${key}"?`)) return;
+    const pass = prompt(`Para eliminar "${key}" introduce su contraseña actual:`);
+    if (!pass) return;
+    if (!confirm(`¿Eliminar usuario "${key}"? Esta acción no se puede deshacer.`)) return;
     try {
+      const email = `${key}@milista.app`;
+      // Sign in como el usuario a borrar para poder eliminarlo de Auth
+      const tempCred = await signInWithEmailAndPassword(auth, email, pass);
+      await tempCred.user.delete();
+      // Volver a loguear como admin
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass);
+      // Borrar de la base de datos
       await remove(ref(db, `usuarios_config/${key}`));
-      // Nota: el usuario en Firebase Auth queda inactivo (no puede entrar sin entrada en usuarios_config)
     } catch(e) {
-      alert('Error al eliminar: ' + e.message);
+      // Intentar reconectar como admin por si acaso
+      try { await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass); } catch {}
+      alert(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'
+        ? 'Contraseña incorrecta'
+        : `Error al eliminar: ${e.message}`);
     }
   };
 
@@ -426,9 +438,23 @@
     document.getElementById('nl_name').value = '';
   };
 
-  window.deleteLista = function(name) {
+  window.deleteLista = async function(name) {
     if (!confirm(`¿Eliminar lista "${name}" y todos sus datos?`)) return;
-    remove(ref(db, `listas/${name}`));
+    try {
+      await remove(ref(db, `listas/${name}`));
+      // Quitar la lista de todos los usuarios que la tenían
+      const updates = {};
+      Object.entries(usuarios).forEach(([uKey, u]) => {
+        const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+        if (userListas.includes(name)) {
+          const newListas = userListas.filter(l => l !== name);
+          updates[`usuarios_config/${uKey}/listas`] = newListas;
+        }
+      });
+      if (Object.keys(updates).length > 0) await update(ref(db, '/'), updates);
+    } catch(e) {
+      alert('Error al eliminar lista: ' + e.message);
+    }
   };
 
   window.showTab = function(tab) {
