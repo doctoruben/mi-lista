@@ -203,12 +203,16 @@
           <input type="checkbox" value="${l}" ${userListas.includes(l) ? 'checked' : ''} style="width:16px; height:16px; accent-color:#818cf8; cursor:pointer;" />
           <span style="font-size:14px; font-weight:600; color:#f1f5f9;">📋 ${l}</span>
         </label>`).join('') : '';
+      const avatarHtml = u.avatar
+        ? `<img src="${u.avatar}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #334155; flex-shrink:0;" />`
+        : `<div style="width:38px; height:38px; border-radius:50%; background:#1e293b; border:2px solid #334155; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">👤</div>`;
       return `
       <div style="background:#0f172a; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
         <!-- Vista normal -->
         <div id="uview-${key}" style="display:flex; align-items:center; gap:10px;">
+          ${avatarHtml}
           <div class="user-info">
-            <div class="user-name">👤 ${key.charAt(0).toUpperCase() + key.slice(1)}</div>
+            <div class="user-name">${key.charAt(0).toUpperCase() + key.slice(1)}</div>
             <div class="user-meta" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">Listas: ${listasText}</div>
           </div>
           <button class="btn-secondary" onclick="toggleEditUser('${key}')">✏️</button>
@@ -217,6 +221,21 @@
         </div>
         <!-- Modo edición -->
         <div id="uedit-${key}" style="display:none; margin-top:10px;">
+          <!-- Avatar -->
+          <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">AVATAR</div>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div id="uedit-avatar-preview-${key}" style="width:56px; height:56px; border-radius:50%; overflow:hidden; border:2px solid #334155; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#1e293b; font-size:24px;">
+              ${u.avatar ? `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover;" />` : '👤'}
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:9px 14px; text-align:center; cursor:pointer; font-size:13px; font-weight:700; color:#94a3b8;">
+                📷 Cambiar foto
+                <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar('${key}', this)" />
+              </label>
+              ${u.avatar ? `<button onclick="removeAvatar('${key}')" style="margin-top:6px; width:100%; background:#450a0a; border:none; color:#fca5a5; border-radius:10px; padding:7px; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer;">🗑 Quitar foto</button>` : ''}
+            </div>
+          </div>
+          <!-- Listas -->
           <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">LISTAS ASIGNADAS</div>
           <div id="uedit-listas-${key}" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">${checkboxes}</div>
           <div style="display:flex; gap:8px;">
@@ -236,15 +255,53 @@
     edit.style.display = isEditing ? 'none' : 'block';
   };
 
+  // Avatar temporal mientras se edita
+  const _pendingAvatars = {};
+
+  window.previewAvatar = function(key, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      // Redimensionar a 80x80 antes de guardar
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 80; canvas.height = 80;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 80, 80);
+        const b64 = canvas.toDataURL('image/jpeg', 0.8);
+        _pendingAvatars[key] = b64;
+        const preview = document.getElementById(`uedit-avatar-preview-${key}`);
+        preview.innerHTML = `<img src="${b64}" style="width:100%; height:100%; object-fit:cover;" />`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.removeAvatar = function(key) {
+    _pendingAvatars[key] = null;
+    const preview = document.getElementById(`uedit-avatar-preview-${key}`);
+    preview.innerHTML = '👤';
+  };
+
   window.saveUserListas = async function(key) {
     const checked = [...document.querySelectorAll(`#uedit-listas-${key} input[type=checkbox]:checked`)];
     const newListas = checked.map(c => c.value);
     if (newListas.length === 0) { alert('Selecciona al menos una lista'); return; }
     const existing = usuarios[key] || {};
     const updated = { uid: existing.uid, listas: newListas };
+    // Gestionar avatar
+    if (key in _pendingAvatars) {
+      if (_pendingAvatars[key] === null) delete updated.avatar;
+      else updated.avatar = _pendingAvatars[key];
+      delete _pendingAvatars[key];
+    } else if (existing.avatar) {
+      updated.avatar = existing.avatar;
+    }
     try {
       await set(ref(db, `usuarios_config/${key}`), updated);
-      // renderUsers se llamará solo desde el listener onValue
     } catch(e) {
       alert('Error al guardar: ' + e.message);
     }
