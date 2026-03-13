@@ -10,6 +10,8 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon.png" />
   <title>Mis Listas</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1e293b" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap');
@@ -630,6 +632,7 @@
         : (userData.lista ? [userData.lista] : []);
 
       if (listas.length === 0) {
+        document.getElementById('loginError').textContent = 'Tu usuario no tiene ninguna lista asignada. Contacta con el administrador.';
         document.getElementById('loginError').style.display = 'block';
         await signOut(auth);
         return;
@@ -1658,4 +1661,11 @@
 </script>
 
 </body>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
 </html>
