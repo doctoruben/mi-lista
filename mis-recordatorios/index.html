@@ -42,12 +42,12 @@
     .stats .pending { color: #c9a84c; font-weight: 800; }
     .stats .done { color: #4ade80; font-weight: 800; }
 
-    .add-card { background: #1a1714; border-radius: 20px; padding: 16px; border: 1px solid #2e2720; box-shadow: 0 4px 24px rgba(0,0,0,0.4); margin-bottom: 14px; }
-    .input-row { display: flex; gap: 8px; align-items: center; height: 50px; }
-    .main-input { flex: 1; height: 50px; background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; padding: 0 14px; color: #f0ebe0; font-size: 16px; font-family: inherit; outline: none; }
+    .add-card { background: #1a1714; border-radius: 20px; padding: 16px; border: 1px solid #2e2720; box-shadow: 0 4px 24px rgba(0,0,0,0.4); margin-bottom: 14px; overflow: hidden; }
+    .input-row { display: flex; gap: 8px; align-items: center; }
+    .main-input { flex: 1; min-width: 0; height: 50px; background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; padding: 0 14px; color: #f0ebe0; font-size: 16px; font-family: inherit; outline: none; }
     .main-input::placeholder { color: #5a4a35; }
     .main-input:focus { border-color: #c9a84c; }
-    .mic-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; width: 50px; height: 50px; min-width: 50px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+    .mic-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; width: 50px; height: 50px; min-width: 50px; max-width: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
     .mic-btn:active { background: #2e2720; }
     .add-btn { width: 100%; background: linear-gradient(90deg, #c9a84c, #a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 16px; font-weight: 900; font-family: inherit; cursor: pointer; transition: transform 0.1s; margin-top: 10px; }
     .add-btn:active { transform: scale(0.97); }
