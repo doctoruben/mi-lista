@@ -20,24 +20,70 @@
     input:focus { border-color: #c9a84c; }
     .btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; }
     .btn:active { opacity: 0.85; }
-    .btn-danger { background: #450a0a; color: #fca5a5; border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-danger { background: #450a0a; color: #fca5a5; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .btn-danger:active { background: #7f1d1d; }
-    .btn-sm { background: #1a1714; color: #8a7a60; border: 1px solid #2e2720; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-sm { background: #1a1714; color: #c9a84c; border: 1px solid #5a3a0a; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .btn-sm:active { background: #2a1f08; }
     .error { color: #f87171; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
     .success { color: #4ade80; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
-    .section-title { font-size: 11px; font-weight: 900; color: #6b5c42; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; margin-top: 4px; }
-    .user-row {
-      display: flex; align-items: center; gap: 10px;
-      background: #0d0b09; border-radius: 12px; padding: 12px 14px;
-      margin-bottom: 8px; border: 1px solid #2e2720;
+    .section-title { font-size: 11px; font-weight: 900; color: #6b5c42; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    .user-card {
+      background: #0d0b09; border-radius: 14px; border: 1px solid #2e2720; margin-bottom: 10px; overflow: hidden;
     }
-    .user-name { font-size: 15px; font-weight: 700; color: #f0ebe0; flex: 1; }
+    .user-header {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+    }
+    .user-avatar-img {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      background: #2a1f08; flex-shrink: 0; border: 2px solid #2e2720;
+      display: flex; align-items: center; justify-content: center; font-size: 20px; color: #5a4a35;
+      overflow: hidden;
+    }
+    .user-avatar-img img { width: 100%; height: 100%; object-fit: cover; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 15px; font-weight: 800; color: #f0ebe0; }
     .user-meta { font-size: 11px; color: #5a4a35; margin-top: 2px; }
+    .admin-badge { background: #2a1f08; color: #c9a84c; border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 900; letter-spacing: 0.5px; margin-left: 6px; }
+    .user-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .user-detail {
+      border-top: 1px solid #1a1714; padding: 14px; display: none;
+      flex-direction: column; gap: 10px;
+    }
+    .user-detail.open { display: flex; }
+    .detail-label { font-size: 11px; font-weight: 800; color: #8a7a60; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .detail-row { display: flex; gap: 8px; align-items: center; }
+    .detail-input {
+      flex: 1; background: #141210; border: 1px solid #2e2720; border-radius: 10px;
+      padding: 9px 12px; color: #f0ebe0; font-size: 14px; font-family: inherit; outline: none;
+    }
+    .detail-input:focus { border-color: #c9a84c; }
+    .avatar-preview {
+      width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
+      border: 2px solid #2e2720; flex-shrink: 0; background: #1a1714;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+      overflow: hidden;
+    }
+    .avatar-preview img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .save-btn {
+      background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none;
+      border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 900;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+    }
+    .save-btn:active { opacity: 0.85; }
     .back-link {
       display: inline-block; background: #0d0b09; border: 1px solid #2e2720;
       border-radius: 10px; color: #8a7a60; font-size: 13px; font-weight: 700;
       padding: 8px 14px; text-decoration: none;
     }
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: #1a1714; border: 1px solid #2e2720; border-radius: 12px;
+      padding: 10px 20px; font-size: 13px; font-weight: 700; color: #f0ebe0;
+      z-index: 9999; white-space: nowrap; pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateX(-50%) translateY(8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
   </style>
 </head>
 <body>
@@ -67,7 +113,6 @@
     </div>
     <p class="subtitle">Gestión de usuarios — MEMENTO</p>
 
-    <!-- CREAR USUARIO -->
     <div class="card">
       <h2>Crear usuario</h2>
       <label>NOMBRE DE USUARIO</label>
@@ -79,7 +124,6 @@
       <p id="createOk" class="success"></p>
     </div>
 
-    <!-- LISTA USUARIOS -->
     <div class="section-title">Usuarios con acceso</div>
     <div id="usersList"></div>
   </div>
@@ -87,7 +131,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, update, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -103,7 +148,6 @@
   const db   = getDatabase(app);
   const auth = getAuth(app);
 
-  // Admin de MEMENTO: ruben@milista.app / Mimi2026
   const ADMIN_USER  = 'ruben';
   const ADMIN_EMAIL = 'ruben@milista.app';
   let _adminPass = '';
@@ -112,28 +156,22 @@
   document.getElementById('a_pass').addEventListener('keydown', e => { if(e.key==='Enter') adminLogin(); });
   document.getElementById('a_pass').addEventListener('input',   e => { _adminPass = e.target.value; });
 
-  // ── LOGIN ADMIN ──────────────────────────────────────────
+  // ── LOGIN ────────────────────────────────────────────────
   window.adminLogin = async function() {
     const pass = document.getElementById('a_pass').value.trim();
     const err  = document.getElementById('loginErr');
     err.style.display = 'none';
     if (!pass) return;
     try {
-      // El admin es ruben — autenticamos con su cuenta
       await signInWithEmailAndPassword(auth, ADMIN_EMAIL, pass);
-      // Verificar que es exactamente ruben (por si alguien intenta con otro usuario)
-      if (auth.currentUser.email !== ADMIN_EMAIL) {
-        await signOut(auth); err.style.display = 'block'; return;
-      }
+      if (auth.currentUser.email !== ADMIN_EMAIL) { await signOut(auth); err.style.display='block'; return; }
       document.getElementById('loginWrap').style.display  = 'none';
       document.getElementById('adminPanel').style.display = 'block';
       initAdmin();
     } catch(e) { err.style.display = 'block'; }
   };
 
-  // ── INIT ADMIN ───────────────────────────────────────────
   function initAdmin() {
-    // Escuchar cambios en memento_usuarios/
     onValue(ref(db, 'memento_usuarios'), snap => {
       usuarios = snap.val() || {};
       renderUsers();
@@ -143,23 +181,127 @@
   // ── RENDER USUARIOS ──────────────────────────────────────
   function renderUsers() {
     const c = document.getElementById('usersList');
-    const keys = Object.keys(usuarios).filter(k => k !== ADMIN_USER); // ruben siempre tiene acceso, no se muestra para borrar
+    // Ordenar: ruben primero, resto alfabético
+    const keys = Object.keys(usuarios).sort((a,b) => {
+      if (a === ADMIN_USER) return -1;
+      if (b === ADMIN_USER) return 1;
+      return a.localeCompare(b);
+    });
+
     if (!keys.length) {
-      c.innerHTML = '<p style="color:#5a4a35;font-size:13px;padding:8px 0;">No hay otros usuarios aún.</p>';
+      c.innerHTML = '<p style="color:#5a4a35;font-size:13px;padding:8px 0;">No hay usuarios aún.</p>';
       return;
     }
+
     c.innerHTML = keys.map(key => {
-      const u = usuarios[key];
+      const u = usuarios[key] || {};
+      const isAdmin = key === ADMIN_USER;
       const fecha = u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-ES') : '';
-      return `<div class="user-row">
-        <div style="flex:1;">
-          <div class="user-name">👤 ${key}</div>
-          ${fecha ? '<div class="user-meta">Alta: '+fecha+'</div>' : ''}
+      const avatarHtml = u.avatar
+        ? `<div class="user-avatar-img"><img src="${u.avatar}" /></div>`
+        : `<div class="user-avatar-img">👤</div>`;
+
+      return `
+      <div class="user-card" id="card-${key}">
+        <div class="user-header">
+          ${avatarHtml}
+          <div class="user-info">
+            <div class="user-name">
+              ${key.charAt(0).toUpperCase() + key.slice(1)}
+              ${isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
+            </div>
+            ${fecha ? `<div class="user-meta">Alta: ${fecha}</div>` : ''}
+          </div>
+          <div class="user-actions">
+            <button class="btn-sm" onclick="toggleDetail('${key}')">✏️ Editar</button>
+            ${!isAdmin ? `<button class="btn-danger" onclick="deleteUser('${key}')">🗑</button>` : ''}
+          </div>
         </div>
-        <button class="btn-danger" onclick="deleteUser('${key}')">🗑 Eliminar</button>
+        <div class="user-detail" id="detail-${key}">
+          <!-- FOTO -->
+          <div>
+            <div class="detail-label">FOTO DE PERFIL (URL)</div>
+            <div class="detail-row">
+              <div class="avatar-preview" id="prev-${key}">
+                ${u.avatar ? `<img src="${u.avatar}" />` : '👤'}
+              </div>
+              <input class="detail-input" id="avatar-${key}" type="url"
+                placeholder="https://..." value="${u.avatar || ''}"
+                oninput="previewAvatar('${key}')" />
+              <button class="save-btn" onclick="saveAvatar('${key}')">✓</button>
+            </div>
+          </div>
+          <!-- CONTRASEÑA -->
+          <div>
+            <div class="detail-label">CAMBIAR CONTRASEÑA</div>
+            <div class="detail-row">
+              <input class="detail-input" id="pass-${key}" type="password" placeholder="Nueva contraseña..." />
+              <button class="save-btn" onclick="savePass('${key}')">✓</button>
+            </div>
+          </div>
+        </div>
       </div>`;
     }).join('');
   }
+
+  window.toggleDetail = function(key) {
+    const d = document.getElementById('detail-' + key);
+    d.classList.toggle('open');
+  };
+
+  // ── PREVIEW AVATAR ───────────────────────────────────────
+  window.previewAvatar = function(key) {
+    const url = document.getElementById('avatar-' + key).value.trim();
+    const prev = document.getElementById('prev-' + key);
+    if (url) {
+      prev.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='❌'" />`;
+    } else {
+      prev.innerHTML = '👤';
+    }
+  };
+
+  // ── GUARDAR AVATAR ───────────────────────────────────────
+  window.saveAvatar = async function(key) {
+    const url = document.getElementById('avatar-' + key).value.trim();
+    try {
+      await update(ref(db, 'memento_usuarios/' + key), { avatar: url || null });
+      showToast('✓ Foto actualizada');
+    } catch(e) { showToast('❌ Error: ' + e.message); }
+  };
+
+  // ── CAMBIAR CONTRASEÑA ───────────────────────────────────
+  window.savePass = async function(key) {
+    const newPass = document.getElementById('pass-' + key).value.trim();
+    if (!newPass) { showToast('❌ Escribe una contraseña'); return; }
+    if (newPass.length < 6) { showToast('❌ Mínimo 6 caracteres'); return; }
+
+    // Para cambiar contraseña en Firebase Auth necesitamos
+    // autenticarnos como ese usuario temporalmente
+    const currentAdminPass = _adminPass;
+    try {
+      // Pedir la contraseña actual del usuario
+      const currentPass = prompt('Introduce la contraseña ACTUAL de ' + key + ':');
+      if (!currentPass) return;
+
+      // Autenticar como el usuario
+      const cred = await signInWithEmailAndPassword(auth, key + '@milista.app', currentPass);
+      // Cambiar contraseña — importar updatePassword
+      const { updatePassword } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      await updatePassword(cred.user, newPass);
+
+      // Volver a loguear como admin
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, currentAdminPass);
+
+      document.getElementById('pass-' + key).value = '';
+      showToast('✓ Contraseña de ' + key + ' actualizada');
+    } catch(e) {
+      // Intentar reconectar como admin
+      try { await signInWithEmailAndPassword(auth, ADMIN_EMAIL, currentAdminPass); } catch {}
+      showToast('❌ ' + (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'
+        ? 'Contraseña actual incorrecta'
+        : e.message));
+    }
+  };
 
   // ── CREAR USUARIO ────────────────────────────────────────
   window.createUser = async function() {
@@ -167,38 +309,27 @@
     const pass = document.getElementById('nu_pass').value.trim();
     const err  = document.getElementById('createErr');
     const ok   = document.getElementById('createOk');
-    err.style.display = 'none';
-    ok.style.display  = 'none';
+    err.style.display = 'none'; ok.style.display = 'none';
 
     if (!user || !pass) { err.textContent='Rellena nombre y contraseña'; err.style.display='block'; return; }
     if (pass.length < 6) { err.textContent='La contraseña debe tener al menos 6 caracteres'; err.style.display='block'; return; }
     if (usuarios[user]) { err.textContent='Ese usuario ya tiene acceso a MEMENTO'; err.style.display='block'; return; }
 
     try {
-      const email = user + '@milista.app';
       let uid;
       try {
-        // Intentar crear cuenta nueva en Firebase Auth
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
+        const cred = await createUserWithEmailAndPassword(auth, user + '@milista.app', pass);
         uid = cred.user.uid;
-        // Volver a loguear como admin
         await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass);
       } catch(authErr) {
         if (authErr.code === 'auth/email-already-in-use') {
-          // La cuenta ya existe en Firebase Auth — solo añadimos acceso a MEMENTO
           uid = 'existing';
-        } else {
-          throw authErr;
-        }
+        } else { throw authErr; }
       }
-      // Registrar en memento_usuarios/
-      await set(ref(db, 'memento_usuarios/' + user), {
-        uid,
-        createdAt: Date.now()
-      });
+      await set(ref(db, 'memento_usuarios/' + user), { uid, createdAt: Date.now() });
       document.getElementById('nu_user').value = '';
       document.getElementById('nu_pass').value = '';
-      ok.textContent = '✓ Usuario "' + user + '" añadido correctamente';
+      ok.textContent = '✓ Usuario "' + user + '" añadido';
       ok.style.display = 'block';
       setTimeout(() => { ok.style.display='none'; }, 3000);
     } catch(e) {
@@ -212,10 +343,18 @@
     if (!confirm('¿Eliminar a "' + key + '" de MEMENTO?')) return;
     try {
       await remove(ref(db, 'memento_usuarios/' + key));
-    } catch(e) {
-      alert('Error: ' + e.message);
-    }
+      showToast('✓ Usuario eliminado');
+    } catch(e) { showToast('❌ Error: ' + e.message); }
   };
+
+  // ── TOAST ────────────────────────────────────────────────
+  function showToast(msg) {
+    const e = document.getElementById('_toast'); if(e) e.remove();
+    const t = document.createElement('div');
+    t.id='_toast'; t.className='toast'; t.textContent=msg;
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 2800);
+  }
 </script>
 </body>
 </html>
