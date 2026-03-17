@@ -1,6 +1,6 @@
 {
-  "name": "Mis Listas",
-  "short_name": "Mis Listas",
+  "name": "Lista NET",
+  "short_name": "Lista NET",
   "description": "Lista de la compra",
   "start_url": "/mi-lista/index.html",
   "scope": "/mi-lista/",
