@@ -410,7 +410,28 @@
 </script>
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', ()=>navigator.serviceWorker.register('/mi-lista/mis-recordatorios/sw.js').catch(()=>{}));
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/mi-lista/mis-recordatorios/sw.js')
+        .then(reg => {
+          // Comprobar actualizaciones cada vez que se abre la app
+          reg.update();
+          // Si hay un nuevo SW esperando, recargar automáticamente
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'activated') {
+                window.location.reload();
+              }
+            });
+          });
+        })
+        .catch(() => {});
+
+      // Si el SW controla la página y hay uno nuevo, recargar
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    });
   }
 </script>
 </body>
