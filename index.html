@@ -398,6 +398,8 @@
           <input class="main-input" id="itemInput" type="text" placeholder="Añadir artículo..." autocomplete="off" />
           <div class="suggestions" id="suggestions" style="display:none"></div>
         </div>
+        <button id="micBtn" onclick="toggleMic()" title="Añadir por voz"
+          style="background:#1e293b; border:1px solid #334155; border-radius:12px; width:44px; height:44px; font-size:20px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">🎤</button>
       </div>
       <select class="cat-select" id="catSelect" onchange="selectedCat = this.value"></select>
       <div class="qty-row">
@@ -1549,6 +1551,96 @@
     remove(ref(db, `${window._listaPath}/history/${key}`));
     const q = document.getElementById('manageSearch').value;
     renderManage(q);
+  };
+
+  // ── TOAST ─────────────────────────────────────────────────
+  function showToast(msg) {
+    const existing = document.getElementById('voiceToast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'voiceToast';
+    toast.style.cssText = `
+      position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+      background:#1e293b; border:1px solid #334155; border-radius:14px;
+      padding:12px 20px; z-index:9999; max-width:320px; width:calc(100% - 32px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.5); font-size:14px; font-weight:700;
+      color:#f1f5f9; text-align:center; animation:slideUp 0.3s ease;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { if (document.getElementById('voiceToast')) toast.remove(); }, 3000);
+  }
+
+  // ── VOZ ──────────────────────────────────────────────────
+  let _recognition = null;
+  let _micActive = false;
+
+  window.toggleMic = function() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
+      return;
+    }
+    if (_micActive) {
+      _recognition && _recognition.stop();
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    _recognition = new SpeechRecognition();
+    _recognition.lang = 'es-ES';
+    _recognition.interimResults = false;
+    _recognition.maxAlternatives = 1;
+
+    _micActive = true;
+    const btn = document.getElementById('micBtn');
+    btn.style.background = '#7f1d1d';
+    btn.style.borderColor = '#f87171';
+    btn.textContent = '🔴';
+
+    _recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript.trim().toLowerCase();
+      // Eliminar palabras clave de comando
+      const prefijos = ['añadir ', 'agregar ', 'poner ', 'meter ', 'apuntar '];
+      let nombre = transcript;
+      for (const p of prefijos) {
+        if (transcript.startsWith(p)) {
+          nombre = transcript.slice(p.length).trim();
+          break;
+        }
+      }
+      // Capitalizar primera letra
+      nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+
+      // Si venía con prefijo "añadir/agregar..." → añadir directo
+      const teniaPrefijo = prefijos.some(p => transcript.startsWith(p));
+      const input = document.getElementById('itemInput');
+      input.value = nombre;
+
+      if (teniaPrefijo) {
+        addItem();
+        showToast(`✅ "${nombre}" añadido por voz`);
+      } else {
+        input.focus();
+        showToast(`🎤 "${nombre}" — pulsa Añadir para confirmar`);
+      }
+    };
+
+    _recognition.onerror = function(e) {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        showToast('❌ Error de micrófono: ' + e.error);
+      }
+    };
+
+    _recognition.onend = function() {
+      _micActive = false;
+      const btn = document.getElementById('micBtn');
+      if (btn) {
+        btn.style.background = '#1e293b';
+        btn.style.borderColor = '#334155';
+        btn.textContent = '🎤';
+      }
+    };
+
+    _recognition.start();
   };
 
   // ── IMAGE VIEWER ─────────────────────────────────────────
