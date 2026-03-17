@@ -126,8 +126,7 @@
 
   const ADMIN_EMAIL = 'admin@milista.app';
 
-  let _app;
-  try { _app = initializeApp(FB_CONFIG, 'memento-admin'); } catch(e) { _app = initializeApp(FB_CONFIG); }
+    const _app = initializeApp(FB_CONFIG, 'memento-admin');
   const db   = getDatabase(_app);
   const auth = getAuth(_app);
 
