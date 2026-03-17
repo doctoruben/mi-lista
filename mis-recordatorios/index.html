@@ -359,7 +359,11 @@
   }
 
   let _fbApp;
-  try { _fbApp = initializeApp(FB_CONFIG, 'recordatorios'); } catch(e) { try { _fbApp = getApp('recordatorios'); } catch { _fbApp = initializeApp(FB_CONFIG); } }
+  try {
+    _fbApp = initializeApp(FB_CONFIG);
+  } catch(e) {
+    _fbApp = getApp();
+  }
   db   = getDatabase(_fbApp);
   auth = getAuth(_fbApp);
 
@@ -380,8 +384,8 @@
         await signOut(auth);
         return;
       }
-      // En MEMENTO cada usuario tiene su propio espacio de recordatorios
-      localStorage.setItem('mrSession', JSON.stringify({ user }));
+      // Guardar sesión con credenciales para re-autenticar tras reload
+      localStorage.setItem('mrSession', JSON.stringify({ user, pass }));
       window.location.reload();
     } catch(e) {
       document.getElementById('loginError').style.display = 'block';
@@ -413,7 +417,7 @@
     initApp(session);
   }
 
-  function initApp(session) {
+  async function initApp(session) {
     currentUser = session.user;
 
     const badge = document.getElementById('userBadge');
@@ -424,6 +428,18 @@
 
     const adminBtn = document.getElementById('adminBtn');
     if (adminBtn && session.user === 'ruben') adminBtn.style.display = 'inline-block';
+
+    // Re-autenticar si no hay sesión activa en Firebase
+    try {
+      if (!auth.currentUser && session.pass) {
+        await signInWithEmailAndPassword(auth, `${session.user}@milista.app`, session.pass);
+      }
+    } catch(e) {
+      // Si falla re-auth, limpiar sesión y volver al login
+      localStorage.removeItem('mrSession');
+      window.location.reload();
+      return;
+    }
 
     // Cargar avatar
     onValue(ref(db, `usuarios_config/${session.user}/avatar`), (snap) => {
