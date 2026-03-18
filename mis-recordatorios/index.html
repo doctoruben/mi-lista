@@ -19,6 +19,7 @@
     ::-webkit-scrollbar-thumb { background: #5a4a35; border-radius: 2px; }
     .app { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; }
 
+    /* LOGIN */
     .setup-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
     .setup-card { background: #1a1714; border-radius: 24px; padding: 28px 24px; border: 1px solid #2e2720; max-width: 440px; width: 100%; }
     .setup-card p { color: #6b5c42; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
@@ -26,9 +27,10 @@
     .setup-field label { display: block; font-size: 12px; font-weight: 800; color: #8a7a60; margin-bottom: 5px; letter-spacing: 0.5px; }
     .setup-field input { width: 100%; background: #0d0b09; border: 1px solid #2e2720; border-radius: 10px; padding: 10px 12px; color: #f0ebe0; font-size: 15px; font-family: inherit; outline: none; }
     .setup-field input:focus { border-color: #c9a84c; }
-    .setup-btn { width: 100%; background: #c9a84c; background: -webkit-linear-gradient(left, #c9a84c, #a8832a); background: linear-gradient(90deg, #c9a84c, #a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; margin-top: 4px; -webkit-appearance: none; appearance: none; }
+    .setup-btn { width: 100%; background: #c9a84c; background: -webkit-linear-gradient(left,#c9a84c,#a8832a); background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; margin-top: 4px; -webkit-appearance: none; }
     .setup-btn:active { opacity: 0.85; }
 
+    /* SYNC */
     .sync-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 0 0; font-size: 11px; font-weight: 700; color: #5a4a35; }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #5a4a35; transition: background 0.3s; }
     .sync-dot.online { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
@@ -36,112 +38,105 @@
     .sync-dot.error { background: #f87171; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
+    /* HEADER */
     .header { padding: 20px 0 14px; text-align: center; }
-    .header-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 4px; }
+    .header-top { display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
     .stats { color: #6b5c42; font-size: 14px; text-align: center; margin-top: 4px; }
     .stats .pending { color: #c9a84c; font-weight: 800; }
     .stats .done { color: #4ade80; font-weight: 800; }
 
+    /* ADD CARD */
     .add-card { background: #1a1714; border-radius: 20px; padding: 16px; border: 1px solid #2e2720; box-shadow: 0 4px 24px rgba(0,0,0,0.4); margin-bottom: 14px; overflow: hidden; }
     .input-row { display: flex; gap: 8px; align-items: center; }
     .main-input { flex: 1; min-width: 0; height: 50px; background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; padding: 0 14px; color: #f0ebe0; font-size: 16px; font-family: inherit; outline: none; }
     .main-input::placeholder { color: #5a4a35; }
     .main-input:focus { border-color: #c9a84c; }
-    .mic-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; width: 50px; height: 50px; min-width: 50px; max-width: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; -webkit-appearance: none; appearance: none; }
+    .mic-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; width: 50px; height: 50px; min-width: 50px; max-width: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; -webkit-appearance: none; border: none; }
     .mic-btn:active { background: #2e2720; }
-    .add-btn { width: 100%; background: #c9a84c; background: -webkit-linear-gradient(left, #c9a84c, #a8832a); background: linear-gradient(90deg, #c9a84c, #a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 16px; font-weight: 900; font-family: inherit; cursor: pointer; transition: transform 0.1s; margin-top: 10px; -webkit-appearance: none; appearance: none; }
+    .add-btn { width: 100%; background: #c9a84c; background: -webkit-linear-gradient(left,#c9a84c,#a8832a); background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 16px; font-weight: 900; font-family: inherit; cursor: pointer; transition: transform 0.1s; margin-top: 10px; -webkit-appearance: none; }
     .add-btn:active { transform: scale(0.97); }
 
+    /* FILTERS */
     .filters { display: flex; gap: 8px; margin-bottom: 14px; }
-    .filter-btn { flex: 1; padding: 10px 0; border-radius: 12px; font-size: 12px; font-weight: 800; font-family: inherit; background: #1a1714; color: #6b5c42; border: 1px solid #2e2720; cursor: pointer; transition: all 0.15s; -webkit-appearance: none; appearance: none; }
+    .filter-btn { flex: 1; padding: 10px 0; border-radius: 12px; font-size: 12px; font-weight: 800; font-family: inherit; background: #1a1714; color: #6b5c42; border: 1px solid #2e2720; cursor: pointer; transition: all 0.15s; -webkit-appearance: none; }
     .filter-btn.active { background: #c9a84c; color: #0d0b09; border-color: #c9a84c; }
 
+    /* ITEMS */
     .items { display: flex; flex-direction: column; gap: 8px; }
     .empty { text-align: center; color: #5a4a35; padding: 40px 0; font-size: 15px; }
-
     .item { background: #1a1714; border-radius: 16px; padding: 14px; border: 1px solid #2e2720; transition: all 0.25s; animation: slideIn 0.25s ease; }
     .item.checked { background: #0d0b09; border-color: #1a1714; opacity: 0.5; }
-    /* Fila superior: check + botones alineados a la derecha */
-    .item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-    /* Fila inferior: texto a todo el ancho */
-    .item-body { display: flex; flex-direction: column; gap: 2px; }
     @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
 
-    .check-btn { width: 28px; height: 28px; border-radius: 8px; border: 2px solid #5a4a35; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 14px; color: #0d0b09; -webkit-appearance: none; appearance: none; }
+    /* ITEM LAYOUT */
+    .item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .item-body { display: flex; flex-direction: column; gap: 2px; }
+    .check-btn { width: 28px; height: 28px; border-radius: 8px; border: 2px solid #5a4a35; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 14px; color: #0d0b09; -webkit-appearance: none; }
     .check-btn.checked { border-color: #c9a84c; background: #c9a84c; }
+    .item-actions { display: flex; align-items: center; gap: 6px; }
     .item-name { font-weight: 700; font-size: 15px; color: #f0ebe0; white-space: normal; word-break: break-word; transition: all 0.2s; }
     .item-name.checked { text-decoration: line-through; color: #5a4a35; }
     .item-ts { font-size: 11px; color: #5a4a35; margin-top: 1px; }
 
-    /* ALARM ROW */
+    /* BUTTONS */
+    .alarm-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s; -webkit-appearance: none; }
+    .alarm-btn:active { background: #2e2720; }
+    .alarm-btn.has-alarm { border-color: #5a3a0a; background: #2a1f08; }
+    .edit-btn { background: #0d0b09; border: 1px solid #2e2720; color: #8a7a60; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; -webkit-appearance: none; }
+    .edit-btn:active { background: #2e2720; border-color: #c9a84c; }
+    .del-btn { background: #450a0a; border: none; color: #fca5a5; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; -webkit-appearance: none; }
+    .del-btn:active { background: #7f1d1d; }
+
+    /* ALARM BADGE */
     .item-alarm { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #2e2720; }
-    .alarm-badge {
-      display: flex; align-items: center; gap: 5px;
-      background: #2a1f08; border: 1px solid #5a3a0a;
-      border-radius: 8px; padding: 4px 10px;
-      font-size: 12px; font-weight: 700; color: #c9a84c;
-      flex: 1; min-width: 0;
-    }
-    .alarm-badge.fired { background: #1a2a1a; border-color: #2a5a2a; color: #4ade80; }
-    .alarm-badge.overdue { background: #2a0a0a; border-color: #5a1a1a; color: #f87171; }
+    .alarm-badge { display: flex; align-items: center; gap: 5px; background: #2a1f08; border: 1px solid #5a3a0a; border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 700; color: #c9a84c; flex: 1; min-width: 0; }
     .alarm-del { background: none; border: none; color: #5a4a35; font-size: 16px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
     .alarm-del:active { color: #f87171; }
 
-    .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    .alarm-btn {
-      background: #0d0b09; border: 1px solid #2e2720; border-radius: 8px;
-      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; flex-shrink: 0; transition: all 0.15s; -webkit-appearance: none; appearance: none;
-    }
-    .alarm-btn:active { background: #2e2720; }
-    .alarm-btn.has-alarm { border-color: #5a3a0a; background: #2a1f08; }
-    .edit-btn { background: #0d0b09; border: 1px solid #2e2720; color: #8a7a60; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; margin-top: 1px; -webkit-appearance: none; appearance: none; }
-    .edit-btn:active { background: #2e2720; border-color: #c9a84c; }
-    .del-btn { background: #450a0a; border: none; color: #fca5a5; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; margin-top: 1px; -webkit-appearance: none; appearance: none; }
-    .del-btn:active { background: #7f1d1d; }
-    /* EDIT INLINE */
-    .edit-row { display: none; margin-top: 10px; gap: 8px; align-items: center; }
+    /* EDIT ROW */
+    .edit-row { display: none; margin-top: 10px; gap: 8px; align-items: flex-start; }
     .edit-row.open { display: flex; }
     .edit-input { flex: 1; min-width: 0; background: #0d0b09; border: 1px solid #c9a84c; border-radius: 10px; padding: 9px 12px; color: #f0ebe0; font-size: 15px; font-family: inherit; outline: none; resize: none; overflow: hidden; min-height: 44px; line-height: 1.4; }
-    .edit-save { background: #c9a84c; background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 900; font-family: inherit; cursor: pointer; white-space: nowrap; -webkit-appearance: none; }
-    .edit-cancel { background: #1a1714; border: 1px solid #2e2720; color: #8a7a60; border-radius: 10px; padding: 9px 12px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
+    .edit-save { background: #c9a84c; background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 10px; padding: 9px 12px; font-size: 14px; font-weight: 900; font-family: inherit; cursor: pointer; white-space: nowrap; -webkit-appearance: none; }
+    .edit-cancel { background: #1a1714; border: 1px solid #2e2720; color: #8a7a60; border-radius: 10px; padding: 9px 10px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
 
+    /* CLEAR BTN */
     .clear-btn { width: 100%; margin-top: 10px; background: none; border: 1px dashed #2e2720; border-radius: 12px; color: #5a4a35; padding: 12px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
     .clear-btn:active { border-color: #f87171; color: #f87171; }
 
-    /* ALARM PICKER POPUP */
-    .popup-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); align-items: flex-end; justify-content: center; }
-    .popup-overlay.open { display: flex; }
-    .popup-sheet {
-      width: 100%; max-width: 480px; background: #1a1714; border-radius: 24px 24px 0 0;
-      padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid #2e2720;
-    }
-    .popup-handle { width: 40px; height: 4px; background: #2e2720; border-radius: 2px; margin: 0 auto 18px; }
-    .popup-title { font-family: 'Abril Fatface', serif; font-size: 20px; color: #f5f0e8; margin-bottom: 16px; }
-    .datetime-input {
-      width: 100%; background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px;
-      padding: 12px 14px; color: #f0ebe0; font-size: 16px; font-family: inherit; outline: none;
-      margin-bottom: 14px; -webkit-appearance: none; appearance: none;
-      color-scheme: dark;
-    }
-    .datetime-input:focus { border-color: #c9a84c; }
-    .popup-btns { display: flex; gap: 10px; }
-    .popup-save { flex: 1; background: #c9a84c; background: -webkit-linear-gradient(left,#c9a84c,#a8832a); background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
-    .popup-cancel { background: #0d0b09; border: 1px solid #2e2720; color: #8a7a60; border-radius: 12px; padding: 13px 18px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
-
-    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1a1714; border: 1px solid #2e2720; border-radius: 14px; padding: 12px 20px; font-size: 14px; font-weight: 700; color: #f0ebe0; z-index: 9999; white-space: nowrap; pointer-events: none; animation: slideUp 0.3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+    /* USER BAR */
     .user-bar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
     .user-pill { display: flex; align-items: center; gap: 6px; background: #0d0b09; border: 1px solid #2e2720; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #8a7a60; }
     .user-avatar { width: 24px; height: 24px; border-radius: 50%; background: #2a1f08; display: none; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-    .action-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #8a7a60; cursor: pointer; font-family: inherit; transition: all 0.15s; display: none; }
+    .action-btn { background: #0d0b09; border: 1px solid #2e2720; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #8a7a60; cursor: pointer; font-family: inherit; transition: all 0.15s; display: none; -webkit-appearance: none; }
     .action-btn:active { border-color: #c9a84c; color: #c9a84c; }
     .admin-btn { color: #c9a84c; border-color: #5a3a0a; }
+
+    /* GROUP HEADERS */
     .group-header { display: flex; align-items: center; gap: 8px; padding: 14px 4px 8px; }
     .group-title { font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #8a7a60; }
     .group-line { flex: 1; height: 1px; background: #2e2720; }
     .group-count { font-size: 11px; font-weight: 800; color: #5a4a35; background: #1a1714; border-radius: 20px; padding: 2px 8px; }
+
+    /* POPUP */
+    .popup-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); align-items: flex-end; justify-content: center; }
+    .popup-overlay.open { display: flex; }
+    .popup-sheet { width: 100%; max-width: 480px; background: #1a1714; border-radius: 24px 24px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom,0px)); border-top: 1px solid #2e2720; }
+    .popup-handle { width: 40px; height: 4px; background: #2e2720; border-radius: 2px; margin: 0 auto 18px; }
+    .popup-title { font-family: 'Abril Fatface', serif; font-size: 20px; color: #f5f0e8; margin-bottom: 6px; }
+    .popup-subtitle { font-size: 13px; color: #6b5c42; margin-bottom: 16px; }
+    .datetime-input { width: 100%; background: #0d0b09; border: 1px solid #2e2720; border-radius: 12px; padding: 12px 14px; color: #f0ebe0; font-size: 16px; font-family: inherit; outline: none; margin-bottom: 14px; -webkit-appearance: none; color-scheme: dark; }
+    .datetime-input:focus { border-color: #c9a84c; }
+    .popup-btns { display: flex; flex-direction: column; gap: 10px; }
+    .popup-btns-row { display: flex; gap: 8px; }
+    .popup-save { flex: 1; background: #c9a84c; background: -webkit-linear-gradient(left,#c9a84c,#a8832a); background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
+    .popup-cancel { background: #0d0b09; border: 1px solid #2e2720; color: #8a7a60; border-radius: 12px; padding: 13px 18px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
+    .popup-gcal { width: 100%; background: #0a1628; border: 1px solid #1a73e8; color: #4da3ff; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 800; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; -webkit-appearance: none; transition: background 0.15s; }
+    .popup-gcal:active { background: #0d1f3a; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1a1714; border: 1px solid #2e2720; border-radius: 14px; padding: 12px 20px; font-size: 14px; font-weight: 700; color: #f0ebe0; z-index: 9999; white-space: nowrap; pointer-events: none; animation: slideUp 0.3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
     @supports (padding-bottom: env(safe-area-inset-bottom)) { .app { padding-bottom: calc(120px + env(safe-area-inset-bottom)); } }
   </style>
 </head>
@@ -216,15 +211,29 @@
   </div>
 </div>
 
-<!-- ALARM PICKER POPUP -->
+<!-- ALARM POPUP -->
 <div class="popup-overlay" id="alarmPopup">
   <div class="popup-sheet">
     <div class="popup-handle"></div>
-    <div class="popup-title">🔔 Programar aviso</div>
+    <div class="popup-title">📅 Programar aviso</div>
+    <div class="popup-subtitle">Elige fecha y hora — se añadirá a Google Calendar</div>
     <input type="datetime-local" class="datetime-input" id="alarmDatetime" />
     <div class="popup-btns">
-      <button class="popup-cancel" onclick="closeAlarmPopup()">Cancelar</button>
-      <button class="popup-save" onclick="saveAlarm()">✓ Guardar aviso</button>
+      <button class="popup-gcal" onclick="addToGoogleCalendar()">
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="17" rx="2" fill="white" stroke="#dadce0" stroke-width="1"/>
+          <rect x="3" y="4" width="18" height="6" rx="2" fill="#1a73e8"/>
+          <rect x="3" y="7" width="18" height="3" fill="#1a73e8"/>
+          <text x="12" y="19" text-anchor="middle" font-size="7" font-weight="900" fill="#1a73e8" font-family="sans-serif">31</text>
+          <line x1="8" y1="2" x2="8" y2="6" stroke="#5f6368" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="16" y1="2" x2="16" y2="6" stroke="#5f6368" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Añadir a Google Calendar
+      </button>
+      <div class="popup-btns-row">
+        <button class="popup-cancel" onclick="closeAlarmPopup()">Cancelar</button>
+        <button class="popup-save" onclick="saveAlarmOnly()">Guardar sin Calendar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -252,19 +261,10 @@
   let currentFilter = 'todos';
   let itemsRef;
   let _listaPath;
-  let _currentAlarmId = null; // id del recordatorio al que se está añadiendo alarma
+  let _currentAlarmId = null;
 
   function loadSession() {
     try { return JSON.parse(localStorage.getItem('mrSession') || 'null'); } catch { return null; }
-  }
-
-  // ── NOTIFICACIONES ───────────────────────────────────────
-  async function requestNotificationPermission() {
-    if (!('Notification' in window)) return false;
-    if (Notification.permission === 'granted') return true;
-    if (Notification.permission === 'denied') return false;
-    const perm = await Notification.requestPermission();
-    return perm === 'granted';
   }
 
   // ── LOGIN ────────────────────────────────────────────────
@@ -334,22 +334,7 @@
       items = snap.val() || {};
       setSyncStatus('online', 'Sincronizado');
       render();
-      checkAlarms();
-      syncAlarmsToSW(); // Mantener SW sincronizado con los datos actuales
     }, () => setSyncStatus('error', 'Error de conexión'));
-
-    // Pedir permiso de notificaciones al iniciar
-    await requestNotificationPermission();
-
-    // Revisar alarmas cada 30 segundos mientras la app está abierta
-    setInterval(checkAlarms, 30000);
-
-    // Sincronizar con el SW cuando esté listo
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(() => {
-        setTimeout(syncAlarmsToSW, 1000); // Pequeño delay para que el SW esté listo
-      });
-    }
   }
 
   function setSyncStatus(state, text) {
@@ -359,86 +344,17 @@
 
   function itemRef(id) { return ref(db, _listaPath + '/recordatorios/' + id); }
 
-  // ── ALARMAS ──────────────────────────────────────────────
-
-  // Enviar todas las alarmas activas al SW para que las programe
-  function syncAlarmsToSW() {
-    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
-    const alarms = Object.entries(items)
-      .filter(([, item]) => item.alarmTs && !item.alarmFired && !item.checked)
-      .map(([id, item]) => ({ id, name: item.name, alarmTs: item.alarmTs }));
-    navigator.serviceWorker.controller.postMessage({ type: 'SYNC_ALARMS', alarms });
-  }
-
-  // Enviar una alarma concreta al SW
-  function scheduleAlarmInSW(id, name, alarmTs) {
-    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
-    navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_ALARM', id, name, alarmTs });
-  }
-
-  // Cancelar alarma en el SW
-  function cancelAlarmInSW(id) {
-    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
-    navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_ALARM', id });
-  }
-
-  // Comprobar alarmas que hayan vencido mientras la app estaba abierta
-  function checkAlarms() {
-    const now = Date.now();
-    Object.entries(items).forEach(([id, item]) => {
-      if (item.checked || !item.alarmTs || item.alarmFired) return;
-      if (item.alarmTs <= now) fireAlarm(id, item);
-    });
-    // Mantener el SW sincronizado
-    syncAlarmsToSW();
-  }
-
-  function fireAlarm(id, item) {
-    update(itemRef(id), { alarmFired: true });
-    // Notificación directa si la app está en primer plano
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        // Intentar via SW registration (más fiable en Android)
-        if (navigator.serviceWorker.controller) {
-          self.registration?.showNotification('🔔 MEMENTO', {
-            body: item.name,
-            icon: '/mi-lista/mis-recordatorios/icon-192.png',
-            tag: 'memento-' + id,
-            requireInteraction: true,
-            vibrate: [300, 100, 300]
-          });
-        } else {
-          new Notification('🔔 MEMENTO', {
-            body: item.name,
-            icon: '/mi-lista/mis-recordatorios/icon-192.png',
-            tag: 'memento-' + id,
-            requireInteraction: true
-          });
-        }
-      } catch(e) {
-        new Notification('🔔 MEMENTO', { body: item.name });
-      }
-    }
-    showToast('🔔 ' + item.name);
-  }
-
   // ── ALARM POPUP ──────────────────────────────────────────
   window.openAlarmPopup = function(id) {
     _currentAlarmId = id;
     const item = items[id];
     const input = document.getElementById('alarmDatetime');
-    if (item.alarmTs) {
-      // Mostrar fecha existente
+    if (item && item.alarmTs) {
       const d = new Date(item.alarmTs);
-      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-        .toISOString().slice(0,16);
-      input.value = local;
+      input.value = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
     } else {
-      // Default: 1 hora desde ahora
       const d = new Date(Date.now() + 3600000);
-      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-        .toISOString().slice(0,16);
-      input.value = local;
+      input.value = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
     }
     document.getElementById('alarmPopup').classList.add('open');
   };
@@ -448,39 +364,62 @@
     _currentAlarmId = null;
   };
 
-  window.saveAlarm = function() {
-    const id = _currentAlarmId;
-    if (!id) { closeAlarmPopup(); return; }
+  function validateAlarm() {
     const val = document.getElementById('alarmDatetime').value;
-    if (!val) { showToast('❌ Elige una fecha y hora'); return; }
+    if (!val) { showToast('❌ Elige una fecha y hora'); return null; }
     const ts = new Date(val).getTime();
-    if (isNaN(ts) || ts <= Date.now()) { showToast('❌ La fecha debe ser futura'); return; }
+    if (isNaN(ts) || ts <= Date.now()) { showToast('❌ La fecha debe ser futura'); return null; }
+    return ts;
+  }
 
-    // Cerrar popup primero para evitar bloqueos
+  function toGCalDate(date) {
+    const p = n => String(n).padStart(2,'0');
+    return date.getFullYear() + p(date.getMonth()+1) + p(date.getDate()) +
+           'T' + p(date.getHours()) + p(date.getMinutes()) + '00';
+  }
+
+  // Añadir a Google Calendar Y guardar en app
+  window.addToGoogleCalendar = function() {
+    const ts = validateAlarm();
+    if (!ts) return;
+    const id = _currentAlarmId;
+    const item = items[id] || {};
+    const name = item.name || 'Recordatorio';
+
     closeAlarmPopup();
 
     // Guardar en Firebase
-    update(itemRef(id), { alarmTs: ts, alarmFired: false })
-      .then(() => {
-        const d = new Date(ts);
-        const fecha = d.toLocaleDateString('es-ES', {day:'numeric', month:'short'});
-        const hora  = d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-        showToast('🔔 Aviso: ' + fecha + ' a las ' + hora);
-        // Programar en el SW inmediatamente
-        const item = items[id] || {};
-        scheduleAlarmInSW(id, item.name || '', ts);
-        // Pedir permiso si aún no se ha dado
-        if ('Notification' in window && Notification.permission === 'default') {
-          Notification.requestPermission();
-        }
-      })
-      .catch(e => showToast('❌ Error al guardar: ' + e.message));
+    update(itemRef(id), { alarmTs: ts });
+
+    // Construir URL de Google Calendar
+    const start = new Date(ts);
+    const end   = new Date(ts + 30 * 60000);
+    const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+      '&text=' + encodeURIComponent('🔔 ' + name) +
+      '&dates=' + toGCalDate(start) + '/' + toGCalDate(end) +
+      '&details=' + encodeURIComponent('Recordatorio de MEMENTO') +
+      '&sf=true&output=xml';
+
+    window.open(url, '_blank');
+
+    const d = new Date(ts);
+    showToast('📅 ' + d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
   };
 
-  window.removeAlarm = async function(id, e) {
+  // Guardar solo en la app sin abrir Calendar
+  window.saveAlarmOnly = function() {
+    const ts = validateAlarm();
+    if (!ts) return;
+    const id = _currentAlarmId;
+    closeAlarmPopup();
+    update(itemRef(id), { alarmTs: ts });
+    const d = new Date(ts);
+    showToast('🔔 ' + d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}) + ' a las ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
+  };
+
+  window.removeAlarm = function(id, e) {
     e.stopPropagation();
-    await update(itemRef(id), { alarmTs: null, alarmFired: null });
-    cancelAlarmInSW(id);
+    update(itemRef(id), { alarmTs: null });
     showToast('🔕 Aviso eliminado');
   };
 
@@ -504,23 +443,54 @@
 
   window.toggleItem = function(id) {
     const item = items[id];
-    if (item) { setSyncStatus('syncing', 'Guardando...'); update(itemRef(id), {checked: !item.checked}); }
+    if (item) { setSyncStatus('syncing','Guardando...'); update(itemRef(id), {checked: !item.checked}); }
   };
 
   window.removeItem = function(id) {
-    setSyncStatus('syncing', 'Guardando...'); remove(itemRef(id));
+    setSyncStatus('syncing','Guardando...'); remove(itemRef(id));
   };
 
   window.clearChecked = function() {
     if (!confirm('¿Eliminar todos los recordatorios realizados?')) return;
-    setSyncStatus('syncing', 'Guardando...');
-    Object.entries(items).forEach(([id, item]) => { if (item.checked) remove(itemRef(id)); });
+    setSyncStatus('syncing','Guardando...');
+    Object.entries(items).forEach(([id,item]) => { if(item.checked) remove(itemRef(id)); });
   };
 
-  window.setFilter = function(f, btn) {
+  window.setFilter = function(f,btn) {
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active'); render();
+  };
+
+  // ── EDITAR ───────────────────────────────────────────────
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+  window.autoResize = autoResize;
+
+  window.toggleEdit = function(id) {
+    const row = document.getElementById('edit-' + id);
+    const input = document.getElementById('edit-input-' + id);
+    const isOpen = row.classList.contains('open');
+    document.querySelectorAll('.edit-row.open').forEach(r => r.classList.remove('open'));
+    if (!isOpen) {
+      row.classList.add('open');
+      if (input) setTimeout(() => { autoResize(input); input.focus(); input.select(); }, 10);
+    }
+  };
+
+  window.saveEdit = async function(id) {
+    const input = document.getElementById('edit-input-' + id);
+    if (!input) return;
+    const newName = input.value.trim();
+    if (!newName) { showToast('❌ El recordatorio no puede estar vacío'); return; }
+    if (newName === items[id]?.name) { toggleEdit(id); return; }
+    const dup = Object.entries(items).find(([k,i]) => k !== id && !i.checked && i.name.toLowerCase() === newName.toLowerCase());
+    if (dup) { showToast('⚠️ Ya existe ese recordatorio'); return; }
+    setSyncStatus('syncing','Guardando...');
+    await update(itemRef(id), { name: newName });
+    showToast('✓ Recordatorio actualizado');
   };
 
   // ── RENDER ───────────────────────────────────────────────
@@ -532,47 +502,38 @@
     if (d < 60000) return 'Hace un momento';
     if (d < 3600000) return 'Hace ' + Math.floor(d/60000) + ' min';
     if (d < 86400000) return 'Hace ' + Math.floor(d/3600000) + ' h';
-    return new Date(ts).toLocaleDateString('es-ES', {day:'numeric', month:'short'});
+    return new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
   }
 
   function formatAlarm(ts) {
     const d = new Date(ts);
     const now = new Date();
-    const isToday = d.toDateString() === now.toDateString();
-    const time = d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-    if (isToday) return 'Hoy ' + time;
-    const tomorrow = new Date(now); tomorrow.setDate(now.getDate()+1);
-    if (d.toDateString() === tomorrow.toDateString()) return 'Mañana ' + time;
-    return d.toLocaleDateString('es-ES', {day:'numeric', month:'short'}) + ' ' + time;
+    const time = d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    if (d.toDateString() === now.toDateString()) return 'Hoy ' + time;
+    const tom = new Date(now); tom.setDate(now.getDate()+1);
+    if (d.toDateString() === tom.toDateString()) return 'Mañana ' + time;
+    return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}) + ' ' + time;
   }
 
   function renderItem(id, item) {
     const hasAlarm = !!item.alarmTs;
-    const alarmFired = item.alarmFired;
-    const alarmOverdue = hasAlarm && !alarmFired && item.alarmTs < Date.now();
-
-    let alarmRowHtml = '';
-    if (hasAlarm) {
-      const badgeClass = alarmFired ? 'alarm-badge fired' : (alarmOverdue ? 'alarm-badge overdue' : 'alarm-badge');
-      const icon = alarmFired ? '✅' : (alarmOverdue ? '⚠️' : '🔔');
-      const label = alarmFired ? 'Aviso enviado — ' + formatAlarm(item.alarmTs) : formatAlarm(item.alarmTs);
-      alarmRowHtml = `
-        <div class="item-alarm">
-          <div class="${badgeClass}">${icon} ${label}</div>
-          <button class="alarm-del" onclick="removeAlarm('${id}', event)" title="Eliminar aviso">✕</button>
-        </div>`;
-    }
+    const alarmRowHtml = hasAlarm ? `
+      <div class="item-alarm">
+        <div class="alarm-badge">📅 ${formatAlarm(item.alarmTs)}</div>
+        <button class="alarm-del" onclick="removeAlarm('${id}',event)" title="Eliminar aviso">✕</button>
+      </div>` : '';
 
     return `
     <div class="item${item.checked?' checked':''}" id="item-${id}">
       <div class="item-top">
         <button class="check-btn${item.checked?' checked':''}" onclick="toggleItem('${id}')">${item.checked?'✓':''}</button>
-        <div style="flex:1;"></div>
+        <div style="flex:1"></div>
         <div class="item-actions">
-          <button class="alarm-btn${hasAlarm?' has-alarm':''}" onclick="openAlarmPopup('${id}')" title="Programar aviso">
+          <button class="alarm-btn${hasAlarm?' has-alarm':''}" onclick="openAlarmPopup('${id}')" title="Programar aviso en Calendar">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hasAlarm?'#c9a84c':'#5a4a35'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              <rect x="3" y="4" width="18" height="17" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
           </button>
           <button class="edit-btn" onclick="toggleEdit('${id}')" title="Editar">
@@ -591,8 +552,7 @@
       <div class="edit-row" id="edit-${id}">
         <textarea class="edit-input" id="edit-input-${id}"
           onkeydown="if(event.key==='Escape')toggleEdit('${id}')"
-          oninput="autoResize(this)"
-          rows="1">${esc(item.name)}</textarea>
+          oninput="autoResize(this)" rows="1">${esc(item.name)}</textarea>
         <button class="edit-save" onclick="saveEdit('${id}')">✓</button>
         <button class="edit-cancel" onclick="toggleEdit('${id}')">✕</button>
       </div>
@@ -607,20 +567,20 @@
 
     document.getElementById('pendingCount').textContent = pending.length;
     document.getElementById('doneCount').textContent    = done.length;
-    const clearBtn = document.getElementById('clearBtn');
-    clearBtn.style.display = done.length > 0 ? 'block' : 'none';
-    clearBtn.textContent = '🗑 Eliminar ' + done.length + ' recordatorio' + (done.length!==1?'s':'') + ' realizado' + (done.length!==1?'s':'');
+    const cb = document.getElementById('clearBtn');
+    cb.style.display = done.length > 0 ? 'block' : 'none';
+    cb.textContent = '🗑 Eliminar ' + done.length + ' recordatorio' + (done.length!==1?'s':'') + ' realizado' + (done.length!==1?'s':'');
 
     const list = document.getElementById('itemList');
-    if (currentFilter === 'pendientes') {
+    if (currentFilter==='pendientes') {
       list.innerHTML = pending.length===0 ? '<div class="empty">¡Todo realizado! 🎉</div>' : pending.map(([id,i])=>renderItem(id,i)).join('');
       return;
     }
-    if (currentFilter === 'realizados') {
+    if (currentFilter==='realizados') {
       list.innerHTML = done.length===0 ? '<div class="empty">Nada realizado aún</div>' : done.map(([id,i])=>renderItem(id,i)).join('');
       return;
     }
-    if (all.length===0) { list.innerHTML='<div class="empty">¡Sin recordatorios! Añade uno 🔔</div>'; return; }
+    if (all.length===0) { list.innerHTML='<div class="empty">¡Sin recordatorios! Añade uno 📅</div>'; return; }
     let html = '';
     if (pending.length>0) {
       html += `<div class="group-header"><span class="group-title">Pendientes</span><div class="group-line"></div><span class="group-count">${pending.length}</span></div>`;
@@ -641,46 +601,10 @@
     setTimeout(()=>t.remove(), 2800);
   };
 
-  // ── EDITAR RECORDATORIO ──────────────────────────────────
-  function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-  }
-  window.autoResize = autoResize;
-
-  window.toggleEdit = function(id) {
-    const row = document.getElementById('edit-' + id);
-    const input = document.getElementById('edit-input-' + id);
-    const isOpen = row.classList.contains('open');
-    // Cerrar cualquier otro que esté abierto
-    document.querySelectorAll('.edit-row.open').forEach(r => r.classList.remove('open'));
-    if (!isOpen) {
-      row.classList.add('open');
-      if (input) {
-        // Ajustar altura al contenido actual
-        setTimeout(() => { autoResize(input); input.focus(); input.select(); }, 10);
-      }
-    }
-  };
-
-  window.saveEdit = async function(id) {
-    const input = document.getElementById('edit-input-' + id);
-    if (!input) return;
-    const newName = input.value.trim();
-    if (!newName) { showToast('❌ El recordatorio no puede estar vacío'); return; }
-    if (newName === items[id]?.name) { toggleEdit(id); return; }
-    // Comprobar duplicado
-    const dup = Object.entries(items).find(([k, i]) => k !== id && !i.checked && i.name.toLowerCase() === newName.toLowerCase());
-    if (dup) { showToast('⚠️ Ya existe ese recordatorio'); return; }
-    setSyncStatus('syncing', 'Guardando...');
-    await update(itemRef(id), { name: newName });
-    showToast('✓ Recordatorio actualizado');
-  };
-
   // ── MICRÓFONO ────────────────────────────────────────────
   let _rec=null, _micActive=false;
   const MIC_SVG = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#8a7a60"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
-  const MIC_ACTIVE = `<svg width="22" height="22" viewBox="0 0 24 24" fill="#f87171" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
+  const MIC_ON  = `<svg width="22" height="22" viewBox="0 0 24 24" fill="#f87171" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
 
   window.toggleMic = function() {
     if (_micActive) { if(_rec) _rec.stop(); return; }
@@ -689,8 +613,7 @@
     _rec=new SR(); _rec.lang='es-ES'; _rec.interimResults=false; _rec.maxAlternatives=1;
     _micActive=true;
     const btn=document.getElementById('micBtn');
-    btn.style.background='#7f1d1d'; btn.style.borderColor='#f87171';
-    btn.innerHTML=MIC_ACTIVE;
+    btn.style.background='#7f1d1d'; btn.style.border='1px solid #f87171'; btn.innerHTML=MIC_ON;
     _rec.onresult=e=>{
       const t=e.results[0][0].transcript.trim();
       const prefijos=['añadir ','agregar ','poner ','meter ','recordar ','apuntar '];
@@ -706,7 +629,7 @@
     _rec.onend=()=>{
       _micActive=false;
       const btn=document.getElementById('micBtn');
-      if(btn){btn.style.background='#0d0b09';btn.style.borderColor='#2e2720';btn.innerHTML=MIC_SVG;}
+      if(btn){btn.style.background=''; btn.style.border=''; btn.innerHTML=MIC_SVG;}
     };
     _rec.start();
   };
