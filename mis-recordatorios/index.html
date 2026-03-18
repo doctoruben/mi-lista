@@ -61,16 +61,18 @@
 
     .item { background: #1a1714; border-radius: 16px; padding: 14px; border: 1px solid #2e2720; transition: all 0.25s; animation: slideIn 0.25s ease; }
     .item.checked { background: #0d0b09; border-color: #1a1714; opacity: 0.5; }
+    /* Fila superior: check + botones alineados a la derecha */
+    .item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    /* Fila inferior: texto a todo el ancho */
+    .item-body { display: flex; flex-direction: column; gap: 2px; }
     @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
     @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
 
-    .item-top { display: flex; align-items: flex-start; gap: 12px; }
-    .check-btn { width: 30px; height: 30px; border-radius: 9px; border: 2px solid #5a4a35; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 16px; color: #0d0b09; margin-top: 2px; -webkit-appearance: none; appearance: none; }
+    .check-btn { width: 28px; height: 28px; border-radius: 8px; border: 2px solid #5a4a35; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 14px; color: #0d0b09; -webkit-appearance: none; appearance: none; }
     .check-btn.checked { border-color: #c9a84c; background: #c9a84c; }
-    .item-info { flex: 1; min-width: 0; }
-    .item-name { font-weight: 700; font-size: 16px; color: #f0ebe0; white-space: normal; word-break: break-word; transition: all 0.2s; }
+    .item-name { font-weight: 700; font-size: 15px; color: #f0ebe0; white-space: normal; word-break: break-word; transition: all 0.2s; }
     .item-name.checked { text-decoration: line-through; color: #5a4a35; }
-    .item-ts { font-size: 11px; color: #5a4a35; margin-top: 3px; }
+    .item-ts { font-size: 11px; color: #5a4a35; margin-top: 1px; }
 
     /* ALARM ROW */
     .item-alarm { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #2e2720; }
@@ -332,14 +334,22 @@
       items = snap.val() || {};
       setSyncStatus('online', 'Sincronizado');
       render();
-      checkAlarms(); // Revisar alarmas cada vez que cambian los datos
+      checkAlarms();
+      syncAlarmsToSW(); // Mantener SW sincronizado con los datos actuales
     }, () => setSyncStatus('error', 'Error de conexión'));
 
     // Pedir permiso de notificaciones al iniciar
     await requestNotificationPermission();
 
-    // Revisar alarmas cada minuto
-    setInterval(checkAlarms, 60000);
+    // Revisar alarmas cada 30 segundos mientras la app está abierta
+    setInterval(checkAlarms, 30000);
+
+    // Sincronizar con el SW cuando esté listo
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        setTimeout(syncAlarmsToSW, 1000); // Pequeño delay para que el SW esté listo
+      });
+    }
   }
 
   function setSyncStatus(state, text) {
@@ -350,33 +360,64 @@
   function itemRef(id) { return ref(db, _listaPath + '/recordatorios/' + id); }
 
   // ── ALARMAS ──────────────────────────────────────────────
+
+  // Enviar todas las alarmas activas al SW para que las programe
+  function syncAlarmsToSW() {
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+    const alarms = Object.entries(items)
+      .filter(([, item]) => item.alarmTs && !item.alarmFired && !item.checked)
+      .map(([id, item]) => ({ id, name: item.name, alarmTs: item.alarmTs }));
+    navigator.serviceWorker.controller.postMessage({ type: 'SYNC_ALARMS', alarms });
+  }
+
+  // Enviar una alarma concreta al SW
+  function scheduleAlarmInSW(id, name, alarmTs) {
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+    navigator.serviceWorker.controller.postMessage({ type: 'SCHEDULE_ALARM', id, name, alarmTs });
+  }
+
+  // Cancelar alarma en el SW
+  function cancelAlarmInSW(id) {
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+    navigator.serviceWorker.controller.postMessage({ type: 'CANCEL_ALARM', id });
+  }
+
+  // Comprobar alarmas que hayan vencido mientras la app estaba abierta
   function checkAlarms() {
     const now = Date.now();
     Object.entries(items).forEach(([id, item]) => {
-      if (item.checked) return; // No avisar de los ya realizados
-      if (!item.alarmTs) return;
-      if (item.alarmFired) return; // Ya se disparó
-      if (item.alarmTs <= now) {
-        fireAlarm(id, item);
-      }
+      if (item.checked || !item.alarmTs || item.alarmFired) return;
+      if (item.alarmTs <= now) fireAlarm(id, item);
     });
+    // Mantener el SW sincronizado
+    syncAlarmsToSW();
   }
 
   function fireAlarm(id, item) {
-    // Marcar como disparada en Firebase
     update(itemRef(id), { alarmFired: true });
-
-    // Lanzar notificación
+    // Notificación directa si la app está en primer plano
     if ('Notification' in window && Notification.permission === 'granted') {
-      const notif = new Notification('🔔 MEMENTO', {
-        body: item.name,
-        icon: '/mi-lista/mis-recordatorios/icon-192.png',
-        badge: '/mi-lista/mis-recordatorios/icon-72x72.png',
-        tag: 'memento-' + id,
-        requireInteraction: true, // No desaparece sola
-        vibrate: [200, 100, 200]
-      });
-      notif.onclick = () => { window.focus(); notif.close(); };
+      try {
+        // Intentar via SW registration (más fiable en Android)
+        if (navigator.serviceWorker.controller) {
+          self.registration?.showNotification('🔔 MEMENTO', {
+            body: item.name,
+            icon: '/mi-lista/mis-recordatorios/icon-192.png',
+            tag: 'memento-' + id,
+            requireInteraction: true,
+            vibrate: [300, 100, 300]
+          });
+        } else {
+          new Notification('🔔 MEMENTO', {
+            body: item.name,
+            icon: '/mi-lista/mis-recordatorios/icon-192.png',
+            tag: 'memento-' + id,
+            requireInteraction: true
+          });
+        }
+      } catch(e) {
+        new Notification('🔔 MEMENTO', { body: item.name });
+      }
     }
     showToast('🔔 ' + item.name);
   }
@@ -425,7 +466,10 @@
         const fecha = d.toLocaleDateString('es-ES', {day:'numeric', month:'short'});
         const hora  = d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
         showToast('🔔 Aviso: ' + fecha + ' a las ' + hora);
-        // Pedir permiso de notificaciones después (no bloquea el guardado)
+        // Programar en el SW inmediatamente
+        const item = items[id] || {};
+        scheduleAlarmInSW(id, item.name || '', ts);
+        // Pedir permiso si aún no se ha dado
         if ('Notification' in window && Notification.permission === 'default') {
           Notification.requestPermission();
         }
@@ -436,6 +480,7 @@
   window.removeAlarm = async function(id, e) {
     e.stopPropagation();
     await update(itemRef(id), { alarmTs: null, alarmFired: null });
+    cancelAlarmInSW(id);
     showToast('🔕 Aviso eliminado');
   };
 
@@ -522,10 +567,7 @@
     <div class="item${item.checked?' checked':''}" id="item-${id}">
       <div class="item-top">
         <button class="check-btn${item.checked?' checked':''}" onclick="toggleItem('${id}')">${item.checked?'✓':''}</button>
-        <div class="item-info">
-          <div class="item-name${item.checked?' checked':''}">${esc(item.name)}</div>
-          <div class="item-ts">${timeAgo(item.ts)}</div>
-        </div>
+        <div style="flex:1;"></div>
         <div class="item-actions">
           <button class="alarm-btn${hasAlarm?' has-alarm':''}" onclick="openAlarmPopup('${id}')" title="Programar aviso">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hasAlarm?'#c9a84c':'#5a4a35'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -541,6 +583,10 @@
           </button>
           <button class="del-btn" onclick="removeItem('${id}')">×</button>
         </div>
+      </div>
+      <div class="item-body">
+        <div class="item-name${item.checked?' checked':''}">${esc(item.name)}</div>
+        <div class="item-ts">${timeAgo(item.ts)}</div>
       </div>
       <div class="edit-row" id="edit-${id}">
         <textarea class="edit-input" id="edit-input-${id}"
