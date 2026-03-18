@@ -94,8 +94,16 @@
     }
     .alarm-btn:active { background: #2e2720; }
     .alarm-btn.has-alarm { border-color: #5a3a0a; background: #2a1f08; }
+    .edit-btn { background: #0d0b09; border: 1px solid #2e2720; color: #8a7a60; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; margin-top: 1px; -webkit-appearance: none; appearance: none; }
+    .edit-btn:active { background: #2e2720; border-color: #c9a84c; }
     .del-btn { background: #450a0a; border: none; color: #fca5a5; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; margin-top: 1px; -webkit-appearance: none; appearance: none; }
     .del-btn:active { background: #7f1d1d; }
+    /* EDIT INLINE */
+    .edit-row { display: none; margin-top: 10px; gap: 8px; align-items: center; }
+    .edit-row.open { display: flex; }
+    .edit-input { flex: 1; min-width: 0; background: #0d0b09; border: 1px solid #c9a84c; border-radius: 10px; padding: 9px 12px; color: #f0ebe0; font-size: 15px; font-family: inherit; outline: none; }
+    .edit-save { background: #c9a84c; background: linear-gradient(90deg,#c9a84c,#a8832a); color: #0d0b09; border: none; border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 900; font-family: inherit; cursor: pointer; white-space: nowrap; -webkit-appearance: none; }
+    .edit-cancel { background: #1a1714; border: 1px solid #2e2720; color: #8a7a60; border-radius: 10px; padding: 9px 12px; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
 
     .clear-btn { width: 100%; margin-top: 10px; background: none; border: 1px dashed #2e2720; border-radius: 12px; color: #5a4a35; padding: 12px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all 0.2s; }
     .clear-btn:active { border-color: #f87171; color: #f87171; }
@@ -399,24 +407,30 @@
     _currentAlarmId = null;
   };
 
-  window.saveAlarm = async function() {
-    if (!_currentAlarmId) return;
+  window.saveAlarm = function() {
+    const id = _currentAlarmId;
+    if (!id) { closeAlarmPopup(); return; }
     const val = document.getElementById('alarmDatetime').value;
     if (!val) { showToast('❌ Elige una fecha y hora'); return; }
     const ts = new Date(val).getTime();
-    if (ts <= Date.now()) { showToast('❌ La fecha debe ser futura'); return; }
+    if (isNaN(ts) || ts <= Date.now()) { showToast('❌ La fecha debe ser futura'); return; }
 
-    // Pedir permiso si aún no se ha dado
-    const granted = await requestNotificationPermission();
-    if (!granted) {
-      showToast('⚠️ Activa las notificaciones para recibir avisos');
-    }
-
-    await update(itemRef(_currentAlarmId), { alarmTs: ts, alarmFired: false });
+    // Cerrar popup primero para evitar bloqueos
     closeAlarmPopup();
 
-    const d = new Date(ts);
-    showToast('🔔 Aviso programado para ' + d.toLocaleDateString('es-ES', {day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}));
+    // Guardar en Firebase
+    update(itemRef(id), { alarmTs: ts, alarmFired: false })
+      .then(() => {
+        const d = new Date(ts);
+        const fecha = d.toLocaleDateString('es-ES', {day:'numeric', month:'short'});
+        const hora  = d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+        showToast('🔔 Aviso: ' + fecha + ' a las ' + hora);
+        // Pedir permiso de notificaciones después (no bloquea el guardado)
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+      })
+      .catch(e => showToast('❌ Error al guardar: ' + e.message));
   };
 
   window.removeAlarm = async function(id, e) {
@@ -505,7 +519,7 @@
     }
 
     return `
-    <div class="item${item.checked?' checked':''}">
+    <div class="item${item.checked?' checked':''}" id="item-${id}">
       <div class="item-top">
         <button class="check-btn${item.checked?' checked':''}" onclick="toggleItem('${id}')">${item.checked?'✓':''}</button>
         <div class="item-info">
@@ -519,8 +533,20 @@
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
           </button>
+          <button class="edit-btn" onclick="toggleEdit('${id}')" title="Editar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
           <button class="del-btn" onclick="removeItem('${id}')">×</button>
         </div>
+      </div>
+      <div class="edit-row" id="edit-${id}">
+        <input class="edit-input" id="edit-input-${id}" value="${esc(item.name)}"
+          onkeydown="if(event.key==='Enter')saveEdit('${id}');if(event.key==='Escape')toggleEdit('${id}')" />
+        <button class="edit-save" onclick="saveEdit('${id}')">✓</button>
+        <button class="edit-cancel" onclick="toggleEdit('${id}')">✕</button>
       </div>
       ${alarmRowHtml}
     </div>`;
@@ -565,6 +591,33 @@
     t.id='_toast'; t.className='toast'; t.textContent=msg;
     document.body.appendChild(t);
     setTimeout(()=>t.remove(), 2800);
+  };
+
+  // ── EDITAR RECORDATORIO ──────────────────────────────────
+  window.toggleEdit = function(id) {
+    const row = document.getElementById('edit-' + id);
+    const input = document.getElementById('edit-input-' + id);
+    const isOpen = row.classList.contains('open');
+    // Cerrar cualquier otro que esté abierto
+    document.querySelectorAll('.edit-row.open').forEach(r => r.classList.remove('open'));
+    if (!isOpen) {
+      row.classList.add('open');
+      if (input) { input.focus(); input.select(); }
+    }
+  };
+
+  window.saveEdit = async function(id) {
+    const input = document.getElementById('edit-input-' + id);
+    if (!input) return;
+    const newName = input.value.trim();
+    if (!newName) { showToast('❌ El recordatorio no puede estar vacío'); return; }
+    if (newName === items[id]?.name) { toggleEdit(id); return; }
+    // Comprobar duplicado
+    const dup = Object.entries(items).find(([k, i]) => k !== id && !i.checked && i.name.toLowerCase() === newName.toLowerCase());
+    if (dup) { showToast('⚠️ Ya existe ese recordatorio'); return; }
+    setSyncStatus('syncing', 'Guardando...');
+    await update(itemRef(id), { name: newName });
+    showToast('✓ Recordatorio actualizado');
   };
 
   // ── MICRÓFONO ────────────────────────────────────────────
