@@ -274,7 +274,7 @@
   };
 
   const GCAL_CLIENT_ID = '948639859257-ou7s31mt97u9il8m0d1gku5nhhlcrtu5.apps.googleusercontent.com';
-  const GCAL_SCOPES    = 'https://www.googleapis.com/auth/calendar.events';
+  const GCAL_SCOPES    = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events';
 
   const app  = initializeApp(FB_CONFIG, 'mementov2');
   const db   = getDatabase(app);
