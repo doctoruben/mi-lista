@@ -192,6 +192,14 @@
           </svg>
           Capturar calendario
         </button>
+        <button class="gcal-btn" id="syncBtn" onclick="manualSync()" style="display:none" title="Sincronizar cambios de Calendar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <polyline points="23 20 23 14 17 14"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+          Actualizar
+        </button>
       </div>
       <div class="sync-bar">
         <div class="sync-dot" id="syncDot"></div>
@@ -328,6 +336,7 @@
       text.textContent = _selectedCalendarName ? '✓ ' + _selectedCalendarName : '✓ Calendar conectado';
       syncBtn.disabled = false;
       importBtn.style.display = 'flex';
+      document.getElementById('syncBtn').style.display = 'flex';
       const sub = _selectedCalendarName
         ? 'Se sincronizará con "' + _selectedCalendarName + '"'
         : 'Elige fecha y hora — se sincronizará con Google Calendar';
@@ -337,6 +346,7 @@
       text.textContent = 'Conectar Calendar';
       syncBtn.disabled = false;
       importBtn.style.display = 'none';
+      document.getElementById('syncBtn').style.display = 'none';
       document.getElementById('alarmSubtitle').textContent = 'Elige fecha y hora';
     }
   }
@@ -567,10 +577,16 @@
     itemsRef = ref(db, _listaPath + '/recordatorios');
 
     setSyncStatus('syncing', 'Conectando...');
+    let _firstLoad = true;
     onValue(itemsRef, snap => {
       items = snap.val() || {};
       setSyncStatus('online', 'Sincronizado');
       render();
+      // Sincronizar desde Calendar solo en la primera carga
+      if (_firstLoad) {
+        _firstLoad = false;
+        setTimeout(syncFromCalendar, 1500); // pequeño delay para que el token esté listo
+      }
     }, () => setSyncStatus('error', 'Error de conexión'));
 
     initGcal();
@@ -710,8 +726,10 @@
       return;
     }
     setSyncStatus('syncing','Guardando...');
-    push(itemsRef, {name, checked: false, ts: Date.now()});
-    input.value = ''; input.focus();
+    const newRef = push(itemsRef, {name, checked: false, ts: Date.now()});
+    input.value = ''; input.blur();
+    // Abrir popup de fecha tras un pequeño delay para que Firebase registre el item
+    setTimeout(() => openAlarmPopup(newRef.key), 400);
   };
 
   window.toggleItem = function(id) {
@@ -1039,6 +1057,85 @@
     closeImportPopup();
     showToast('✅ ' + imported + ' evento' + (imported!==1?'s':'') + ' importado' + (imported!==1?'s':''));
   };
+
+  window.manualSync = async function() {
+    const btn = document.getElementById('syncBtn');
+    btn.style.opacity = '0.5';
+    btn.style.pointerEvents = 'none';
+    await syncFromCalendar();
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+  };
+
+  // ── SYNC CALENDAR → MEMENTO ─────────────────────────────
+  async function syncFromCalendar() {
+    if (!_gcalToken || !_selectedCalendarId) return;
+
+    // Obtener todos los recordatorios que tienen gcalEventId
+    const synced = Object.entries(items).filter(([, i]) => i.gcalEventId && !i.checked);
+    if (synced.length === 0) return;
+
+    try {
+      const token = await ensureGcalToken();
+      let updated = 0;
+      let deleted = 0;
+
+      for (const [id, item] of synced) {
+        try {
+          const res = await fetch(
+            'https://www.googleapis.com/calendar/v3/calendars/' +
+            encodeURIComponent(_selectedCalendarId) + '/events/' + item.gcalEventId,
+            { headers: { 'Authorization': 'Bearer ' + token } }
+          );
+
+          if (res.status === 404 || res.status === 410) {
+            // Evento eliminado en Calendar — quitamos la sincronización pero mantenemos el recordatorio
+            await update(itemRef(id), { gcalEventId: null, alarmTs: null });
+            deleted++;
+            continue;
+          }
+
+          if (!res.ok) continue;
+
+          const ev = await res.json();
+
+          // Calcular cambios
+          const changes = {};
+
+          // Nombre cambiado en Calendar
+          const calName = ev.summary ? ev.summary.replace(/^🔔\s*/, '').trim() : '';
+          if (calName && calName !== item.name) {
+            changes.name = calName;
+          }
+
+          // Fecha/hora cambiada en Calendar
+          const calStart = ev.start?.dateTime || ev.start?.date;
+          if (calStart) {
+            const calTs = new Date(calStart).getTime();
+            if (Math.abs(calTs - item.alarmTs) > 60000) { // diferencia > 1 min
+              changes.alarmTs = calTs;
+            }
+          }
+
+          if (Object.keys(changes).length > 0) {
+            await update(itemRef(id), changes);
+            updated++;
+          }
+        } catch(e) {
+          // Ignorar errores individuales
+        }
+      }
+
+      if (updated > 0 || deleted > 0) {
+        let msg = '';
+        if (updated > 0) msg += updated + ' recordatorio' + (updated!==1?'s':'') + ' actualizado' + (updated!==1?'s':'');
+        if (deleted > 0) msg += (msg?', ':'') + deleted + ' desvinculado' + (deleted!==1?'s':'') + ' de Calendar';
+        showToast('🔄 ' + msg);
+      }
+    } catch(e) {
+      console.warn('Sync from calendar error:', e);
+    }
+  }
 
   // ── MICRÓFONO ────────────────────────────────────────────
   let _rec=null,_micActive=false;
