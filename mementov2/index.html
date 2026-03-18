@@ -285,7 +285,9 @@
   let itemsRef;
   let _listaPath;
   let _currentAlarmId = null;
-  let _gcalToken = null; // OAuth access token
+  let _gcalToken = null;         // OAuth access token
+  let _selectedCalendarId = null; // ID del calendario seleccionado
+  let _selectedCalendarName = ''; // Nombre para mostrar
 
   function loadSession() {
     try { return JSON.parse(localStorage.getItem('mv2Session') || 'null'); } catch { return null; }
@@ -299,10 +301,18 @@
       const data = JSON.parse(saved);
       if (data.expires > Date.now()) {
         _gcalToken = data.token;
+        // Recuperar calendario seleccionado
+        const calSaved = localStorage.getItem('mv2SelectedCal');
+        if (calSaved) {
+          const cal = JSON.parse(calSaved);
+          _selectedCalendarId   = cal.id;
+          _selectedCalendarName = cal.name;
+        }
         updateGcalUI(true);
         return;
       } else {
         localStorage.removeItem('mv2GcalToken');
+        localStorage.removeItem('mv2SelectedCal');
       }
     }
     updateGcalUI(false);
@@ -315,10 +325,13 @@
     const importBtn = document.getElementById('importBtn');
     if (connected) {
       btn.classList.add('connected');
-      text.textContent = '✓ Calendar conectado';
+      text.textContent = _selectedCalendarName ? '✓ ' + _selectedCalendarName : '✓ Calendar conectado';
       syncBtn.disabled = false;
       importBtn.style.display = 'flex';
-      document.getElementById('alarmSubtitle').textContent = 'Elige fecha y hora — se sincronizará con Google Calendar';
+      const sub = _selectedCalendarName
+        ? 'Se sincronizará con "' + _selectedCalendarName + '"'
+        : 'Elige fecha y hora — se sincronizará con Google Calendar';
+      document.getElementById('alarmSubtitle').textContent = sub;
     } else {
       btn.classList.remove('connected');
       text.textContent = 'Conectar Calendar';
@@ -330,16 +343,74 @@
 
   window.toggleGcal = function() {
     if (_gcalToken) {
-      // Desconectar
-      if (confirm('¿Desconectar Google Calendar?')) {
-        _gcalToken = null;
-        localStorage.removeItem('mv2GcalToken');
-        updateGcalUI(false);
-        showToast('📅 Google Calendar desconectado');
+      // Menú: cambiar calendario o desconectar
+      if (confirm('¿Cambiar calendario o desconectar?
+
+Pulsa Aceptar para cambiar calendario
+Pulsa Cancelar para desconectar')) {
+        openCalSelector();
+      } else {
+        if (confirm('¿Desconectar Google Calendar?')) {
+          _gcalToken = null;
+          _selectedCalendarId = null;
+          _selectedCalendarName = '';
+          localStorage.removeItem('mv2GcalToken');
+          localStorage.removeItem('mv2SelectedCal');
+          updateGcalUI(false);
+          showToast('📅 Google Calendar desconectado');
+        }
       }
     } else {
-      requestGcalToken();
+      // Conectar: auth primero, luego selector de calendario
+      requestGcalToken().then(() => openCalSelector()).catch(() => {});
     }
+  };
+
+  async function openCalSelector() {
+    document.getElementById('calSelectorPopup').classList.add('open');
+    const list = document.getElementById('calSelectorList');
+    list.innerHTML = '<div style="color:#8a7a60;font-size:13px;padding:12px 0;text-align:center;">Cargando calendarios...</div>';
+    try {
+      const token = await ensureGcalToken();
+      const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Error ' + res.status);
+      const data = await res.json();
+      const calendars = (data.items || []).sort((a,b) => (b.primary?1:0)-(a.primary?1:0));
+
+      list.innerHTML = calendars.map(cal => {
+        const isSelected = cal.id === _selectedCalendarId;
+        const color = cal.backgroundColor || '#c9a84c';
+        return `<button onclick="selectCalendar('${cal.id.replace(/'/g,"\'")}','${cal.summary.replace(/'/g,"\'")}')"
+          style="width:100%;background:${isSelected?'#2a1f08':'#0d0b09'};border:1px solid ${isSelected?'#c9a84c':'#2e2720'};
+                 border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;
+                 display:flex;align-items:center;gap:10px;font-family:inherit;transition:all 0.15s;">
+          <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;color:${isSelected?'#c9a84c':'#f0ebe0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${cal.summary}${cal.primary?' ★':''}
+            </div>
+            ${isSelected?'<div style="font-size:11px;color:#c9a84c;">Seleccionado actualmente</div>':''}
+          </div>
+        </button>`;
+      }).join('');
+    } catch(e) {
+      list.innerHTML = '<div style="color:#f87171;font-size:13px;padding:12px 0;">Error cargando calendarios: ' + e.message + '</div>';
+    }
+  }
+
+  window.selectCalendar = function(id, name) {
+    _selectedCalendarId   = id;
+    _selectedCalendarName = name;
+    localStorage.setItem('mv2SelectedCal', JSON.stringify({id, name}));
+    document.getElementById('calSelectorPopup').classList.remove('open');
+    updateGcalUI(true);
+    showToast('✓ Calendario "' + name + '" seleccionado');
+  };
+
+  window.closeCalSelector = function() {
+    document.getElementById('calSelectorPopup').classList.remove('open');
   };
 
   function requestGcalToken() {
@@ -392,7 +463,7 @@
       end:   { dateTime: toGCalDateTime(alarmTs + 30*60000), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
       reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 0 }] }
     };
-    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+    const res = await fetch(('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(_selectedCalendarId || 'primary') + '/events'), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify(event)
@@ -411,7 +482,7 @@
       end:   { dateTime: toGCalDateTime(alarmTs + 30*60000), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
       reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 0 }] }
     };
-    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + gcalEventId, {
+    const res = await fetch(('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(_selectedCalendarId || 'primary') + '/events/' + gcalEventId), {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify(event)
@@ -422,7 +493,7 @@
   async function deleteGcalEvent(gcalEventId) {
     const token = _gcalToken;
     if (!token || !gcalEventId) return;
-    await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events/' + gcalEventId, {
+    await fetch(('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(_selectedCalendarId || 'primary') + '/events/' + gcalEventId), {
       method: 'DELETE',
       headers: { 'Authorization': 'Bearer ' + token }
     });
@@ -844,9 +915,13 @@
       if (!res.ok) throw new Error('Error ' + res.status);
       const data = await res.json();
       const calendars = data.items || [];
-      select.innerHTML = calendars.map(cal =>
-        `<option value="${cal.id}" ${cal.primary ? 'selected' : ''}>${cal.summary}${cal.primary ? ' (principal)' : ''}</option>`
-      ).join('');
+      // Pre-seleccionar el calendario configurado, o el principal
+      select.innerHTML = calendars.map(cal => {
+        const selected = _selectedCalendarId
+          ? cal.id === _selectedCalendarId
+          : cal.primary;
+        return `<option value="${cal.id}" ${selected?'selected':''}>${cal.summary}${cal.primary?' (principal)':''}</option>`;
+      }).join('');
     } catch(e) {
       select.innerHTML = '<option value="">Error cargando calendarios</option>';
       showToast('❌ Error: ' + e.message);
@@ -998,6 +1073,17 @@
     _rec.start();
   };
 </script>
+
+<!-- CALENDAR SELECTOR POPUP -->
+<div class="popup-overlay" id="calSelectorPopup">
+  <div class="popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="popup-title">📅 Elige tu calendario</div>
+    <div class="popup-subtitle">Selecciona el calendario de Google con el que quieres trabajar</div>
+    <div id="calSelectorList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:300px;overflow-y:auto;"></div>
+    <button class="popup-cancel" onclick="closeCalSelector()" style="width:100%;">Cancelar</button>
+  </div>
+</div>
 
 <!-- IMPORT POPUP -->
 <div class="popup-overlay" id="importPopup">
