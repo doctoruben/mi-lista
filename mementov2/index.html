@@ -343,11 +343,8 @@
 
   window.toggleGcal = function() {
     if (_gcalToken) {
-      // Menú: cambiar calendario o desconectar
-      if (confirm('¿Cambiar calendario o desconectar?
-
-Pulsa Aceptar para cambiar calendario
-Pulsa Cancelar para desconectar')) {
+      const action = confirm('Pulsa OK para cambiar de calendario, o Cancelar para desconectar.');
+      if (action) {
         openCalSelector();
       } else {
         if (confirm('¿Desconectar Google Calendar?')) {
@@ -361,7 +358,6 @@ Pulsa Cancelar para desconectar')) {
         }
       }
     } else {
-      // Conectar: auth primero, luego selector de calendario
       requestGcalToken().then(() => openCalSelector()).catch(() => {});
     }
   };
@@ -379,24 +375,28 @@ Pulsa Cancelar para desconectar')) {
       const data = await res.json();
       const calendars = (data.items || []).sort((a,b) => (b.primary?1:0)-(a.primary?1:0));
 
-      list.innerHTML = calendars.map(cal => {
+      list.innerHTML = '';
+      calendars.forEach(cal => {
         const isSelected = cal.id === _selectedCalendarId;
         const color = cal.backgroundColor || '#c9a84c';
-        return `<button onclick="selectCalendar('${cal.id.replace(/'/g,"\'")}','${cal.summary.replace(/'/g,"\'")}')"
-          style="width:100%;background:${isSelected?'#2a1f08':'#0d0b09'};border:1px solid ${isSelected?'#c9a84c':'#2e2720'};
-                 border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;
-                 display:flex;align-items:center;gap:10px;font-family:inherit;transition:all 0.15s;">
-          <div style="width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:14px;font-weight:700;color:${isSelected?'#c9a84c':'#f0ebe0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${cal.summary}${cal.primary?' ★':''}
-            </div>
-            ${isSelected?'<div style="font-size:11px;color:#c9a84c;">Seleccionado actualmente</div>':''}
-          </div>
-        </button>`;
-      }).join('');
+        const btn = document.createElement('button');
+        btn.style.cssText = 'width:100%;background:' + (isSelected?'#2a1f08':'#0d0b09') +
+          ';border:1px solid ' + (isSelected?'#c9a84c':'#2e2720') +
+          ';border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;' +
+          'display:flex;align-items:center;gap:10px;font-family:inherit;margin-bottom:8px;';
+        btn.innerHTML =
+          '<div style="width:12px;height:12px;border-radius:50%;background:' + color + ';flex-shrink:0;"></div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:14px;font-weight:700;color:' + (isSelected?'#c9a84c':'#f0ebe0') +
+              ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+              cal.summary + (cal.primary?' ★':'') + '</div>' +
+            (isSelected ? '<div style="font-size:11px;color:#c9a84c;">Seleccionado actualmente</div>' : '') +
+          '</div>';
+        btn.onclick = () => selectCalendar(cal.id, cal.summary);
+        list.appendChild(btn);
+      });
     } catch(e) {
-      list.innerHTML = '<div style="color:#f87171;font-size:13px;padding:12px 0;">Error cargando calendarios: ' + e.message + '</div>';
+      list.innerHTML = '<div style="color:#f87171;font-size:13px;padding:12px 0;">Error: ' + e.message + '</div>';
     }
   }
 
