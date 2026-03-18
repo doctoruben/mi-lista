@@ -560,8 +560,14 @@
     </div>`;
   }
 
+  function sortItems(entries) {
+    const withAlarm    = entries.filter(([,i]) => i.alarmTs).sort((a,b) => a[1].alarmTs - b[1].alarmTs);
+    const withoutAlarm = entries.filter(([,i]) => !i.alarmTs).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+    return [...withAlarm, ...withoutAlarm];
+  }
+
   function render() {
-    const all     = Object.entries(items).sort((a,b) => (b[1].ts||0)-(a[1].ts||0));
+    const all     = sortItems(Object.entries(items));
     const pending = all.filter(([,i]) => !i.checked);
     const done    = all.filter(([,i]) => i.checked);
 
