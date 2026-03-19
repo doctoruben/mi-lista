@@ -246,6 +246,14 @@
     <div class="popup-title">📅 Programar aviso</div>
     <div class="popup-subtitle" id="alarmSubtitle">Elige fecha y hora</div>
     <input type="datetime-local" class="datetime-input" id="alarmDatetime" />
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:-6px 0 14px;user-select:none;">
+      <div id="allDayCheck" onclick="toggleAllDay()"
+        style="width:22px;height:22px;border-radius:6px;border:2px solid #5a4a35;background:transparent;
+               flex-shrink:0;display:flex;align-items:center;justify-content:center;
+               font-size:14px;color:#0d0b09;transition:all 0.15s;cursor:pointer;">
+      </div>
+      <span style="font-size:14px;font-weight:700;color:#8a7a60;">Todo el día</span>
+    </label>
     <div class="popup-btns">
       <button class="popup-gcal" id="gcalSyncBtn" onclick="saveAlarmWithGcal()">
         <svg width="18" height="18" viewBox="0 0 24 24">
@@ -464,38 +472,46 @@
     return new Date(ts).toISOString();
   }
 
-  async function createGcalEvent(name, alarmTs) {
-    const token = await ensureGcalToken();
-    const event = {
+  function buildGcalEvent(name, alarmTs, isAllDay) {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (isAllDay) {
+      const dateStr = new Date(alarmTs).toISOString().slice(0,10);
+      const nextDay = new Date(alarmTs + 86400000).toISOString().slice(0,10);
+      return {
+        summary: '🔔 ' + name,
+        description: 'Recordatorio de MEMENTO',
+        start: { date: dateStr },
+        end:   { date: nextDay },
+        reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 0 }] }
+      };
+    }
+    return {
       summary: '🔔 ' + name,
       description: 'Recordatorio de MEMENTO',
-      start: { dateTime: toGCalDateTime(alarmTs), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-      end:   { dateTime: toGCalDateTime(alarmTs + 30*60000), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      start: { dateTime: toGCalDateTime(alarmTs), timeZone: tz },
+      end:   { dateTime: toGCalDateTime(alarmTs + 30*60000), timeZone: tz },
       reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 0 }] }
     };
+  }
+
+  async function createGcalEvent(name, alarmTs, isAllDay) {
+    const token = await ensureGcalToken();
     const res = await fetch(('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(_selectedCalendarId || 'primary') + '/events'), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(event)
+      body: JSON.stringify(buildGcalEvent(name, alarmTs, isAllDay))
     });
     if (!res.ok) throw new Error('Error creando evento: ' + res.status);
     const data = await res.json();
-    return data.id; // gcalEventId
+    return data.id;
   }
 
-  async function updateGcalEvent(gcalEventId, name, alarmTs) {
+  async function updateGcalEvent(gcalEventId, name, alarmTs, isAllDay) {
     const token = await ensureGcalToken();
-    const event = {
-      summary: '🔔 ' + name,
-      description: 'Recordatorio de MEMENTO',
-      start: { dateTime: toGCalDateTime(alarmTs), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-      end:   { dateTime: toGCalDateTime(alarmTs + 30*60000), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-      reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 0 }] }
-    };
     const res = await fetch(('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(_selectedCalendarId || 'primary') + '/events/' + gcalEventId), {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(event)
+      body: JSON.stringify(buildGcalEvent(name, alarmTs, isAllDay || false))
     });
     if (!res.ok) throw new Error('Error actualizando evento: ' + res.status);
   }
@@ -604,9 +620,28 @@
     _currentAlarmId = id;
     const item = items[id];
     const input = document.getElementById('alarmDatetime');
+
+    // Reset all-day state
+    _allDay = false;
+    input.type = 'datetime-local';
+    const check = document.getElementById('allDayCheck');
+    check.style.background = 'transparent';
+    check.style.borderColor = '#5a4a35';
+    check.textContent = '';
+
     if (item && item.alarmTs) {
-      const d = new Date(item.alarmTs);
-      input.value = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      if (item.allDay) {
+        // Restaurar estado todo el día
+        _allDay = true;
+        input.type = 'date';
+        input.value = new Date(item.alarmTs).toISOString().slice(0,10);
+        check.style.background = '#c9a84c';
+        check.style.borderColor = '#c9a84c';
+        check.textContent = '✓';
+      } else {
+        const d = new Date(item.alarmTs);
+        input.value = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      }
     } else {
       const d = new Date(Date.now() + 3600000);
       input.value = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -619,11 +654,44 @@
     _currentAlarmId = null;
   };
 
+  let _allDay = false;
+
+  window.toggleAllDay = function() {
+    _allDay = !_allDay;
+    const check = document.getElementById('allDayCheck');
+    const input = document.getElementById('alarmDatetime');
+    if (_allDay) {
+      check.style.background = '#c9a84c';
+      check.style.borderColor = '#c9a84c';
+      check.textContent = '✓';
+      // Cambiar input a date-only
+      const currentVal = input.value;
+      const dateOnly = currentVal ? currentVal.slice(0,10) : new Date().toISOString().slice(0,10);
+      input.type = 'date';
+      input.value = dateOnly;
+    } else {
+      check.style.background = 'transparent';
+      check.style.borderColor = '#5a4a35';
+      check.textContent = '';
+      // Restaurar datetime
+      const currentVal = input.value;
+      const dateTime = currentVal ? currentVal + 'T09:00' : '';
+      input.type = 'datetime-local';
+      input.value = dateTime;
+    }
+  };
+
   function validateAlarm() {
     const val = document.getElementById('alarmDatetime').value;
-    if (!val) { showToast('❌ Elige una fecha y hora'); return null; }
-    const ts = new Date(val).getTime();
-    if (isNaN(ts) || ts <= Date.now()) { showToast('❌ La fecha debe ser futura'); return null; }
+    if (!val) { showToast('❌ Elige una fecha'); return null; }
+    let ts;
+    if (_allDay) {
+      ts = new Date(val + 'T00:00:00').getTime();
+      if (isNaN(ts)) { showToast('❌ Fecha no válida'); return null; }
+    } else {
+      ts = new Date(val).getTime();
+      if (isNaN(ts) || ts <= Date.now()) { showToast('❌ La fecha debe ser futura'); return null; }
+    }
     return ts;
   }
 
@@ -634,26 +702,23 @@
     const id = _currentAlarmId;
     const item = items[id] || {};
     const name = item.name || 'Recordatorio';
+    const isAllDay = _allDay;
 
     closeAlarmPopup();
 
     try {
       let gcalEventId = item.gcalEventId || null;
       if (gcalEventId) {
-        // Actualizar evento existente
-        await updateGcalEvent(gcalEventId, name, ts);
+        await updateGcalEvent(gcalEventId, name, ts, isAllDay);
         showToast('📅 Evento actualizado en Calendar');
       } else {
-        // Crear evento nuevo
-        gcalEventId = await createGcalEvent(name, ts);
+        gcalEventId = await createGcalEvent(name, ts, isAllDay);
         showToast('📅 Evento creado en Calendar');
       }
-      // Guardar en Firebase con el ID del evento de Calendar
-      await update(itemRef(id), { alarmTs: ts, gcalEventId });
+      await update(itemRef(id), { alarmTs: ts, gcalEventId, allDay: isAllDay });
     } catch(e) {
       showToast('❌ Error con Calendar: ' + e.message);
-      // Guardar al menos en la app
-      await update(itemRef(id), { alarmTs: ts });
+      await update(itemRef(id), { alarmTs: ts, allDay: isAllDay });
     }
   };
 
@@ -662,10 +727,14 @@
     const ts = validateAlarm();
     if (!ts) return;
     const id = _currentAlarmId;
+    const isAllDay = _allDay;
     closeAlarmPopup();
-    update(itemRef(id), { alarmTs: ts });
+    update(itemRef(id), { alarmTs: ts, allDay: isAllDay });
     const d = new Date(ts);
-    showToast('🔔 ' + d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}) + ' a las ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
+    const label = isAllDay
+      ? d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})
+      : d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}) + ' a las ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    showToast('🔔 ' + label);
   };
 
   // Eliminar alarma (y evento de Calendar si existe)
@@ -793,9 +862,15 @@
     return new Date(ts).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
   }
 
-  function formatAlarm(ts) {
+  function formatAlarm(ts, allDay) {
     const d = new Date(ts);
     const now = new Date();
+    if (allDay) {
+      if (d.toDateString()===now.toDateString()) return 'Hoy — todo el día';
+      const tom = new Date(now); tom.setDate(now.getDate()+1);
+      if (d.toDateString()===tom.toDateString()) return 'Mañana — todo el día';
+      return d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}) + ' — todo el día';
+    }
     const time = d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     if (d.toDateString()===now.toDateString()) return 'Hoy ' + time;
     const tom = new Date(now); tom.setDate(now.getDate()+1);
@@ -815,7 +890,7 @@
     const alarmIcon = hasSynced ? '📅' : '🔔';
     const alarmRowHtml = hasAlarm ? `
       <div class="item-alarm">
-        <div class="alarm-badge" onclick="openAlarmPopup('${id}')">${alarmIcon} ${formatAlarm(item.alarmTs)}${hasSynced ? ' · <span style="font-size:10px;opacity:0.7">Calendar ✓</span>' : ''}</div>
+        <div class="alarm-badge" onclick="openAlarmPopup('${id}')">${alarmIcon} ${formatAlarm(item.alarmTs, item.allDay)}${hasSynced ? ' · <span style="font-size:10px;opacity:0.7">Calendar ✓</span>' : ''}</div>
         <button class="alarm-del" onclick="removeAlarm('${id}',event)" title="Eliminar aviso">✕</button>
       </div>` : '';
 
