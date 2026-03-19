@@ -182,6 +182,73 @@
     @supports (padding-bottom: env(safe-area-inset-bottom)) {
       .app { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
     }
+
+    /* ── SAMSUNG INTERNET DARK MODE OVERRIDE ───────────────
+       Samsung Internet ignores color-scheme:light and applies
+       its own dark theme. This block forces ALL colors back
+       to light values when the OS is in dark mode.          */
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #f7f5f2 !important; color: #1a1714 !important; }
+      .header { background: #ffffff !important; border-color: #f0ede8 !important; }
+      .add-card { background: #ffffff !important; border-color: #eeeae4 !important; }
+      .main-input { background: #f7f5f2 !important; color: #1a1714 !important; border-color: #e8e4dc !important; -webkit-text-fill-color: #1a1714 !important; }
+      .main-input::placeholder { color: #ccc !important; -webkit-text-fill-color: #ccc !important; }
+      .mic-btn { background: #f7f5f2 !important; border-color: #e8e4dc !important; }
+      .mic-btn svg { stroke: #aaa !important; }
+      .add-btn { background: #c9a84c !important; color: #ffffff !important; }
+      .filters { background: transparent !important; }
+      .filter-btn { background: #ffffff !important; color: #777 !important; border-color: #e8e4dc !important; }
+      .filter-btn.active { background: #c9a84c !important; color: #ffffff !important; border-color: #c9a84c !important; }
+      .item { background: #ffffff !important; border-color: #eeeae4 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important; }
+      .item.checked { background: #fafaf8 !important; opacity: 0.45 !important; }
+      .item-name { color: #1a1714 !important; -webkit-text-fill-color: #1a1714 !important; }
+      .item-name.checked { color: #ccc !important; -webkit-text-fill-color: #ccc !important; }
+      .item-ts { color: #999 !important; }
+      .check-btn { border-color: #ddd !important; background: transparent !important; }
+      .check-btn.checked { background: #c9a84c !important; border-color: #c9a84c !important; }
+      .alarm-btn { background: #f7f5f2 !important; border-color: #e8e4dc !important; }
+      .alarm-btn.has-alarm { background: #fdf6e8 !important; border-color: #e8d090 !important; }
+      .edit-btn { background: #f7f5f2 !important; border-color: #e8e4dc !important; }
+      .del-btn { background: #fff0f0 !important; color: #e05050 !important; }
+      .alarm-badge { background: #fdf6e8 !important; border-color: #e8d090 !important; color: #a8832a !important; }
+      .item-alarm { border-color: #f0ede8 !important; }
+      .edit-row .edit-input { background: #fdf8ef !important; color: #1a1714 !important; border-color: #c9a84c !important; -webkit-text-fill-color: #1a1714 !important; }
+      .edit-save { background: #c9a84c !important; color: #ffffff !important; }
+      .edit-cancel { background: #f5f2ee !important; color: #888 !important; }
+      .group-title { color: #999 !important; }
+      .group-line { background: #eeebe4 !important; }
+      .group-count { color: #888 !important; background: #f5f2ee !important; }
+      .user-pill { background: #f5f2ee !important; border-color: #e8e4dc !important; color: #666 !important; }
+      .action-btn { background: #f5f2ee !important; border-color: #e8e4dc !important; color: #666 !important; }
+      .admin-btn { background: #fdf6e8 !important; border-color: #e8d090 !important; color: #a8832a !important; }
+      .gcal-btn { background: #f5f2ee !important; border-color: #e8e4dc !important; color: #666 !important; }
+      .gcal-btn.connected { background: #f0faf4 !important; border-color: #90d8b0 !important; color: #2a8a50 !important; }
+      .sync-bar { color: #999 !important; }
+      .stats { color: #888 !important; }
+      .stats .pend { color: #c9a84c !important; }
+      .stats .done { color: #4ade80 !important; }
+      .clear-btn { color: #999 !important; border-color: #e0ddd6 !important; }
+      .empty { color: #999 !important; }
+      /* Login */
+      .setup-screen { background: #f7f5f2 !important; }
+      .setup-card { background: #ffffff !important; border-color: #e8e4dc !important; }
+      .setup-card p { color: #888 !important; }
+      .setup-field label { color: #bbb !important; }
+      .setup-field input { background: #f7f5f2 !important; color: #1a1714 !important; border-color: #e0ddd6 !important; -webkit-text-fill-color: #1a1714 !important; }
+      .setup-btn { background: #c9a84c !important; color: #ffffff !important; }
+      /* Popups */
+      .popup-overlay { background: rgba(0,0,0,0.35) !important; }
+      .popup-sheet { background: #ffffff !important; border-color: #eee !important; }
+      .popup-title { color: #1a1714 !important; }
+      .popup-subtitle { color: #888 !important; }
+      .datetime-input { background: #f7f5f2 !important; color: #1a1714 !important; border-color: #e0ddd6 !important; -webkit-text-fill-color: #1a1714 !important; }
+      .custom-check { border-color: #ddd !important; background: transparent !important; }
+      .custom-check.on { background: #c9a84c !important; border-color: #c9a84c !important; }
+      .check-label-text { color: #666 !important; }
+      .popup-save { background: #c9a84c !important; color: #ffffff !important; }
+      .popup-cancel { background: #f5f2ee !important; color: #888 !important; border-color: #e0ddd6 !important; }
+      .popup-gcal { background: #f0f7ff !important; color: #1a73e8 !important; border-color: #90c0f0 !important; }
+    }
   </style>
 </head>
 <body>
@@ -704,7 +771,12 @@
     check.textContent = '';
     const noDateChk = document.getElementById('noDateCheck');
     noDateChk.style.background = 'transparent';
-    noDateChk.style.borderColor = '#c9b99a';
+    noDateChk.style.borderColor = '#ddd';
+    // Reset gcal button
+    const gcalBtnR = document.getElementById('gcalSyncBtn');
+    gcalBtnR.disabled = false;
+    gcalBtnR.style.opacity = '';
+    gcalBtnR.style.cursor = '';
     noDateChk.textContent = '';
 
     if (item && item.alarmTs) {
@@ -740,23 +812,29 @@
     const check = document.getElementById('noDateCheck');
     const input = document.getElementById('alarmDatetime');
     const allDayCheck = document.getElementById('allDayCheck');
+    const gcalBtn = document.getElementById('gcalSyncBtn');
     if (_noDate) {
       check.style.background = '#c9a84c';
       check.style.borderColor = '#c9a84c';
       check.textContent = '✓';
-      // Deshabilitar el selector de fecha y el check de todo el día
       input.style.opacity = '0.3';
       input.style.pointerEvents = 'none';
       allDayCheck.style.opacity = '0.3';
       allDayCheck.style.pointerEvents = 'none';
+      gcalBtn.disabled = true;
+      gcalBtn.style.opacity = '0.35';
+      gcalBtn.style.cursor = 'default';
     } else {
       check.style.background = 'transparent';
-      check.style.borderColor = '#c9b99a';
+      check.style.borderColor = '#ddd';
       check.textContent = '';
       input.style.opacity = '';
       input.style.pointerEvents = '';
       allDayCheck.style.opacity = '';
       allDayCheck.style.pointerEvents = '';
+      gcalBtn.disabled = false;
+      gcalBtn.style.opacity = '';
+      gcalBtn.style.cursor = '';
     }
   };
 
@@ -838,20 +916,32 @@
   window.saveAlarmOnly = function() {
     const ts = validateAlarm();
     if (ts === false) return;
+    const id = _currentAlarmId;
+    const item = items[id] || {};
+    const isAllDay = _allDay;
+
     if (ts === null) {
       closeAlarmPopup();
-      const id = _currentAlarmId;
+      // Si tenía evento en Calendar, eliminarlo
+      if (item.gcalEventId && _gcalToken) {
+        deleteGcalEvent(item.gcalEventId).catch(() => {});
+      }
       update(itemRef(id), { alarmTs: null, gcalEventId: null, allDay: null });
       showToast('✓ Guardado sin fecha');
       return;
     }
-    const id = _currentAlarmId;
-    const isAllDay = _allDay;
+
     closeAlarmPopup();
-    update(itemRef(id), { alarmTs: ts, allDay: isAllDay });
+
+    // Si tenía evento en Calendar, eliminarlo (ya no queremos sincronización)
+    if (item.gcalEventId && _gcalToken) {
+      deleteGcalEvent(item.gcalEventId).catch(() => {});
+    }
+
+    update(itemRef(id), { alarmTs: ts, allDay: isAllDay, gcalEventId: null });
     const d = new Date(ts);
     const label = isAllDay
-      ? d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})
+      ? d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}) + ' — Todo el día'
       : d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}) + ' a las ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     showToast('🔔 ' + label);
   };

@@ -122,6 +122,32 @@
       -webkit-text-fill-color: #1a1714 !important;
       color-scheme: light !important;
     }
+
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #f7f5f2 !important; color: #1a1714 !important; }
+      .card { background: #ffffff !important; border-color: #e8e4dc !important; }
+      .card h2 { color: #1a1714 !important; }
+      input[type="text"], input[type="password"] {
+        background: #f7f5f2 !important; color: #1a1714 !important;
+        border-color: #e0ddd6 !important; -webkit-text-fill-color: #1a1714 !important;
+      }
+      select, textarea {
+        background: #f7f5f2 !important; color: #1a1714 !important;
+        -webkit-text-fill-color: #1a1714 !important;
+      }
+      .btn { background: linear-gradient(90deg,#c9a84c,#a8832a) !important; color: #fff !important; }
+      .btn-danger { background: #fff0f0 !important; color: #e05050 !important; }
+      .user-name { color: #1a1714 !important; -webkit-text-fill-color: #1a1714 !important; }
+      .user-meta { color: #888 !important; }
+      .section-title { color: #999 !important; }
+      .detail-label { color: #888 !important; }
+      .detail-input {
+        background: #f7f5f2 !important; color: #1a1714 !important;
+        border-color: #e0ddd6 !important; -webkit-text-fill-color: #1a1714 !important;
+      }
+      .save-btn { background: linear-gradient(90deg,#c9a84c,#a8832a) !important; color: #fff !important; }
+      .admin-badge { background: #fdf6e8 !important; color: #a8832a !important; }
+    }
   </style>
 </head>
 <body>
@@ -139,7 +165,8 @@
       <label>CONTRASEÑA DE ADMINISTRADOR</label>
       <input type="password" id="a_pass" placeholder="••••••••" />
       <p id="loginErr" class="error">Contraseña incorrecta</p>
-      <button class="btn" onclick="adminLogin()">Entrar</button>
+      <button class="btn" onclick="adminLogin()" style="width:100%;">Entrar</button>
+      <button onclick="window.location.href='index.html'" style="width:100%;margin-top:8px;background:none;border:0.5px solid #e0ddd6;border-radius:12px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;color:#888;cursor:pointer;">← Volver a MEMENTO</button>
     </div>
   </div>
 </div>
