@@ -7,22 +7,52 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="MEMENTO" />
   <meta name="theme-color" content="#ffffff" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="supported-color-schemes" content="light" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icon.png" />
   <title>MEMENTO</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
   <script src="https://accounts.google.com/gsi/client" async></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { min-height: 100vh; background: #f7f5f2; font-family: 'Nunito', sans-serif; color: #1a1714; overscroll-behavior: none; }
+    :root { color-scheme: light only; }
+    html { background: #f7f5f2 !important; color: #1a1714 !important; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; color-scheme: light; }
+    body { min-height: 100vh; background: #f7f5f2 !important; font-family: 'Nunito', sans-serif; color: #1a1714 !important; overscroll-behavior: none; }
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: #f7f5f2; }
     ::-webkit-scrollbar-thumb { background: #ddd8d0; border-radius: 2px; }
+    /* Force light on all form elements - Samsung Internet fix */
+    input, textarea, select, button {
+      color-scheme: light;
+      background-color: inherit;
+      color: inherit;
+    }
+    input[type="datetime-local"],
+    input[type="date"],
+    input[type="text"],
+    input[type="password"],
+    select, textarea {
+      background-color: #f7f5f2 !important;
+      color: #1a1714 !important;
+      border-color: #e0ddd6 !important;
+      color-scheme: light !important;
+      -webkit-text-fill-color: #1a1714 !important;
+    }
+    input[type="datetime-local"]:focus,
+    input[type="date"]:focus,
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    select:focus, textarea:focus {
+      background-color: #f7f5f2 !important;
+      color: #1a1714 !important;
+      -webkit-text-fill-color: #1a1714 !important;
+    }
     .app { max-width: 480px; margin: 0 auto; padding: 0 14px 120px; }
 
     /* LOGIN */
     .setup-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: #f7f5f2; }
-    .setup-card { background: #fff; border-radius: 24px; padding: 28px 24px; border: 0.5px solid #e8e4dc; box-shadow: 0 4px 24px rgba(0,0,0,0.07); max-width: 440px; width: 100%; text-align: center; }
+    .setup-card { background: #ffffff !important; border-radius: 24px; padding: 28px 24px; border: 0.5px solid #e8e4dc; box-shadow: 0 4px 24px rgba(0,0,0,0.07); max-width: 440px; width: 100%; text-align: center; }
     .setup-card p { color: #aaa; font-size: 14px; margin-bottom: 16px; }
     .setup-field { margin-bottom: 12px; text-align: left; }
     .setup-field label { display: block; font-size: 11px; font-weight: 800; color: #bbb; letter-spacing: 0.5px; margin-bottom: 5px; }
@@ -32,7 +62,7 @@
     .setup-btn:active { opacity: 0.85; }
 
     /* SYNC */
-    .sync-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 0 0; font-size: 11px; font-weight: 700; color: #ccc; }
+    .sync-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 0 0; font-size: 11px; font-weight: 700; color: #999; }
     .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #ddd; transition: background 0.3s; }
     .sync-dot.online { background: #4ade80; box-shadow: 0 0 5px #4ade8044; }
     .sync-dot.syncing { background: #c9a84c; animation: pulse 0.8s infinite; }
@@ -40,22 +70,22 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     /* HEADER */
-    .header { padding: 18px 0 12px; text-align: center; background: #fff; border-bottom: 0.5px solid #f0ede8; margin: 0 -14px 14px; padding-left: 14px; padding-right: 14px; }
-    .stats { color: #bbb; font-size: 13px; margin-top: 4px; }
+    .header { padding: 18px 0 12px; text-align: center; background: #ffffff !important; border-bottom: 0.5px solid #f0ede8; margin: 0 -14px 14px; padding-left: 14px; padding-right: 14px; }
+    .stats { color: #888; font-size: 13px; margin-top: 4px; }
     .stats .pend { color: #c9a84c; font-weight: 800; }
     .stats .done { color: #4ade80; font-weight: 800; }
 
     /* USER BAR */
     .user-bar { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-    .user-pill { display: flex; align-items: center; gap: 6px; background: #f5f2ee; border: 0.5px solid #e8e4dc; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #8a7a60; }
+    .user-pill { display: flex; align-items: center; gap: 6px; background: #f5f2ee; border: 0.5px solid #e8e4dc; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #666; }
     .user-avatar { width: 22px; height: 22px; border-radius: 50%; overflow: hidden; display: none; align-items: center; justify-content: center; flex-shrink: 0; }
-    .action-btn { background: #f5f2ee; border: 0.5px solid #e8e4dc; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #8a7a60; cursor: pointer; font-family: inherit; display: none; -webkit-appearance: none; }
+    .action-btn { background: #f5f2ee; border: 0.5px solid #e8e4dc; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 800; color: #666; cursor: pointer; font-family: inherit; display: none; -webkit-appearance: none; }
     .admin-btn { color: #a8832a; border-color: #e8d090; background: #fdf6e8; }
-    .gcal-btn { display: flex; align-items: center; gap: 6px; background: #f5f2ee; border: 0.5px solid #e8e4dc; border-radius: 20px; padding: 5px 10px; font-size: 11px; font-weight: 800; color: #8a7a60; cursor: pointer; font-family: inherit; -webkit-appearance: none; }
+    .gcal-btn { display: flex; align-items: center; gap: 6px; background: #f5f2ee; border: 0.5px solid #e8e4dc; border-radius: 20px; padding: 5px 10px; font-size: 11px; font-weight: 800; color: #666; cursor: pointer; font-family: inherit; -webkit-appearance: none; }
     .gcal-btn.connected { color: #2a8a50; border-color: #90d8b0; background: #f0faf4; }
 
     /* ADD CARD */
-    .add-card { background: #fff; border-radius: 18px; padding: 14px; border: 0.5px solid #eeeae4; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 12px; }
+    .add-card { background: #ffffff !important; border-radius: 18px; padding: 14px; border: 0.5px solid #eeeae4; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 12px; }
     .input-row { display: flex; gap: 8px; align-items: center; }
     .main-input { flex: 1; min-width: 0; height: 48px; background: #f7f5f2; border: 0.5px solid #e8e4dc; border-radius: 12px; padding: 0 14px; color: #1a1714; font-size: 16px; font-family: inherit; outline: none; }
     .main-input::placeholder { color: #ccc; }
@@ -66,13 +96,13 @@
 
     /* FILTERS */
     .filters { display: flex; gap: 8px; margin-bottom: 12px; }
-    .filter-btn { flex: 1; padding: 9px 0; border-radius: 12px; font-size: 12px; font-weight: 800; font-family: inherit; background: #fff; color: #bbb; border: 0.5px solid #e8e4dc; cursor: pointer; -webkit-appearance: none; }
+    .filter-btn { flex: 1; padding: 9px 0; border-radius: 12px; font-size: 12px; font-weight: 800; font-family: inherit; background: #fff; color: #777; border: 0.5px solid #e8e4dc; cursor: pointer; -webkit-appearance: none; }
     .filter-btn.active { background: #c9a84c; color: #fff; border-color: #c9a84c; }
 
     /* ITEMS */
     .items { display: flex; flex-direction: column; gap: 8px; }
-    .empty { text-align: center; color: #ccc; padding: 40px 0; font-size: 15px; }
-    .item { background: #fff; border-radius: 14px; padding: 12px 14px; border: 0.5px solid #eeeae4; box-shadow: 0 1px 4px rgba(0,0,0,0.04); animation: slideIn 0.2s ease; }
+    .empty { text-align: center; color: #999; padding: 40px 0; font-size: 15px; }
+    .item { background: #ffffff !important; border-radius: 14px; padding: 12px 14px; border: 0.5px solid #eeeae4; box-shadow: 0 1px 4px rgba(0,0,0,0.04); animation: slideIn 0.2s ease; }
     .item.checked { opacity: 0.4; background: #fafaf8; }
     @keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
     @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
@@ -83,9 +113,9 @@
     .item-actions { display: flex; align-items: center; gap: 5px; }
     .check-btn { width: 26px; height: 26px; border-radius: 7px; border: 1.5px solid #ddd; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; color: #fff; -webkit-appearance: none; transition: all 0.15s; }
     .check-btn.checked { border-color: #c9a84c; background: #c9a84c; }
-    .item-name { font-weight: 700; font-size: 15px; color: #1a1714; word-break: break-word; }
+    .item-name { font-weight: 700; font-size: 15px; color: #1a1714 !important; word-break: break-word; }
     .item-name.checked { text-decoration: line-through; color: #ccc; }
-    .item-ts { font-size: 11px; color: #ccc; margin-top: 1px; }
+    .item-ts { font-size: 11px; color: #999; margin-top: 1px; }
 
     /* ITEM BUTTONS */
     .alarm-btn { background: #f7f5f2; border: 0.5px solid #e8e4dc; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; -webkit-appearance: none; }
@@ -97,7 +127,7 @@
     /* ALARM BADGE */
     .item-alarm { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 0.5px solid #f0ede8; }
     .alarm-badge { display: flex; align-items: center; gap: 5px; background: #fdf6e8; border: 0.5px solid #e8d090; border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #a8832a; flex: 1; min-width: 0; cursor: pointer; }
-    .alarm-del { background: none; border: none; color: #ccc; font-size: 14px; cursor: pointer; padding: 2px 4px; }
+    .alarm-del { background: none; border: none; color: #aaa; font-size: 14px; cursor: pointer; padding: 2px 4px; }
     .alarm-del:active { color: #f87171; }
 
     /* EDIT ROW */
@@ -109,21 +139,21 @@
 
     /* GROUP HEADERS */
     .group-header { display: flex; align-items: center; gap: 8px; padding: 12px 2px 6px; }
-    .group-title { font-size: 10px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #ccc; }
+    .group-title { font-size: 10px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #999; }
     .group-line { flex: 1; height: 0.5px; background: #eeebe4; }
-    .group-count { font-size: 10px; font-weight: 800; color: #ccc; background: #f5f2ee; border-radius: 20px; padding: 2px 8px; }
+    .group-count { font-size: 10px; font-weight: 800; color: #888; background: #f5f2ee; border-radius: 20px; padding: 2px 8px; }
 
     /* CLEAR BTN */
-    .clear-btn { width: 100%; margin-top: 8px; background: none; border: 0.5px dashed #e0ddd6; border-radius: 12px; color: #ccc; padding: 12px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .clear-btn { width: 100%; margin-top: 8px; background: none; border: 0.5px dashed #e0ddd6; border-radius: 12px; color: #999; padding: 12px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
     .clear-btn:active { border-color: #f87171; color: #f87171; }
 
     /* POPUP */
     .popup-overlay { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.3); align-items: flex-end; justify-content: center; }
     .popup-overlay.open { display: flex; }
-    .popup-sheet { width: 100%; max-width: 480px; background: #fff; border-radius: 24px 24px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom,0px)); border-top: 0.5px solid #eee; box-shadow: 0 -4px 24px rgba(0,0,0,0.1); }
+    .popup-sheet { width: 100%; max-width: 480px; background: #ffffff !important; border-radius: 24px 24px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom,0px)); border-top: 0.5px solid #eee; box-shadow: 0 -4px 24px rgba(0,0,0,0.1); }
     .popup-handle { width: 36px; height: 4px; background: #e8e4dc; border-radius: 2px; margin: 0 auto 16px; }
     .popup-title { font-family: 'Abril Fatface', serif; font-size: 20px; color: #1a1714; margin-bottom: 4px; }
-    .popup-subtitle { font-size: 13px; color: #bbb; margin-bottom: 14px; }
+    .popup-subtitle { font-size: 13px; color: #888; margin-bottom: 14px; }
     .datetime-input { width: 100%; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 12px; padding: 12px 14px; color: #1a1714; font-size: 16px; font-family: inherit; outline: none; margin-bottom: 10px; -webkit-appearance: none; color-scheme: light; }
     .datetime-input:focus { border-color: #c9a84c; }
 
@@ -132,7 +162,7 @@
     .check-label { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
     .custom-check { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #ddd; background: transparent; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
     .custom-check.on { background: #c9a84c; border-color: #c9a84c; }
-    .check-label-text { font-size: 13px; font-weight: 700; color: #aaa; }
+    .check-label-text { font-size: 13px; font-weight: 700; color: #666; }
 
     /* POPUP BUTTONS */
     .popup-btns { display: flex; flex-direction: column; gap: 8px; }
@@ -213,7 +243,7 @@
           autocomplete="off" autocapitalize="sentences"
           onkeydown="if(event.key==='Enter')addItem();" />
         <button class="mic-btn" id="micBtn" onclick="toggleMic()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="2" width="6" height="11" rx="3"/>
             <path d="M5 10a7 7 0 0 0 14 0"/>
             <line x1="12" y1="19" x2="12" y2="22"/>
@@ -283,21 +313,21 @@
     <div class="popup-title">☁️ Capturar calendario</div>
     <div class="popup-subtitle">Importa eventos como recordatorios</div>
     <div style="margin-bottom:12px;">
-      <div style="font-size:11px;font-weight:800;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">CALENDARIO</div>
+      <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">CALENDARIO</div>
       <select id="calendarSelect" class="datetime-input" style="margin-bottom:0;"></select>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:12px;">
       <div style="flex:1;">
-        <div style="font-size:11px;font-weight:800;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">DESDE</div>
+        <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">DESDE</div>
         <input type="date" id="importFrom" class="datetime-input" style="margin-bottom:0;padding:10px 12px;" />
       </div>
       <div style="flex:1;">
-        <div style="font-size:11px;font-weight:800;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">HASTA</div>
+        <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">HASTA</div>
         <input type="date" id="importTo" class="datetime-input" style="margin-bottom:0;padding:10px 12px;" />
       </div>
     </div>
     <div id="importPreview" style="max-height:180px;overflow-y:auto;margin-bottom:12px;display:none;">
-      <div style="font-size:11px;font-weight:800;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">EVENTOS ENCONTRADOS</div>
+      <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">EVENTOS ENCONTRADOS</div>
       <div id="importPreviewList"></div>
     </div>
     <div class="popup-btns">
@@ -422,7 +452,7 @@
   async function openCalSelector() {
     document.getElementById('calSelectorPopup').classList.add('open');
     const list = document.getElementById('calSelectorList');
-    list.innerHTML = '<div style="color:#8a7a60;font-size:13px;padding:12px 0;text-align:center;">Cargando calendarios...</div>';
+    list.innerHTML = '<div style="color:#888;font-size:13px;padding:12px 0;text-align:center;">Cargando calendarios...</div>';
     try {
       const token = await ensureGcalToken();
       const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
@@ -1160,7 +1190,7 @@
     const confirmText = document.getElementById('importConfirmText');
 
     if (_importEvents.length === 0) {
-      list.innerHTML = '<div style="color:#c9b99a;font-size:13px;padding:8px 0;">No se encontraron eventos en ese rango.</div>';
+      list.innerHTML = '<div style="color:#888;font-size:13px;padding:8px 0;">No se encontraron eventos en ese rango.</div>';
       preview.style.display = 'block';
       confirmBtn.style.display = 'none';
       return;
@@ -1178,7 +1208,7 @@
         <input type="checkbox" id="imp-${idx}" value="${idx}" ${exists?'disabled':''} ${!exists?'checked':''} style="width:auto;accent-color:#c9a84c;flex-shrink:0;" />
         <div style="flex:1;min-width:0;">
           <div style="font-size:13px;font-weight:700;color:${exists?'#2a8a50':'#1a1714'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.summary}</div>
-          <div style="font-size:11px;color:#c9b99a;">${date}${exists?' · Ya importado':''}</div>
+          <div style="font-size:11px;color:#888;">${date}${exists?' · Ya importado':''}</div>
         </div>
       </div>`;
     }).join('');

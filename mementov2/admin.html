@@ -6,8 +6,10 @@
   <title>⚙️ Admin — MEMENTO</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: linear-gradient(135deg, #f7f5f2 0%, #ffffff 50%, #f7f5f2 100%); font-family: 'Nunito', sans-serif; color: #ffffff; min-height: 100vh; }
+    :root { color-scheme: light only; }
+    html { background: #f7f5f2 !important; }
+    * { box-sizing: border-box; margin: 0; padding: 0; color-scheme: light; }
+    body { background: #f7f5f2 !important; font-family: 'Nunito', sans-serif; color: #1a1714 !important; min-height: 100vh; }
     .wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 60px; }
     h1 { font-family: 'Abril Fatface', serif; font-size: 26px; color: #1a1714; margin-bottom: 4px; }
     .subtitle { color: #bbb; font-size: 13px; margin-bottom: 24px; }
@@ -18,19 +20,19 @@
     label:first-of-type { margin-top: 0; }
     input[type=text], input[type=password] {
       width: 100%; background: #f7f5f2; border: 1px solid #e8e4dc; border-radius: 10px;
-      padding: 10px 14px; color: #ffffff; font-size: 15px; font-family: inherit; outline: none;
+      padding: 10px 14px; color: #1a1714; font-size: 15px; font-family: inherit; outline: none;
     }
     input[type=text]:focus, input[type=password]:focus { border-color: #c9a84c; }
-    .btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(90deg,#c9a84c,#a8832a); color: #f7f5f2; border: none; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; }
+    .btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(90deg,#c9a84c,#a8832a); color: #fff; border: none; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; }
     .btn:active { opacity: 0.85; }
     .btn-danger { background: #fff0f0; color: #e05050; border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .btn-danger:active { background: #ffe0e0; }
     .btn-sm { background: #ffffff; color: #c9a84c; border: 1px solid #5a3a0a; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .btn-sm:active { background: #fdf6e8; }
-    .save-btn { background: linear-gradient(90deg,#c9a84c,#a8832a); color: #f7f5f2; border: none; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 900; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .save-btn { background: linear-gradient(90deg,#c9a84c,#a8832a); color: #fff; border: none; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 900; font-family: inherit; cursor: pointer; white-space: nowrap; }
     .save-btn:active { opacity: 0.85; }
     .error { color: #f87171; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
-    .success { color: #4ade80; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
+    .success { color: #2a8a50; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
     .section-title { font-size: 11px; font-weight: 900; color: #999; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
     .back-link { display: inline-block; background: #f7f5f2; border: 1px solid #e8e4dc; border-radius: 10px; color: #888; font-size: 13px; font-weight: 700; padding: 8px 14px; text-decoration: none; }
 
@@ -46,7 +48,7 @@
     .avatar-circle:hover { border-color: #c9a84c; }
     .avatar-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
     .user-info { flex: 1; min-width: 0; }
-    .user-name { font-size: 15px; font-weight: 800; color: #ffffff; }
+    .user-name { font-size: 15px; font-weight: 800; color: #1a1714; }
     .user-meta { font-size: 11px; color: #bbb; margin-top: 2px; }
     .admin-badge { background: #fdf6e8; color: #c9a84c; border-radius: 6px; padding: 2px 8px; font-size: 10px; font-weight: 900; letter-spacing: 0.5px; margin-left: 6px; }
     .user-actions { display: flex; gap: 6px; flex-shrink: 0; }
@@ -91,7 +93,7 @@
     .remove-photo-btn:active { background: #fff0f0; }
 
     /* PASSWORD */
-    .detail-input { flex: 1; background: #f7f5f2; border: 1px solid #e8e4dc; border-radius: 10px; padding: 9px 12px; color: #ffffff; font-size: 14px; font-family: inherit; outline: none; }
+    .detail-input { flex: 1; background: #f7f5f2; border: 1px solid #e8e4dc; border-radius: 10px; padding: 9px 12px; color: #1a1714; font-size: 14px; font-family: inherit; outline: none; }
     .detail-input:focus { border-color: #c9a84c; }
 
     /* TOAST */
@@ -108,6 +110,18 @@
     /* Hidden file input */
     #fileInput { display: none; }
     .spinner { display: none; font-size: 12px; color: #888; }
+    /* Samsung Internet force light mode */
+    :root { color-scheme: light only; }
+    html { background: #f7f5f2 !important; color: #1a1714 !important; }
+    * { color-scheme: light; }
+    body { background: #f7f5f2 !important; color: #1a1714 !important; }
+    input, textarea, select, button { color-scheme: light; }
+    input[type="text"], input[type="password"], textarea, select {
+      background-color: #f7f5f2 !important;
+      color: #1a1714 !important;
+      -webkit-text-fill-color: #1a1714 !important;
+      color-scheme: light !important;
+    }
   </style>
 </head>
 <body>
