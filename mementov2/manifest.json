@@ -5,8 +5,8 @@
   "start_url": "/mi-lista/mementov2/index.html",
   "scope": "/mi-lista/mementov2/",
   "display": "standalone",
-  "background_color": "#141210",
-  "theme_color": "#141210",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [
     { "src": "icon-72x72.png",   "sizes": "72x72",   "type": "image/png", "purpose": "any maskable" },
