@@ -1,6 +1,6 @@
-const CACHE_VERSION = 'mementov2-v1';
+const CACHE_VERSION = 'mementov2-v2';
 const BASE = '/mi-lista/mementov2/';
-const PRECACHE = [BASE+'index.html',BASE+'admin.html',BASE+'manifest.json',BASE+'icon.png',BASE+'icon-192.png',BASE+'icon-512.png'];
+const PRECACHE = [BASE+'index.html',BASE+'admin.html',BASE+'calendar.html',BASE+'manifest.json',BASE+'icon.png',BASE+'icon-192.png',BASE+'icon-512.png'];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE_VERSION).then(c=>c.addAll(PRECACHE)).catch(()=>{})); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim())); });
 self.addEventListener('fetch', e => {

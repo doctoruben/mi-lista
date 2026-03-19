@@ -91,8 +91,10 @@
     .main-input::placeholder { color: #ccc; }
     .main-input:focus { border-color: #c9a84c; }
     .mic-btn { background: #f7f5f2; border: 0.5px solid #e8e4dc; border-radius: 12px; width: 48px; height: 48px; min-width: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-appearance: none; }
-    .add-btn { width: 100%; background: #c9a84c; color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; margin-top: 10px; -webkit-appearance: none; }
+    .add-btn { background: #c9a84c; color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
     .add-btn:active { opacity: 0.9; }
+    .cal-view-btn { display:flex; align-items:center; justify-content:center; gap:6px; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 12px; padding: 11px 14px; font-size: 13px; font-weight: 800; font-family: inherit; color: #888; cursor: pointer; white-space: nowrap; -webkit-appearance: none; }
+    .cal-view-btn:active { background: #eeeae4; }
 
     /* FILTERS */
     .filters { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -318,7 +320,18 @@
           </svg>
         </button>
       </div>
-      <button class="add-btn" onclick="addItem()">+ Añadir recordatorio</button>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="add-btn" onclick="addItem()" style="flex:1;padding:11px;font-size:14px;">+ Añadir</button>
+        <button class="cal-view-btn" onclick="openCalendarView()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="17" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Ver calendario
+        </button>
+      </div>
     </div>
 
     <div class="filters">
@@ -378,22 +391,12 @@
   <div class="popup-sheet">
     <div class="popup-handle"></div>
     <div class="popup-title">☁️ Capturar calendario</div>
-    <div class="popup-subtitle">Importa eventos como recordatorios</div>
-    <div style="margin-bottom:12px;">
+    <div class="popup-subtitle">Importa eventos a partir de hoy como recordatorios</div>
+    <div style="margin-bottom:14px;">
       <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">CALENDARIO</div>
       <select id="calendarSelect" class="datetime-input" style="margin-bottom:0;"></select>
     </div>
-    <div style="display:flex;gap:10px;margin-bottom:12px;">
-      <div style="flex:1;">
-        <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">DESDE</div>
-        <input type="date" id="importFrom" class="datetime-input" style="margin-bottom:0;padding:10px 12px;" />
-      </div>
-      <div style="flex:1;">
-        <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">HASTA</div>
-        <input type="date" id="importTo" class="datetime-input" style="margin-bottom:0;padding:10px 12px;" />
-      </div>
-    </div>
-    <div id="importPreview" style="max-height:180px;overflow-y:auto;margin-bottom:12px;display:none;">
+    <div id="importPreview" style="max-height:220px;overflow-y:auto;margin-bottom:12px;display:none;">
       <div style="font-size:11px;font-weight:800;color:#777;letter-spacing:0.5px;margin-bottom:6px;">EVENTOS ENCONTRADOS</div>
       <div id="importPreviewList"></div>
     </div>
@@ -1191,19 +1194,10 @@
   let _importEvents = []; // eventos encontrados en la búsqueda
 
   window.openImportPopup = async function() {
-    // Establecer fechas por defecto: hoy → +30 días
-    const today = new Date();
-    const in30  = new Date(today.getTime() + 30*24*3600000);
-    const fmt   = d => d.toISOString().slice(0,10);
-    document.getElementById('importFrom').value = fmt(today);
-    document.getElementById('importTo').value   = fmt(in30);
     document.getElementById('importPreview').style.display = 'none';
     document.getElementById('importConfirmBtn').style.display = 'none';
     _importEvents = [];
-
     document.getElementById('importPopup').classList.add('open');
-
-    // Cargar lista de calendarios
     await loadCalendarList();
   };
 
@@ -1238,10 +1232,7 @@
 
   window.searchCalendarEvents = async function() {
     const calId = document.getElementById('calendarSelect').value;
-    const from  = document.getElementById('importFrom').value;
-    const to    = document.getElementById('importTo').value;
     if (!calId) { showToast('❌ Selecciona un calendario'); return; }
-    if (!from || !to)  { showToast('❌ Elige el rango de fechas'); return; }
 
     const btn = document.getElementById('importSearchBtn');
     btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Buscando...';
@@ -1249,21 +1240,17 @@
 
     try {
       const token = await ensureGcalToken();
-      const timeMin = new Date(from).toISOString();
-      const timeMax = new Date(to + 'T23:59:59').toISOString();
+      // From today, no end limit (max 250 results)
+      const timeMin = new Date().toISOString();
 
       const url = 'https://www.googleapis.com/calendar/v3/calendars/' +
         encodeURIComponent(calId) + '/events?timeMin=' + encodeURIComponent(timeMin) +
-        '&timeMax=' + encodeURIComponent(timeMax) +
-        '&singleEvents=true&orderBy=startTime&maxResults=50';
+        '&singleEvents=true&orderBy=startTime&maxResults=250';
 
-      const res = await fetch(url, {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
+      const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
       if (!res.ok) throw new Error('Error ' + res.status);
       const data = await res.json();
-      _importEvents = (data.items || []).filter(e => e.summary); // Solo los que tienen título
-
+      _importEvents = (data.items || []).filter(e => e.summary);
       renderImportPreview();
     } catch(e) {
       showToast('❌ Error buscando eventos: ' + e.message);
@@ -1426,6 +1413,10 @@
       console.warn('Sync from calendar error:', e);
     }
   }
+
+  window.openCalendarView = function() {
+    window.location.href = 'calendar.html';
+  };
 
   // ── MICRÓFONO ────────────────────────────────────────────
   let _rec=null,_micActive=false;
