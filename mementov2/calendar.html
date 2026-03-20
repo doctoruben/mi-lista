@@ -114,6 +114,34 @@
     .event-badge { display: inline-flex; align-items: center; gap: 3px; margin-top: 4px; font-size: 10px; font-weight: 700; color: #a8832a; background: #fdf6e8; border-radius: 5px; padding: 2px 6px; }
     .no-events { color: #bbb; font-size: 14px; text-align: center; padding: 20px 0; }
     .popup-close { width: 100%; margin-top: 8px; background: #f5f2ee; border: 0.5px solid #e0ddd6; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; font-family: inherit; color: #888; cursor: pointer; -webkit-appearance: none; }
+    .event-item-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .ev-edit-btn { flex:1; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 8px; padding: 7px 0; font-size: 12px; font-weight: 800; font-family: inherit; color: #888; cursor: pointer; -webkit-appearance: none; }
+    .ev-del-btn  { background: #fff0f0; border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 800; font-family: inherit; color: #e05050; cursor: pointer; -webkit-appearance: none; }
+    .ev-edit-btn:active { background: #eeeae4; }
+    .ev-del-btn:active  { background: #ffe0e0; }
+    /* Edit inline in day popup */
+    .ev-edit-row { display: none; margin-top: 8px; gap: 6px; align-items: flex-start; }
+    .ev-edit-row.open { display: flex; }
+    .ev-edit-input { flex:1; min-width:0; background: #f7f5f2; border: 1px solid #c9a84c; border-radius: 8px; padding: 7px 10px; font-size: 14px; font-family: inherit; color: #1a1714; outline: none; resize: none; min-height: 36px; }
+    .ev-edit-save   { background: #c9a84c; color: #fff; border: none; border-radius: 8px; padding: 7px 10px; font-weight: 900; font-family: inherit; cursor: pointer; font-size: 13px; }
+    .ev-edit-cancel { background: #f5f2ee; border: 0.5px solid #e0ddd6; color: #aaa; border-radius: 8px; padding: 7px 8px; font-weight: 700; font-family: inherit; cursor: pointer; font-size: 13px; }
+    /* Add event popup */
+    .add-popup-overlay { display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.3); align-items: flex-end; justify-content: center; }
+    .add-popup-overlay.open { display: flex; }
+    .add-popup-sheet { width: 100%; max-width: 480px; background: #fff; border-radius: 24px 24px 0 0; padding: 20px 20px calc(20px + env(safe-area-inset-bottom,0px)); border-top: 0.5px solid #eee; box-shadow: 0 -4px 24px rgba(0,0,0,0.1); }
+    .add-popup-title { font-size: 17px; font-weight: 900; color: #1a1714; margin-bottom: 14px; }
+    .add-popup-input { width: 100%; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 12px; padding: 12px 14px; font-size: 16px; font-family: inherit; color: #1a1714; outline: none; margin-bottom: 10px; }
+    .add-popup-input:focus { border-color: #c9a84c; }
+    .add-popup-checks { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .add-popup-check-label { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+    .add-popup-custom-check { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #ddd; background: transparent; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+    .add-popup-custom-check.on { background: #c9a84c; border-color: #c9a84c; }
+    .add-popup-check-text { font-size: 13px; font-weight: 700; color: #666; }
+    .time-input { width: 100%; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 12px; padding: 12px 14px; font-size: 16px; font-family: inherit; color: #1a1714; outline: none; margin-bottom: 14px; -webkit-appearance: none; color-scheme: light; }
+    .time-input:focus { border-color: #c9a84c; }
+    .add-popup-btns { display: flex; gap: 8px; }
+    .add-popup-save { flex:1; background: #c9a84c; color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
+    .add-popup-cancel { background: #f5f2ee; border: 0.5px solid #e0ddd6; color: #888; border-radius: 12px; padding: 13px 16px; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
 
     @media (prefers-color-scheme: dark) {
       html, body { background: #f7f5f2 !important; color: #1a1714 !important; }
@@ -173,15 +201,38 @@
 <div class="popup-overlay" id="dayPopup">
   <div class="popup-sheet">
     <div class="popup-handle"></div>
-    <div class="popup-day-title" id="dayPopupTitle"></div>
-    <div id="dayPopupEvents"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="popup-day-title" id="dayPopupTitle" style="margin-bottom:0;"></div>
+      <button onclick="openAddEventPopup()" style="width:32px;height:32px;background:#c9a84c;border:none;border-radius:50%;color:#fff;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;">+</button>
+    </div>
+    <div id="dayPopupEvents" style="max-height:50vh;overflow-y:auto;"></div>
     <button class="popup-close" onclick="document.getElementById('dayPopup').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ADD EVENT POPUP -->
+<div class="add-popup-overlay" id="addEventPopup">
+  <div class="add-popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="add-popup-title" id="addEventTitle">Nuevo recordatorio</div>
+    <input class="add-popup-input" id="addEventInput" placeholder="Nombre del recordatorio..." autocapitalize="sentences" />
+    <div class="add-popup-checks">
+      <div class="add-popup-check-label" onclick="toggleAddAllDay()">
+        <div class="add-popup-custom-check" id="addAllDayCheck"></div>
+        <span class="add-popup-check-text">Todo el día</span>
+      </div>
+    </div>
+    <input type="time" class="time-input" id="addEventTime" value="09:00" />
+    <div class="add-popup-btns">
+      <button class="add-popup-cancel" onclick="closeAddEventPopup()">Cancelar</button>
+      <button class="add-popup-save" onclick="saveNewEvent()">+ Añadir</button>
+    </div>
   </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const FB_CONFIG = {
@@ -208,10 +259,12 @@
     try { return JSON.parse(localStorage.getItem('mv2Session') || 'null'); } catch { return null; }
   }
 
+  let _session = null;
   const session = loadSession();
   if (!session) {
     window.location.href = 'index.html';
   } else {
+    _session = session;
     const now = new Date();
     currentYear  = now.getFullYear();
     currentMonth = now.getMonth();
@@ -228,8 +281,17 @@
 
     const itemsRef = ref(db, 'memento/' + session.user + '/recordatorios');
     onValue(itemsRef, snap => {
-      items = snap.val() || {};
+      const raw = snap.val() || {};
+      // Attach _id to each item for easy reference
+      items = {};
+      Object.entries(raw).forEach(([id, item]) => {
+        items[id] = { ...item, _id: id };
+      });
       render();
+      // Also refresh day popup if open
+      if (_currentDayDate && document.getElementById('dayPopup').classList.contains('open')) {
+        setTimeout(refreshDayPopup, 100);
+      }
     });
   }
 
@@ -403,42 +465,164 @@
   }
 
   // ── DAY POPUP ─────────────────────────────────────────────
+  let _currentDayDate = null; // date selected in popup
+
   function formatTime(ts, allDay) {
     if (allDay) return 'Todo el día';
     return new Date(ts).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
   }
 
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function itemRef(id) { return ref(db, 'memento/' + _session.user + '/recordatorios/' + id); }
+
+  function refreshDayPopup() {
+    if (!_currentDayDate) return;
+    const dayItems = getItemsForDateObj(_currentDayDate).sort((a,b) => (a.alarmTs||0)-(b.alarmTs||0));
+    renderDayEvents(dayItems);
+  }
+
+  function renderDayEvents(dayItems) {
+    const evList = document.getElementById('dayPopupEvents');
+    if (!dayItems || dayItems.length === 0) {
+      evList.innerHTML = '<div class="no-events">Sin recordatorios este día</div>';
+      return;
+    }
+    evList.innerHTML = dayItems.map(item => {
+      const id  = item._id;
+      const cls = item.allDay ? 'all-day' : (item.gcalEventId ? 'with-cal' : 'no-cal');
+      const cal = item.gcalEventId
+        ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#a8832a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px;vertical-align:middle"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' : '';
+      return `<div class="event-item" id="ev-${id}">
+        <div class="event-dot ${cls}"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="event-name">${cal}${esc(item.name)}</div>
+          <div class="event-time">${formatTime(item.alarmTs, item.allDay)}</div>
+          <div class="event-item-actions">
+            <button class="ev-edit-btn" onclick="toggleEvEdit('${id}','${esc(item.name)}')">✏️ Editar</button>
+            <button class="ev-del-btn" onclick="deleteEvent('${id}')">🗑 Eliminar</button>
+          </div>
+          <div class="ev-edit-row" id="ev-edit-${id}">
+            <textarea class="ev-edit-input" id="ev-edit-input-${id}" rows="1"
+              onkeydown="if(event.key==='Escape')toggleEvEdit('${id}','')"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
+            >${esc(item.name)}</textarea>
+            <button class="ev-edit-save" onclick="saveEvEdit('${id}')">✓</button>
+            <button class="ev-edit-cancel" onclick="toggleEvEdit('${id}','')">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   function openDayPopup(dateObj, dayItems) {
+    _currentDayDate = dateObj;
     let title;
     if (dateObj) {
       const wd = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
       title = wd[dateObj.getDay()] + ', ' + dateObj.getDate() + ' de ' + MONTHS_ES[dateObj.getMonth()];
-      if (viewMode === 'month') dayItems = getItemsForDateObj(dateObj);
+      dayItems = getItemsForDateObj(dateObj).sort((a,b) => (a.alarmTs||0)-(b.alarmTs||0));
     } else {
       title = 'Recordatorio';
     }
     document.getElementById('dayPopupTitle').textContent = title;
-    const evList = document.getElementById('dayPopupEvents');
-    if (!dayItems || dayItems.length === 0) {
-      evList.innerHTML = '<div class="no-events">Sin recordatorios este día</div>';
-    } else {
-      evList.innerHTML = dayItems.map(item => {
-        const cls   = item.allDay ? 'all-day' : (item.gcalEventId ? 'with-cal' : 'no-cal');
-        const badge = item.gcalEventId
-          ? '<span class="event-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a8832a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>'
-          : '';
-        return `<div class="event-item">
-          <div class="event-dot ${cls}"></div>
-          <div>
-            <div class="event-name">${item.name}</div>
-            <div class="event-time">${formatTime(item.alarmTs, item.allDay)}</div>
-            ${badge}
-          </div>
-        </div>`;
-      }).join('');
-    }
+    renderDayEvents(dayItems || []);
     document.getElementById('dayPopup').classList.add('open');
   }
+
+  // ── EDIT EVENT IN POPUP ───────────────────────────────────
+  window.toggleEvEdit = function(id, name) {
+    const row   = document.getElementById('ev-edit-' + id);
+    const input = document.getElementById('ev-edit-input-' + id);
+    const isOpen = row.classList.contains('open');
+    document.querySelectorAll('.ev-edit-row.open').forEach(r => r.classList.remove('open'));
+    if (!isOpen) {
+      row.classList.add('open');
+      if (input) {
+        input.value = name;
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+        setTimeout(() => { input.focus(); input.select(); }, 10);
+      }
+    }
+  };
+
+  window.saveEvEdit = async function(id) {
+    const input = document.getElementById('ev-edit-input-' + id);
+    if (!input) return;
+    const newName = input.value.trim();
+    if (!newName) return;
+    await update(itemRef(id), { name: newName });
+    // Refresh popup
+    setTimeout(refreshDayPopup, 300);
+  };
+
+  window.deleteEvent = async function(id) {
+    if (!confirm('¿Eliminar este recordatorio?')) return;
+    await remove(itemRef(id));
+    setTimeout(refreshDayPopup, 300);
+  };
+
+  // ── ADD EVENT POPUP ───────────────────────────────────────
+  let _addAllDay = false;
+
+  window.openAddEventPopup = function() {
+    if (!_currentDayDate) return;
+    const wd = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const d = _currentDayDate;
+    document.getElementById('addEventTitle').textContent =
+      wd[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS_ES[d.getMonth()];
+    document.getElementById('addEventInput').value = '';
+    document.getElementById('addEventTime').value = '09:00';
+    document.getElementById('addEventTime').style.display = 'block';
+    _addAllDay = false;
+    const chk = document.getElementById('addAllDayCheck');
+    chk.classList.remove('on');
+    chk.textContent = '';
+    document.getElementById('addEventPopup').classList.add('open');
+    setTimeout(() => document.getElementById('addEventInput').focus(), 100);
+  };
+
+  window.closeAddEventPopup = function() {
+    document.getElementById('addEventPopup').classList.remove('open');
+  };
+
+  window.toggleAddAllDay = function() {
+    _addAllDay = !_addAllDay;
+    const chk = document.getElementById('addAllDayCheck');
+    const timeInput = document.getElementById('addEventTime');
+    if (_addAllDay) {
+      chk.classList.add('on'); chk.textContent = '✓';
+      timeInput.style.display = 'none';
+    } else {
+      chk.classList.remove('on'); chk.textContent = '';
+      timeInput.style.display = 'block';
+    }
+  };
+
+  window.saveNewEvent = async function() {
+    const name = document.getElementById('addEventInput').value.trim();
+    if (!name) { document.getElementById('addEventInput').focus(); return; }
+    const d = _currentDayDate;
+    let alarmTs;
+    if (_addAllDay) {
+      alarmTs = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0).getTime();
+    } else {
+      const timeVal = document.getElementById('addEventTime').value || '09:00';
+      const [h, m] = timeVal.split(':').map(Number);
+      alarmTs = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0).getTime();
+    }
+    closeAddEventPopup();
+    const itemsRef = ref(db, 'memento/' + _session.user + '/recordatorios');
+    await push(itemsRef, {
+      name,
+      checked: false,
+      ts: Date.now(),
+      alarmTs,
+      allDay: _addAllDay || null
+    });
+    setTimeout(refreshDayPopup, 400);
+  };
 </script>
 </body>
 </html>

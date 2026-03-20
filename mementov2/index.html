@@ -973,8 +973,7 @@
     const newName = input.value.trim();
     if (!newName) { showToast('❌ El recordatorio no puede estar vacío'); return; }
     if (newName === items[id]?.name) { toggleEdit(id); return; }
-    const dup = Object.entries(items).find(([k,i]) => k !== id && !i.checked && i.name.toLowerCase() === newName.toLowerCase());
-    if (dup) { showToast('⚠️ Ya existe ese recordatorio'); return; }
+
 
     setSyncStatus('syncing','Guardando...');
     await update(itemRef(id), { name: newName });
@@ -998,14 +997,6 @@
     const input = document.getElementById('itemInput');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
-    const dup = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === name.toLowerCase());
-    if (dup) {
-      input.style.border = '2px solid #f87171';
-      input.placeholder = '⚠️ Ya existe este recordatorio';
-      input.value = '';
-      setTimeout(() => { input.style.border=''; input.placeholder='Nuevo recordatorio...'; input.focus(); }, 2000);
-      return;
-    }
     setSyncStatus('syncing','Guardando...');
     const newRef = push(itemsRef, {name, checked: false, ts: Date.now()});
     input.value = ''; input.blur();
