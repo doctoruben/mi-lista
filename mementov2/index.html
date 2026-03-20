@@ -93,7 +93,7 @@
     .mic-btn { background: #f7f5f2; border: 0.5px solid #e8e4dc; border-radius: 12px; width: 48px; height: 48px; min-width: 48px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-appearance: none; }
     .add-btn { background: #c9a84c; color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; -webkit-appearance: none; }
     .add-btn:active { opacity: 0.9; }
-    .cal-view-btn { display:flex; align-items:center; justify-content:center; gap:6px; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 12px; padding: 11px 14px; font-size: 13px; font-weight: 800; font-family: inherit; color: #888; cursor: pointer; white-space: nowrap; -webkit-appearance: none; }
+    .cal-view-btn { display:flex; align-items:center; justify-content:center; background: #f7f5f2; border: 0.5px solid #e0ddd6; border-radius: 12px; width: 48px; height: 48px; cursor: pointer; flex-shrink: 0; -webkit-appearance: none; color: #888; }
     .cal-view-btn:active { background: #eeeae4; }
 
     /* FILTERS */
@@ -322,14 +322,13 @@
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="add-btn" onclick="addItem()" style="flex:1;padding:11px;font-size:14px;">+ Añadir</button>
-        <button class="cal-view-btn" onclick="openCalendarView()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button class="cal-view-btn" onclick="openCalendarView()" title="Ver calendario">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="17" rx="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/>
             <line x1="8" y1="2" x2="8" y2="6"/>
             <line x1="3" y1="10" x2="21" y2="10"/>
           </svg>
-          Ver calendario
         </button>
       </div>
     </div>
@@ -1433,4 +1432,63 @@
       console.warn('Sync error:', e);
     }
   }
->
+
+  // ── CALENDAR VIEW ────────────────────────────────────────
+  window.openCalendarView = function() {
+    window.location.href = 'calendar.html';
+  };
+
+
+  // ── MICRÓFONO ────────────────────────────────────────────
+  let _rec=null,_micActive=false;
+  const MIC_SVG=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
+  const MIC_ON=`<svg width="20" height="20" viewBox="0 0 24 24" fill="#f87171" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
+
+  window.toggleMic=function(){
+    if(_micActive){if(_rec)_rec.stop();return;}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){showToast('❌ Tu navegador no soporta reconocimiento de voz');return;}
+    _rec=new SR();_rec.lang='es-ES';_rec.interimResults=false;_rec.maxAlternatives=1;
+    _micActive=true;
+    const btn=document.getElementById('micBtn');
+    btn.style.background='#fff0f0';btn.style.border='1px solid #f87171';btn.innerHTML=MIC_ON;
+    _rec.onresult=e=>{
+      const t=e.results[0][0].transcript.trim();
+      const prefijos=['añadir ','agregar ','poner ','meter ','recordar ','apuntar '];
+      let nombre=t.toLowerCase();
+      for(const p of prefijos){if(nombre.startsWith(p)){nombre=nombre.slice(p.length).trim();break;}}
+      nombre=nombre.charAt(0).toUpperCase()+nombre.slice(1);
+      const teniaPrefijo=prefijos.some(p=>t.toLowerCase().startsWith(p));
+      document.getElementById('itemInput').value=nombre;
+      if(teniaPrefijo){addItem();showToast('✅ "'+nombre+'" añadido por voz');}
+      else{document.getElementById('itemInput').focus();showToast('🎤 "'+nombre+'" — pulsa Añadir para confirmar');}
+    };
+    _rec.onerror=e=>{if(e.error!=='no-speech'&&e.error!=='aborted')showToast('❌ Error: '+e.error);};
+    _rec.onend=()=>{
+      _micActive=false;
+      const btn=document.getElementById('micBtn');
+      if(btn){btn.style.background='';btn.style.border='';btn.innerHTML=MIC_SVG;}
+    };
+    _rec.start();
+  };
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/mi-lista/mementov2/sw.js')
+        .then(reg => {
+          reg.update();
+          reg.addEventListener('updatefound', () => {
+            const w = reg.installing;
+            w.addEventListener('statechange', () => {
+              if (w.state === 'activated') window.location.reload();
+            });
+          });
+        }).catch(() => {});
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+    });
+  }
+</script>
+</body>
+</html>
