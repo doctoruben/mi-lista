@@ -246,6 +246,34 @@
   </div>
 </div>
 
+<!-- RESCHEDULE POPUP -->
+<div class="add-popup-overlay" id="reschedulePopup">
+  <div class="add-popup-sheet">
+    <div class="popup-handle"></div>
+    <div class="add-popup-title" id="rescheduleTitle">Reprogramar aviso</div>
+    <div class="add-popup-checks" style="margin-bottom:10px;">
+      <div class="add-popup-check-label" onclick="toggleRescheduleAllDay()">
+        <div class="add-popup-custom-check" id="rescheduleAllDayCheck"></div>
+        <span class="add-popup-check-text">Todo el día</span>
+      </div>
+      <div class="add-popup-check-label" onclick="toggleRescheduleCalSync()">
+        <span class="add-popup-check-text">Sincronizar con Calendar</span>
+        <div class="add-popup-custom-check" id="rescheduleCalCheck"></div>
+      </div>
+    </div>
+    <input type="date" class="time-input" id="rescheduleDate"
+      onclick="this.showPicker && this.showPicker()"
+      onfocus="this.showPicker && this.showPicker()" style="margin-bottom:8px;" />
+    <input type="time" class="time-input" id="rescheduleTime" value="09:00"
+      onclick="this.showPicker && this.showPicker()"
+      onfocus="this.showPicker && this.showPicker()" />
+    <div class="add-popup-btns">
+      <button class="add-popup-cancel" onclick="closeReschedule()">Cancelar</button>
+      <button class="add-popup-save" onclick="saveReschedule()">✓ Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -298,13 +326,11 @@
     const itemsRef = ref(db, 'memento/' + session.user + '/recordatorios');
     onValue(itemsRef, snap => {
       const raw = snap.val() || {};
-      // Attach _id to each item for easy reference
       items = {};
       Object.entries(raw).forEach(([id, item]) => {
         items[id] = { ...item, _id: id };
       });
       render();
-      // Also refresh day popup if open
       if (_currentDayDate && document.getElementById('dayPopup').classList.contains('open')) {
         setTimeout(refreshDayPopup, 100);
       }
@@ -520,6 +546,7 @@
           <div class="event-time">${formatTime(item.alarmTs, item.allDay)}</div>
           <div class="event-item-actions">
             <button class="ev-edit-btn" onclick="toggleEvEdit('${id}')">✏️ Editar</button>
+            <button class="ev-edit-btn" onclick="openReschedule('${id}')" style="color:#a8832a;border-color:#e8d090;background:#fdf6e8;">📅 Reprogramar</button>
             <button class="ev-del-btn" onclick="deleteEvent('${id}')">🗑 Eliminar</button>
           </div>
           <div class="ev-edit-row" id="ev-edit-${id}">
@@ -572,31 +599,29 @@
     if (!input) return;
     const newName = input.value.trim();
     if (!newName) return;
-    if (!_session) { alert('Sesión no disponible'); return; }
-    try {
-      await update(itemRef(id), { name: newName });
-      // Close edit row immediately
-      const row = document.getElementById('ev-edit-' + id);
-      if (row) row.classList.remove('open');
-      // Update name in DOM directly (no need to wait for onValue)
-      const nameEl = document.querySelector('#ev-' + id + ' .event-name');
-      if (nameEl) {
-        // Keep calendar icon if present
-        const svg = nameEl.querySelector('svg');
-        nameEl.textContent = newName;
-        if (svg) nameEl.prepend(svg);
-      }
-      // Also update local items cache
-      if (items[id]) items[id].name = newName;
-    } catch(e) {
-      alert('Error guardando: ' + e.message);
-    }
+    if (!_session) return;
+    // Close edit row immediately
+    const row = document.getElementById('ev-edit-' + id);
+    if (row) row.classList.remove('open');
+    // Update local cache immediately so onValue refresh shows correct value
+    if (items[id]) items[id].name = newName;
+    // Save to Firebase - onValue will confirm
+    await update(itemRef(id), { name: newName });
   };
 
   window.deleteEvent = async function(id) {
     if (!confirm('¿Eliminar este recordatorio?')) return;
+    // Delete from Google Calendar if synced
+    const item  = items[id];
+    const token = getGcalToken();
+    const calId = getSelectedCalendarId();
+    if (item && item.gcalEventId && token && calId) {
+      fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) + '/events/' + item.gcalEventId,
+        { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } }
+      ).catch(() => {});
+    }
     await remove(itemRef(id));
-    setTimeout(refreshDayPopup, 300);
   };
 
   // ── ADD EVENT POPUP ───────────────────────────────────────
@@ -765,6 +790,132 @@
       gcalEventId: gcalEventId || null
     });
     setTimeout(refreshDayPopup, 400);
+  };
+
+  // ── RESCHEDULE ────────────────────────────────────────────
+  let _rescheduleId      = null;
+  let _rescheduleAllDay  = false;
+  let _rescheduleCalSync = false;
+
+  window.openReschedule = function(id) {
+    _rescheduleId = id;
+    const item = items[id];
+    if (!item) return;
+
+    document.getElementById('rescheduleTitle').textContent = item.name;
+
+    // Set current values
+    const ts = item.alarmTs ? new Date(item.alarmTs) : new Date();
+    const pad = n => String(n).padStart(2,'0');
+    document.getElementById('rescheduleDate').value =
+      ts.getFullYear() + '-' + pad(ts.getMonth()+1) + '-' + pad(ts.getDate());
+    document.getElementById('rescheduleTime').value =
+      pad(ts.getHours()) + ':' + pad(ts.getMinutes());
+
+    // allDay state
+    _rescheduleAllDay = !!item.allDay;
+    const allDayChk = document.getElementById('rescheduleAllDayCheck');
+    if (_rescheduleAllDay) {
+      allDayChk.classList.add('on'); allDayChk.textContent = '✓';
+      document.getElementById('rescheduleTime').style.display = 'none';
+    } else {
+      allDayChk.classList.remove('on'); allDayChk.textContent = '';
+      document.getElementById('rescheduleTime').style.display = 'block';
+    }
+
+    // Cal sync state
+    _rescheduleCalSync = !!(item.gcalEventId && getGcalToken());
+    const calChk = document.getElementById('rescheduleCalCheck');
+    if (_rescheduleCalSync) { calChk.classList.add('on'); calChk.textContent = '✓'; }
+    else if (getGcalToken() && getSelectedCalendarId()) {
+      _rescheduleCalSync = true;
+      calChk.classList.add('on'); calChk.textContent = '✓';
+    } else { calChk.classList.remove('on'); calChk.textContent = ''; }
+
+    document.getElementById('reschedulePopup').classList.add('open');
+  };
+
+  window.closeReschedule = function() {
+    document.getElementById('reschedulePopup').classList.remove('open');
+    _rescheduleId = null;
+  };
+
+  window.toggleRescheduleAllDay = function() {
+    _rescheduleAllDay = !_rescheduleAllDay;
+    const chk = document.getElementById('rescheduleAllDayCheck');
+    const ti  = document.getElementById('rescheduleTime');
+    if (_rescheduleAllDay) { chk.classList.add('on'); chk.textContent = '✓'; ti.style.display = 'none'; }
+    else { chk.classList.remove('on'); chk.textContent = ''; ti.style.display = 'block'; }
+  };
+
+  window.toggleRescheduleCalSync = function() {
+    _rescheduleCalSync = !_rescheduleCalSync;
+    const chk = document.getElementById('rescheduleCalCheck');
+    if (_rescheduleCalSync) { chk.classList.add('on'); chk.textContent = '✓'; }
+    else { chk.classList.remove('on'); chk.textContent = ''; }
+  };
+
+  window.saveReschedule = async function() {
+    if (!_rescheduleId) return;
+    const id   = _rescheduleId;
+    const item = items[id];
+    const dateVal = document.getElementById('rescheduleDate').value;
+    if (!dateVal) return;
+
+    let alarmTs;
+    if (_rescheduleAllDay) {
+      const [y,mo,d] = dateVal.split('-').map(Number);
+      alarmTs = new Date(y, mo-1, d, 0, 0, 0).getTime();
+    } else {
+      const timeVal = document.getElementById('rescheduleTime').value || '09:00';
+      const [y,mo,d] = dateVal.split('-').map(Number);
+      const [h,mi]   = timeVal.split(':').map(Number);
+      alarmTs = new Date(y, mo-1, d, h, mi, 0).getTime();
+    }
+
+    closeReschedule();
+
+    // Update local cache
+    if (items[id]) { items[id].alarmTs = alarmTs; items[id].allDay = _rescheduleAllDay || null; }
+
+    const changes = { alarmTs, allDay: _rescheduleAllDay || null };
+
+    // Handle Calendar sync
+    if (_rescheduleCalSync && getGcalToken() && getSelectedCalendarId()) {
+      if (item && item.gcalEventId) {
+        // Update existing event
+        const token = getGcalToken();
+        const calId = getSelectedCalendarId();
+        const tz    = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        let event;
+        if (_rescheduleAllDay) {
+          const dateStr = new Date(alarmTs).toISOString().slice(0,10);
+          const nextDay = new Date(alarmTs + 86400000).toISOString().slice(0,10);
+          event = { summary: '🔔 ' + item.name, start: { date: dateStr }, end: { date: nextDay } };
+        } else {
+          event = { summary: '🔔 ' + item.name, start: { dateTime: toGCalDateTime(alarmTs), timeZone: tz }, end: { dateTime: toGCalDateTime(alarmTs + 30*60000), timeZone: tz } };
+        }
+        fetch('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) + '/events/' + item.gcalEventId,
+          { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(event) }
+        ).catch(() => {});
+      } else {
+        // Create new event
+        const gcalEventId = await createGcalEventCal(item ? item.name : '', alarmTs, _rescheduleAllDay);
+        if (gcalEventId) changes.gcalEventId = gcalEventId;
+      }
+    } else if (!_rescheduleCalSync && item && item.gcalEventId) {
+      // Remove from calendar
+      const token = getGcalToken();
+      const calId = getSelectedCalendarId();
+      if (token && calId) {
+        fetch('https://www.googleapis.com/calendar/v3/calendars/' + encodeURIComponent(calId) + '/events/' + item.gcalEventId,
+          { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } }
+        ).catch(() => {});
+      }
+      changes.gcalEventId = null;
+    }
+
+    await update(itemRef(id), changes);
   };
 
 </script>
