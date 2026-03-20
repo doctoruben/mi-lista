@@ -1304,7 +1304,7 @@
     const existingIds = new Set(Object.values(items).map(i => i.gcalEventId).filter(Boolean));
     const selected = _importEvents.filter((ev, idx) => {
       const cb = document.getElementById('imp-' + idx);
-      return cb && cb.checked && !existingIds.has(ev.id);
+      return cb && cb.checked;
     });
 
     if (selected.length === 0) { showToast('❌ Selecciona al menos un evento'); return; }
@@ -1315,16 +1315,19 @@
 
     let imported = 0;
     for (const ev of selected) {
-      const start = ev.start.dateTime || ev.start.date;
-      const ts    = new Date(start).getTime();
-      // Comprobar duplicado por nombre
-      const dup = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === ev.summary.toLowerCase());
-      if (dup) continue;
+      const evStart = ev.start.dateTime || ev.start.date;
+      if (!evStart) continue;
+      const ts      = new Date(evStart).getTime();
+      const name    = ev.summary.replace(/^🔔\s*/, '').trim();
+      // Skip only if same gcalEventId already exists (not by name)
+      const dupId = Object.values(items).find(i => i.gcalEventId === ev.id);
+      if (dupId) continue;
       await push(itemsRef, {
-        name:         ev.summary,
+        name,
         checked:      false,
         ts:           Date.now(),
         alarmTs:      ts,
+        allDay:       !ev.start.dateTime || null,
         gcalEventId:  ev.id
       });
       imported++;
