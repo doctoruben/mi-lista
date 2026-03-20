@@ -540,6 +540,19 @@ async function syncFromCalendar() {
         const s = ev.start?.dateTime||ev.start?.date; if (!s) continue;
         const ts = new Date(s).getTime();
         const name = ev.summary.replace(/^🔔\s*/,'').trim();
+        // Skip if already exists by gcalEventId
+        if (existingIds.has(ev.id)) continue;
+        // Skip if same name + same date (within 1 hour) already exists
+        const dupByName = Object.values(items).find(i =>
+          !i.checked && i.name.toLowerCase()===name.toLowerCase() &&
+          i.alarmTs && Math.abs(i.alarmTs-ts) < 3600000
+        );
+        if (dupByName) {
+          // Just link the gcalEventId to the existing item
+          const dupId = Object.keys(items).find(k=>items[k]===dupByName);
+          if (dupId && !items[dupId].gcalEventId) await update(iref(dupId),{gcalEventId:ev.id});
+          continue;
+        }
         await push(itemsRef, { name, checked:false, ts:Date.now(), alarmTs:ts, allDay:!ev.start?.dateTime||null, gcalEventId:ev.id });
         imported++;
       }
