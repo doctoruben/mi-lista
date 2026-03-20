@@ -502,7 +502,21 @@ window.toggleEvEdit = function(id) {
 window.saveEvEdit = async function(id) {
   const ta=document.getElementById('evta-'+id); if(!ta)return;
   const name=ta.value.trim(); if(!name)return;
-  if(items[id])items[id].name=name;
+  // Close edit row immediately
+  const row=document.getElementById('evr-'+id);
+  if(row) row.classList.remove('open');
+  // Update local cache NOW so onValue refresh shows correct value
+  if(items[id]) items[id].name=name;
+  // Update name in visible DOM immediately
+  const evItem=document.getElementById('evi-'+id);
+  if(evItem){
+    const nameEl=evItem.querySelector('.ev-name');
+    if(nameEl){
+      const svg=nameEl.querySelector('svg');
+      nameEl.textContent=name;
+      if(svg) nameEl.prepend(svg);
+    }
+  }
   const item=items[id]||{};
   if(item.gcalEventId&&getGcalToken()&&item.alarmTs) gcalUpdate(item.gcalEventId,name,item.alarmTs,item.allDay);
   await update(iref(id),{name});
