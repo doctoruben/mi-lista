@@ -520,7 +520,7 @@ async function syncFromCalendar() {
       try {
         const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(selectedCalId)+'/events/'+item.gcalEventId,
           { headers:{'Authorization':'Bearer '+token} });
-        if (r.status===404||r.status===410) { await update(iref(id),{gcalEventId:null,alarmTs:null}); deleted++; continue; }
+        if (r.status===404||r.status===410) { await remove(iref(id)); deleted++; continue; }
         if (!r.ok) continue;
         const ev = await r.json();
         const ch = {};
