@@ -477,6 +477,8 @@ window.toggleGcal = async function() {
 };
 
 // ── CALENDAR SELECTOR ─────────────────────────────────────
+const SHARED_CAL_NAME = 'casa';
+
 async function openCalSelector() {
   document.getElementById('calSelOverlay').classList.add('open');
   const list = document.getElementById('calSelList');
@@ -487,6 +489,19 @@ async function openCalSelector() {
       { headers:{'Authorization':'Bearer '+token} });
     const data = await r.json();
     const cals = (data.items||[]).sort((a,b)=>(b.primary?1:0)-(a.primary?1:0));
+
+    // Auto-select "casa" if not already selected
+    if (!selectedCalId) {
+      const casa = cals.find(c => c.summary.toLowerCase() === SHARED_CAL_NAME.toLowerCase());
+      if (casa) {
+        saveSelectedCal(casa.id, casa.summary);
+        document.getElementById('calSelOverlay').classList.remove('open');
+        updateGcalUI(true);
+        toast('✓ Calendario "'+casa.summary+'" seleccionado automáticamente');
+        return;
+      }
+    }
+
     list.innerHTML='';
     cals.forEach(cal => {
       const b = document.createElement('button');
@@ -578,7 +593,10 @@ window.openImport = async function() {
     const r = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',{headers:{'Authorization':'Bearer '+token}});
     const data = await r.json();
     const cals = (data.items||[]).sort((a,b)=>(b.primary?1:0)-(a.primary?1:0));
-    sel.innerHTML = cals.map(c=>`<option value="${c.id}" ${c.id===selectedCalId?'selected':''}>${c.summary}${c.primary?' (principal)':''}</option>`).join('');
+    // Pre-select 'casa' or current selected calendar
+    const casaCal = cals.find(cl=>cl.summary.toLowerCase()===SHARED_CAL_NAME.toLowerCase());
+    const preselId = selectedCalId || (casaCal?.id) || '';
+    sel.innerHTML = cals.map(cl=>`<option value="${cl.id}" ${cl.id===preselId?'selected':''}>${cl.summary}${cl.primary?' (principal)':''}</option>`).join('');
   } catch(e) { sel.innerHTML='<option value="">Error cargando</option>'; }
 };
 window.closeImport = () => document.getElementById('importOverlay').classList.remove('open');
