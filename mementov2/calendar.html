@@ -36,6 +36,7 @@ input[type=date],input[type=time],textarea,select{background:#f7f5f2!important;c
 .day{min-height:68px;background:#fff;border-radius:8px;border:.5px solid #eeeae4;padding:4px 3px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
 .day:active{background:#fdf8ef}
 .day.empty{background:transparent;border-color:transparent;cursor:default}
+.day.weekend{background:#f5f4f2}
 .day.today .dnw{background:#c9a84c;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .day.today .dn{color:#fff;font-weight:900}
 .dnw{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-bottom:2px}
@@ -134,7 +135,7 @@ input[type=date],input[type=time],textarea,select{background:#f7f5f2!important;c
     <button class="back-btn" onclick="location.href='index.html'">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z"/><polyline points="9 21 9 13 15 13 15 21"/></svg>
     </button>
-    <div style="flex:1;text-align:center;font-size:14px;font-weight:900;color:#1a1714;letter-spacing:.5px">MEMENTO</div>
+    <div style="flex:1"></div>
     <div class="view-toggle">
       <button class="vbtn on" id="vbtnM" onclick="setView('month')">Mes</button>
       <button class="vbtn" id="vbtnW" onclick="setView('week')">Semana</button>
@@ -374,7 +375,9 @@ function renderMonth() {
   for(let d=1;d<=last.getDate();d++){
     const isToday=today.getFullYear()===curYear&&today.getMonth()===curMonth&&today.getDate()===d;
     const dayItems=getItemsForDay(curYear,curMonth,d);
-    const cell=document.createElement('div'); cell.className='day'+(isToday?' today':'');
+    const dow2=(new Date(curYear,curMonth,d).getDay()+6)%7; // 0=Mon..5=Sat,6=Sun
+    const isWeekend=dow2>=5;
+    const cell=document.createElement('div'); cell.className='day'+(isToday?' today':'')+(isWeekend?' weekend':'');
     cell.onclick=()=>openDayPopup(new Date(curYear,curMonth,d));
 
     const nw=document.createElement('div'); nw.className='dnw';

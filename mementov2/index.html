@@ -533,18 +533,28 @@ async function syncFromCalendar() {
     let updated=0, deleted=0, imported=0;
     for (const [id, item] of synced) {
       try {
-        const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(selectedCalId)+'/events/'+item.gcalEventId,
-          { headers:{'Authorization':'Bearer '+token} });
-        if (r.status===404||r.status===410) { await remove(iref(id)); deleted++; continue; }
-        if (!r.ok) continue;
-        const ev = await r.json();
-        const ch = {};
-        const cn = ev.summary ? ev.summary.replace(/^🔔\s*/,'').trim() : '';
-        if (cn && cn!==item.name) ch.name=cn;
-        const cs = ev.start?.dateTime||ev.start?.date;
-        if (cs) { const ct=new Date(cs).getTime(); if (Math.abs(ct-(item.alarmTs||0))>60000) ch.alarmTs=ct; }
-        if (Object.keys(ch).length) { await update(iref(id),ch); updated++; }
-      } catch {}
+        const url = 'https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(selectedCalId)+'/events/'+item.gcalEventId;
+        const r = await fetch(url, { headers:{'Authorization':'Bearer '+token} });
+        console.log('[sync] event', item.name, '→ status', r.status);
+        if (r.status===404||r.status===410) {
+          console.log('[sync] DELETING from MEMENTO:', item.name);
+          await remove(iref(id)); deleted++; continue;
+        }
+        if (r.status===200) {
+          const ev = await r.json();
+          // Check if event was cancelled
+          if (ev.status==='cancelled') {
+            console.log('[sync] CANCELLED, deleting:', item.name);
+            await remove(iref(id)); deleted++; continue;
+          }
+          const ch = {};
+          const cn = ev.summary ? ev.summary.replace(/^🔔\s*/,'').trim() : '';
+          if (cn && cn!==item.name) ch.name=cn;
+          const cs = ev.start?.dateTime||ev.start?.date;
+          if (cs) { const ct=new Date(cs).getTime(); if (Math.abs(ct-(item.alarmTs||0))>60000) ch.alarmTs=ct; }
+          if (Object.keys(ch).length) { await update(iref(id),ch); updated++; }
+        }
+      } catch(err) { console.warn('[sync] error for', item.name, err); }
     }
     const r = await fetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(selectedCalId)+'/events?timeMin='+encodeURIComponent(new Date().toISOString())+'&singleEvents=true&orderBy=startTime&maxResults=250',
       { headers:{'Authorization':'Bearer '+token} });
