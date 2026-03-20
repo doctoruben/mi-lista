@@ -1348,15 +1348,14 @@
   async function syncFromCalendar() {
     if (!_gcalToken || !_selectedCalendarId) return;
 
-    // Obtener todos los recordatorios que tienen gcalEventId
     const synced = Object.entries(items).filter(([, i]) => i.gcalEventId && !i.checked);
-    if (synced.length === 0) return;
+    const existingGcalIds = new Set(Object.values(items).map(i => i.gcalEventId).filter(Boolean));
 
     try {
       const token = await ensureGcalToken();
-      let updated = 0;
-      let deleted = 0;
+      let updated = 0, deleted = 0, imported = 0;
 
+      // ── 1. UPDATE EXISTING SYNCED ITEMS ────────────────
       for (const [id, item] of synced) {
         try {
           const res = await fetch(
@@ -1364,110 +1363,74 @@
             encodeURIComponent(_selectedCalendarId) + '/events/' + item.gcalEventId,
             { headers: { 'Authorization': 'Bearer ' + token } }
           );
-
           if (res.status === 404 || res.status === 410) {
-            // Evento eliminado en Calendar — quitamos la sincronización pero mantenemos el recordatorio
             await update(itemRef(id), { gcalEventId: null, alarmTs: null });
             deleted++;
             continue;
           }
-
           if (!res.ok) continue;
-
           const ev = await res.json();
-
-          // Calcular cambios
           const changes = {};
-
-          // Nombre cambiado en Calendar
           const calName = ev.summary ? ev.summary.replace(/^🔔\s*/, '').trim() : '';
-          if (calName && calName !== item.name) {
-            changes.name = calName;
-          }
-
-          // Fecha/hora cambiada en Calendar
+          if (calName && calName !== item.name) changes.name = calName;
           const calStart = ev.start?.dateTime || ev.start?.date;
           if (calStart) {
             const calTs = new Date(calStart).getTime();
-            if (Math.abs(calTs - item.alarmTs) > 60000) { // diferencia > 1 min
-              changes.alarmTs = calTs;
-            }
+            if (Math.abs(calTs - item.alarmTs) > 60000) changes.alarmTs = calTs;
           }
-
           if (Object.keys(changes).length > 0) {
             await update(itemRef(id), changes);
             updated++;
           }
-        } catch(e) {
-          // Ignorar errores individuales
+        } catch(e) {}
+      }
+
+      // ── 2. FETCH NEW EVENTS FROM CALENDAR ──────────────
+      const timeMin = new Date().toISOString();
+      const url = 'https://www.googleapis.com/calendar/v3/calendars/' +
+        encodeURIComponent(_selectedCalendarId) +
+        '/events?timeMin=' + encodeURIComponent(timeMin) +
+        '&singleEvents=true&orderBy=startTime&maxResults=250';
+
+      const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.ok) {
+        const data = await res.json();
+        const newEvents = (data.items || []).filter(ev =>
+          ev.summary && !existingGcalIds.has(ev.id)
+        );
+
+        for (const ev of newEvents) {
+          const start = ev.start?.dateTime || ev.start?.date;
+          if (!start) continue;
+          const ts = new Date(start).getTime();
+          const isAllDay = !ev.start?.dateTime;
+          const name = ev.summary.replace(/^🔔\s*/, '').trim();
+          // Skip duplicates by name
+          const dup = Object.values(items).find(i =>
+            !i.checked && i.name.toLowerCase() === name.toLowerCase()
+          );
+          if (dup) continue;
+          await push(itemsRef, {
+            name,
+            checked:     false,
+            ts:          Date.now(),
+            alarmTs:     ts,
+            allDay:      isAllDay || null,
+            gcalEventId: ev.id
+          });
+          imported++;
         }
       }
 
-      if (updated > 0 || deleted > 0) {
-        let msg = '';
-        if (updated > 0) msg += updated + ' recordatorio' + (updated!==1?'s':'') + ' actualizado' + (updated!==1?'s':'');
-        if (deleted > 0) msg += (msg?', ':'') + deleted + ' desvinculado' + (deleted!==1?'s':'') + ' de Calendar';
-        showToast('🔄 ' + msg);
-      }
+      // ── 3. SHOW RESULT ──────────────────────────────────
+      const parts = [];
+      if (imported > 0) parts.push(imported + ' nuevo' + (imported !== 1 ? 's' : ''));
+      if (updated  > 0) parts.push(updated  + ' actualizado' + (updated  !== 1 ? 's' : ''));
+      if (deleted  > 0) parts.push(deleted  + ' desvinculado' + (deleted  !== 1 ? 's' : ''));
+      if (parts.length > 0) showToast('🔄 ' + parts.join(', '));
+
     } catch(e) {
-      console.warn('Sync from calendar error:', e);
+      console.warn('Sync error:', e);
     }
   }
-
-  window.openCalendarView = function() {
-    window.location.href = 'calendar.html';
-  };
-
-  // ── MICRÓFONO ────────────────────────────────────────────
-  let _rec=null,_micActive=false;
-  const MIC_SVG=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#8a7a60"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
-  const MIC_ON=`<svg width="22" height="22" viewBox="0 0 24 24" fill="#f87171" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
-
-  window.toggleMic=function(){
-    if(_micActive){if(_rec)_rec.stop();return;}
-    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){showToast('❌ Tu navegador no soporta reconocimiento de voz');return;}
-    _rec=new SR();_rec.lang='es-ES';_rec.interimResults=false;_rec.maxAlternatives=1;
-    _micActive=true;
-    const btn=document.getElementById('micBtn');
-    btn.style.background='#7f1d1d';btn.style.border='1px solid #f87171';btn.innerHTML=MIC_ON;
-    _rec.onresult=e=>{
-      const t=e.results[0][0].transcript.trim();
-      const prefijos=['añadir ','agregar ','poner ','meter ','recordar ','apuntar '];
-      let nombre=t.toLowerCase();
-      for(const p of prefijos){if(nombre.startsWith(p)){nombre=nombre.slice(p.length).trim();break;}}
-      nombre=nombre.charAt(0).toUpperCase()+nombre.slice(1);
-      const teniaPrefijo=prefijos.some(p=>t.toLowerCase().startsWith(p));
-      document.getElementById('itemInput').value=nombre;
-      if(teniaPrefijo){addItem();showToast('✅ "'+nombre+'" añadido por voz');}
-      else{document.getElementById('itemInput').focus();showToast('🎤 "'+nombre+'" — pulsa Añadir para confirmar');}
-    };
-    _rec.onerror=e=>{if(e.error!=='no-speech'&&e.error!=='aborted')showToast('❌ Error: '+e.error);};
-    _rec.onend=()=>{
-      _micActive=false;
-      const btn=document.getElementById('micBtn');
-      if(btn){btn.style.background='';btn.style.border='';btn.innerHTML=MIC_SVG;}
-    };
-    _rec.start();
-  };
-</script>
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/mi-lista/mementov2/sw.js')
-        .then(reg => {
-          reg.update();
-          reg.addEventListener('updatefound', () => {
-            const w = reg.installing;
-            w.addEventListener('statechange', () => {
-              if (w.state === 'activated') window.location.reload();
-            });
-          });
-        }).catch(() => {});
-      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-    });
-  }
-</script>
-</body>
-</html>
+>
