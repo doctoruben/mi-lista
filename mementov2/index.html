@@ -477,23 +477,24 @@
     const text      = document.getElementById('gcalBtnText');
     const syncBtn   = document.getElementById('gcalSyncBtn');
     const importBtn = document.getElementById('importBtn');
+    const syncBtnEl = document.getElementById('syncBtn');
+    const subtitle  = document.getElementById('alarmSubtitle');
     if (connected) {
-      btn.classList.add('connected');
-      text.textContent = _selectedCalendarName ? '✓ ' + _selectedCalendarName : '✓ Calendar conectado';
-      syncBtn.disabled = false;
-      importBtn.style.display = 'flex';
-      document.getElementById('syncBtn').style.display = 'flex';
-      const sub = _selectedCalendarName
+      if (btn)   btn.classList.add('connected');
+      if (text)  text.textContent = _selectedCalendarName ? '✓ ' + _selectedCalendarName : '✓ Calendar conectado';
+      if (syncBtn) syncBtn.disabled = false;
+      if (importBtn) importBtn.style.display = 'flex';
+      if (syncBtnEl) syncBtnEl.style.display = 'flex';
+      if (subtitle) subtitle.textContent = _selectedCalendarName
         ? 'Se sincronizará con "' + _selectedCalendarName + '"'
         : 'Elige fecha y hora — se sincronizará con Google Calendar';
-      document.getElementById('alarmSubtitle').textContent = sub;
     } else {
-      btn.classList.remove('connected');
-      text.textContent = 'Conectar Calendar';
-      syncBtn.disabled = false;
-      importBtn.style.display = 'none';
-      document.getElementById('syncBtn').style.display = 'none';
-      document.getElementById('alarmSubtitle').textContent = 'Elige fecha y hora';
+      if (btn)   btn.classList.remove('connected');
+      if (text)  text.textContent = 'Conectar Calendar';
+      if (syncBtn) syncBtn.disabled = false;
+      if (importBtn) importBtn.style.display = 'none';
+      if (syncBtnEl) syncBtnEl.style.display = 'none';
+      if (subtitle) subtitle.textContent = 'Elige fecha y hora';
     }
   }
 
@@ -1230,18 +1231,15 @@
   }
 
   window.searchCalendarEvents = async function() {
-    const calId = document.getElementById('calendarSelect').value;
+    const calId = document.getElementById('calendarSelect')?.value;
     if (!calId) { showToast('❌ Selecciona un calendario'); return; }
 
     const btn = document.getElementById('importSearchBtn');
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Buscando...';
-    btn.disabled = true;
+    if (btn) { btn.innerHTML = '⏳ Buscando...'; btn.disabled = true; }
 
     try {
       const token = await ensureGcalToken();
-      // From today, no end limit (max 250 results)
       const timeMin = new Date().toISOString();
-
       const url = 'https://www.googleapis.com/calendar/v3/calendars/' +
         encodeURIComponent(calId) + '/events?timeMin=' + encodeURIComponent(timeMin) +
         '&singleEvents=true&orderBy=startTime&maxResults=250';
@@ -1254,8 +1252,10 @@
     } catch(e) {
       showToast('❌ Error buscando eventos: ' + e.message);
     } finally {
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar eventos';
-      btn.disabled = false;
+      if (btn) {
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar eventos';
+        btn.disabled = false;
+      }
     }
   };
 
@@ -1266,9 +1266,9 @@
     const confirmText = document.getElementById('importConfirmText');
 
     if (_importEvents.length === 0) {
-      list.innerHTML = '<div style="color:#888;font-size:13px;padding:8px 0;">No se encontraron eventos en ese rango.</div>';
+      list.innerHTML = '<div style="color:#888;font-size:13px;padding:8px 0;">No se encontraron eventos.</div>';
       preview.style.display = 'block';
-      confirmBtn.style.display = 'none';
+      if (confirmBtn) confirmBtn.style.display = 'none';
       return;
     }
 
@@ -1293,10 +1293,10 @@
 
     const newCount = _importEvents.filter(ev => !existingIds.has(ev.id)).length;
     if (newCount > 0) {
-      confirmText.textContent = 'Importar ' + newCount + ' evento' + (newCount!==1?'s':'');
-      confirmBtn.style.display = 'block';
+      if (confirmText) confirmText.textContent = 'Importar ' + newCount + ' evento' + (newCount!==1?'s':'');
+      if (confirmBtn) confirmBtn.style.display = 'block';
     } else {
-      confirmBtn.style.display = 'none';
+      if (confirmBtn) confirmBtn.style.display = 'none';
     }
   }
 
