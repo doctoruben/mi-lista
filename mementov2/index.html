@@ -535,16 +535,13 @@ async function syncFromCalendar() {
       try {
         const url = 'https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(selectedCalId)+'/events/'+item.gcalEventId;
         const r = await fetch(url, { headers:{'Authorization':'Bearer '+token} });
-        console.log('[sync] event', item.name, '→ status', r.status);
         if (r.status===404||r.status===410) {
-          console.log('[sync] DELETING from MEMENTO:', item.name);
           await remove(iref(id)); deleted++; continue;
         }
         if (r.status===200) {
           const ev = await r.json();
           // Check if event was cancelled
           if (ev.status==='cancelled') {
-            console.log('[sync] CANCELLED, deleting:', item.name);
             await remove(iref(id)); deleted++; continue;
           }
           const ch = {};
