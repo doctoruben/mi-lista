@@ -331,8 +331,11 @@ async function initApp() {
     const raw=snap.val()||{}; items={};
     Object.entries(raw).forEach(([id,item])=>{ items[id]={...item,_id:id}; });
     render();
-    if (currentDayDate&&document.getElementById('dayOverlay').classList.contains('open'))
-      setTimeout(refreshDayPopup,100);
+    if (currentDayDate&&document.getElementById('dayOverlay').classList.contains('open')) {
+      // Only refresh if no edit row is currently open
+      const editOpen = document.querySelector('.ev-edit-row.open');
+      if (!editOpen) setTimeout(refreshDayPopup, 100);
+    }
   });
 }
 
