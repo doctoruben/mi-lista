@@ -1089,7 +1089,7 @@ window.syncGuardias = async function() {
     const casaId = selectedCalId;
     if (!casaId) { toast('❌ Selecciona el calendario Casa primero'); return; }
 
-    const GUARDIA_CALS = ['Calendario NORMAL', 'Calendario S,D F'];
+    const GUARDIA_CALS = ['Calendario NORMAL', 'Calendario S,D y F'];
     const timeMin = new Date().toISOString();
 
     // ── GET IDs OF SOURCE CALENDARS ──────────────────────
