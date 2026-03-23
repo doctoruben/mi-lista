@@ -399,6 +399,24 @@ async function requestGcalToken() {
     c.requestAccessToken();
   });
 }
+
+function trysilentGcalRefresh() {
+  // Try to get a token silently (no popup) using hint
+  if (!window.google) { updateGcalUI(false); return; }
+  try {
+    const c = google.accounts.oauth2.initTokenClient({
+      client_id: GCAL_ID, scope: GCAL_SCOPE,
+      prompt: '',  // empty = silent, no consent screen
+      callback: r => {
+        if (r.error || !r.access_token) { updateGcalUI(false); return; }
+        saveGcalToken(r.access_token);
+        updateGcalUI(true);
+        setTimeout(syncFromCalendar, 500);
+      }
+    });
+    c.requestAccessToken();
+  } catch { updateGcalUI(false); }
+}
 async function ensureToken() {
   if (gcalToken) return gcalToken;
   return requestGcalToken();
@@ -723,8 +741,15 @@ async function initApp(s) {
   }, ()=>setSyncUI('err','Error de conexión'));
 
   // Gcal init
-  if (loadGcalToken()) { loadSelectedCal(); updateGcalUI(true); }
-  else updateGcalUI(false);
+  loadSelectedCal();
+  if (loadGcalToken()) {
+    updateGcalUI(true);
+  } else if (selectedCalId) {
+    // Token expired but we had a calendar - try silent refresh
+    trysilentGcalRefresh();
+  } else {
+    updateGcalUI(false);
+  }
 }
 
 // ── ACTIONS ───────────────────────────────────────────────
