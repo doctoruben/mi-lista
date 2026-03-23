@@ -588,10 +588,12 @@ async function syncFromCalendar() {
         const name = ev.summary.replace(/^🔔\s*/,'').trim();
         // Skip if already exists by gcalEventId
         if (existingIds.has(ev.id)) continue;
-        // Skip if same name + same date (within 1 hour) already exists
+        // Skip if same name + same date (within 24h for allDay events, 1h for timed)
+        const isAllDayEv = !ev.start?.dateTime;
+        const tolerance = isAllDayEv ? 86400000 : 3600000;
         const dupByName = Object.values(items).find(i =>
           !i.checked && i.name.toLowerCase()===name.toLowerCase() &&
-          i.alarmTs && Math.abs(i.alarmTs-ts) < 3600000
+          i.alarmTs && Math.abs(i.alarmTs-ts) < tolerance
         );
         if (dupByName) {
           // Just link the gcalEventId to the existing item
@@ -1156,6 +1158,8 @@ window.syncGuardias = async function() {
         allDay: true,
         gcalEventId: gcalEventId || null
       });
+      // Add to existingIds immediately to prevent syncFromCalendar duplicating it
+      if (gcalEventId) existingIds.add(gcalEventId);
       added++;
     }
 
