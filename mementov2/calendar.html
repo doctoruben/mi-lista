@@ -288,7 +288,10 @@ async function gcalCreate(name, ts, allDay) {
   const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
   let ev;
   if (allDay) {
-    const ds=new Date(ts).toISOString().slice(0,10), de=new Date(ts+86400000).toISOString().slice(0,10);
+    const d=new Date(ts);
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const dn=new Date(ts+86400000);
+    const de=dn.getFullYear()+'-'+String(dn.getMonth()+1).padStart(2,'0')+'-'+String(dn.getDate()).padStart(2,'0');
     ev={summary:'🔔 '+name,start:{date:ds},end:{date:de},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
   } else {
     ev={summary:'🔔 '+name,start:{dateTime:new Date(ts).toISOString(),timeZone:tz},end:{dateTime:new Date(ts+1800000).toISOString(),timeZone:tz},reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]}};
@@ -304,7 +307,10 @@ async function gcalUpdate(gcalId, name, ts, allDay) {
   const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
   let ev;
   if (allDay) {
-    const ds=new Date(ts).toISOString().slice(0,10), de=new Date(ts+86400000).toISOString().slice(0,10);
+    const d=new Date(ts);
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const dn=new Date(ts+86400000);
+    const de=dn.getFullYear()+'-'+String(dn.getMonth()+1).padStart(2,'0')+'-'+String(dn.getDate()).padStart(2,'0');
     ev={summary:'🔔 '+name,start:{date:ds},end:{date:de}};
   } else {
     ev={summary:'🔔 '+name,start:{dateTime:new Date(ts).toISOString(),timeZone:tz},end:{dateTime:new Date(ts+1800000).toISOString(),timeZone:tz}};
@@ -572,7 +578,7 @@ window.saveAddEvent=async function(){
   if(!name){document.getElementById('addInput').focus();return;}
   const d=currentDayDate;
   let ts;
-  if(addAllDay){ts=new Date(d.getFullYear(),d.getMonth(),d.getDate(),0,0,0).getTime();}
+  if(addAllDay){ts=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0).getTime();}
   else{const tv=document.getElementById('addTime').value||'09:00';const[h,m]=tv.split(':').map(Number);ts=new Date(d.getFullYear(),d.getMonth(),d.getDate(),h,m,0).getTime();}
   let gcalEventId=null;
   if(addCalSync) gcalEventId=await gcalCreate(name,ts,addAllDay);
@@ -643,7 +649,7 @@ window.saveResched=async function(){
   const dv=document.getElementById('reschedDate').value; if(!dv)return;
   const [y,mo,d]=dv.split('-').map(Number);
   let ts;
-  if(reschedAllDay){ts=new Date(y,mo-1,d,0,0,0).getTime();}
+  if(reschedAllDay){ts=new Date(y,mo-1,d,12,0,0).getTime();}
   else{const tv=document.getElementById('reschedTime').value||'09:00';const[h,m]=tv.split(':').map(Number);ts=new Date(y,mo-1,d,h,m,0).getTime();}
   closeResched();
   const item=items[reschedId]||{};

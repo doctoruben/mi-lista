@@ -304,6 +304,7 @@ const auth = getAuth(app);
 // ── STATE ─────────────────────────────────────────────────
 let items = {}, itemsRef, listaPath;
 let filter = 'all';
+let _pendingName = null;
 let alarmItemId = null, alarmAllDay = false, noDate = false;
 let gcalToken = null, selectedCalId = null, selectedCalName = '';
 let importEvents = [];
@@ -427,8 +428,10 @@ async function gcalCreateEvent(name, ts, allDay) {
   const tz    = Intl.DateTimeFormat().resolvedOptions().timeZone;
   let ev;
   if (allDay) {
-    const ds = new Date(ts).toISOString().slice(0,10);
-    const de = new Date(ts+86400000).toISOString().slice(0,10);
+    const _da=new Date(ts);
+    const ds=_da.getFullYear()+'-'+String(_da.getMonth()+1).padStart(2,'0')+'-'+String(_da.getDate()).padStart(2,'0');
+    const _db=new Date(ts+86400000);
+    const de=_db.getFullYear()+'-'+String(_db.getMonth()+1).padStart(2,'0')+'-'+String(_db.getDate()).padStart(2,'0');
     ev = { summary:'🔔 '+name, description:'Recordatorio de MEMENTO', start:{date:ds}, end:{date:de}, reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]} };
   } else {
     ev = { summary:'🔔 '+name, description:'Recordatorio de MEMENTO', start:{dateTime:toGcalDt(ts),timeZone:tz}, end:{dateTime:toGcalDt(ts+1800000),timeZone:tz}, reminders:{useDefault:false,overrides:[{method:'popup',minutes:0}]} };
@@ -444,8 +447,10 @@ async function gcalUpdateEvent(gcalId, name, ts, allDay) {
   const tz    = Intl.DateTimeFormat().resolvedOptions().timeZone;
   let ev;
   if (allDay) {
-    const ds = new Date(ts).toISOString().slice(0,10);
-    const de = new Date(ts+86400000).toISOString().slice(0,10);
+    const _da=new Date(ts);
+    const ds=_da.getFullYear()+'-'+String(_da.getMonth()+1).padStart(2,'0')+'-'+String(_da.getDate()).padStart(2,'0');
+    const _db=new Date(ts+86400000);
+    const de=_db.getFullYear()+'-'+String(_db.getMonth()+1).padStart(2,'0')+'-'+String(_db.getDate()).padStart(2,'0');
     ev = { summary:'🔔 '+name, start:{date:ds}, end:{date:de} };
   } else {
     ev = { summary:'🔔 '+name, start:{dateTime:toGcalDt(ts),timeZone:tz}, end:{dateTime:toGcalDt(ts+1800000),timeZone:tz} };
@@ -756,11 +761,27 @@ async function initApp(s) {
 window.addItem = function() {
   const input=document.getElementById('itemInput');
   const name=input.value.trim(); if(!name){input.focus();return;}
-  setSyncUI('sync','Guardando...');
-  const nr=push(itemsRef,{name,checked:false,ts:Date.now()});
   input.value=''; input.blur();
-  setTimeout(()=>openAlarm(nr.key),400);
+  // Open alarm popup first - save only when user confirms
+  openNewAlarm(name);
 };
+
+function openNewAlarm(name) {
+  // Store pending name, show alarm popup
+  _pendingName = name;
+  const allDayChk=document.getElementById('alarmAllDayChk');
+  const ndChk=document.getElementById('noDateChk');
+  const gcalBtn=document.getElementById('gcalSyncBtn');
+  alarmItemId = null; alarmAllDay=false; noDate=false;
+  const input=document.getElementById('alarmDt');
+  input.type='datetime-local'; input.style.opacity=''; input.style.pointerEvents='';
+  allDayChk.className='chk-box'; allDayChk.textContent='';
+  ndChk.className='chk-box'; ndChk.textContent='';
+  if(gcalBtn){gcalBtn.disabled=false;gcalBtn.style.opacity='';gcalBtn.style.cursor='';}
+  const d=new Date(Date.now()+3600000);
+  input.value=localIso(new Date(d.getTime()-d.getTimezoneOffset()*60000));
+  document.getElementById('alarmOverlay').classList.add('open');
+}
 window.toggleItem = id => {
   const item=items[id]; if(!item)return;
   update(iref(id),{checked:!item.checked});
@@ -809,7 +830,11 @@ window.openAlarm = function(id) {
   }
   document.getElementById('alarmOverlay').classList.add('open');
 };
-window.closeAlarm = () => { document.getElementById('alarmOverlay').classList.remove('open'); alarmItemId=null; };
+window.closeAlarm = () => {
+  document.getElementById('alarmOverlay').classList.remove('open');
+  alarmItemId=null;
+  _pendingName=null; // discard if user cancels new item
+};
 window.toggleAlarmAllDay = function() {
   alarmAllDay=!alarmAllDay;
   const chk=document.getElementById('alarmAllDayChk');
@@ -850,12 +875,40 @@ function validateAlarm() {
 }
 window.saveAlarmWithGcal = async function() {
   const ts=validateAlarm(); if(ts===false)return;
+
+  // New item pending
+  if (_pendingName) {
+    const name=_pendingName; _pendingName=null;
+    if (ts===null) {
+      setSyncUI('sync','Guardando...');
+      await push(itemsRef,{name,checked:false,ts:Date.now()});
+      closeAlarm(); toast('✓ Añadido sin fecha'); return;
+    }
+    if (!gcalToken) {
+      try { toast('🔄 Conectando con Google Calendar...'); await requestGcalToken(); if(!selectedCalId)await openCalSelector(); } catch { }
+    }
+    closeAlarm();
+    setSyncUI('sync','Guardando...');
+    try {
+      let gcalEventId=null;
+      if(gcalToken) gcalEventId=await gcalCreateEvent(name,ts,alarmAllDay);
+      await push(itemsRef,{name,checked:false,ts:Date.now(),alarmTs:ts,allDay:alarmAllDay||null,gcalEventId:gcalEventId||null});
+      toast(gcalEventId?'📅 Añadido y sincronizado':'🔔 Añadido');
+    } catch(e) { await push(itemsRef,{name,checked:false,ts:Date.now(),alarmTs:ts,allDay:alarmAllDay||null}); toast('🔔 Añadido'); }
+    return;
+  }
+
+  // Existing item
   const id=alarmItemId; const item=items[id]||{};
   if (ts===null) {
     closeAlarm();
     if(item.gcalEventId&&gcalToken)gcalDeleteEvent(item.gcalEventId);
     update(iref(id),{alarmTs:null,gcalEventId:null,allDay:null});
     toast('✓ Guardado sin fecha'); return;
+  }
+  if (!gcalToken) {
+    try { toast('🔄 Conectando con Google Calendar...'); await requestGcalToken(); if(!selectedCalId)await openCalSelector(); }
+    catch(e) { update(iref(id),{alarmTs:ts,allDay:alarmAllDay||null}); toast('⚠️ Guardado sin Calendar'); closeAlarm(); return; }
   }
   closeAlarm();
   try {
@@ -866,8 +919,25 @@ window.saveAlarmWithGcal = async function() {
     toast('📅 Guardado y sincronizado');
   } catch(e) { update(iref(id),{alarmTs:ts,allDay:alarmAllDay||null}); toast('⚠️ Guardado (error Calendar)'); }
 };
-window.saveAlarmOnly = function() {
+window.saveAlarmOnly = async function() {
   const ts=validateAlarm(); if(ts===false)return;
+
+  // New item pending
+  if (_pendingName) {
+    const name=_pendingName; _pendingName=null;
+    closeAlarm();
+    setSyncUI('sync','Guardando...');
+    if (ts===null) {
+      await push(itemsRef,{name,checked:false,ts:Date.now()});
+      toast('✓ Añadido sin fecha');
+    } else {
+      await push(itemsRef,{name,checked:false,ts:Date.now(),alarmTs:ts,allDay:alarmAllDay||null});
+      toast('🔔 '+fmtAlarm(ts,alarmAllDay));
+    }
+    return;
+  }
+
+  // Existing item
   const id=alarmItemId; const item=items[id]||{};
   closeAlarm();
   if (ts===null) {
