@@ -36,7 +36,7 @@ input[type=date],input[type=time],textarea,select{background:#f7f5f2!important;c
 .day{min-height:68px;background:#fff;border-radius:8px;border:.5px solid #eeeae4;padding:4px 3px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
 .day:active{background:#fdf8ef}
 .day.empty{background:transparent;border-color:transparent;cursor:default}
-.day.weekend{background:#f5f4f2}
+.day.weekend{background:#fffbee}
 .day.today .dnw{background:#c9a84c;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .day.today .dn{color:#fff;font-weight:900}
 .dnw{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-bottom:2px}
@@ -375,7 +375,7 @@ function renderMonth() {
   for(let d=1;d<=last.getDate();d++){
     const isToday=today.getFullYear()===curYear&&today.getMonth()===curMonth&&today.getDate()===d;
     const dayItems=getItemsForDay(curYear,curMonth,d);
-    const dow2=(new Date(curYear,curMonth,d).getDay()+6)%7; // 0=Mon..5=Sat,6=Sun
+    const dow2=(new Date(curYear,curMonth,d).getDay()+6)%7;
     const isWeekend=dow2>=5;
     const cell=document.createElement('div'); cell.className='day'+(isToday?' today':'')+(isWeekend?' weekend':'');
     cell.onclick=()=>openDayPopup(new Date(curYear,curMonth,d));
