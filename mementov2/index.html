@@ -184,6 +184,7 @@ input[type=text],input[type=password],input[type=datetime-local],input[type=date
       <div class="pill" id="userPill"><span id="userAvatar" style="width:22px;height:22px;border-radius:50%;overflow:hidden;display:none;flex-shrink:0"></span><span id="userLabel">👤</span></div>
       <button class="pill" id="logoutBtn" style="display:none" onclick="doLogout()">Salir</button>
       <button class="pill gold" id="adminBtn" style="display:none" onclick="location.href='admin.html'">⚙️ Admin</button>
+      <button class="pill" id="guardiasBtn" style="display:none" onclick="syncGuardias()">🏥 Sincronizar Guardias</button>
       <button class="pill" id="gcalConnBtn" onclick="toggleGcal()"><span id="gcalConnText">Conectar Calendar</span></button>
       <button class="pill" id="importBtn" style="display:none" onclick="openImport()">⬇ Capturar</button>
       <button class="pill" id="syncBtn" style="display:none" onclick="manualSync()">↺ Actualizar</button>
@@ -722,7 +723,10 @@ async function initApp(s) {
   const lbl = document.getElementById('userLabel');
   if (lbl) lbl.textContent='👤 '+s.user.charAt(0).toUpperCase()+s.user.slice(1);
   document.getElementById('logoutBtn').style.display='inline-flex';
-  if (s.user==='ruben') document.getElementById('adminBtn').style.display='inline-flex';
+  if (s.user==='ruben') {
+    document.getElementById('adminBtn').style.display='inline-flex';
+    document.getElementById('guardiasBtn').style.display='inline-flex';
+  }
 
   // Avatar
   onValue(ref(db,'memento_usuarios/'+s.user+'/avatar'), snap => {
@@ -1068,6 +1072,115 @@ function render() {
   if(done.length){h+=`<div class="grp-hdr"><span class="grp-title">Realizados</span><div class="grp-line"></div><span class="grp-count">${done.length}</span></div>`;h+=done.map(([id,i])=>renderItem(id,i)).join('');}
   list.innerHTML=h;
 }
+
+// ── SYNC GUARDIAS ─────────────────────────────────────────
+window.syncGuardias = async function() {
+  const btn = document.getElementById('guardiasBtn');
+  if (btn) { btn.style.opacity='.4'; btn.style.pointerEvents='none'; }
+  toast('🔄 Sincronizando guardias...');
+
+  try {
+    // Ensure Calendar connected
+    if (!gcalToken) {
+      try { await requestGcalToken(); if (!selectedCalId) await openCalSelector(); }
+      catch(e) { toast('❌ Necesitas conectar Google Calendar'); return; }
+    }
+    const token = await ensureToken();
+    const casaId = selectedCalId;
+    if (!casaId) { toast('❌ Selecciona el calendario Casa primero'); return; }
+
+    const GUARDIA_CALS = ['Calendario NORMAL', 'Calendario S,D F'];
+    const timeMin = new Date().toISOString();
+
+    // ── GET IDs OF SOURCE CALENDARS ──────────────────────
+    const calListRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',
+      { headers: { 'Authorization': 'Bearer ' + token } });
+    const calList = await calListRes.json();
+    const sourceCals = (calList.items || []).filter(c =>
+      GUARDIA_CALS.includes(c.summary)
+    );
+    if (!sourceCals.length) {
+      toast('❌ No se encontraron los calendarios de guardias');
+      return;
+    }
+
+    // ── FETCH "RUBEN MARCOS" EVENTS FROM SOURCE CALS ─────
+    const guardiaDateSet = new Set(); // "YYYY-MM-DD" of shifts found in source cals
+    for (const cal of sourceCals) {
+      const r = await fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/' +
+        encodeURIComponent(cal.id) +
+        '/events?timeMin=' + encodeURIComponent(timeMin) +
+        '&singleEvents=true&orderBy=startTime&maxResults=500',
+        { headers: { 'Authorization': 'Bearer ' + token } }
+      );
+      if (!r.ok) continue;
+      const data = await r.json();
+      (data.items || []).forEach(ev => {
+        if (ev.summary && ev.summary.trim() === 'Ruben Marcos') {
+          const s = ev.start?.date || ev.start?.dateTime;
+          if (s) guardiaDateSet.add(s.slice(0, 10));
+        }
+      });
+    }
+
+    // ── GET EXISTING GUARDIAS IN MEMENTO ─────────────────
+    // Items titled "Guardia" that have a gcalEventId (synced with Casa)
+    const existingGuardias = Object.entries(items).filter(([, i]) =>
+      i.name === 'Guardia' && i.gcalEventId && !i.checked && i.alarmTs
+    );
+    const existingDates = new Map(); // "YYYY-MM-DD" → {id, gcalEventId}
+    existingGuardias.forEach(([id, item]) => {
+      const d = new Date(item.alarmTs);
+      const ds = d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+      existingDates.set(ds, { id, gcalEventId: item.gcalEventId });
+    });
+
+    let added = 0, removed = 0;
+
+    // ── ADD NEW GUARDIAS ──────────────────────────────────
+    for (const dateStr of guardiaDateSet) {
+      if (existingDates.has(dateStr)) continue; // already exists
+      const [y, mo, d] = dateStr.split('-').map(Number);
+      const ts = new Date(y, mo - 1, d, 12, 0, 0).getTime();
+      // Create in Casa calendar
+      const gcalEventId = await gcalCreateEvent('Guardia', ts, true);
+      // Save in MEMENTO
+      await push(itemsRef, {
+        name: 'Guardia',
+        checked: false,
+        ts: Date.now(),
+        alarmTs: ts,
+        allDay: true,
+        gcalEventId: gcalEventId || null
+      });
+      added++;
+    }
+
+    // ── REMOVE GUARDIAS NO LONGER IN SOURCE CALS ─────────
+    for (const [dateStr, { id, gcalEventId }] of existingDates) {
+      if (guardiaDateSet.has(dateStr)) continue; // still exists
+      // Delete from Casa calendar
+      if (gcalEventId && gcalToken) gcalDeleteEvent(gcalEventId);
+      // Delete from MEMENTO
+      await remove(iref(id));
+      removed++;
+    }
+
+    const parts = [];
+    if (added)   parts.push(added   + ' guardia' + (added   !== 1 ? 's' : '') + ' añadida'  + (added   !== 1 ? 's' : ''));
+    if (removed) parts.push(removed + ' guardia' + (removed !== 1 ? 's' : '') + ' eliminada' + (removed !== 1 ? 's' : ''));
+    toast(parts.length ? '🏥 ' + parts.join(', ') : '✅ Guardias al día');
+
+  } catch(e) {
+    console.error('syncGuardias error', e);
+    toast('❌ Error sincronizando guardias: ' + e.message);
+  } finally {
+    if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+  }
+};
 </script>
 
 <script>
