@@ -13,10 +13,14 @@
     --needle: #c0392b;
   }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+  }
 
   body {
-    min-height: 100vh;
+    min-height: 100dvh;
     background: var(--bg);
     display: flex;
     flex-direction: column;
@@ -25,6 +29,9 @@
     font-family: 'Crimson Pro', serif;
     overflow: hidden;
     position: relative;
+    padding: 0 1rem;
+    /* Evitar rebote en iOS */
+    overscroll-behavior: none;
   }
 
   body::before {
@@ -39,47 +46,51 @@
   body::after {
     content: '';
     position: fixed;
-    inset: 20px;
-    border: 1px solid rgba(26,26,26,0.15);
+    inset: 12px;
+    border: 1px solid rgba(26,26,26,0.12);
     pointer-events: none;
     z-index: 5;
   }
 
   .title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(2rem, 6vw, 4rem);
+    font-size: clamp(2.2rem, 10vw, 4rem);
     letter-spacing: 0.15em;
     color: var(--text);
-    margin-bottom: 0.2em;
+    margin-bottom: 0.05em;
     text-align: center;
+    line-height: 1;
   }
 
   .subtitle {
     font-style: italic;
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-size: clamp(0.8rem, 3.5vw, 1rem);
     color: #888;
     letter-spacing: 0.05em;
-    margin-bottom: 2.5rem;
+    margin-bottom: clamp(1rem, 4vw, 2rem);
     text-align: center;
   }
 
+  /* La ruleta ocupa el máximo posible del ancho, acotada también por la altura */
   .wheel-container {
     position: relative;
-    width: clamp(260px, 50vw, 360px);
-    height: clamp(260px, 50vw, 360px);
-    margin-bottom: 2.5rem;
+    /* Usa el menor entre 82vw y 46vh para que quepa en pantalla pequeña */
+    width: min(82vw, 46vh, 380px);
+    height: min(82vw, 46vh, 380px);
+    margin-bottom: clamp(1rem, 4vw, 2rem);
+    flex-shrink: 0;
   }
 
   .needle {
     position: absolute;
-    top: -28px;
+    top: -22px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 14px solid transparent;
-    border-right: 14px solid transparent;
-    border-top: 32px solid var(--needle);
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 28px solid var(--needle);
     z-index: 20;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   }
@@ -87,10 +98,10 @@
   .needle::after {
     content: '';
     position: absolute;
-    top: -36px;
-    left: -6px;
-    width: 12px;
-    height: 12px;
+    top: -30px;
+    left: -5px;
+    width: 10px;
+    height: 10px;
     background: var(--needle);
     border-radius: 50%;
   }
@@ -98,12 +109,13 @@
   canvas {
     border-radius: 50%;
     box-shadow:
-      0 0 0 6px #fff,
-      0 0 0 8px rgba(26,26,26,0.2),
-      0 20px 60px rgba(0,0,0,0.25);
+      0 0 0 5px #fff,
+      0 0 0 7px rgba(26,26,26,0.18),
+      0 12px 40px rgba(0,0,0,0.2);
     display: block;
     width: 100%;
     height: 100%;
+    touch-action: none;
   }
 
   .hub {
@@ -111,8 +123,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     background: radial-gradient(circle at 40% 35%, #fff 0%, #ccc 100%);
     border-radius: 50%;
     border: 3px solid #888;
@@ -122,56 +134,64 @@
 
   .buttons-row {
     display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: stretch;
     justify-content: center;
+    width: 100%;
+    max-width: 380px;
   }
 
   .btn-decidir {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.5rem;
-    letter-spacing: 0.2em;
-    padding: 0.9rem 3rem;
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    letter-spacing: 0.15em;
+    padding: 0.85rem 0;
+    flex: 2;
     background: var(--text);
     color: var(--bg);
     border: none;
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
-    box-shadow: 5px 5px 0px var(--accent);
+    box-shadow: 4px 4px 0px var(--accent);
     user-select: none;
+    touch-action: manipulation;
   }
 
-  .btn-decidir:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 7px 7px 0px var(--accent); }
-  .btn-decidir:active:not(:disabled) { transform: translate(3px,3px); box-shadow: 2px 2px 0px var(--accent); }
+  .btn-decidir:active:not(:disabled) { transform: translate(3px,3px); box-shadow: 1px 1px 0px var(--accent); }
   .btn-decidir:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-opciones {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.5rem;
-    letter-spacing: 0.2em;
-    padding: 0.9rem 2rem;
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    letter-spacing: 0.1em;
+    padding: 0.85rem 0;
+    flex: 1;
     background: var(--bg);
     color: var(--text);
     border: 2px solid var(--text);
     cursor: pointer;
     transition: transform 0.1s, box-shadow 0.1s;
-    box-shadow: 5px 5px 0px rgba(26,26,26,0.2);
+    box-shadow: 4px 4px 0px rgba(26,26,26,0.18);
     user-select: none;
+    touch-action: manipulation;
   }
 
-  .btn-opciones:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0px rgba(26,26,26,0.2); }
-  .btn-opciones:active { transform: translate(3px,3px); box-shadow: 2px 2px 0px rgba(26,26,26,0.2); }
+  .btn-opciones:active { transform: translate(3px,3px); box-shadow: 1px 1px 0px rgba(26,26,26,0.18); }
+
+  @media (hover: hover) {
+    .btn-decidir:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 6px 6px 0px var(--accent); }
+    .btn-opciones:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0px rgba(26,26,26,0.18); }
+  }
 
   .result-text {
-    margin-top: 1.8rem;
+    margin-top: clamp(0.6rem, 2.5vw, 1.5rem);
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(1.8rem, 6vw, 3.5rem);
+    font-size: clamp(1.6rem, 8vw, 3.5rem);
     letter-spacing: 0.1em;
     text-align: center;
     min-height: 1.2em;
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
     transition: opacity 0.5s, transform 0.5s;
     color: var(--text);
   }
@@ -183,11 +203,15 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(26,26,26,0.6);
+    background: rgba(26,26,26,0.65);
     z-index: 100;
-    align-items: center;
+    align-items: flex-end;   /* en móvil sube desde abajo */
     justify-content: center;
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(4px);
+  }
+
+  @media (min-width: 500px) {
+    .modal-overlay { align-items: center; }
   }
 
   .modal-overlay.open { display: flex; }
@@ -195,60 +219,101 @@
   .modal {
     background: var(--bg);
     border: 2px solid var(--text);
-    box-shadow: 8px 8px 0px var(--accent);
-    padding: 2.5rem;
-    width: min(520px, 92vw);
-    max-height: 88vh;
+    border-bottom: none;
+    box-shadow: 0 -4px 0px var(--accent);
+    padding: 1.5rem 1.5rem 2rem;
+    width: 100%;
+    max-width: 520px;
+    /* En móvil ocupa hasta 90% de la pantalla, con scroll si hay muchas opciones */
+    max-height: 90dvh;
     overflow-y: auto;
     position: relative;
-    animation: modalIn 0.2s ease;
+    animation: modalUp 0.25s cubic-bezier(0.32,0.72,0,1);
+    border-radius: 16px 16px 0 0;
+    /* handle visual */
+    padding-top: 2rem;
+  }
+
+  /* Handle de arrastre visual */
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: rgba(26,26,26,0.2);
+    border-radius: 2px;
+  }
+
+  @media (min-width: 500px) {
+    .modal {
+      border: 2px solid var(--text);
+      border-bottom: 2px solid var(--text);
+      box-shadow: 8px 8px 0px var(--accent);
+      border-radius: 0;
+      padding: 2rem 2rem 2rem;
+      max-height: 88vh;
+      animation: modalIn 0.2s ease;
+    }
+    .modal::before { display: none; }
+  }
+
+  @keyframes modalUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
   }
 
   @keyframes modalIn {
-    from { transform: translateY(20px); opacity: 0; }
+    from { transform: translateY(16px); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
 
   .modal-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 2rem;
+    font-size: 1.8rem;
     letter-spacing: 0.15em;
     color: var(--text);
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.2rem;
   }
 
   .modal-subtitle {
     font-style: italic;
     color: #888;
-    font-size: 1rem;
-    margin-bottom: 2rem;
+    font-size: 0.95rem;
+    margin-bottom: 1.4rem;
   }
 
   .modal-close {
     position: absolute;
-    top: 1rem;
-    right: 1.2rem;
+    top: 0.9rem;
+    right: 1rem;
     background: none;
     border: none;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     cursor: pointer;
-    color: #888;
+    color: #aaa;
     line-height: 1;
-    transition: color 0.15s;
+    padding: 0.3rem;
+    touch-action: manipulation;
   }
 
-  .modal-close:hover { color: var(--accent); }
+  .modal-close:active { color: var(--accent); }
+  @media (hover: hover) { .modal-close:hover { color: var(--accent); } }
 
   .num-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: 0.75rem;
+    margin-bottom: 1.4rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(26,26,26,0.1);
   }
 
   .num-label {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     letter-spacing: 0.08em;
     color: var(--text);
   }
@@ -263,8 +328,8 @@
   .num-btn {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.4rem;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     background: var(--text);
     color: var(--bg);
     border: none;
@@ -274,9 +339,12 @@
     justify-content: center;
     transition: background 0.15s;
     line-height: 1;
+    border-radius: 4px;
+    touch-action: manipulation;
   }
 
-  .num-btn:hover:not(:disabled) { background: var(--accent); }
+  .num-btn:active:not(:disabled) { background: var(--accent); }
+  @media (hover: hover) { .num-btn:hover:not(:disabled) { background: var(--accent); } }
   .num-btn:disabled { background: #ccc; cursor: not-allowed; }
 
   .num-display {
@@ -290,25 +358,25 @@
   .options-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
+    gap: 0.6rem;
+    margin-bottom: 1.4rem;
   }
 
   .option-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     animation: fadeRow 0.2s ease;
   }
 
   @keyframes fadeRow {
-    from { opacity: 0; transform: translateX(-8px); }
+    from { opacity: 0; transform: translateX(-6px); }
     to   { opacity: 1; transform: translateX(0); }
   }
 
   .option-color-dot {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     flex-shrink: 0;
     border: 2px solid rgba(0,0,0,0.12);
@@ -316,9 +384,9 @@
 
   .option-num {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #aaa;
-    min-width: 1.4rem;
+    min-width: 1.2rem;
     text-align: right;
     flex-shrink: 0;
   }
@@ -326,13 +394,17 @@
   .option-input {
     flex: 1;
     font-family: 'Crimson Pro', serif;
-    font-size: 1.1rem;
-    padding: 0.55rem 0.9rem;
+    /* Tamaño mínimo 16px para evitar zoom en iOS al hacer foco */
+    font-size: max(1rem, 16px);
+    padding: 0.65rem 0.85rem;
     border: 1.5px solid #ccc;
     background: #fff;
     color: var(--text);
     outline: none;
     transition: border-color 0.15s;
+    border-radius: 4px;
+    /* Desactivar autocorrect molesto en móvil */
+    -webkit-appearance: none;
   }
 
   .option-input:focus { border-color: var(--text); }
@@ -340,9 +412,9 @@
 
   .btn-aplicar {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     letter-spacing: 0.2em;
-    padding: 0.85rem 2.5rem;
+    padding: 1rem;
     background: var(--accent);
     color: #fff;
     border: none;
@@ -350,10 +422,15 @@
     width: 100%;
     box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
     transition: transform 0.1s, box-shadow 0.1s;
+    touch-action: manipulation;
+    /* Espacio seguro iOS */
+    margin-bottom: env(safe-area-inset-bottom, 0);
   }
 
-  .btn-aplicar:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0px rgba(0,0,0,0.2); }
-  .btn-aplicar:active { transform: translate(2px,2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+  .btn-aplicar:active { transform: translate(2px,2px); box-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
+  @media (hover: hover) {
+    .btn-aplicar:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0px rgba(0,0,0,0.2); }
+  }
 </style>
   <meta name="theme-color" content="#1a1a1a">
   <meta name="mobile-web-app-capable" content="yes">
@@ -363,6 +440,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/favicon.ico">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 </head>
 <body>
 
@@ -586,9 +664,17 @@
     document.getElementById('modalOverlay').classList.remove('open');
   }
 
-  // Cerrar al hacer clic en el fondo oscuro (no dentro del modal)
-  document.getElementById('modalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeModal();
+  // Cerrar al hacer clic en el fondo oscuro.
+  // Usamos mousedown+mouseup para evitar que seleccionar texto dentro del modal
+  // dispare el cierre cuando el mouseup termina sobre el overlay.
+  let overlayMouseDownOnBg = false;
+  const overlay = document.getElementById('modalOverlay');
+  overlay.addEventListener('mousedown', function(e) {
+    overlayMouseDownOnBg = (e.target === overlay);
+  });
+  overlay.addEventListener('mouseup', function(e) {
+    if (overlayMouseDownOnBg && e.target === overlay) closeModal();
+    overlayMouseDownOnBg = false;
   });
 
   function changeNum(d) {
