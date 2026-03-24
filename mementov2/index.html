@@ -1090,6 +1090,7 @@ window.syncGuardias = async function() {
     const token = await ensureToken();
     const casaId = selectedCalId;
     if (!casaId) { toast('❌ Selecciona el calendario Casa primero'); return; }
+    const createdGcalIds = new Set();
 
     const GUARDIA_CALS = ['Calendario Normal', 'Calendario S,D y F'];
     const timeMin = new Date().toISOString();
@@ -1158,8 +1159,8 @@ window.syncGuardias = async function() {
         allDay: true,
         gcalEventId: gcalEventId || null
       });
-      // Add to existingIds immediately to prevent syncFromCalendar duplicating it
-      if (gcalEventId) existingIds.add(gcalEventId);
+      // Track newly created gcalEventIds to avoid duplicates within this run
+      if (gcalEventId) createdGcalIds.add(gcalEventId);
       added++;
     }
 
