@@ -1,0 +1,292 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+#app { padding: 1rem 0; }
+h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.subtitle { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+.search-row { display: flex; gap: 8px; margin-bottom: 1rem; align-items: flex-start; flex-wrap: wrap; }
+#muni-input { flex: 1; min-width: 160px; }
+#search-btn { white-space: nowrap; }
+#loc-btn { white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.fuel-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 0.5px solid var(--color-border-secondary); cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); transition: background .15s, color .15s; user-select: none; }
+.pill.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-primary); font-weight: 500; }
+#status { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1rem; min-height: 20px; }
+#results { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.station-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.1rem; position: relative; transition: border-color .15s; }
+.station-card:hover { border-color: var(--color-border-secondary); }
+.station-card.rank-1 { border: 1.5px solid var(--color-border-success); }
+.rank-badge { position: absolute; top: 10px; right: 10px; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 999px; }
+.rank-1 .rank-badge { background: var(--color-background-success); color: var(--color-text-success); }
+.rank-other .rank-badge { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.station-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; padding-right: 50px; }
+.station-address { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px; }
+.price-main { font-size: 26px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 2px; }
+.price-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 10px; }
+.horario { font-size: 11px; color: var(--color-text-secondary); margin-top: 6px; }
+.empty { font-size: 14px; color: var(--color-text-secondary); text-align: center; padding: 2rem; }
+.suggest-box { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-top: 2px; max-height: 200px; overflow-y: auto; position: absolute; z-index: 99; width: 100%; }
+.suggest-item { padding: 8px 12px; font-size: 13px; cursor: pointer; color: var(--color-text-primary); }
+.suggest-item:hover { background: var(--color-background-secondary); }
+.input-wrap { position: relative; flex: 1; min-width: 160px; }
+svg.icon { width: 14px; height: 14px; display: inline-block; vertical-align: middle; }
+</style>
+<div id="app">
+  <h1>Gasolineras baratas</h1>
+  <p class="subtitle">Datos en tiempo real del Ministerio de Industria de España</p>
+  <div class="search-row">
+    <div class="input-wrap">
+      <input type="text" id="muni-input" placeholder="Escribe un municipio..." oninput="onInput()" autocomplete="off">
+      <div class="suggest-box" id="suggest-box" style="display:none"></div>
+    </div>
+    <button id="search-btn" onclick="buscar()">Buscar</button>
+    <button id="loc-btn" onclick="buscarPorUbicacion()">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="8" y1="1" x2="8" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="1" y1="8" x2="4" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Mi ubicación
+    </button>
+  </div>
+  <div class="fuel-pills" id="fuel-pills"></div>
+  <div id="status"></div>
+  <div id="results"></div>
+</div>
+
+<script>
+const FUELS = [
+  { key: 'Precio Gasoleo A', label: 'Diésel' },
+  { key: 'Precio Gasolina 95 E5', label: 'Gasolina 95' },
+  { key: 'Precio Gasolina 98 E5', label: 'Gasolina 98' },
+  { key: 'Precio Gases licuados del petroleo', label: 'GLP' },
+  { key: 'Precio Gasoleo Premium', label: 'Diésel Premium' },
+  { key: 'Precio Gasolina 95 E5 Premium', label: '95 Premium' },
+];
+let selectedFuel = FUELS[0];
+let allMunicipios = [];
+let selectedMunicipio = null;
+let stationsData = [];
+let suggestTimeout;
+
+const pillContainer = document.getElementById('fuel-pills');
+const statusEl = document.getElementById('status');
+const resultsEl = document.getElementById('results');
+const suggestBox = document.getElementById('suggest-box');
+const muniInput = document.getElementById('muni-input');
+
+FUELS.forEach((f, i) => {
+  const p = document.createElement('div');
+  p.className = 'pill' + (i === 0 ? ' active' : '');
+  p.textContent = f.label;
+  p.onclick = () => {
+    selectedFuel = f;
+    document.querySelectorAll('.pill').forEach((el, j) => el.classList.toggle('active', j === i));
+    renderResults();
+  };
+  pillContainer.appendChild(p);
+});
+
+async function loadMunicipios() {
+  try {
+    const r = await fetch('https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/Listados/Municipios/', { headers: { 'Accept': 'application/json' } });
+    const data = await r.json();
+    allMunicipios = data || [];
+  } catch(e) { console.log('error municipios', e); }
+}
+
+function onInput() {
+  clearTimeout(suggestTimeout);
+  suggestTimeout = setTimeout(() => showSuggestions(muniInput.value), 200);
+}
+
+function normalize(s) {
+  return (s || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function showSuggestions(val) {
+  suggestBox.innerHTML = '';
+  if (!val || val.length < 2) { suggestBox.style.display = 'none'; return; }
+  const v = normalize(val);
+  const matches = allMunicipios.filter(m => normalize(m.Municipio).includes(v)).slice(0, 12);
+  if (!matches.length) { suggestBox.style.display = 'none'; return; }
+  matches.forEach(m => {
+    const item = document.createElement('div');
+    item.className = 'suggest-item';
+    item.textContent = m.Municipio;
+    item.onclick = () => {
+      muniInput.value = m.Municipio;
+      selectedMunicipio = m;
+      suggestBox.style.display = 'none';
+      buscar();
+    };
+    suggestBox.appendChild(item);
+  });
+  suggestBox.style.display = 'block';
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.input-wrap')) suggestBox.style.display = 'none';
+});
+
+muniInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { suggestBox.style.display = 'none'; buscar(); }
+});
+
+async function buscar() {
+  suggestBox.style.display = 'none';
+  if (!selectedMunicipio) {
+    const v = normalize(muniInput.value.trim());
+    const match = allMunicipios.find(m => normalize(m.Municipio) === v);
+    if (!match) { statusEl.textContent = 'Municipio no encontrado. Selecciónalo de la lista.'; return; }
+    selectedMunicipio = match;
+  }
+  const id = selectedMunicipio.IDMunicipio;
+  statusEl.textContent = 'Consultando precios...';
+  resultsEl.innerHTML = '';
+  try {
+    const r = await fetch(`https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroMunicipio/${id}`, { headers: { 'Accept': 'application/json' } });
+    const data = await r.json();
+    stationsData = data.ListaEESSPrecio || [];
+    renderResults();
+  } catch(e) {
+    statusEl.textContent = 'Error al consultar la API. Inténtalo de nuevo.';
+  }
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+async function buscarPorUbicacion() {
+  if (!navigator.geolocation) {
+    statusEl.textContent = 'Tu navegador no soporta geolocalización.';
+    return;
+  }
+  const btn = document.getElementById('loc-btn');
+  btn.disabled = true;
+  btn.textContent = 'Localizando...';
+  statusEl.textContent = 'Obteniendo tu ubicación...';
+  resultsEl.innerHTML = '';
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude, longitude } = pos.coords;
+    statusEl.textContent = 'Buscando el municipio más cercano...';
+
+    try {
+      // Usar la API de provincia para filtrar por coordenadas
+      // Buscar municipio más cercano comparando con todos los municipios disponibles
+      // La API del Ministerio incluye coordenadas en los datos de gasolineras, así que
+      // buscamos por provincia primero usando reverse geocoding via nominatim
+      const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es`, {
+        headers: { 'User-Agent': 'GasolinerasApp/1.0' }
+      });
+      const geoData = await geoRes.json();
+
+      const addr = geoData.address || {};
+      // Nominatim puede devolver city, town, village, municipality
+      const candidato = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
+
+      statusEl.textContent = `Ubicación detectada: ${candidato || 'desconocida'}. Buscando municipio...`;
+
+      const v = normalize(candidato);
+      let match = allMunicipios.find(m => normalize(m.Municipio) === v);
+
+      // Si no hay coincidencia exacta, buscamos la más parecida
+      if (!match) {
+        const candidates = allMunicipios.filter(m => normalize(m.Municipio).includes(v) || v.includes(normalize(m.Municipio)));
+        match = candidates[0] || null;
+      }
+
+      // Si aun no encontramos, buscamos el municipio cuyas gasolineras estén más cerca
+      if (!match) {
+        statusEl.textContent = 'Buscando gasolineras más cercanas a tu posición...';
+        // Traer todas las estaciones y encontrar la más cercana
+        const allRes = await fetch('https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/', { headers: { 'Accept': 'application/json' } });
+        const allData = await allRes.json();
+        const estaciones = allData.ListaEESSPrecio || [];
+        let bestDist = Infinity, bestMuniId = null, bestMuniName = null;
+        estaciones.forEach(s => {
+          const lat = parseFloat((s['Latitud']||'').replace(',','.'));
+          const lon = parseFloat((s['Longitud (WGS84)']||s['Longitud']||'').replace(',','.'));
+          if (isNaN(lat) || isNaN(lon)) return;
+          const d = haversine(latitude, longitude, lat, lon);
+          if (d < bestDist) { bestDist = d; bestMuniId = s['IDMunicipio']; bestMuniName = s['Municipio']; }
+        });
+        if (bestMuniId) {
+          match = allMunicipios.find(m => m.IDMunicipio === bestMuniId) || { IDMunicipio: bestMuniId, Municipio: bestMuniName };
+        }
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="1" x2="8" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="8" x2="4" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Mi ubicación`;
+
+      if (match) {
+        muniInput.value = match.Municipio;
+        selectedMunicipio = match;
+        buscar();
+      } else {
+        statusEl.textContent = 'No se pudo determinar el municipio. Escríbelo manualmente.';
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="1" x2="8" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="8" x2="4" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Mi ubicación`;
+      statusEl.textContent = 'Error al obtener la ubicación. Inténtalo de nuevo.';
+    }
+  }, (err) => {
+    btn.disabled = false;
+    btn.innerHTML = `<svg class="icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="1" x2="8" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="12" x2="8" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="8" x2="4" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Mi ubicación`;
+    statusEl.textContent = err.code === 1 ? 'Permiso de ubicación denegado.' : 'No se pudo obtener la ubicación.';
+  }, { timeout: 10000 });
+}
+
+function renderResults() {
+  const key = selectedFuel.key;
+  const label = selectedFuel.label;
+  const withPrice = stationsData.filter(s => {
+    const p = (s[key] || '').replace(',', '.');
+    return p && !isNaN(parseFloat(p)) && parseFloat(p) > 0;
+  }).map(s => ({ ...s, _price: parseFloat((s[key] || '').replace(',', '.')) }));
+  withPrice.sort((a, b) => a._price - b._price);
+  const fecha = stationsData[0] ? (stationsData[0]['Fecha'] || '') : '';
+  statusEl.textContent = withPrice.length
+    ? `${withPrice.length} gasolineras con ${label} en ${selectedMunicipio.Municipio}${fecha ? ' · ' + fecha : ''}`
+    : (stationsData.length ? `Sin datos de ${label} en ${selectedMunicipio.Municipio}` : '');
+  if (!withPrice.length) {
+    resultsEl.innerHTML = `<div class="empty">No hay datos de ${label} disponibles en este municipio.</div>`;
+    return;
+  }
+  const top = withPrice.slice(0, 10);
+  resultsEl.innerHTML = top.map((s, i) => {
+    const priceStr = s._price.toFixed(3).replace('.', ',') + ' €/L';
+    const diff = i > 0 ? `+${(s._price - top[0]._price).toFixed(3).replace('.', ',')} €` : '';
+    const rotulo = s['Rótulo'] || s['Rotulo'] || 'Sin nombre';
+    const dir = s['Dirección'] || s['Direccion'] || '';
+    const horario = s['Horario'] || '';
+    return `<div class="station-card rank-${i === 0 ? '1' : 'other'}">
+      <span class="rank-badge">${i === 0 ? 'Más barata' : '#' + (i + 1)}</span>
+      <div class="station-name">${rotulo}</div>
+      <div class="station-address">${dir}</div>
+      <div class="price-main">${priceStr}</div>
+      <div class="price-label">${label}${diff ? ' · <span style="color:var(--color-text-danger)">' + diff + '</span>' : ''}</div>
+      ${horario ? `<div class="horario">${horario}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+loadMunicipios().then(() => {
+  const match = allMunicipios.find(m => normalize(m.Municipio) === 'INGENIO');
+  if (match) {
+    muniInput.value = match.Municipio;
+    selectedMunicipio = match;
+    buscar();
+  }
+});
+</script>
