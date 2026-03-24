@@ -383,8 +383,8 @@
 <div class="result-text" id="result"></div>
 
 <!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="overlayClick(event)">
-  <div class="modal">
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">Personalizar Ruleta</div>
     <p class="modal-subtitle">Elige cuántas opciones y ponles nombre</p>
@@ -586,9 +586,10 @@
     document.getElementById('modalOverlay').classList.remove('open');
   }
 
-  function overlayClick(e) {
-    if (e.target === document.getElementById('modalOverlay')) closeModal();
-  }
+  // Cerrar al hacer clic en el fondo oscuro (no dentro del modal)
+  document.getElementById('modalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
 
   function changeNum(d) {
     tempNum = Math.max(2, Math.min(10, tempNum + d));
