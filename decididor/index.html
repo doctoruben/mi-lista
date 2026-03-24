@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decididor</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --accent: #c0392b;
+    --text: #1a1a1a;
+    --needle: #c0392b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Crimson Pro', serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 20px;
+    border: 1px solid rgba(26,26,26,0.15);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    letter-spacing: 0.15em;
+    color: var(--text);
+    margin-bottom: 0.2em;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-style: italic;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    color: #888;
+    letter-spacing: 0.05em;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+
+  .wheel-container {
+    position: relative;
+    width: clamp(260px, 50vw, 360px);
+    height: clamp(260px, 50vw, 360px);
+    margin-bottom: 2.5rem;
+  }
+
+  .needle {
+    position: absolute;
+    top: -28px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-top: 32px solid var(--needle);
+    z-index: 20;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  }
+
+  .needle::after {
+    content: '';
+    position: absolute;
+    top: -36px;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    background: var(--needle);
+    border-radius: 50%;
+  }
+
+  canvas {
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 6px #fff,
+      0 0 0 8px rgba(26,26,26,0.2),
+      0 20px 60px rgba(0,0,0,0.25);
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    background: radial-gradient(circle at 40% 35%, #fff 0%, #ccc 100%);
+    border-radius: 50%;
+    border: 3px solid #888;
+    z-index: 15;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+
+  .buttons-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-decidir {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    padding: 0.9rem 3rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 5px 5px 0px var(--accent);
+    user-select: none;
+  }
+
+  .btn-decidir:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 7px 7px 0px var(--accent); }
+  .btn-decidir:active:not(:disabled) { transform: translate(3px,3px); box-shadow: 2px 2px 0px var(--accent); }
+  .btn-decidir:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-opciones {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    padding: 0.9rem 2rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 2px solid var(--text);
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 5px 5px 0px rgba(26,26,26,0.2);
+    user-select: none;
+  }
+
+  .btn-opciones:hover { transform: translate(-2px,-2px); box-shadow: 7px 7px 0px rgba(26,26,26,0.2); }
+  .btn-opciones:active { transform: translate(3px,3px); box-shadow: 2px 2px 0px rgba(26,26,26,0.2); }
+
+  .result-text {
+    margin-top: 1.8rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1.8rem, 6vw, 3.5rem);
+    letter-spacing: 0.1em;
+    text-align: center;
+    min-height: 1.2em;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s, transform 0.5s;
+    color: var(--text);
+  }
+
+  .result-text.show { opacity: 1; transform: translateY(0); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,26,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg);
+    border: 2px solid var(--text);
+    box-shadow: 8px 8px 0px var(--accent);
+    padding: 2.5rem;
+    width: min(520px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+
+  .modal-subtitle {
+    font-style: italic;
+    color: #888;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #888;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .modal-close:hover { color: var(--accent); }
+
+  .num-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .num-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+
+  .num-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .num-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    width: 38px;
+    height: 38px;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    line-height: 1;
+  }
+
+  .num-btn:hover:not(:disabled) { background: var(--accent); }
+  .num-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .num-display {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    min-width: 2.2rem;
+    text-align: center;
+    color: var(--text);
+  }
+
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: fadeRow 0.2s ease;
+  }
+
+  @keyframes fadeRow {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .option-color-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 2px solid rgba(0,0,0,0.12);
+  }
+
+  .option-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: #aaa;
+    min-width: 1.4rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .option-input {
+    flex: 1;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.1rem;
+    padding: 0.55rem 0.9rem;
+    border: 1.5px solid #ccc;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .option-input:focus { border-color: var(--text); }
+  .option-input::placeholder { color: #bbb; font-style: italic; }
+
+  .btn-aplicar {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.2em;
+    padding: 0.85rem 2.5rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .btn-aplicar:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0px rgba(0,0,0,0.2); }
+  .btn-aplicar:active { transform: translate(2px,2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+</style>
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Decididor">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/favicon.ico">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+
+<h1 class="title">DECIDIDOR</h1>
+<p class="subtitle">Deja que el universo decida por ti</p>
+
+<div class="wheel-container">
+  <div class="needle"></div>
+  <canvas id="wheel" width="600" height="600"></canvas>
+  <div class="hub"></div>
+</div>
+
+<div class="buttons-row">
+  <button class="btn-decidir" id="btn" onclick="spin()">✦ DECIDIR ✦</button>
+  <button class="btn-opciones" onclick="openModal()">⚙ OPCIONES</button>
+</div>
+
+<div class="result-text" id="result"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="overlayClick(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Personalizar Ruleta</div>
+    <p class="modal-subtitle">Elige cuántas opciones y ponles nombre</p>
+
+    <div class="num-row">
+      <span class="num-label">Número de opciones</span>
+      <div class="num-controls">
+        <button class="num-btn" id="btnMinus" onclick="changeNum(-1)">−</button>
+        <span class="num-display" id="numDisplay">2</span>
+        <button class="num-btn" id="btnPlus"  onclick="changeNum(1)">+</button>
+      </div>
+    </div>
+
+    <div class="options-list" id="optionsList"></div>
+
+    <button class="btn-aplicar" onclick="applyOptions()">✦ APLICAR ✦</button>
+  </div>
+</div>
+
+<script>
+  const PALETTE = [
+    '#2d2d2d','#e8c547','#c0392b','#2980b9',
+    '#27ae60','#8e44ad','#e67e22','#16a085',
+    '#d35400','#1a252f'
+  ];
+
+  let options = ['SÍ','NO'];
+  let angle   = 0;
+  let spinning = false;
+  let tempNum  = 2;
+
+  const canvas = document.getElementById('wheel');
+  const ctx    = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, r = W/2 - 4;
+
+  /* ── DIBUJO ── */
+  function drawWheel(rot) {
+    ctx.clearRect(0, 0, W, H);
+    const n = options.length;
+    const slice = (2 * Math.PI) / n;
+
+    for (let i = 0; i < n; i++) {
+      const a0 = rot + i * slice;
+      const a1 = a0 + slice;
+
+      // Sector
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, a0, a1);
+      ctx.closePath();
+      ctx.fillStyle = PALETTE[i % PALETTE.length];
+      ctx.fill();
+
+      // Separador
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a0)*r, cy + Math.sin(a0)*r);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Etiqueta
+      const bisect   = a0 + slice / 2;
+      const labelDist = r * 0.58;
+      const lx = cx + Math.cos(bisect) * labelDist;
+      const ly = cy + Math.sin(bisect) * labelDist;
+
+      ctx.save();
+      ctx.translate(lx, ly);
+      ctx.rotate(bisect + Math.PI / 2);
+
+      const label    = options[i].toUpperCase();
+      const maxWidth = slice * r * 0.82;
+      let fontSize   = Math.min(W * 0.09, maxWidth / Math.max(label.length * 0.6, 1));
+      fontSize       = Math.max(fontSize, W * 0.034);
+
+      ctx.font = `bold ${fontSize}px 'Bebas Neue', sans-serif`;
+      ctx.fillStyle    = contrastColor(PALETTE[i % PALETTE.length]);
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Recortar si no cabe
+      let txt = label;
+      while (ctx.measureText(txt).width > maxWidth && txt.length > 1)
+        txt = txt.slice(0, -1);
+      if (txt !== label) txt = txt.slice(0,-1) + '…';
+
+      ctx.fillText(txt, 0, 0);
+      ctx.restore();
+    }
+
+    // Ticks
+    ctx.save();
+    ctx.translate(cx, cy);
+    const ticks = Math.max(36, n * 6);
+    for (let i = 0; i < ticks; i++) {
+      const a     = (i / ticks) * Math.PI * 2 + rot;
+      const major = i % (ticks / n) === 0;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * (r - (major?22:10)), Math.sin(a) * (r - (major?22:10)));
+      ctx.lineTo(Math.cos(a) * (r - 2),             Math.sin(a) * (r - 2));
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth   = major ? 2.5 : 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function contrastColor(hex) {
+    const rv = parseInt(hex.slice(1,3),16);
+    const gv = parseInt(hex.slice(3,5),16);
+    const bv = parseInt(hex.slice(5,7),16);
+    return (0.299*rv + 0.587*gv + 0.114*bv)/255 > 0.5 ? '#1a1a1a' : '#f5f0e8';
+  }
+
+  drawWheel(0);
+
+  /* ── GIRO ── */
+  function easeOut(t) { return 1 - Math.pow(1-t, 4); }
+
+  function getWinnerFromAngle(rot) {
+    // Aguja fija apunta arriba = -PI/2 en canvas.
+    // El sector i ocupa [rot + i*slice, rot + (i+1)*slice].
+    // Calculamos qué sector queda bajo la aguja.
+    const n     = options.length;
+    const slice = (2 * Math.PI) / n;
+    const needle = -Math.PI / 2;
+    let rel = ((needle - rot) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    return Math.floor(rel / slice) % n;
+  }
+
+  function spin() {
+    if (spinning) return;
+    spinning = true;
+    const btn    = document.getElementById('btn');
+    const result = document.getElementById('result');
+    btn.disabled = true;
+    result.className  = 'result-text';
+    result.textContent = '';
+
+    const n     = options.length;
+    const slice = (2 * Math.PI) / n;
+
+    // Elegir ganador y calcular ángulo final que lo coloca bajo la aguja (-PI/2)
+    const winnerIdx     = Math.floor(Math.random() * n);
+    const offsetInSlice = (0.15 + Math.random() * 0.7) * slice;
+    const baseSpins     = 6 + Math.random() * 4;
+
+    // rot + winnerIdx*slice + offsetInSlice = -PI/2  → rot = -PI/2 - winnerIdx*slice - offsetInSlice
+    const finalAngle    = -Math.PI / 2 - winnerIdx * slice - offsetInSlice + baseSpins * 2 * Math.PI;
+
+    const startAngle    = angle;
+    const totalRotation = finalAngle - startAngle;
+    const duration      = 5000;
+    let startTime = null, lastTick = 0;
+
+    function animate(ts) {
+      if (!startTime) startTime = ts;
+      const t       = Math.min((ts - startTime) / duration, 1);
+      const current = startAngle + totalRotation * easeOut(t);
+      angle = current;
+      drawWheel(current);
+
+      // Flash aguja
+      const dynamicTick = Math.max(40, 120 - Math.abs(totalRotation * (1-Math.pow(1-Math.min(t+.001,1),3))/duration*1000)*2);
+      if (ts - lastTick > dynamicTick) {
+        lastTick = ts;
+        const el = document.querySelector('.needle');
+        el.style.filter = 'drop-shadow(0 0 8px #fff) drop-shadow(0 2px 4px rgba(0,0,0,0.3))';
+        setTimeout(() => el.style.filter = 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))', 60);
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+        btn.disabled = false;
+        // Leer ganador directo del ángulo final para máxima precisión
+        const actual = getWinnerFromAngle(angle);
+        result.textContent = '✦ ' + options[actual].toUpperCase() + ' ✦';
+        result.style.color = PALETTE[actual % PALETTE.length];
+        result.className   = 'result-text show';
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  /* ── MODAL ── */
+  function openModal() {
+    tempNum = options.length;
+    document.getElementById('numDisplay').textContent = tempNum;
+    updateNumButtons();
+    renderInputs();
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function overlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function changeNum(d) {
+    tempNum = Math.max(2, Math.min(10, tempNum + d));
+    document.getElementById('numDisplay').textContent = tempNum;
+    updateNumButtons();
+    renderInputs();
+  }
+
+  function updateNumButtons() {
+    document.getElementById('btnMinus').disabled = tempNum <= 2;
+    document.getElementById('btnPlus').disabled  = tempNum >= 10;
+  }
+
+  function renderInputs() {
+    const list    = document.getElementById('optionsList');
+    const current = [...list.querySelectorAll('.option-input')].map(i => i.value);
+    list.innerHTML = '';
+
+    for (let i = 0; i < tempNum; i++) {
+      const row = document.createElement('div');
+      row.className = 'option-row';
+
+      const num = document.createElement('span');
+      num.className = 'option-num';
+      num.textContent = (i+1) + '.';
+
+      const dot = document.createElement('div');
+      dot.className = 'option-color-dot';
+      dot.style.background = PALETTE[i % PALETTE.length];
+
+      const inp = document.createElement('input');
+      inp.type        = 'text';
+      inp.className   = 'option-input';
+      inp.maxLength   = 22;
+      inp.placeholder = `Opción ${i+1}`;
+      inp.value       = current[i] !== undefined ? current[i] : (options[i] || '');
+
+      // Confirmar con Enter
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyOptions();
+      });
+
+      row.appendChild(num);
+      row.appendChild(dot);
+      row.appendChild(inp);
+      list.appendChild(row);
+    }
+  }
+
+  function applyOptions() {
+    const inputs = document.querySelectorAll('.option-input');
+    options = [...inputs].map((inp, i) => inp.value.trim() || `Opción ${i+1}`);
+    angle = 0;
+    drawWheel(0);
+    document.getElementById('result').className = 'result-text';
+    document.getElementById('result').textContent = '';
+    closeModal();
+  }
+
+  // Renderizar modal por si se abre de inmediato
+  renderInputs();
+</script>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(r => console.log('SW registrado:', r.scope))
+        .catch(e => console.log('SW error:', e));
+    });
+  }
+</script>
+</body>
+</html>
