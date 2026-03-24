@@ -1,171 +1,147 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="manifest.json"/>
-  
   <title>BESTGAS</title>
   <style>
     :root {
-      --primary: #2563eb;
+      --primary: #ea580c;
+      --primary-dark: #c2410c;
       --success: #16a34a;
-      --highlight: #fefce8;
+      --highlight: #fff7ed;
       --bg-body: #f8fafc;
       --bg-card: #ffffff;
       --text-main: #1e293b;
       --text-muted: #64748b;
       --border: #e2e8f0;
       --radius: 12px;
-      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); line-height: 1.5; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 
-    body { 
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
-      background-color: var(--bg-body);
-      color: var(--text-main);
-      line-height: 1.5;
-    }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.75rem; }
+    .header-logo { width: 46px; height: 46px; object-fit: contain; }
+    header h1 { font-size: 1.7rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
+    .subtitle { font-size: 0.85rem; color: var(--text-muted); }
 
-    .container { max-width: 1000px; margin: 0 auto; padding: 2rem 1rem; }
-
-    header { display: flex; align-items: center; gap: 15px; margin-bottom: 2rem; }
-    .header-logo { width: 50px; height: 50px; object-fit: contain; }
-    header div h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0px; }
-    .subtitle { font-size: 0.95rem; color: var(--text-muted); }
-
-    .search-row { 
-      display: flex; 
-      gap: 12px; 
-      margin-bottom: 1.5rem; 
-      flex-wrap: wrap;
-    }
-
+    .search-row { display: flex; gap: 10px; margin-bottom: 0.75rem; flex-wrap: wrap; }
     .input-wrap { flex: 1; position: relative; min-width: 200px; }
 
     input[type="text"] {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 1rem;
-      outline: none;
+      width: 100%; padding: 0.7rem 1rem;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-size: 1rem; outline: none; background: white; color: var(--text-main);
     }
-
     input[type="text"]:focus { border-color: var(--primary); }
 
     button {
-      padding: 0.75rem 1.25rem;
-      border-radius: var(--radius);
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
+      padding: 0.7rem 1.1rem; border-radius: var(--radius); border: none;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      transition: all 0.15s; white-space: nowrap;
     }
-
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     #search-btn { background: var(--primary); color: white; }
-    #loc-btn { background: var(--bg-card); border: 1.5px solid var(--border); color: var(--text-main); }
-    button:hover { opacity: 0.9; transform: translateY(-1px); }
+    #search-btn:hover:not(:disabled) { background: var(--primary-dark); }
+    #loc-btn { background: white; border: 1.5px solid var(--border); color: var(--text-main); }
+    #loc-btn:hover:not(:disabled) { background: #f1f5f9; }
+
+    .pref-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .pref-label { font-size: 0.8rem; color: var(--text-muted); }
+    .pref-name { font-size: 0.85rem; font-weight: 600; color: var(--text-main); background: #f1f5f9; padding: 3px 10px; border-radius: 20px; }
+    #pref-btn {
+      font-size: 0.78rem; padding: 4px 12px; border-radius: 20px;
+      background: white; border: 1.5px solid var(--border); color: var(--text-muted);
+      font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
+    }
+    #pref-btn:hover { border-color: var(--primary); color: var(--primary); }
 
     .suggest-box {
-      position: absolute;
-      top: 100%; left: 0; right: 0;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-top: 5px;
-      max-height: 250px;
-      overflow-y: auto;
-      z-index: 100;
-      box-shadow: var(--shadow);
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
+      margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 200; box-shadow: var(--shadow);
     }
-
-    .suggest-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+    .suggest-item { padding: 10px 14px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
+    .suggest-item:last-child { border-bottom: none; }
     .suggest-item:hover { background: #f8fafc; }
 
-    .fuel-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 2rem; }
+    .fuel-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
     .pill {
-      font-size: 0.85rem;
-      padding: 6px 14px;
-      border-radius: 20px;
-      background: white;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      color: var(--text-muted);
+      font-size: 0.82rem; padding: 5px 14px; border-radius: 20px;
+      background: white; border: 1.5px solid var(--border); cursor: pointer;
+      color: var(--text-muted); font-weight: 500; transition: all 0.15s;
     }
+    .pill.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 700; }
+    .pill:hover:not(.active) { border-color: #cbd5e1; }
 
-    .pill.active { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+    #status { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 20px; }
 
-    #status { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; min-height: 20px; }
-    #results { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-      gap: 1.5rem; 
-    }
+    #results { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.25rem; }
 
     .station-card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      border: 1px solid var(--border);
-      position: relative;
-      display: flex;
-      flex-direction: column;
+      background: var(--bg-card); border-radius: var(--radius); padding: 1.25rem;
+      border: 1.5px solid var(--border); position: relative;
+      display: flex; flex-direction: column; box-shadow: var(--shadow);
     }
-
-    .station-card.rank-1 { 
-      border: 2px solid var(--success); 
-      background-color: var(--highlight);
-    }
-    
-    .rank-badge {
-      position: absolute; top: 12px; right: 12px;
-      font-size: 0.7rem; font-weight: 700;
-      padding: 4px 8px; border-radius: 6px;
-    }
-    .rank-1 .rank-badge { background: #fef08a; color: #854d0e; border: 1px solid #eab308; }
+    .station-card.rank-1 { border-color: var(--primary); background: var(--highlight); box-shadow: 0 0 0 3px rgb(234 88 12 / 0.1); }
+    .rank-badge { position: absolute; top: 12px; right: 12px; font-size: 0.68rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+    .rank-1 .rank-badge { background: #fed7aa; color: #9a3412; border: 1px solid #fb923c; }
     .rank-other .rank-badge { background: #f1f5f9; color: var(--text-muted); }
 
-    .station-name { font-weight: 700; margin-bottom: 0.25rem; padding-right: 60px; }
-    .station-address { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
-    .price-main { font-size: 2rem; font-weight: 800; color: var(--text-main); }
-    .price-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; }
-    
+    .station-name { font-weight: 700; font-size: 1rem; margin-bottom: 3px; padding-right: 55px; }
+    .station-address { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .price-main { font-size: 2.1rem; font-weight: 800; color: var(--text-main); line-height: 1; }
+    .price-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 3px; margin-bottom: 1rem; }
+    .price-diff { color: #dc2626; font-weight: 600; }
+
     .btn-maps {
-      margin-top: auto;
-      background: #f1f5f9;
-      color: #475569;
-      text-decoration: none;
-      padding: 8px;
-      border-radius: 8px;
-      text-align: center;
-      font-size: 0.8rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
+      margin-top: auto; background: #f1f5f9; color: #475569; text-decoration: none;
+      padding: 8px 12px; border-radius: 8px; text-align: center; font-size: 0.78rem;
+      font-weight: 600; display: flex; align-items: center; justify-content: center;
+      gap: 5px; transition: background 0.15s;
     }
     .btn-maps:hover { background: #e2e8f0; }
+    .horario { font-size: 0.68rem; color: var(--text-muted); margin-top: 8px; text-align: center; }
 
-    .horario { font-size: 0.7rem; color: var(--text-muted); margin-top: 10px; text-align: center; }
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 500; align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 420px; box-shadow: 0 20px 40px rgb(0 0 0 / 0.2); }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .modal p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .modal-input-wrap { position: relative; margin-bottom: 0.75rem; }
+    .modal-suggest {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
+      margin-top: 4px; max-height: 200px; overflow-y: auto; z-index: 600; box-shadow: var(--shadow);
+    }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+    .btn-cancel { background: #f1f5f9; color: var(--text-muted); }
+    .btn-cancel:hover { background: #e2e8f0; }
+    .btn-save { background: var(--primary); color: white; }
+    .btn-save:hover { background: var(--primary-dark); }
+    .btn-use-loc { background: white; border: 1.5px solid var(--border); color: var(--text-main); font-size: 0.82rem; padding: 0.5rem 0.9rem; width: 100%; justify-content: center; }
+    .btn-use-loc:hover { background: #f1f5f9; }
 
-    svg.icon { width: 16px; height: 16px; }
+    svg.icon { width: 15px; height: 15px; flex-shrink: 0; }
+    .empty { grid-column: 1/-1; text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 0.9rem; }
   </style>
 </head>
 <body>
-
 <div class="container">
   <header>
     <img src="https://doctoruben.github.io/mi-lista/gas.png" alt="Logo" class="header-logo">
     <div>
-      <h2>BESTGAS</h2>
-      
+      <h1>BESTGAS</h1>
+      <div class="subtitle">Gasolineras más baratas de España</div>
     </div>
   </header>
 
@@ -174,16 +150,58 @@
       <input type="text" id="muni-input" placeholder="Escribe un municipio..." oninput="onInput()" autocomplete="off">
       <div class="suggest-box" id="suggest-box" style="display:none"></div>
     </div>
-    <button id="search-btn" onclick="buscar()">Buscar</button>
+    <button id="search-btn" onclick="buscarDesdeInput()">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="6.5" cy="6.5" r="4.5"/><line x1="10" y1="10" x2="14" y2="14"/>
+      </svg>
+      Buscar
+    </button>
     <button id="loc-btn" onclick="buscarPorUbicacion()">
-      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1" x2="8" y2="3"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="1" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="15" y2="8"/></svg>
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="8" cy="8" r="3"/><line x1="8" y1="1" x2="8" y2="3"/>
+        <line x1="8" y1="13" x2="8" y2="15"/><line x1="1" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="15" y2="8"/>
+      </svg>
       Cerca de mí
+    </button>
+  </div>
+
+  <div class="pref-row">
+    <span class="pref-label">Ubicación preferida:</span>
+    <span class="pref-name" id="pref-display">—</span>
+    <button id="pref-btn" onclick="openPrefModal()">
+      <svg style="width:12px;height:12px" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M11 2l3 3-9 9H2v-3L11 2z"/>
+      </svg>
+      Ubicación preferida
     </button>
   </div>
 
   <div class="fuel-pills" id="fuel-pills"></div>
   <div id="status">Cargando municipios...</div>
   <div id="results"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="pref-modal" onclick="closePrefModalOutside(event)">
+  <div class="modal">
+    <h3>Ubicación preferida</h3>
+    <p>Se cargará automáticamente al abrir la app.</p>
+    <div class="modal-input-wrap">
+      <input type="text" id="pref-input" placeholder="Escribe un municipio..." oninput="onPrefInput()" autocomplete="off">
+      <div class="modal-suggest" id="pref-suggest" style="display:none"></div>
+    </div>
+    <button class="btn-use-loc" onclick="usarUbicacionComoPref()">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="8" cy="8" r="3"/><line x1="8" y1="1" x2="8" y2="3"/>
+        <line x1="8" y1="13" x2="8" y2="15"/><line x1="1" y1="8" x2="3" y2="8"/><line x1="13" y1="8" x2="15" y2="8"/>
+      </svg>
+      Usar mi ubicación actual
+    </button>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePrefModal()">Cancelar</button>
+      <button class="btn-save" onclick="savePref()">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -194,17 +212,23 @@ const FUELS = [
   { key: 'Precio Gases licuados del petroleo', label: 'GLP' },
   { key: 'Precio Gasoleo Premium', label: 'Diésel Premium' }
 ];
+const DEFAULT_MUNI = 'INGENIO';
 
 let selectedFuel = FUELS[0];
 let allMunicipios = [];
 let selectedMunicipio = null;
 let stationsData = [];
-let suggestTimeout;
+let suggestTimeout, prefSuggestTimeout;
+let prefMunicipio = null;
+let pendingPrefMuni = null;
 
-const statusEl = document.getElementById('status');
-const resultsEl = document.getElementById('results');
-const suggestBox = document.getElementById('suggest-box');
-const muniInput = document.getElementById('muni-input');
+const statusEl    = document.getElementById('status');
+const resultsEl   = document.getElementById('results');
+const suggestBox  = document.getElementById('suggest-box');
+const muniInput   = document.getElementById('muni-input');
+const prefDisplay = document.getElementById('pref-display');
+const prefInput   = document.getElementById('pref-input');
+const prefSuggest = document.getElementById('pref-suggest');
 
 FUELS.forEach((f, i) => {
   const p = document.createElement('div');
@@ -219,30 +243,53 @@ FUELS.forEach((f, i) => {
   document.getElementById('fuel-pills').appendChild(p);
 });
 
-async function loadMunicipios() {
-  try {
-    const r = await fetch('https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/Listados/Municipios/');
-    allMunicipios = await r.json();
-    statusEl.textContent = "Listo.";
-  } catch(e) { statusEl.textContent = "Error de red."; }
-}
-
 function normalize(s) {
   return (s || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371, d2r = Math.PI / 180;
+  const dLat = (lat2 - lat1) * d2r, dLon = (lon2 - lon1) * d2r;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*d2r)*Math.cos(lat2*d2r)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* ── Load municipios + init ── */
+async function loadMunicipios() {
+  try {
+    const r = await fetch('https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/Listados/Municipios/');
+    allMunicipios = await r.json();
+  } catch(e) { statusEl.textContent = 'Error de red.'; return; }
+
+  const saved = localStorage.getItem('bestgas_pref');
+  if (saved) { try { prefMunicipio = JSON.parse(saved); } catch(e) {} }
+  if (!prefMunicipio) {
+    prefMunicipio = allMunicipios.find(m => normalize(m.Municipio) === DEFAULT_MUNI) || null;
+  }
+  updatePrefDisplay();
+
+  if (prefMunicipio) selectMuni(prefMunicipio.Municipio, prefMunicipio.IDMunicipio);
+  else statusEl.textContent = 'Listo.';
+}
+
+function updatePrefDisplay() {
+  prefDisplay.textContent = prefMunicipio ? prefMunicipio.Municipio : '—';
+}
+
+/* ── Main search ── */
 function onInput() {
+  selectedMunicipio = null;
   clearTimeout(suggestTimeout);
   suggestTimeout = setTimeout(() => {
     const val = muniInput.value;
     if (!val || val.length < 2) { suggestBox.style.display = 'none'; return; }
     const v = normalize(val);
     const matches = allMunicipios.filter(m => normalize(m.Municipio).includes(v)).slice(0, 10);
-    suggestBox.innerHTML = matches.map(m => `
-      <div class="suggest-item" onclick="selectMuni('${m.Municipio}', '${m.IDMunicipio}')">${m.Municipio}</div>
-    `).join('');
+    suggestBox.innerHTML = matches.map(m =>
+      `<div class="suggest-item" onclick="selectMuni('${m.Municipio}','${m.IDMunicipio}')">${m.Municipio}</div>`
+    ).join('');
     suggestBox.style.display = matches.length ? 'block' : 'none';
-  }, 200);
+  }, 180);
 }
 
 function selectMuni(name, id) {
@@ -252,85 +299,223 @@ function selectMuni(name, id) {
   buscar();
 }
 
+function buscarDesdeInput() {
+  suggestBox.style.display = 'none';
+  if (selectedMunicipio) { buscar(); return; }
+  const v = normalize(muniInput.value.trim());
+  const match = allMunicipios.find(m => normalize(m.Municipio) === v);
+  if (match) { selectedMunicipio = match; buscar(); }
+  else statusEl.textContent = 'Municipio no encontrado. Selecciónalo de la lista.';
+}
+
 async function buscar() {
   if (!selectedMunicipio) return;
   statusEl.textContent = 'Buscando precios...';
+  resultsEl.innerHTML = '';
   try {
     const r = await fetch(`https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroMunicipio/${selectedMunicipio.IDMunicipio}`);
     const data = await r.json();
     stationsData = data.ListaEESSPrecio || [];
     renderResults();
-  } catch(e) { statusEl.textContent = 'Error al cargar.'; }
+  } catch(e) { statusEl.textContent = 'Error al cargar datos.'; }
 }
 
+/* ── Geolocation (robust, with fallback) ── */
+async function resolveUbicacion(latitude, longitude) {
+  // 1) Nominatim reverse geocoding
+  try {
+    const geoRes = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es`,
+      { headers: { 'User-Agent': 'BestGasApp/1.0' } }
+    );
+    const geo = await geoRes.json();
+    const addr = geo.address || {};
+    const candidates = [addr.city, addr.town, addr.village, addr.municipality, addr.suburb, addr.county].filter(Boolean);
+    for (const c of candidates) {
+      const v = normalize(c);
+      let m = allMunicipios.find(x => normalize(x.Municipio) === v);
+      if (!m) m = allMunicipios.find(x => normalize(x.Municipio).startsWith(v.slice(0,6)) || v.startsWith(normalize(x.Municipio).slice(0,6)));
+      if (m) return m;
+    }
+  } catch(e) { /* fallback */ }
+
+  // 2) Fallback: nearest station by coordinates
+  statusEl.textContent = 'Calculando municipio más cercano...';
+  try {
+    const r = await fetch('https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/');
+    const data = await r.json();
+    const estaciones = data.ListaEESSPrecio || [];
+    let bestDist = Infinity, bestMuniId = null, bestMuniName = null;
+    for (const s of estaciones) {
+      const lat = parseFloat((s['Latitud'] || '').replace(',', '.'));
+      const lon = parseFloat((s['Longitud (WGS84)'] || s['Longitud'] || '').replace(',', '.'));
+      if (isNaN(lat) || isNaN(lon)) continue;
+      const d = haversine(latitude, longitude, lat, lon);
+      if (d < bestDist) { bestDist = d; bestMuniId = s['IDMunicipio']; bestMuniName = s['Municipio']; }
+    }
+    if (bestMuniId) {
+      return allMunicipios.find(m => m.IDMunicipio === bestMuniId) || { IDMunicipio: bestMuniId, Municipio: bestMuniName };
+    }
+  } catch(e) {}
+  return null;
+}
+
+function buscarPorUbicacion() {
+  if (!navigator.geolocation) { statusEl.textContent = 'Geolocalización no disponible.'; return; }
+  const btn = document.getElementById('loc-btn');
+  btn.disabled = true;
+  statusEl.textContent = 'Obteniendo ubicación...';
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const match = await resolveUbicacion(pos.coords.latitude, pos.coords.longitude);
+      if (match) selectMuni(match.Municipio, match.IDMunicipio);
+      else statusEl.textContent = 'No se pudo determinar el municipio.';
+    } catch(e) { statusEl.textContent = 'Error al buscar municipio.'; }
+    btn.disabled = false;
+  }, (err) => {
+    btn.disabled = false;
+    statusEl.textContent = err.code === 1 ? 'Permiso de ubicación denegado.' : 'No se pudo obtener la ubicación.';
+  }, { timeout: 12000, enableHighAccuracy: true });
+}
+
+/* ── Preferred location modal ── */
+function openPrefModal() {
+  pendingPrefMuni = null;
+  prefInput.value = prefMunicipio ? prefMunicipio.Municipio : '';
+  prefSuggest.style.display = 'none';
+  document.getElementById('pref-modal').classList.add('open');
+  setTimeout(() => prefInput.focus(), 60);
+}
+function closePrefModal() {
+  document.getElementById('pref-modal').classList.remove('open');
+  prefSuggest.style.display = 'none';
+}
+function closePrefModalOutside(e) {
+  if (e.target === document.getElementById('pref-modal')) closePrefModal();
+}
+
+function onPrefInput() {
+  pendingPrefMuni = null;
+  clearTimeout(prefSuggestTimeout);
+  prefSuggestTimeout = setTimeout(() => {
+    const val = prefInput.value;
+    if (!val || val.length < 2) { prefSuggest.style.display = 'none'; return; }
+    const v = normalize(val);
+    const matches = allMunicipios.filter(m => normalize(m.Municipio).includes(v)).slice(0, 10);
+    prefSuggest.innerHTML = matches.map(m =>
+      `<div class="suggest-item" onclick="selectPrefSuggest('${m.Municipio}','${m.IDMunicipio}')">${m.Municipio}</div>`
+    ).join('');
+    prefSuggest.style.display = matches.length ? 'block' : 'none';
+  }, 180);
+}
+
+function selectPrefSuggest(name, id) {
+  prefInput.value = name;
+  pendingPrefMuni = { Municipio: name, IDMunicipio: id };
+  prefSuggest.style.display = 'none';
+}
+
+function savePref() {
+  let muni = pendingPrefMuni;
+  if (!muni) {
+    const v = normalize(prefInput.value.trim());
+    muni = allMunicipios.find(m => normalize(m.Municipio) === v) || null;
+  }
+  if (!muni) {
+    prefInput.style.borderColor = '#ef4444';
+    prefInput.placeholder = 'Selecciona un municipio de la lista';
+    setTimeout(() => { prefInput.style.borderColor = ''; prefInput.placeholder = 'Escribe un municipio...'; }, 1800);
+    return;
+  }
+  prefMunicipio = muni;
+  localStorage.setItem('bestgas_pref', JSON.stringify(muni));
+  updatePrefDisplay();
+  closePrefModal();
+  selectMuni(muni.Municipio, muni.IDMunicipio);
+}
+
+function usarUbicacionComoPref() {
+  if (!navigator.geolocation) { alert('Geolocalización no disponible.'); return; }
+  prefInput.value = 'Obteniendo ubicación...';
+  prefInput.disabled = true;
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const match = await resolveUbicacion(pos.coords.latitude, pos.coords.longitude);
+      prefInput.disabled = false;
+      if (match) { prefInput.value = match.Municipio; pendingPrefMuni = match; }
+      else { prefInput.value = ''; alert('No se pudo determinar el municipio.'); }
+    } catch(e) { prefInput.disabled = false; prefInput.value = ''; alert('Error al obtener municipio.'); }
+  }, () => {
+    prefInput.disabled = false; prefInput.value = '';
+    alert('Permiso de ubicación denegado.');
+  }, { timeout: 12000, enableHighAccuracy: true });
+}
+
+/* ── Render results ── */
 function renderResults() {
   const key = selectedFuel.key;
   const filtered = stationsData
-    .filter(s => s[key])
+    .filter(s => s[key] && parseFloat(s[key].replace(',', '.')) > 0)
     .map(s => ({ ...s, _price: parseFloat(s[key].replace(',', '.')) }))
     .sort((a, b) => a._price - b._price);
 
   if (!filtered.length) {
-    resultsEl.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:2rem;">Sin datos para ${selectedFuel.label}.</div>`;
+    resultsEl.innerHTML = `<div class="empty">Sin datos de ${selectedFuel.label} en ${selectedMunicipio.Municipio}.</div>`;
+    statusEl.textContent = '';
     return;
   }
 
-  statusEl.textContent = `${filtered.length} resultados en ${selectedMunicipio.Municipio}`;
+  const fecha = stationsData[0]?.['Fecha'] ? ' · ' + stationsData[0]['Fecha'] : '';
+  statusEl.textContent = `${filtered.length} estaciones con ${selectedFuel.label} en ${selectedMunicipio.Municipio}${fecha}`;
+
+  const minPrice = filtered[0]._price;
   resultsEl.innerHTML = filtered.slice(0, 15).map((s, i) => {
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s['Dirección'] + ' ' + s['Municipio'])}`;
+    const diff = i > 0 ? ` · <span class="price-diff">+${(s._price - minPrice).toFixed(3).replace('.', ',')} €</span>` : '';
+    const dir = s['Dirección'] || s['Direccion'] || '';
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((s['Rótulo']||'') + ' ' + dir + ' ' + (s['Municipio']||''))}`;
     return `
       <div class="station-card ${i === 0 ? 'rank-1' : 'rank-other'}">
-        <span class="rank-badge">${i === 0 ? '#1' : '#' + (i + 1)}</span>
-        <div class="station-name">${s['Rótulo']}</div>
-        <div class="station-address">${s['Dirección']}</div>
+        <span class="rank-badge">${i === 0 ? '★ Más barata' : '#' + (i + 1)}</span>
+        <div class="station-name">${s['Rótulo'] || 'Sin nombre'}</div>
+        <div class="station-address">${dir}</div>
         <div class="price-main">${s._price.toFixed(3).replace('.', ',')} €/L</div>
-        <div class="price-label">${selectedFuel.label}</div>
-        
+        <div class="price-label">${selectedFuel.label}${diff}</div>
         <a href="${mapsUrl}" target="_blank" class="btn-maps">
-          📍 Ver en Google Maps
+          <svg style="width:13px;height:13px;flex-shrink:0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 2C5.8 2 4 3.8 4 6c0 3.3 4 8 4 8s4-4.7 4-8c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="6" r="1.2" fill="currentColor"/>
+          </svg>
+          Ver en Google Maps
         </a>
         <div class="horario">🕒 ${s['Horario'] || 'Sin horario'}</div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
-async function buscarPorUbicacion() {
-  if (!navigator.geolocation) return;
-  const btn = document.getElementById('loc-btn');
-  btn.disabled = true;
-  statusEl.textContent = "Localizando...";
-
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    try {
-      const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=es`);
-      const geoData = await geoRes.json();
-      const city = geoData.address.city || geoData.address.town || geoData.address.village;
-      const match = allMunicipios.find(m => normalize(m.Municipio) === normalize(city));
-      if (match) selectMuni(match.Municipio, match.IDMunicipio);
-      else statusEl.textContent = "No se detectó el municipio.";
-    } catch(e) { statusEl.textContent = "Error."; }
-    btn.disabled = false;
-  }, () => {
-    btn.disabled = false;
-    statusEl.textContent = "Sin acceso a ubicación.";
-  });
-}
-
-loadMunicipios().then(() => {
-  const match = allMunicipios.find(m => normalize(m.Municipio) === 'INGENIO');
-  if (match) selectMuni(match.Municipio, match.IDMunicipio);
+/* ── Init ── */
+document.addEventListener('click', e => {
+  if (!e.target.closest('.input-wrap')) suggestBox.style.display = 'none';
+  if (!e.target.closest('.modal-input-wrap')) prefSuggest.style.display = 'none';
 });
+muniInput.addEventListener('keydown', e => { if (e.key === 'Enter') buscarDesdeInput(); });
 
-document.addEventListener('click', e => { if (!e.target.closest('.input-wrap')) suggestBox.style.display = 'none'; });
+loadMunicipios();
 </script>
-  <script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
     navigator.serviceWorker.register('/mi-lista/gas/sw.js')
-      .then(r=>{r.update();r.addEventListener('updatefound',()=>{const w=r.installing;w.addEventListener('statechange',()=>{if(w.state==='activated')location.reload();});});})
-      .catch(()=>{});
-    navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+      .then(r => {
+        r.update();
+        r.addEventListener('updatefound', () => {
+          const w = r.installing;
+          w.addEventListener('statechange', () => {
+            if (w.state === 'activated') location.reload();
+          });
+        });
+      })
+      .catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
   });
 }
 </script>
