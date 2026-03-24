@@ -327,7 +327,7 @@ document.addEventListener('click', e => { if (!e.target.closest('.input-wrap')) 
   <script>
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/mi-lista/mementov2/sw.js')
+    navigator.serviceWorker.register('/mi-lista/gas/sw.js')
       .then(r=>{r.update();r.addEventListener('updatefound',()=>{const w=r.installing;w.addEventListener('statechange',()=>{if(w.state==='activated')location.reload();});});})
       .catch(()=>{});
     navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
