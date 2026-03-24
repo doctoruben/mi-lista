@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json"/>
+  
   <title>BESTGAS</title>
   <style>
     :root {
@@ -321,6 +323,16 @@ loadMunicipios().then(() => {
 });
 
 document.addEventListener('click', e => { if (!e.target.closest('.input-wrap')) suggestBox.style.display = 'none'; });
+</script>
+  <script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/mi-lista/mementov2/sw.js')
+      .then(r=>{r.update();r.addEventListener('updatefound',()=>{const w=r.installing;w.addEventListener('statechange',()=>{if(w.state==='activated')location.reload();});});})
+      .catch(()=>{});
+    navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+  });
+}
 </script>
 </body>
 </html>
