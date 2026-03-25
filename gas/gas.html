@@ -31,21 +31,26 @@
     /* ── Row 1: Ubicación preferida ── */
     /* ── Row 1: Ubicación preferida ── */
     .pref-row {
-      display: flex; align-items: center; gap: 7px;
-      margin-bottom: 0.75rem; padding: 0.6rem 1rem;
-      background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
+      display: flex; align-items: stretch;
+      margin-bottom: 0.75rem;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      overflow: hidden;
     }
-    .pref-row-label { font-size: 0.82rem; color: var(--text-muted); white-space: nowrap; }
+    .pref-row-label {
+      display: flex; align-items: center; gap: 6px; padding: 0.6rem 1rem;
+      background: #fefce8; border-right: 1.5px solid var(--border);
+      font-size: 0.82rem; font-weight: 600; color: #92400e; white-space: nowrap;
+    }
     #pref-btn {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: none; border: none; padding: 2px 6px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; flex: 1;
+      background: white; border: none; padding: 0.6rem 1rem; cursor: pointer;
       color: var(--primary); font-weight: 700; font-size: 0.92rem;
-      border-radius: 6px; transition: background 0.15s;
+      transition: background 0.15s;
     }
     #pref-btn:hover { background: #fff7ed; }
 
     /* ── Row 2: Municipio + lupa ── */
-    .search-row { display: flex; gap: 0; margin-bottom: 0.65rem; align-items: stretch; }
+    .search-row { display: flex; gap: 0; margin-bottom: 0.65rem; align-items: stretch; flex-wrap: nowrap; }
     .search-label {
       display: flex; align-items: center; padding: 0 12px;
       background: #fefce8; border: 1.5px solid var(--border); border-right: none;
@@ -58,7 +63,9 @@
       width: 100%; padding: 0.7rem 0.9rem;
       border: 1.5px solid var(--border); border-left: none; border-right: none;
       border-radius: 0; font-size: 0.95rem; outline: none;
-      background: white; color: var(--text-main); height: 100%;
+      background: white; color: var(--text-main);
+      font-family: inherit; line-height: 1.4;
+      display: block; box-sizing: border-box;
     }
     #muni-input:focus { border-color: var(--primary); z-index: 1; position: relative; }
     #search-btn {
@@ -83,12 +90,12 @@
     .loc-row { margin-bottom: 1.25rem; }
     #loc-btn {
       width: 100%; padding: 0.65rem 1rem;
-      background: white; border: 1.5px solid var(--border); border-radius: var(--radius);
-      color: var(--text-main); font-weight: 600; font-size: 0.88rem;
+      background: var(--primary); border: none; border-radius: var(--radius);
+      color: white; font-weight: 600; font-size: 0.88rem;
       cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
       transition: all 0.15s;
     }
-    #loc-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #cbd5e1; }
+    #loc-btn:hover:not(:disabled) { background: var(--primary-dark); }
     #loc-btn:active { transform: scale(0.98); }
     #loc-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -240,10 +247,12 @@
 
   <!-- Fila 1: Ubicación preferida -->
   <div class="pref-row">
-    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="var(--primary)" stroke-width="2">
-      <path d="M8 2C5.8 2 4 3.8 4 6c0 3.3 4 8 4 8s4-4.7 4-8c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="6" r="1.2" fill="var(--primary)" stroke="none"/>
-    </svg>
-    <span class="pref-row-label">Ubicación preferida:</span>
+    <span class="pref-row-label">
+      <svg style="width:14px;height:14px;flex-shrink:0" viewBox="0 0 16 16" fill="none" stroke="#92400e" stroke-width="2">
+        <path d="M8 2C5.8 2 4 3.8 4 6c0 3.3 4 8 4 8s4-4.7 4-8c0-2.2-1.8-4-4-4z"/><circle cx="8" cy="6" r="1.2" fill="#92400e" stroke="none"/>
+      </svg>
+      Ubicación preferida:
+    </span>
     <button id="pref-btn" onclick="openPrefModal()">
       <svg style="width:13px;height:13px;flex-shrink:0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M11 2l3 3-9 9H2v-3L11 2z"/>
@@ -256,7 +265,7 @@
   <div class="search-row">
     <span class="search-label">Municipio</span>
     <div class="input-wrap">
-      <input type="text" id="muni-input" placeholder="Escribe o selecciona..." oninput="onInput()" autocomplete="off">
+      <textarea id="muni-input" placeholder="Escribe o selecciona..." oninput="onInput(); autoResize(this)" rows="1" autocomplete="off" style="resize:none;overflow:hidden;"></textarea>
       <div class="suggest-box" id="suggest-box" style="display:none"></div>
     </div>
     <button id="search-btn" onclick="buscarDesdeInput()" title="Buscar">
@@ -656,12 +665,18 @@ function renderResults() {
   }).join('');
 }
 
+/* ── Auto-resize textarea ── */
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
 /* ── Init ── */
 document.addEventListener('click', e => {
   if (!e.target.closest('.input-wrap')) suggestBox.style.display = 'none';
   if (!e.target.closest('.modal-input-wrap')) prefSuggest.style.display = 'none';
 });
-muniInput.addEventListener('keydown', e => { if (e.key === 'Enter') buscarDesdeInput(); });
+muniInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); buscarDesdeInput(); } });
 
 loadMunicipios();
 </script>
