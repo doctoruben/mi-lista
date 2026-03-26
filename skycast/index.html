@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SkyCast Pro | Ultra Info</title>
+    <title>SkyCast Pro</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e293b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-512.png">
-
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #0b0f1a; --card: #161e31; --accent: #60a5fa;
@@ -22,90 +19,70 @@
             --border-future: rgba(96, 165, 250, 0.2);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg); color: var(--text);
-            min-height: 100vh; padding: 1.5rem 0.8rem;
+            min-height: 100vh; padding: 0.5rem 0.8rem 2rem 0.8rem;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .container { width: 100%; max-width: 450px; position: relative; }
+        .container { width: 100%; max-width: 450px; }
+
+        .app-header { width: 100%; text-align: center; padding: 1rem 0; margin-bottom: 0.5rem; }
+        .app-header h1 { font-weight: 800; font-size: 1.8rem; letter-spacing: -1px; color: var(--text); }
+        .app-header span { color: var(--accent); }
         
-        /* Buscador */
         .search-wrapper { position: relative; margin-bottom: 1rem; z-index: 100; }
-        .search-container {
-            background: var(--card); padding: 5px; border-radius: 12px;
-            display: flex; gap: 5px; border: 1px solid rgba(255,255,255,0.05);
-        }
+        .search-container { background: var(--card); padding: 5px; border-radius: 12px; display: flex; border: 1px solid rgba(255,255,255,0.05); }
         input { flex: 1; background: transparent; border: none; padding: 10px; color: white; outline: none; font-size: 0.95rem; }
-        
-        .suggestions-list {
-            position: absolute; top: 100%; left: 0; right: 0;
-            background: var(--card); border-radius: 12px; margin-top: 5px;
-            max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            display: none; border: 1px solid rgba(255,255,255,0.1);
-        }
+        .suggestions-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--card); border-radius: 12px; margin-top: 5px; max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); display: none; z-index: 1000; }
         .suggestion-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 0.85rem; }
 
         .favorites-bar { display: flex; gap: 6px; margin-bottom: 1.2rem; flex-wrap: wrap; justify-content: center; }
         .fav-pill { background: var(--glass); padding: 6px 12px; border-radius: 100px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-size: 0.7rem; color: var(--accent); }
 
-        .main-card {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-radius: 28px; padding: 1.5rem; text-align: center;
-            position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            display: none; width: 100%;
-        }
-        
+        .main-card { background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 28px; padding: 1.5rem; text-align: center; position: relative; display: none; width: 100%; margin-bottom: 1.2rem; }
         .location-header { font-size: 1.5rem; font-weight: 600; color: white; }
         .province-tag { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px; display: block; }
         .fav-star { position: absolute; top: 20px; right: 20px; cursor: pointer; border:none; background:none; }
         .temp-now { font-size: 3.2rem; font-weight: 300; margin: 0.3rem 0; color: #fff; }
 
-        /* Detalles principales */
         .details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 1.2rem 0; }
         .detail-item { font-size: 0.6rem; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; gap: 4px; }
         .detail-item strong { display: block; color: white; font-size: 0.8rem; }
 
-        /* Franjas horarias */
-        .hourly-scroll { display: flex; gap: 6px; padding-top: 10px; justify-content: space-between; width: 100%; }
-        .hour-item { flex: 1; background: rgba(255,255,255,0.03); padding: 10px 2px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; }
-        .hour-label { font-size: 0.65rem; font-weight: 600; color: var(--accent); margin-bottom: 5px; }
-        .hour-data { font-size: 0.55rem; color: var(--text-dim); margin-top: 2px; display: flex; align-items: center; gap: 2px; }
+        .charts-section { background: var(--card); border-radius: 24px; padding: 1.2rem; width: 100%; display: none; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.03); }
+        .chart-tabs { display: flex; gap: 5px; margin-bottom: 1rem; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; }
+        .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: var(--text-dim); font-size: 0.65rem; font-weight: 600; border-radius: 10px; cursor: pointer; }
+        .tab-btn.active { background: var(--accent); color: var(--bg); }
+        .chart-container { height: 160px; width: 100%; }
 
-        .btn-7days {
-            margin-top: 1.5rem; width: 100%; padding: 12px;
-            background: var(--accent); color: var(--bg);
-            border: none; border-radius: 14px; font-weight: 700;
-            font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
+        .btn-7days { margin-top: 1rem; width: 100%; padding: 12px; background: var(--accent); color: var(--bg); border: none; border-radius: 14px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-        /* Modal 7 días */
-        .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); align-items: center; justify-content: center; }
-        .modal-content { background: var(--card); width: 96%; max-width: 440px; padding: 1.2rem; border-radius: 24px; }
-        
+        .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); align-items: center; justify-content: center; }
+        .modal-content { background: var(--card); width: 95%; max-width: 440px; padding: 1.2rem; border-radius: 24px; max-height: 90vh; overflow-y: auto; position: relative; }
+
         .grid-7days { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 1rem; }
-        .day-card { background: var(--card-future); border: 1px solid var(--border-future); padding: 10px 4px; border-radius: 16px; text-align: center; }
-        
-        /* Estructura 2-3-2 */
+        .day-card { background: var(--card-future); border: 1px solid var(--border-future); padding: 10px 4px; border-radius: 16px; text-align: center; cursor: pointer; }
         .day-card:nth-child(1), .day-card:nth-child(2) { grid-column: span 3; }
         .day-card:nth-child(3), .day-card:nth-child(4), .day-card:nth-child(5) { grid-column: span 2; }
         .day-card:nth-child(6), .day-card:nth-child(7) { grid-column: span 3; }
+        
+        .day-rain-info { font-size: 0.55rem; color: var(--rain); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 2px; margin-top: 2px; }
 
-        .day-info { font-size: 0.55rem; color: var(--text-dim); margin-top: 4px; line-height: 1.2; }
-        .day-temp-text { font-size: 0.75rem; font-weight: 700; margin: 3px 0; color: white; }
-
-        @media (max-width: 370px) { .temp-now { font-size: 2.5rem; } }
+        .back-btn { background: none; border: 1px solid var(--text-dim); color: var(--text-dim); padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; cursor: pointer; display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <header class="app-header">
+        <h1>Sky<span>Cast</span></h1>
+    </header>
+
     <div class="search-wrapper">
-        <div class="search-container">
-            <input type="text" id="cityInput" placeholder="Buscar municipio..." autocomplete="off">
-        </div>
+        <div class="search-container"><input type="text" id="cityInput" placeholder="Buscar municipio..." autocomplete="off"></div>
         <div id="suggestions" class="suggestions-list"></div>
     </div>
 
@@ -115,71 +92,75 @@
         <button id="fav-trigger" class="fav-star"></button>
         <div class="location-header" id="location-name">--</div>
         <div class="province-tag" id="province-name">--</div>
-        
         <div id="main-icon"></div>
         <div class="temp-now" id="current-temp">--°</div>
-
         <div class="details-grid">
-            <div class="detail-item">
-                <i data-lucide="wind" size="16"></i>
-                Viento <strong id="wind-speed">--</strong>
-            </div>
-            <div class="detail-item">
-                <i data-lucide="droplets" size="16"></i>
-                Humedad <strong id="humidity">--</strong>
-            </div>
-            <div class="detail-item">
-                <i data-lucide="umbrella" size="16"></i>
-                Lluvia <strong id="rain-now">--</strong>
-            </div>
+            <div class="detail-item"><i data-lucide="wind" size="16"></i>Viento <strong id="wind-speed">--</strong></div>
+            <div class="detail-item"><i data-lucide="droplets" size="16"></i>Humedad <strong id="humidity">--</strong></div>
+            <div class="detail-item"><i data-lucide="umbrella" size="16"></i>Lluvia <strong id="rain-now">--</strong></div>
         </div>
+        <button class="btn-7days" onclick="open7DaysModal()"><i data-lucide="calendar-days" size="18"></i> Previsión 7 días</button>
+    </div>
 
-        <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem;">
-            <span style="display:block; font-size:0.55rem; color:var(--accent); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:8px; font-weight:600;">Hoy por franjas</span>
-            <div class="hourly-scroll" id="hourly-container"></div>
+    <div id="charts-wrapper" class="charts-section">
+        <div class="chart-tabs">
+            <button id="main-tab-temp" class="tab-btn active" onclick="switchMainChart('temp')">Temp.</button>
+            <button id="main-tab-wind" class="tab-btn" onclick="switchMainChart('wind')">Viento</button>
+            <button id="main-tab-rain" class="tab-btn" onclick="switchMainChart('rain')">Lluvia %</button>
         </div>
-
-        <button class="btn-7days" onclick="open7DaysModal()">
-            <i data-lucide="calendar-days" size="18"></i> Previsión 7 días
-        </button>
+        <div class="chart-container"><canvas id="mainWeatherChart"></canvas></div>
     </div>
 </div>
 
-<div id="modal7" class="modal" onclick="close7DaysModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 style="color: var(--accent); font-size: 1rem; margin-bottom: 1rem; text-align: center;">Próximos 7 días</h3>
+<div id="modal7" class="modal">
+    <div class="modal-content">
+        <h3 style="text-align: center; color: var(--accent); margin-bottom: 1rem;">Próximos 7 días</h3>
         <div class="grid-7days" id="grid-7days-container"></div>
-        <button onclick="close7DaysModal()" style="margin-top:1.2rem; width:100%; padding:10px; background:var(--glass); border:1px solid var(--accent); color:white; border-radius:12px; font-size:0.8rem;">Cerrar</button>
+        <button onclick="closeModals()" style="margin-top:1.5rem; width:100%; padding:12px; background:var(--glass); border:1px solid rgba(255,255,255,0.1); color:white; border-radius:14px; font-weight:600;">Cerrar</button>
+    </div>
+</div>
+
+<div id="modalDetail" class="modal">
+    <div class="modal-content">
+        <button class="back-btn" onclick="backTo7Days()"><i data-lucide="chevron-left" size="14"></i> Volver</button>
+        <div style="text-align:center; margin-bottom: 1rem;">
+            <h2 id="detail-date" style="font-size: 1.1rem; color: white;">--</h2>
+            <div id="detail-icon" style="margin: 8px 0;"></div>
+            <div id="detail-temps" style="font-size: 1.3rem; font-weight: 600; color: var(--accent);">--</div>
+        </div>
+        <div class="chart-tabs">
+            <button id="mod-tab-temp" class="tab-btn active" onclick="switchModalChart('temp')">Temp.</button>
+            <button id="mod-tab-wind" class="tab-btn" onclick="switchModalChart('wind')">Viento</button>
+            <button id="mod-tab-rain" class="tab-btn" onclick="switchModalChart('rain')">Lluvia %</button>
+        </div>
+        <div class="chart-container"><canvas id="modalWeatherChart"></canvas></div>
     </div>
 </div>
 
 <script>
-    let currentCity = null;
-    let weatherData = null;
+    let currentCity = null, weatherData = null;
+    let mainChart = null, modalChart = null;
+    let selectedDayIdx = 0;
     let favorites = JSON.parse(localStorage.getItem('skyCastFavs')) || [];
     const weatherIcons = { 0: 'sun', 1: 'cloud-sun', 2: 'cloud-sun', 3: 'cloud', 45: 'cloud-fog', 51: 'cloud-drizzle', 61: 'cloud-rain', 80: 'cloud-rain', 71: 'cloud-snow', 95: 'cloud-lightning' };
 
-    const cityInput = document.getElementById('cityInput');
-    const suggestionsBox = document.getElementById('suggestions');
-
-    cityInput.addEventListener('input', async (e) => {
+    document.getElementById('cityInput').addEventListener('input', async (e) => {
         const query = e.target.value;
-        if (query.length < 3) { suggestionsBox.style.display = 'none'; return; }
+        if (query.length < 3) return;
         const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=es&format=json`);
         const data = await res.json();
         if (data.results) {
-            suggestionsBox.innerHTML = data.results.map(city => `
+            document.getElementById('suggestions').innerHTML = data.results.map(city => `
                 <div class="suggestion-item" onclick="selectCity(${city.latitude}, ${city.longitude}, '${city.name.replace(/'/g, "\\'")}', '${(city.admin1 || city.country).replace(/'/g, "\\'")}')">
                     ${city.name} <span style="color:var(--text-dim); font-size:0.75rem;">(${city.admin1 || city.country})</span>
                 </div>
             `).join('');
-            suggestionsBox.style.display = 'block';
+            document.getElementById('suggestions').style.display = 'block';
         }
     });
 
     function selectCity(lat, lon, name, province) {
-        suggestionsBox.style.display = 'none';
-        cityInput.value = name;
+        document.getElementById('suggestions').style.display = 'none';
         getWeather(lat, lon, name, province);
     }
 
@@ -189,41 +170,91 @@
         weatherData = await res.json();
         
         document.getElementById('weather-display').style.display = 'block';
+        document.getElementById('charts-wrapper').style.display = 'block';
         document.getElementById('location-name').innerText = name;
-        document.getElementById('province-name').innerText = province || "";
+        document.getElementById('province-name').innerText = province;
         document.getElementById('current-temp').innerText = `${Math.round(weatherData.current.temperature_2m)}°`;
         document.getElementById('wind-speed').innerText = `${Math.round(weatherData.current.wind_speed_10m)} km/h`;
         document.getElementById('humidity').innerText = `${weatherData.current.relative_humidity_2m}%`;
         document.getElementById('rain-now').innerText = `${weatherData.daily.precipitation_probability_max[0]}%`;
-
-        renderDaySegments();
         document.getElementById('main-icon').innerHTML = `<i data-lucide="${weatherIcons[weatherData.current.weather_code] || 'cloud'}" size="48" color="#60a5fa"></i>`;
         
+        switchMainChart('temp');
         updateFavStatus();
         lucide.createIcons();
     }
 
-    function renderDaySegments() {
-        const container = document.getElementById('hourly-container');
-        container.innerHTML = '';
-        const segments = [{ label: 'Mañana', h: 8 }, { label: 'Tarde', h: 16 }, { label: 'Noche', h: 22 }];
-        segments.forEach(seg => {
-            const idx = seg.h;
-            container.innerHTML += `
-                <div class="hour-item">
-                    <span class="hour-label">${seg.label}</span>
-                    <i data-lucide="${weatherIcons[weatherData.hourly.weather_code[idx]] || 'cloud'}" size="22" color="#60a5fa"></i>
-                    <span style="font-weight:600; font-size:0.9rem; margin:3px 0;">${Math.round(weatherData.hourly.temperature_2m[idx])}°</span>
-                    <div class="hour-data"><i data-lucide="umbrella" size="8"></i>${weatherData.hourly.precipitation_probability[idx]}%</div>
-                    <div class="hour-data"><i data-lucide="wind" size="8"></i>${Math.round(weatherData.hourly.wind_speed_10m[idx])}km/h</div>
-                </div>`;
+    function switchMainChart(type) {
+        document.querySelectorAll('#charts-wrapper .tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('main-tab-' + type).classList.add('active');
+        const ctx = document.getElementById('mainWeatherChart').getContext('2d');
+        if (mainChart) mainChart.destroy();
+        mainChart = createChart(ctx, 0, type);
+    }
+
+    function switchModalChart(type) {
+        document.querySelectorAll('#modalDetail .tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('mod-tab-' + type).classList.add('active');
+        const ctx = document.getElementById('modalWeatherChart').getContext('2d');
+        if (modalChart) modalChart.destroy();
+        modalChart = createChart(ctx, selectedDayIdx, type);
+    }
+
+    function createChart(ctx, dayIdx, type) {
+        const start = dayIdx * 24;
+        const labels = weatherData.hourly.time.slice(start, start + 24).map(t => t.split('T')[1]);
+        let data, color, unit, fill = type === 'rain';
+
+        if (type === 'temp') { data = weatherData.hourly.temperature_2m.slice(start, start + 24); color = '#60a5fa'; unit = '°C'; }
+        else if (type === 'wind') { data = weatherData.hourly.wind_speed_10m.slice(start, start + 24); color = '#94a3b8'; unit = ' km/h'; }
+        else { data = weatherData.hourly.precipitation_probability.slice(start, start + 24); color = '#38bdf8'; unit = '%'; }
+
+        return new Chart(ctx, {
+            type: type === 'rain' ? 'bar' : 'line',
+            data: { labels, datasets: [{ data, borderColor: color, backgroundColor: color + '33', fill, tension: 0.4, pointRadius: 0 }] },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: false, tooltip: { callbacks: { label: (c) => `${c.raw}${unit}` } } },
+                scales: { 
+                    x: { ticks: { color: '#94a3b8', font: { size: 8 } }, grid: { display: false } }, 
+                    y: { ticks: { color: '#94a3b8', font: { size: 8 }, callback: (v) => v + unit }, grid: { color: 'rgba(255,255,255,0.05)' } } 
+                } 
+            }
         });
     }
 
-    
+    function open7DaysModal() {
+        const container = document.getElementById('grid-7days-container');
+        container.innerHTML = '';
+        for(let i=0; i<7; i++) {
+            const date = new Date(weatherData.daily.time[i]);
+            container.innerHTML += `
+                <div class="day-card" onclick="openDayDetail(${i})">
+                    <div style="font-size:0.55rem; color:var(--accent); font-weight:700; text-transform:uppercase;">${date.toLocaleDateString('es-ES', {weekday:'short'})} ${date.getDate()}</div>
+                    <i data-lucide="${weatherIcons[weatherData.daily.weather_code[i]] || 'cloud'}" size="18" color="#60a5fa" style="margin:4px 0;"></i>
+                    <div class="day-temp-text">${Math.round(weatherData.daily.temperature_2m_min[i])}°/${Math.round(weatherData.daily.temperature_2m_max[i])}°</div>
+                    <div class="day-rain-info"><i data-lucide="umbrella" size="10"></i> ${weatherData.daily.precipitation_probability_max[i]}%</div>
+                </div>`;
+        }
+        document.getElementById('modal7').style.display = 'flex';
+        lucide.createIcons();
+    }
 
-    function close7DaysModal() { document.getElementById('modal7').style.display = 'none'; }
-    
+    function openDayDetail(index) {
+        selectedDayIdx = index;
+        document.getElementById('modal7').style.display = 'none';
+        document.getElementById('modalDetail').style.display = 'flex';
+        const date = new Date(weatherData.daily.time[index]);
+        document.getElementById('detail-date').innerText = date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        document.getElementById('detail-icon').innerHTML = `<i data-lucide="${weatherIcons[weatherData.daily.weather_code[index]] || 'cloud'}" size="36" color="#60a5fa"></i>`;
+        document.getElementById('detail-temps').innerText = `${Math.round(weatherData.daily.temperature_2m_min[index])}° / ${Math.round(weatherData.daily.temperature_2m_max[index])}°`;
+        switchModalChart('temp');
+        lucide.createIcons();
+    }
+
+    function backTo7Days() { document.getElementById('modalDetail').style.display = 'none'; document.getElementById('modal7').style.display = 'flex'; }
+    function closeModals() { document.getElementById('modal7').style.display = 'none'; document.getElementById('modalDetail').style.display = 'none'; }
+
     document.getElementById('fav-trigger').onclick = () => {
         const index = favorites.findIndex(f => f.name === currentCity.name);
         index > -1 ? favorites.splice(index, 1) : favorites.push(currentCity);
@@ -241,32 +272,8 @@
         });
     }
 
-function open7DaysModal() {
-    const container = document.getElementById('grid-7days-container');
-    container.innerHTML = '';
-    for(let i=0; i<7; i++) {
-        const date = new Date(weatherData.daily.time[i]);
-        // Obtenemos el nombre corto del día y el número del mes
-        const dayName = i === 0 ? 'Hoy' : date.toLocaleDateString('es-ES', { weekday: 'short' });
-        const dayNumber = date.getDate();
-        const displayDate = i === 0 ? `Hoy ${dayNumber}` : `${dayName} ${dayNumber}`;
-        
-        container.innerHTML += `
-            <div class="day-card">
-                <div style="font-size:0.55rem; text-transform:uppercase; color:var(--accent); font-weight:700;">${displayDate}</div>
-                <i data-lucide="${weatherIcons[weatherData.daily.weather_code[i]] || 'cloud'}" size="18" color="#60a5fa" style="margin:4px 0;"></i>
-                <div class="day-temp-text">${Math.round(weatherData.daily.temperature_2m_min[i])}°/${Math.round(weatherData.daily.temperature_2m_max[i])}°</div>
-                <div class="day-info">
-                    <div><i data-lucide="umbrella" size="8"></i> ${weatherData.daily.precipitation_probability_max[i]}%</div>
-                    <div><i data-lucide="wind" size="8"></i> ${Math.round(weatherData.daily.wind_speed_10m_max[i])}km/h</div>
-                </div>
-            </div>`;
-    }
-    document.getElementById('modal7').style.display = 'flex';
-    lucide.createIcons();
-}
     function updateFavStatus() {
-        const isFav = favorites.some(f => f.name === currentCity.name);
+        const isFav = currentCity && favorites.some(f => f.name === currentCity.name);
         document.getElementById('fav-trigger').innerHTML = `<i data-lucide="star" ${isFav ? 'fill="#fbbf24" color="#fbbf24"' : 'color="#94a3b8"'}></i>`;
         lucide.createIcons();
     }
