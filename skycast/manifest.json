@@ -1,0 +1,18 @@
+{
+  "name": "SkyCast Pro Weather",
+  "short_name": "SkyCast",
+  "description": "Previsión meteorológica minimalista por franjas horarias.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f1a",
+  "theme_color": "#1e293b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
