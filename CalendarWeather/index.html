@@ -138,6 +138,8 @@
                 if(e.target.value) {
                     const city = JSON.parse(e.target.value);
                     selectCity(city);
+                    // Esta línea resetea el combo al texto inicial después de seleccionar
+        e.target.value = "";
                 }
             });
         });
@@ -190,7 +192,7 @@
 
         function renderFavorites() {
             const combo = document.getElementById('favCombo');
-            combo.innerHTML = '<option value="" disabled selected>Seleccionar de mis municipios favoritos...</option>';
+            combo.innerHTML = '<option value="" disabled selected>Municipios favoritos...</option>';
             favorites.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = JSON.stringify(f);
