@@ -206,30 +206,46 @@
         }
 
         function updateYearUI(data, year) {
-            const monthLabels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-            const monthlyAvgTemp = new Array(12).fill(0);
-            const monthlySumRain = new Array(12).fill(0);
-            const counts = new Array(12).fill(0);
+    const monthLabels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const monthlyAvgTemp = new Array(12).fill(0);
+    const monthlySumRain = new Array(12).fill(0);
+    const counts = new Array(12).fill(0);
 
-            data.daily.time.forEach((date, i) => {
-                const m = parseInt(date.split('-')[1]) - 1;
-                const max = data.daily.temperature_2m_max[i];
-                const min = data.daily.temperature_2m_min[i];
-                const rain = data.daily.precipitation_sum[i] || 0;
-                
-                if (max !== null && min !== null) {
-                    monthlyAvgTemp[m] += (max + min) / 2;
-                    monthlySumRain[m] += rain;
-                    counts[m]++;
-                }
-            });
-
-            const finalTemp = monthlyAvgTemp.map((sum, i) => counts[i] > 0 ? (sum / counts[i]).toFixed(1) : null);
-            const finalRain = monthlySumRain.map(sum => sum.toFixed(1));
-
-            renderChart('yearTempChart', monthLabels, [{ label: 'Media mensual', data: finalTemp, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }]);
-            renderChart('yearRainChart', monthLabels, [{ label: 'Acumulado (mm)', data: finalRain, backgroundColor: '#4f46e5' }], 'bar');
+    data.daily.time.forEach((date, i) => {
+        const m = parseInt(date.split('-')[1]) - 1;
+        const max = data.daily.temperature_2m_max[i];
+        const min = data.daily.temperature_2m_min[i];
+        const rain = data.daily.precipitation_sum[i] || 0;
+        
+        if (max !== null && min !== null) {
+            monthlyAvgTemp[m] += (max + min) / 2;
+            monthlySumRain[m] += rain;
+            counts[m]++;
         }
+    });
+
+    const finalTemp = monthlyAvgTemp.map((sum, i) => counts[i] > 0 ? (sum / counts[i]).toFixed(1) : null);
+    const finalRain = monthlySumRain.map(sum => sum.toFixed(1));
+
+    // --- CORRECCIÓN AQUÍ: Destruir gráficas previas si existen ---
+    if (charts['yearTempChart']) charts['yearTempChart'].destroy();
+    if (charts['yearRainChart']) charts['yearRainChart'].destroy();
+
+    // Renderizar de nuevo
+    renderChart('yearTempChart', monthLabels, [{ 
+        label: 'Media mensual', 
+        data: finalTemp, 
+        borderColor: '#8b5cf6', 
+        backgroundColor: 'rgba(139, 92, 246, 0.1)', 
+        fill: true 
+    }]);
+
+    renderChart('yearRainChart', monthLabels, [{ 
+        label: 'Acumulado (mm)', 
+        data: finalRain, 
+        backgroundColor: '#4f46e5' 
+    }], 'bar');
+}
 
         function renderChart(id, labels, datasets, type = 'line') {
             if (charts[id]) charts[id].destroy();
