@@ -2,22 +2,32 @@
   "name": "CalendarWeather Pro",
   "short_name": "CalWeather",
   "description": "Consulta el histórico meteorológico de cualquier municipio.",
-   "start_url": "https://doctoruben.github.io/mi-lista/CalendarWeather/index.html",
-  "scope": "https://doctoruben.github.io/mi-lista/CalendarWeather/",
-  
-  
-  
-  
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
-    
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://via.placeholder.com/540x720.png?text=Preview+Mobile",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
   ]
 }
