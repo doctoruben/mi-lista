@@ -199,29 +199,69 @@
         if (modalChart) modalChart.destroy();
         modalChart = createChart(ctx, selectedDayIdx, type);
     }
+// Busca esta función en tu script y reemplázala por esta versión actualizada
+function createChart(ctx, dayIdx, type) {
+    const start = dayIdx * 24;
+    const labels = weatherData.hourly.time.slice(start, start + 24).map(t => t.split('T')[1]);
+    let data, color, unit, fill = type === 'rain';
 
-    function createChart(ctx, dayIdx, type) {
-        const start = dayIdx * 24;
-        const labels = weatherData.hourly.time.slice(start, start + 24).map(t => t.split('T')[1]);
-        let data, color, unit, fill = type === 'rain';
-
-        if (type === 'temp') { data = weatherData.hourly.temperature_2m.slice(start, start + 24); color = '#60a5fa'; unit = '°C'; }
-        else if (type === 'wind') { data = weatherData.hourly.wind_speed_10m.slice(start, start + 24); color = '#94a3b8'; unit = ' km/h'; }
-        else { data = weatherData.hourly.precipitation_probability.slice(start, start + 24); color = '#38bdf8'; unit = '%'; }
-
-        return new Chart(ctx, {
-            type: type === 'rain' ? 'bar' : 'line',
-            data: { labels, datasets: [{ data, borderColor: color, backgroundColor: color + '33', fill, tension: 0.4, pointRadius: 0 }] },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                plugins: { legend: false, tooltip: { callbacks: { label: (c) => `${c.raw}${unit}` } } },
-                scales: { 
-                    x: { ticks: { color: '#94a3b8', font: { size: 8 } }, grid: { display: false } }, 
-                    y: { ticks: { color: '#94a3b8', font: { size: 8 }, callback: (v) => v + unit }, grid: { color: 'rgba(255,255,255,0.05)' } } 
-                } 
-            }
+    if (type === 'temp') { 
+        data = weatherData.hourly.temperature_2m.slice(start, start + 24); 
+        color = '#60a5fa'; unit = '°C'; 
+    }
+    else if (type === 'wind') { 
+        data = weatherData.hourly.wind_speed_10m.slice(start, start + 24); 
+        color = '#94a3b8'; unit = ' km/h'; 
+    }
+    else { 
+        data = weatherData.hourly.precipitation_probability.slice(start, start + 24); 
+        unit = '%';
+        // Lógica de colores dinámicos para las barras de lluvia
+        color = data.map(val => {
+            if (val > 60) return '#ef4444'; // Rojo
+            if (val >= 40) return '#f97316'; // Naranja
+            return '#38bdf8'; // Azul
         });
     }
+
+    return new Chart(ctx, {
+        type: type === 'rain' ? 'bar' : 'line',
+        data: { 
+            labels, 
+            datasets: [{ 
+                data, 
+                borderColor: type === 'rain' ? color : color, // En bar, el border puede ser el mismo
+                backgroundColor: type === 'rain' ? color : color + '33', 
+                fill, 
+                tension: 0.4, 
+                pointRadius: 0,
+                borderRadius: 4 // Un toque estético para las barras
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: false, 
+                tooltip: { callbacks: { label: (c) => `${c.raw}${unit}` } } 
+            },
+            scales: { 
+                x: { ticks: { color: '#94a3b8', font: { size: 8 } }, grid: { display: false } }, 
+                y: { 
+                    min: 0,
+                    max: type === 'rain' ? 100 : undefined, // Eje al 100% solo en lluvia
+                    ticks: { 
+                        color: '#94a3b8', 
+                        font: { size: 8 }, 
+                        callback: (v) => v + unit 
+                    }, 
+                    grid: { color: 'rgba(255,255,255,0.05)' } 
+                } 
+            }
+        }
+    });
+}
+    
 
     function open7DaysModal() {
         const container = document.getElementById('grid-7days-container');
