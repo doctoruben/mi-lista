@@ -1,0 +1,236 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalendarWeather | Histórico Meteorológico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 class="text-3xl font-semibold text-slate-800 flex items-center gap-2">
+                <i data-lucide="calendar-days" class="text-blue-500"></i> CalendarWeather
+            </h1>
+            
+            <div class="relative w-full md:w-96">
+                <div class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="cityInput" placeholder="Busca un municipio..." 
+                               class="w-full p-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-400 outline-none">
+                        <div id="autocompleteResults" class="absolute z-50 w-full bg-white mt-1 rounded-xl shadow-lg border border-slate-100 hidden"></div>
+                    </div>
+                    <button id="addFavorite" class="p-3 bg-white border border-slate-200 rounded-xl hover:text-yellow-500 transition-colors shadow-sm">
+                        <i data-lucide="star"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div id="favoritesBar" class="flex gap-2 mb-6 overflow-x-auto pb-2"></div>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass p-6 rounded-3xl border border-white shadow-xl">
+                    <label class="block text-sm font-medium text-slate-500 mb-2">Selecciona la Fecha</label>
+                    <input type="date" id="dateInput" class="w-full p-3 rounded-xl border border-slate-200 bg-white mb-4">
+                    
+                    <div class="flex justify-between items-center gap-2">
+                        <button onclick="changeDay(-1)" class="flex-1 p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">← Anterior</button>
+                        <button onclick="changeDay(1)" class="flex-1 p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">Siguiente →</button>
+                    </div>
+                </div>
+
+                <div id="locationCard" class="hidden glass p-6 rounded-3xl border border-white shadow-xl bg-gradient-to-br from-blue-50 to-white">
+                    <p class="text-xs text-blue-600 font-bold uppercase tracking-wider mb-1">Ubicación actual</p>
+                    <h2 id="currentLocationName" class="text-xl font-semibold text-slate-800">---</h2>
+                </div>
+            </div>
+
+            <div id="resultsArea" class="hidden lg:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="glass p-6 rounded-3xl border border-white shadow-lg text-center">
+                        <i data-lucide="thermometer-sun" class="mx-auto text-orange-500 mb-2"></i>
+                        <p class="text-sm text-slate-500">Máxima</p>
+                        <p id="tempMax" class="text-2xl font-bold text-slate-800">--°C</p>
+                    </div>
+                    <div class="glass p-6 rounded-3xl border border-white shadow-lg text-center">
+                        <i data-lucide="thermometer-snowflake" class="mx-auto text-blue-500 mb-2"></i>
+                        <p class="text-sm text-slate-500">Mínima</p>
+                        <p id="tempMin" class="text-2xl font-bold text-slate-800">--°C</p>
+                    </div>
+                    <div class="glass p-6 rounded-3xl border border-white shadow-lg text-center">
+                        <i data-lucide="droplets" class="mx-auto text-cyan-500 mb-2"></i>
+                        <p class="text-sm text-slate-500">Precipitación</p>
+                        <p id="precipTotal" class="text-2xl font-bold text-slate-800">-- l/m²</p>
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-3xl border border-white shadow-xl">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <i data-lucide="line-chart" class="w-5 h-5"></i> Evolución Diaria
+                    </h3>
+                    <div class="chart-container">
+                        <canvas id="weatherChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let selectedCity = null;
+        let chartInstance = null;
+        let favorites = JSON.parse(localStorage.getItem('cw-favs')) || [];
+
+        // Inicializar Iconos
+        lucide.createIcons();
+
+        // Autocompletado de Municipios
+        const cityInput = document.getElementById('cityInput');
+        const resultsDiv = document.getElementById('autocompleteResults');
+
+        cityInput.addEventListener('input', async (e) => {
+            const query = e.target.value;
+            if (query.length < 3) {
+                resultsDiv.classList.add('hidden');
+                return;
+            }
+
+            const resp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=es&format=json`);
+            const data = await resp.json();
+
+            if (data.results) {
+                resultsDiv.innerHTML = data.results.map(city => `
+                    <div onclick="selectCity(${JSON.stringify(city).replace(/"/g, '&quot;')})" 
+                         class="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-0">
+                        <span class="font-medium">${city.name}</span> 
+                        <span class="text-xs text-slate-400">${city.admin1 || ''}, ${city.country}</span>
+                    </div>
+                `).join('');
+                resultsDiv.classList.remove('hidden');
+            }
+        });
+
+        function selectCity(city) {
+            selectedCity = city;
+            cityInput.value = city.name;
+            resultsDiv.classList.add('hidden');
+            document.getElementById('currentLocationName').innerText = `${city.name}, ${city.country}`;
+            document.getElementById('locationCard').classList.remove('hidden');
+            fetchWeatherData();
+        }
+
+        // Favoritos
+        document.getElementById('addFavorite').onclick = () => {
+            if (!selectedCity) return;
+            if (!favorites.find(f => f.id === selectedCity.id)) {
+                favorites.push(selectedCity);
+                localStorage.setItem('cw-favs', JSON.stringify(favorites));
+                renderFavorites();
+            }
+        };
+
+        function renderFavorites() {
+            const bar = document.getElementById('favoritesBar');
+            bar.innerHTML = favorites.map(f => `
+                <button onclick='selectCity(${JSON.stringify(f)})' class="px-4 py-2 bg-white border border-slate-200 rounded-full shadow-sm text-sm hover:border-blue-400 transition-all whitespace-nowrap">
+                    ⭐ ${f.name}
+                </button>
+            `).join('');
+        }
+        renderFavorites();
+
+        // Obtener Datos Meteorológicos Históricos
+        async function fetchWeatherData() {
+            const date = document.getElementById('dateInput').value;
+            if (!selectedCity || !date) return;
+
+            document.getElementById('resultsArea').classList.remove('hidden');
+
+            const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${date}&end_date=${date}&hourly=temperature_2m,precipitation,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+            
+            try {
+                const resp = await fetch(url);
+                const data = await resp.json();
+                updateUI(data);
+            } catch (error) {
+                alert("Error al cargar datos históricos. Asegúrate de que la fecha no sea futura.");
+            }
+        }
+
+        function updateUI(data) {
+            document.getElementById('tempMax').innerText = `${data.daily.temperature_2m_max[0]}°C`;
+            document.getElementById('tempMin').innerText = `${data.daily.temperature_2m_min[0]}°C`;
+            document.getElementById('precipTotal').innerText = `${data.daily.precipitation_sum[0]} l/m²`;
+
+            renderChart(data.hourly);
+        }
+
+        function renderChart(hourly) {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: hourly.time.map(t => t.split('T')[1]),
+                    datasets: [
+                        {
+                            label: 'Temp (°C)',
+                            data: hourly.temperature_2m,
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Viento (km/h)',
+                            data: hourly.windspeed_10m,
+                            borderColor: '#3b82f6',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Precip. (mm)',
+                            data: hourly.precipitation,
+                            type: 'bar',
+                            backgroundColor: 'rgba(6, 182, 212, 0.5)',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false },
+                        y1: { position: 'right', grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function changeDay(delta) {
+            const current = new Date(document.getElementById('dateInput').value || new Date());
+            current.setDate(current.getDate() + delta);
+            document.getElementById('dateInput').value = current.toISOString().split('T')[0];
+            fetchWeatherData();
+        }
+
+        // Establecer hoy por defecto (pero Open Meteo Archivo suele tener 2 días de retraso)
+        const d = new Date();
+        d.setDate(d.getDate() - 5);
+        document.getElementById('dateInput').value = d.toISOString().split('T')[0];
+    </script>
+</body>
+</html>
