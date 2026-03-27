@@ -196,23 +196,31 @@
             renderChart('windChart', labels, [{ data: data.hourly.windspeed_10m, borderColor: '#3b82f6' }]);
         }
 
-        function updateMonthUI(data) {
-            const labels = data.daily.time.map(t => t.split('-')[2]);
-            renderChart('monthTempChart', labels, [
-                { label: 'Máx', data: data.daily.temperature_2m_max, borderColor: '#ef4444' },
-                { label: 'Mín', data: data.daily.temperature_2m_min, borderColor: '#3b82f6' }
-            ]);
-            renderChart('monthRainChart', labels, [{ label: 'Lluvia', data: data.daily.precipitation_sum, backgroundColor: '#0891b2' }], 'bar');
-        }
+       function updateMonthUI(data) {
+    const labels = data.daily.time.map(t => t.split('-')[2]);
+    
+    // Limpieza total
+    if (charts['monthTempChart']) { charts['monthTempChart'].destroy(); delete charts['monthTempChart']; }
+    if (charts['monthRainChart']) { charts['monthRainChart'].destroy(); delete charts['monthRainChart']; }
 
-        function updateYearUI(data, year) {
+    renderChart('monthTempChart', labels, [
+        { label: 'Máx', data: data.daily.temperature_2m_max, borderColor: '#ef4444' },
+        { label: 'Mín', data: data.daily.temperature_2m_min, borderColor: '#3b82f6' }
+    ]);
+    renderChart('monthRainChart', labels, [{ label: 'Lluvia', data: data.daily.precipitation_sum, backgroundColor: '#0891b2' }], 'bar');
+}
+
+     function updateYearUI(data, year) {
     const monthLabels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    
+    // Inicializamos arrays vacíos (null para que Chart.js no dibuje nada en meses futuros)
     const monthlyAvgTemp = new Array(12).fill(0);
     const monthlySumRain = new Array(12).fill(0);
     const counts = new Array(12).fill(0);
 
+    // Procesamos los datos que nos devuelve la API
     data.daily.time.forEach((date, i) => {
-        const m = parseInt(date.split('-')[1]) - 1;
+        const m = parseInt(date.split('-')[1]) - 1; // Mes (0-11)
         const max = data.daily.temperature_2m_max[i];
         const min = data.daily.temperature_2m_min[i];
         const rain = data.daily.precipitation_sum[i] || 0;
@@ -224,16 +232,16 @@
         }
     });
 
+    // Calculamos medias. Si un mes no tiene datos (counts === 0), devolvemos null
     const finalTemp = monthlyAvgTemp.map((sum, i) => counts[i] > 0 ? (sum / counts[i]).toFixed(1) : null);
-    const finalRain = monthlySumRain.map(sum => sum.toFixed(1));
+    const finalRain = monthlySumRain.map((sum, i) => counts[i] > 0 ? sum.toFixed(1) : null);
 
-    // --- CORRECCIÓN AQUÍ: Destruir gráficas previas si existen ---
-    if (charts['yearTempChart']) charts['yearTempChart'].destroy();
-    if (charts['yearRainChart']) charts['yearRainChart'].destroy();
+    // CRUCIAL: Destruir explícitamente antes de renderizar para evitar que se "pegue" el año anterior
+    if (charts['yearTempChart']) { charts['yearTempChart'].destroy(); delete charts['yearTempChart']; }
+    if (charts['yearRainChart']) { charts['yearRainChart'].destroy(); delete charts['yearRainChart']; }
 
-    // Renderizar de nuevo
     renderChart('yearTempChart', monthLabels, [{ 
-        label: 'Media mensual', 
+        label: `Media mensual ${year}`, 
         data: finalTemp, 
         borderColor: '#8b5cf6', 
         backgroundColor: 'rgba(139, 92, 246, 0.1)', 
@@ -241,7 +249,7 @@
     }]);
 
     renderChart('yearRainChart', monthLabels, [{ 
-        label: 'Acumulado (mm)', 
+        label: `Lluvia total ${year} (mm)`, 
         data: finalRain, 
         backgroundColor: '#4f46e5' 
     }], 'bar');
