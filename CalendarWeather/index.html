@@ -134,14 +134,20 @@
             dateInput.addEventListener('change', fetchWeatherData);
             
             // Listener del combo de favoritos
-            document.getElementById('favCombo').addEventListener('change', (e) => {
-                if(e.target.value) {
-                    const city = JSON.parse(e.target.value);
-                    selectCity(city);
-                    // Esta línea resetea el combo al texto inicial después de seleccionar
-        e.target.value = "";
-                }
-            });
+            document.getElementById('favCombo').addEventListener('change', function(e) {
+    if(this.value) {
+        const city = JSON.parse(this.value);
+        
+        // 1. Ejecutamos la selección del municipio
+        selectCity(city);
+        
+        // 2. Reseteamos el valor al placeholder
+        this.value = "";
+        
+        // 3. Forzamos el cierre visual quitando el foco del elemento
+        this.blur(); 
+    }
+});
         });
 
         // BUSCADOR CON AUTOCOMPLETADO
