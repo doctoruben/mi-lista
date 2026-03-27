@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,7 +6,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="./icon-512.png">
     <meta name="theme-color" content="#3b82f6">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CalendarWeather | Pro</title>
@@ -16,10 +14,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #334155; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #334155; overflow-x: hidden; }
         .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border: 1px solid #e2e8f0; }
         .chart-box { height: 180px; width: 100%; }
-        .chart-box-large { height: 220px; width: 100%; }
+        .chart-box-large { height: 240px; width: 100%; }
         .fancy-title { background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 1.2rem; }
         select.custom-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem; }
         @keyframes toast-in-out { 0% { transform: translateY(20px); opacity: 0; } 15% { transform: translateY(0); opacity: 1; } 85% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-20px); opacity: 0; } }
@@ -38,13 +36,11 @@
     <div id="favModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="font-bold text-slate-700 font-xs">Gestionar Favoritos</h3>
+                <h3 class="font-bold text-slate-700">Gestionar Favoritos</h3>
                 <button onclick="toggleModal(false)" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div id="favListContainer" class="max-h-64 overflow-y-auto p-2 space-y-1"></div>
-            <div class="p-3 bg-slate-50 text-center border-t border-slate-100">
-                <button onclick="toggleModal(false)" class="text-xs font-bold text-blue-600 uppercase">Cerrar</button>
-            </div>
+            <div class="p-3 bg-slate-50 text-center"><button onclick="toggleModal(false)" class="text-xs font-bold text-blue-600 uppercase tracking-widest">Cerrar</button></div>
         </div>
     </div>
 
@@ -68,9 +64,7 @@
                 <select id="favCombo" class="custom-select flex-1 pl-4 pr-10 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm">
                     <option value="" disabled selected>Municipios favoritos...</option>
                 </select>
-                <button onclick="toggleModal(true)" class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all border border-slate-200">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                </button>
+                <button onclick="toggleModal(true)" class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all border border-slate-200"><i data-lucide="settings" class="w-5 h-5"></i></button>
             </div>
         </header>
 
@@ -90,28 +84,36 @@
                 </div>
             </div>
 
-            <div id="resultsArea" class="hidden lg:col-span-3 space-y-4">
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="glass-panel p-3 rounded-xl text-center border-t-2 border-t-orange-400"><p class="text-[9px] font-bold text-slate-400 uppercase">Máx</p><p id="tempMax" class="text-lg font-bold">--°C</p></div>
-                    <div class="glass-panel p-3 rounded-xl text-center border-t-2 border-t-blue-400"><p class="text-[9px] font-bold text-slate-400 uppercase">Mín</p><p id="tempMin" class="text-lg font-bold">--°C</p></div>
-                    <div class="glass-panel p-3 rounded-xl text-center border-t-2 border-t-cyan-400"><p class="text-[9px] font-bold text-slate-400 uppercase">Lluvia</p><p id="precipTotal" class="text-lg font-bold">-- <span class="text-[10px]">mm</span></p></div>
-                </div>
+            <div id="resultsArea" class="hidden lg:col-span-3 space-y-6">
+                
+                <section>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div class="glass-panel p-3 rounded-xl text-center border-t-2 border-t-orange-400"><p class="text-[9px] font-bold text-slate-400 uppercase">Máx</p><p id="tempMax" class="text-lg font-bold">--°C</p></div>
+                        <div class="glass-panel p-3 rounded-xl text-center border-t-2 border-t-blue-400"><p class="text-[9px] font-bold text-slate-400 uppercase">Mín</p><p id="tempMin" class="text-lg font-bold">--°C</p></div>
+                        <div class="glass-panel p-3 rounded-xl text-center border-t-2 border-t-cyan-400"><p class="text-[9px] font-bold text-slate-400 uppercase">Lluvia</p><p id="precipTotal" class="text-lg font-bold">-- <span class="text-[10px]">mm</span></p></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="glass-panel p-3 rounded-xl col-span-1 md:col-span-2"><p id="titleDayTemp" class="text-[9px] font-bold text-slate-400 uppercase mb-2">Temperatura el ...</p><div class="chart-box"><canvas id="tempChart"></canvas></div></div>
+                        <div class="glass-panel p-3 rounded-xl"><p id="titleDayRain" class="text-[9px] font-bold text-slate-400 uppercase mb-2">Lluvia el ...</p><div class="chart-box"><canvas id="precipChart"></canvas></div></div>
+                        <div class="glass-panel p-3 rounded-xl"><p id="titleDayWind" class="text-[9px] font-bold text-slate-400 uppercase mb-2">Viento el ...</p><div class="chart-box"><canvas id="windChart"></canvas></div></div>
+                    </div>
+                </section>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div class="glass-panel p-3 rounded-xl col-span-1 md:col-span-2"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Temperatura hoy</p><div class="chart-box"><canvas id="tempChart"></canvas></div></div>
-                    <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Lluvia hoy</p><div class="chart-box"><canvas id="precipChart"></canvas></div></div>
-                    <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Viento hoy</p><div class="chart-box"><canvas id="windChart"></canvas></div></div>
-                </div>
+                <section>
+                    <div class="flex items-center gap-2 mb-3 px-1"><i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i><h2 id="monthTitle" class="text-xs font-bold text-slate-500 uppercase tracking-widest">Resumen Mensual</h2></div>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Máximas y Mínimas del mes</p><div class="chart-box-large"><canvas id="monthTempChart"></canvas></div></div>
+                        <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Lluvia diaria del mes (mm)</p><div class="chart-box-large"><canvas id="monthRainChart"></canvas></div></div>
+                    </div>
+                </section>
 
-                <hr class="border-slate-200 my-6">
-                <div class="flex items-center gap-2 mb-2">
-                    <i data-lucide="calendar-days" class="w-4 h-4 text-blue-500"></i>
-                    <h2 id="monthTitle" class="text-xs font-bold text-slate-500 uppercase tracking-wider">Resumen del mes</h2>
-                </div>
-                <div class="grid grid-cols-1 gap-4">
-                    <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Evolución Térmica Mensual</p><div class="chart-box-large"><canvas id="monthTempChart"></canvas></div></div>
-                    <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Lluvia Acumulada Mensual</p><div class="chart-box-large"><canvas id="monthRainChart"></canvas></div></div>
-                </div>
+                <section>
+                    <div class="flex items-center gap-2 mb-3 px-1"><i data-lucide="bar-chart-3" class="w-4 h-4 text-purple-500"></i><h2 id="yearTitle" class="text-xs font-bold text-slate-500 uppercase tracking-widest">Resumen Anual</h2></div>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Media de Temperatura por mes</p><div class="chart-box-large"><canvas id="yearTempChart"></canvas></div></div>
+                        <div class="glass-panel p-3 rounded-xl"><p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Lluvia Acumulada por mes</p><div class="chart-box-large"><canvas id="yearRainChart"></canvas></div></div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -124,7 +126,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             const dateInput = document.getElementById('dateInput');
-            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 2); // 2 días atrás para asegurar datos
             dateInput.value = yesterday.toISOString().split('T')[0];
             renderFavorites();
             dateInput.addEventListener('change', fetchWeatherData);
@@ -148,26 +150,39 @@
             if (!selectedCity || !dateStr) return;
             document.getElementById('resultsArea').classList.remove('hidden');
 
-            // 1. Datos del DÍA
-            const dailyUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${dateStr}&end_date=${dateStr}&hourly=temperature_2m,precipitation,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
-            
-            // 2. Datos del MES (Cálculo del rango mensual)
             const dateObj = new Date(dateStr);
-            const firstDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString().split('T')[0];
-            const lastDay = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).toISOString().split('T')[0];
+            const formatDate = (d) => d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            
+            // Actualizar Títulos con Fecha
+            const prettyDate = formatDate(dateObj);
+            document.getElementById('titleDayTemp').innerText = `Temperatura el ${prettyDate}`;
+            document.getElementById('titleDayRain').innerText = `Lluvia el ${prettyDate}`;
+            document.getElementById('titleDayWind').innerText = `Viento el ${prettyDate}`;
+
+            // Rangos Mensuales y Anuales
+            const firstDayMonth = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).toISOString().split('T')[0];
+            const lastDayMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).toISOString().split('T')[0];
+            const firstDayYear = `${dateObj.getFullYear()}-01-01`;
+            const lastDayYear = `${dateObj.getFullYear()}-12-31`;
+
             const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             document.getElementById('monthTitle').innerText = `Resumen de ${monthNames[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+            document.getElementById('yearTitle').innerText = `Estadísticas del año ${dateObj.getFullYear()}`;
 
-            const monthlyUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${firstDay}&end_date=${lastDay}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+            const urlDay = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${dateStr}&end_date=${dateStr}&hourly=temperature_2m,precipitation,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+            const urlMonth = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${firstDayMonth}&end_date=${lastDayMonth}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+            const urlYear = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${firstDayYear}&end_date=${lastDayYear}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
 
             try {
-                const [dayResp, monthResp] = await Promise.all([fetch(dailyUrl), fetch(monthlyUrl)]);
-                const dayData = await dayResp.json();
-                const monthData = await monthResp.json();
+                const [dResp, mResp, yResp] = await Promise.all([fetch(urlDay), fetch(urlMonth), fetch(urlYear)]);
+                const dData = await dResp.json();
+                const mData = await mResp.json();
+                const yData = await yResp.json();
 
-                updateDayUI(dayData);
-                updateMonthUI(monthData);
-            } catch(e) { console.error(e); }
+                updateDayUI(dData);
+                updateMonthUI(mData);
+                updateYearUI(yData, dateObj.getFullYear());
+            } catch(e) { console.error("Error cargando datos:", e); }
         }
 
         function updateDayUI(data) {
@@ -182,25 +197,45 @@
         }
 
         function updateMonthUI(data) {
-            const labels = data.daily.time.map(t => t.split('-')[2]); // Solo el día del mes
-            
-            // Gráfica Térmica Mensual (Máximas y Mínimas)
+            const labels = data.daily.time.map(t => t.split('-')[2]);
             renderChart('monthTempChart', labels, [
-                { label: 'Máx', data: data.daily.temperature_2m_max, borderColor: '#ef4444', tension: 0.3 },
-                { label: 'Mín', data: data.daily.temperature_2m_min, borderColor: '#3b82f6', tension: 0.3 }
+                { label: 'Máx', data: data.daily.temperature_2m_max, borderColor: '#ef4444' },
+                { label: 'Mín', data: data.daily.temperature_2m_min, borderColor: '#3b82f6' }
             ]);
+            renderChart('monthRainChart', labels, [{ label: 'Lluvia', data: data.daily.precipitation_sum, backgroundColor: '#0891b2' }], 'bar');
+        }
 
-            // Gráfica Lluvia Mensual
-            renderChart('monthRainChart', labels, [
-                { label: 'Lluvia', data: data.daily.precipitation_sum, backgroundColor: '#0891b2' }
-            ], 'bar');
+        function updateYearUI(data, year) {
+            const monthLabels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            const monthlyAvgTemp = new Array(12).fill(0);
+            const monthlySumRain = new Array(12).fill(0);
+            const counts = new Array(12).fill(0);
+
+            data.daily.time.forEach((date, i) => {
+                const m = parseInt(date.split('-')[1]) - 1;
+                const max = data.daily.temperature_2m_max[i];
+                const min = data.daily.temperature_2m_min[i];
+                const rain = data.daily.precipitation_sum[i] || 0;
+                
+                if (max !== null && min !== null) {
+                    monthlyAvgTemp[m] += (max + min) / 2;
+                    monthlySumRain[m] += rain;
+                    counts[m]++;
+                }
+            });
+
+            const finalTemp = monthlyAvgTemp.map((sum, i) => counts[i] > 0 ? (sum / counts[i]).toFixed(1) : null);
+            const finalRain = monthlySumRain.map(sum => sum.toFixed(1));
+
+            renderChart('yearTempChart', monthLabels, [{ label: 'Media mensual', data: finalTemp, borderColor: '#8b5cf6', backgroundColor: 'rgba(139, 92, 246, 0.1)', fill: true }]);
+            renderChart('yearRainChart', monthLabels, [{ label: 'Acumulado (mm)', data: finalRain, backgroundColor: '#4f46e5' }], 'bar');
         }
 
         function renderChart(id, labels, datasets, type = 'line') {
             if (charts[id]) charts[id].destroy();
             charts[id] = new Chart(document.getElementById(id), {
                 type,
-                data: { labels, datasets: datasets.map(ds => ({ ...ds, tension: 0.4, pointRadius: 2 })) },
+                data: { labels, datasets: datasets.map(ds => ({ ...ds, tension: 0.4, pointRadius: 1 })) },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: datasets.length > 1, labels: { boxWidth: 10, font: { size: 9 } } } },
@@ -212,7 +247,7 @@
             });
         }
 
-        // --- FUNCIONES DE APOYO (Favoritos, Modal, etc.) ---
+        // SOPORTE (Favoritos, Modal, Buscador...)
         function toggleModal(show) {
             const modal = document.getElementById('favModal');
             if(show) { renderFavList(); modal.classList.remove('hidden'); }
