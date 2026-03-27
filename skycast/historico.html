@@ -1,101 +1,210 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CalendarWeather | Histórico Meteorológico</title>
+    <title>CalendarWeather | Tu Histórico Meteorológico Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
-        .chart-container { position: relative; height: 300px; width: 100%; }
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Quicksand', sans-serif; 
+            background: #f0f4f8; /* Fondo un poco más gris/azulado para resaltar tarjetas */
+        }
+        
+        /* Efecto Cristal (Glassmorphism) mejorado */
+        .glass { 
+            background: rgba(255, 255, 255, 0.75); 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        }
+
+        /* Contenedores de gráficas más altos */
+        .chart-container { 
+            position: relative; 
+            height: 280px; /* Altura fija para cada gráfica */
+            width: 100%; 
+        }
+
+        /* Título elegante con degradado */
+        .fancy-title {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #93c5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        /* Scrollbar suave para favoritos */
+        #favoritesBar::-webkit-scrollbar { height: 4px; }
+        #favoritesBar::-webkit-scrollbar-track { background: transparent; }
+        #favoritesBar::-webkit-scrollbar-thumb { background: #cbd5e1; rounded: 4px; }
+        
+        /* Ajuste para input date nativo en móviles */
+        input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            min-height: 2.5rem;
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-10 transition-colors duration-300">
 
-    <div class="max-w-5xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <h1 class="text-3xl font-semibold text-slate-800 flex items-center gap-2">
-                <i data-lucide="calendar-days" class="text-blue-500"></i> CalendarWeather
-            </h1>
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 p-4 rounded-3xl bg-white/50 border border-white shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-md">
+                    <i data-lucide="cloud-sun" class="text-white w-8 h-8"></i>
+                </div>
+                <h1 class="text-4xl fancy-title tracking-tight">
+                    CalendarWeather
+                </h1>
+            </div>
             
-            <div class="relative w-full md:w-96">
+            <div class="relative w-full md:w-[450px]">
                 <div class="flex gap-2">
                     <div class="relative flex-1">
-                        <input type="text" id="cityInput" placeholder="Busca un municipio..." 
-                               class="w-full p-3 rounded-xl border border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-400 outline-none">
-                        <div id="autocompleteResults" class="absolute z-50 w-full bg-white mt-1 rounded-xl shadow-lg border border-slate-100 hidden"></div>
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                        <input type="text" id="cityInput" placeholder="Busca municipio (ej: Madrid, Ingenio...)" 
+                               class="w-full pl-12 pr-4 py-3.5 rounded-full bg-white border border-slate-100 shadow-inner focus:ring-2 focus:ring-blue-300 outline-none text-lg transition-all">
+                        <div id="autocompleteResults" class="absolute z-50 w-full bg-white mt-2 rounded-2xl shadow-xl border border-slate-100 hidden max-h-60 overflow-y-auto"></div>
                     </div>
-                    <button id="addFavorite" class="p-3 bg-white border border-slate-200 rounded-xl hover:text-yellow-500 transition-colors shadow-sm">
-                        <i data-lucide="star"></i>
+                    <button id="addFavorite" class="p-3.5 bg-white border border-slate-100 rounded-full hover:bg-yellow-50 hover:border-yellow-200 text-slate-400 hover:text-yellow-500 transition-all shadow-sm">
+                        <i data-lucide="star" class="w-6 h-6"></i>
                     </button>
                 </div>
             </div>
         </header>
 
-        <div id="favoritesBar" class="flex gap-2 mb-6 overflow-x-auto pb-2"></div>
+        <div id="favoritesBar" class="flex gap-3 mb-8 overflow-x-auto pb-3 px-1">
+            </div>
 
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 space-y-6">
-                <div class="glass p-6 rounded-3xl border border-white shadow-xl">
-                    <label class="block text-sm font-medium text-slate-500 mb-2">Selecciona la Fecha</label>
-                    <input type="date" id="dateInput" class="w-full p-3 rounded-xl border border-slate-200 bg-white mb-4">
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="glass p-7 rounded-[30px] border border-white shadow-xl">
+                    <label class="block text-sm font-semibold text-blue-900/70 uppercase tracking-wider mb-3">📅 Selecciona la Fecha</label>
                     
-                    <div class="flex justify-between items-center gap-2">
-                        <button onclick="changeDay(-1)" class="flex-1 p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">← Anterior</button>
-                        <button onclick="changeDay(1)" class="flex-1 p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition-colors">Siguiente →</button>
+                    <input type="date" id="dateInput" 
+                           class="w-full p-4 rounded-xl border-none bg-white shadow-inner mb-5 text-xl font-medium text-slate-800 focus:ring-2 focus:ring-blue-400 outline-none cursor-pointer">
+                    
+                    <div class="flex justify-between items-center gap-3">
+                        <button onclick="changeDay(-1)" class="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-100 hover:bg-blue-500 hover:text-white rounded-xl text-base font-semibold transition-all duration-200 shadow-sm text-slate-700">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i> Día Anterior
+                        </button>
+                        <button onclick="changeDay(1)" class="flex-1 flex items-center justify-center gap-2 p-3 bg-slate-100 hover:bg-blue-500 hover:text-white rounded-xl text-base font-semibold transition-all duration-200 shadow-sm text-slate-700">
+                            Día Siguiente <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div id="locationCard" class="hidden glass p-6 rounded-3xl border border-white shadow-xl bg-gradient-to-br from-blue-50 to-white">
-                    <p class="text-xs text-blue-600 font-bold uppercase tracking-wider mb-1">Ubicación actual</p>
-                    <h2 id="currentLocationName" class="text-xl font-semibold text-slate-800">---</h2>
+                <div id="locationCard" class="hidden glass p-7 rounded-[30px] border border-white shadow-xl bg-gradient-to-br from-blue-50/50 to-white">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i data-lucide="map-pin" class="text-blue-500 w-5 h-5"></i>
+                        <p class="text-sm text-blue-600 font-bold uppercase tracking-wider">Ubicación consultada</p>
+                    </div>
+                    <h2 id="currentLocationName" class="text-2xl font-bold text-slate-800 leading-tight">---</h2>
                 </div>
             </div>
 
-            <div id="resultsArea" class="hidden lg:col-span-2 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="glass p-6 rounded-3xl border border-white shadow-lg text-center">
-                        <i data-lucide="thermometer-sun" class="mx-auto text-orange-500 mb-2"></i>
-                        <p class="text-sm text-slate-500">Máxima</p>
-                        <p id="tempMax" class="text-2xl font-bold text-slate-800">--°C</p>
+            <div id="resultsArea" class="hidden lg:col-span-8 space-y-8">
+                
+                <div class="grid grid-cols-3 gap-4 md:gap-6">
+                    <div class="glass p-5 md:p-6 rounded-[25px] border border-white shadow-lg text-center flex flex-col items-center justify-center">
+                        <div class="p-2.5 rounded-full bg-orange-100 mb-3">
+                            <i data-lucide="thermometer-sun" class="w-7 h-7 text-orange-600"></i>
+                        </div>
+                        <p class="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Máxima</p>
+                        <p id="tempMax" class="text-2xl md:text-4xl font-extrabold text-slate-900 tabular-nums">--°C</p>
                     </div>
-                    <div class="glass p-6 rounded-3xl border border-white shadow-lg text-center">
-                        <i data-lucide="thermometer-snowflake" class="mx-auto text-blue-500 mb-2"></i>
-                        <p class="text-sm text-slate-500">Mínima</p>
-                        <p id="tempMin" class="text-2xl font-bold text-slate-800">--°C</p>
+                    <div class="glass p-5 md:p-6 rounded-[25px] border border-white shadow-lg text-center flex flex-col items-center justify-center">
+                        <div class="p-2.5 rounded-full bg-blue-100 mb-3">
+                            <i data-lucide="thermometer-snowflake" class="w-7 h-7 text-blue-600"></i>
+                        </div>
+                        <p class="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Mínima</p>
+                        <p id="tempMin" class="text-2xl md:text-4xl font-extrabold text-slate-900 tabular-nums">--°C</p>
                     </div>
-                    <div class="glass p-6 rounded-3xl border border-white shadow-lg text-center">
-                        <i data-lucide="droplets" class="mx-auto text-cyan-500 mb-2"></i>
-                        <p class="text-sm text-slate-500">Precipitación</p>
-                        <p id="precipTotal" class="text-2xl font-bold text-slate-800">-- l/m²</p>
+                    <div class="glass p-5 md:p-6 rounded-[25px] border border-white shadow-lg text-center flex flex-col items-center justify-center">
+                        <div class="p-2.5 rounded-full bg-cyan-100 mb-3">
+                            <i data-lucide="droplets" class="w-7 h-7 text-cyan-600"></i>
+                        </div>
+                        <p class="text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Lluvia Total</p>
+                        <p id="precipTotal" class="text-2xl md:text-4xl font-extrabold text-slate-900 tabular-nums">-- <span class="text-lg md:text-2xl font-bold text-slate-500">l/m²</span></p>
                     </div>
                 </div>
 
-                <div class="glass p-6 rounded-3xl border border-white shadow-xl">
-                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                        <i data-lucide="line-chart" class="w-5 h-5"></i> Evolución Diaria
-                    </h3>
-                    <div class="chart-container">
-                        <canvas id="weatherChart"></canvas>
+                <div class="space-y-6">
+                    
+                    <div class="glass p-6 md:p-7 rounded-[30px] border border-white shadow-xl">
+                        <h3 class="text-xl font-bold text-slate-800 mb-5 flex items-center gap-3">
+                            <i data-lucide="thermometer" class="w-6 h-6 text-orange-500"></i> Evolución de la Temperatura (°C)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass p-6 md:p-7 rounded-[30px] border border-white shadow-xl">
+                        <h3 class="text-xl font-bold text-slate-800 mb-5 flex items-center gap-3">
+                            <i data-lucide="cloud-rain" class="w-6 h-6 text-cyan-500"></i> Precipitación por Hora (mm o l/m²)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="precipChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass p-6 md:p-7 rounded-[30px] border border-white shadow-xl">
+                        <h3 class="text-xl font-bold text-slate-800 mb-5 flex items-center gap-3">
+                            <i data-lucide="wind" class="w-6 h-6 text-blue-500"></i> Velocidad del Viento (km/h)
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="windChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
+        
+        <footer class="mt-16 pt-8 border-t border-slate-200 text-center text-slate-500 p-4">
+            <p>&copy; 2023 CalendarWeather Pro. Datos históricos proporcionados por Open-Meteo.</p>
+        </footer>
     </div>
 
     <script>
+        // --- VARIABLES GLOBALES ---
         let selectedCity = null;
-        let chartInstance = null;
+        // Instancias de las 3 gráficas
+        let charts = {
+            temp: null,
+            precip: null,
+            wind: null
+        };
         let favorites = JSON.parse(localStorage.getItem('cw-favs')) || [];
 
-        // Inicializar Iconos
-        lucide.createIcons();
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons(); // Cargar iconos
+            
+            // 1. Establecer fecha por defecto: AYER
+            const dateInput = document.getElementById('dateInput');
+            const ayer = new Date();
+            ayer.setDate(ayer.getDate() - 1);
+            dateInput.value = ayer.toISOString().split('T')[0]; // Formato YYYY-MM-DD
 
-        // Autocompletado de Municipios
+            // 2. Cargar Favoritos
+            renderFavorites();
+
+            // 3. Escuchar cambios en el calendario (actualización automática)
+            dateInput.addEventListener('change', fetchWeatherData);
+        });
+
+
+        // --- AUTOCUMPLETADO DE MUNICIPIOS ---
         const cityInput = document.getElementById('cityInput');
         const resultsDiv = document.getElementById('autocompleteResults');
 
@@ -106,33 +215,62 @@
                 return;
             }
 
-            const resp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=5&language=es&format=json`);
-            const data = await resp.json();
+            // Llamada a la API de Geocodificación de Open-Meteo
+            try {
+                const resp = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=es&format=json`);
+                const data = await resp.json();
 
-            if (data.results) {
-                resultsDiv.innerHTML = data.results.map(city => `
-                    <div onclick="selectCity(${JSON.stringify(city).replace(/"/g, '&quot;')})" 
-                         class="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-0">
-                        <span class="font-medium">${city.name}</span> 
-                        <span class="text-xs text-slate-400">${city.admin1 || ''}, ${city.country}</span>
-                    </div>
-                `).join('');
-                resultsDiv.classList.remove('hidden');
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.innerHTML = data.results.map(city => {
+                        // Construir nombre elegante: Municipio, Provincia (admin1), País
+                        const admin1 = city.admin1 ? `, ${city.admin1}` : '';
+                        const displayName = `${city.name}${admin1}, ${city.country}`;
+                        
+                        return `
+                            <div onclick="selectCity(${JSON.stringify(city).replace(/"/g, '&quot;')})" 
+                                 class="px-5 py-3.5 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3 transition-colors">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                                <div>
+                                    <span class="font-semibold text-slate-700 text-base">${city.name}</span> 
+                                    <span class="text-sm text-slate-500">${admin1}, ${city.country}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    // Re-renderizar iconos lucide en los nuevos resultados
+                    lucide.createIcons({ attrs: { class: "w-4 h-4 text-slate-400" }, nameAttr: "data-lucide" });
+                    resultsDiv.classList.remove('hidden');
+                } else {
+                    resultsDiv.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error("Error en geocodificación:", error);
             }
         });
 
         function selectCity(city) {
             selectedCity = city;
+            // Actualizar input con nombre limpio
             cityInput.value = city.name;
             resultsDiv.classList.add('hidden');
-            document.getElementById('currentLocationName').innerText = `${city.name}, ${city.country}`;
+            
+            // Actualizar Tarjeta de Ubicación: Municipio + Provincia (admin1)
+            const admin1 = city.admin1 ? `<span class="text-slate-500 font-medium block text-lg">${city.admin1}</span>` : '';
+            document.getElementById('currentLocationName').innerHTML = `${city.name} ${admin1}`;
             document.getElementById('locationCard').classList.remove('hidden');
+            
+            // Llamada automática a datos
             fetchWeatherData();
         }
 
-        // Favoritos
+
+        // --- GESTIÓN DE FAVORITOS ---
         document.getElementById('addFavorite').onclick = () => {
-            if (!selectedCity) return;
+            if (!selectedCity) {
+                alert("Primero busca y selecciona un municipio.");
+                return;
+            }
+            // Evitar duplicados
             if (!favorites.find(f => f.id === selectedCity.id)) {
                 favorites.push(selectedCity);
                 localStorage.setItem('cw-favs', JSON.stringify(favorites));
@@ -142,95 +280,177 @@
 
         function renderFavorites() {
             const bar = document.getElementById('favoritesBar');
+            if (favorites.length === 0) {
+                bar.innerHTML = '<p class="text-sm text-slate-400 p-2">Tus municipios favoritos aparecerán aquí...</p>';
+                return;
+            }
             bar.innerHTML = favorites.map(f => `
-                <button onclick='selectCity(${JSON.stringify(f)})' class="px-4 py-2 bg-white border border-slate-200 rounded-full shadow-sm text-sm hover:border-blue-400 transition-all whitespace-nowrap">
-                    ⭐ ${f.name}
+                <button onclick='selectCity(${JSON.stringify(f)})' class="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-100 rounded-full shadow-sm text-base font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50 transition-all whitespace-nowrap group">
+                    <i data-lucide="star" class="w-4 h-4 text-yellow-400 group-hover:scale-110 transition-transform"></i> 
+                    ${f.name}
                 </button>
             `).join('');
+            lucide.createIcons(); // Renderizar iconos de estrellas
         }
-        renderFavorites();
 
-        // Obtener Datos Meteorológicos Históricos
+
+        // --- OBTENER DATOS HISTÓRICOS (API Open-Meteo Archive) ---
         async function fetchWeatherData() {
             const date = document.getElementById('dateInput').value;
+            // Validación básica
             if (!selectedCity || !date) return;
+            
+            // Verificar que no sea una fecha futura (la API Archive no lo permite)
+            if (new Date(date) >= new Date().setHours(0,0,0,0)) {
+                alert("La API histórica requiere una fecha pasada (mínimo ayer).");
+                return;
+            }
 
-            document.getElementById('resultsArea').classList.remove('hidden');
+            // Mostrar área de resultados con animación suave
+            const resultsArea = document.getElementById('resultsArea');
+            resultsArea.classList.remove('hidden');
+            resultsArea.classList.add('opacity-0');
+            setTimeout(() => resultsArea.classList.remove('opacity-0'), 50);
 
+            // Construir URL API Archive
             const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${selectedCity.latitude}&longitude=${selectedCity.longitude}&start_date=${date}&end_date=${date}&hourly=temperature_2m,precipitation,windspeed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
             
             try {
+                // Mostrar cargando en los datos
+                document.getElementById('tempMax').innerText = "...";
+                document.getElementById('tempMin').innerText = "...";
+                document.getElementById('precipTotal').innerHTML = "...";
+
                 const resp = await fetch(url);
                 const data = await resp.json();
+                
+                if (data.error) throw new Error(data.reason);
+                
                 updateUI(data);
             } catch (error) {
-                alert("Error al cargar datos históricos. Asegúrate de que la fecha no sea futura.");
+                console.error("Error API:", error);
+                alert(`Error al cargar datos: ${error.message}. Es posible que no haya datos para esta fecha tan antigua o sea futura.`);
+                resultsArea.classList.add('hidden');
             }
         }
 
-        function updateUI(data) {
-            document.getElementById('tempMax').innerText = `${data.daily.temperature_2m_max[0]}°C`;
-            document.getElementById('tempMin').innerText = `${data.daily.temperature_2m_min[0]}°C`;
-            document.getElementById('precipTotal').innerText = `${data.daily.precipitation_sum[0]} l/m²`;
 
-            renderChart(data.hourly);
+        // --- ACTUALIZAR INTERFAZ (Tarjetas y Gráficas) ---
+        function updateUI(data) {
+            // 1. Tarjetas de Datos Diarios (Redondear a 1 decimal)
+            document.getElementById('tempMax').innerText = `${data.daily.temperature_2m_max[0].toFixed(1)}°C`;
+            document.getElementById('tempMin').innerText = `${data.daily.temperature_2m_min[0].toFixed(1)}°C`;
+            
+            const pTotal = data.daily.precipitation_sum[0];
+            document.getElementById('precipTotal').innerHTML = `${pTotal.toFixed(1)} <span class="text-lg md:text-2xl font-bold text-slate-500">l/m²</span>`;
+
+            // 2. Renderizar las 3 gráficas independientes
+            renderIndependentCharts(data.hourly);
         }
 
-        function renderChart(hourly) {
-            const ctx = document.getElementById('weatherChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
 
-            chartInstance = new Chart(ctx, {
+        // --- RENDERIZADO DE GRÁFICAS INDEPENDIENTES (Chart.js) ---
+        function renderIndependentCharts(hourly) {
+            // Configuración común para los ejes X (Horas)
+            const horasLabels = hourly.time.map(t => t.split('T')[1]); // Extraer "HH:MM"
+            
+            const commonXScale = {
+                grid: { display: false },
+                ticks: { color: '#94a3b8', font: { family: 'Quicksand' } }
+            };
+            const commonYScale = {
+                beginAtZero: false,
+                grid: { color: 'rgba(148, 163, 184, 0.1)' },
+                ticks: { color: '#94a3b8', font: { family: 'Quicksand' } }
+            };
+
+            // Destruir instancias previas si existen para evitar superposiciones
+            Object.values(charts).forEach(chart => chart && chart.destroy());
+
+            // --- 1. Gráfica de Temperatura (Línea Naranja) ---
+            const ctxTemp = document.getElementById('tempChart').getContext('2d');
+            charts.temp = new Chart(ctxTemp, {
                 type: 'line',
                 data: {
-                    labels: hourly.time.map(t => t.split('T')[1]),
-                    datasets: [
-                        {
-                            label: 'Temp (°C)',
-                            data: hourly.temperature_2m,
-                            borderColor: '#f97316',
-                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Viento (km/h)',
-                            data: hourly.windspeed_10m,
-                            borderColor: '#3b82f6',
-                            borderDash: [5, 5],
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Precip. (mm)',
-                            data: hourly.precipitation,
-                            type: 'bar',
-                            backgroundColor: 'rgba(6, 182, 212, 0.5)',
-                            yAxisID: 'y1'
-                        }
-                    ]
+                    labels: horasLabels,
+                    datasets: [{
+                        label: 'Temperatura',
+                        data: hourly.temperature_2m,
+                        borderColor: '#f97316', // Orange 500
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        fill: true,
+                        tension: 0.4, // Curva suave
+                        pointBackgroundColor: '#f97316',
+                        pointRadius: 2
+                    }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: false },
-                        y1: { position: 'right', grid: { display: false } }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                    scales: { x: commonXScale, y: commonYScale }
+                }
+            });
+
+            // --- 2. Gráfica de Lluvia (Barras Cian) ---
+            const ctxPrecip = document.getElementById('precipChart').getContext('2d');
+            charts.precip = new Chart(ctxPrecip, {
+                type: 'bar',
+                data: {
+                    labels: horasLabels,
+                    datasets: [{
+                        label: 'Precipitación',
+                        data: hourly.precipitation,
+                        backgroundColor: '#06b6d4', // Cyan 500
+                        borderRadius: 5, // Barras redondeadas
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: commonXScale, 
+                        y: { ...commonYScale, beginAtZero: true } // Lluvia siempre empieza en 0
                     }
+                }
+            });
+
+            // --- 3. Gráfica de Viento (Área Azul) ---
+            const ctxWind = document.getElementById('windChart').getContext('2d');
+            charts.wind = new Chart(ctxWind, {
+                type: 'line',
+                data: {
+                    labels: horasLabels,
+                    datasets: [{
+                        label: 'Velocidad Viento',
+                        data: hourly.windspeed_10m,
+                        borderColor: '#3b82f6', // Blue 500
+                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                        fill: true, // Efecto área
+                        tension: 0.3,
+                        pointRadius: 0 // Sin puntos para limpieza
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: commonXScale, y: commonYScale }
                 }
             });
         }
 
+
+        // --- NAVEGACIÓN DE DÍAS (Anterior/Siguiente) ---
         function changeDay(delta) {
-            const current = new Date(document.getElementById('dateInput').value || new Date());
-            current.setDate(current.getDate() + delta);
-            document.getElementById('dateInput').value = current.toISOString().split('T')[0];
+            const dateInput = document.getElementById('dateInput');
+            const currentSelected = new Date(dateInput.value);
+            
+            // Añadir/restar delta días
+            currentSelected.setDate(currentSelected.getDate() + delta);
+            
+            // Actualizar input y disparar evento change automáticamente
+            dateInput.value = currentSelected.toISOString().split('T')[0];
             fetchWeatherData();
         }
-
-        // Establecer hoy por defecto (pero Open Meteo Archivo suele tener 2 días de retraso)
-        const d = new Date();
-        d.setDate(d.getDate() - 5);
-        document.getElementById('dateInput').value = d.toISOString().split('T')[0];
     </script>
 </body>
 </html>
