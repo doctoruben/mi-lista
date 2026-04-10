@@ -1,10 +1,62 @@
-body {
-  background: #0f172a;
-  color: white;
-  font-family: sans-serif;
-  padding: 20px;
+:root {
+  --bg: #0f172a;
+  --card: #ffffff;
+  --accent: #3b82f6;
 }
 
+body {
+  background: var(--bg);
+  font-family: sans-serif;
+  padding: 10px;
+  color: white;
+}
+
+/* Header */
+.mini-header {
+  padding: 20px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mini-header h1 {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.sub {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Cards */
+.weather-card {
+  background: white;
+  border-radius: 20px;
+  padding: 15px;
+  margin-bottom: 10px;
+  color: black;
+  position: relative;
+}
+
+.city-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.temp-info {
+  font-size: 0.9rem;
+}
+
+.btn-delete {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  border: none;
+  background: none;
+}
+
+/* FAB */
 #btnPlus {
   position: fixed;
   bottom: 30px;
@@ -13,8 +65,13 @@ body {
   width: 55px;
   height: 55px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: var(--accent);
   color: white;
   border: none;
-  font-size: 22px;
+}
+
+/* Modal */
+.modal-card {
+  width: 90%;
+  max-width: 400px;
 }
