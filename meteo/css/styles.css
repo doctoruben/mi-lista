@@ -5,55 +5,79 @@
 }
 
 body {
-  background: var(--bg);
-  font-family: sans-serif;
-  padding: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  min-height: 100vh;
+  padding: 15px;
   color: white;
 }
 
 /* Header */
 .mini-header {
-  padding: 20px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 25px 10px;
 }
 
 .mini-header h1 {
-  font-size: 1.4rem;
-  font-weight: bold;
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 
 .sub {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   opacity: 0.6;
 }
 
-/* Cards */
+/* Card PRO */
 .weather-card {
-  background: white;
-  border-radius: 20px;
-  padding: 15px;
-  margin-bottom: 10px;
-  color: black;
-  position: relative;
+  background: rgba(255,255,255,0.95);
+  border-radius: 22px;
+  padding: 18px;
+  margin-bottom: 12px;
+  color: #1e293b;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  transition: 0.25s;
 }
 
+.weather-card:hover {
+  transform: translateY(-3px);
+}
+
+/* Ciudad */
 .city-name {
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-weight: 700;
+  font-size: 1.2rem;
 }
 
+/* Info */
 .temp-info {
-  font-size: 0.9rem;
+  margin-top: 5px;
+  font-size: 0.85rem;
+  display: flex;
+  gap: 10px;
 }
 
+/* Badge lluvia */
+.rain {
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+/* Botón borrar */
 .btn-delete {
   position: absolute;
-  right: 10px;
-  top: 10px;
+  right: 12px;
+  top: 12px;
   border: none;
   background: none;
+  color: #94a3b8;
+}
+
+.btn-delete:hover {
+  color: red;
 }
 
 /* FAB */
@@ -62,16 +86,18 @@ body {
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: var(--accent);
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white;
   border: none;
+  font-size: 24px;
+  box-shadow: 0 10px 30px rgba(59,130,246,0.6);
 }
 
 /* Modal */
 .modal-card {
-  width: 90%;
-  max-width: 400px;
+  border-radius: 20px;
+  overflow: hidden;
 }
