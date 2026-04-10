@@ -5,20 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MeteoAlert</title>
 
-  <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-  <div class="container">
-    <h1 class="title">METEOAlert</h1>
-    <p>Previsión mañana: <span id="fechaManana"></span></p>
 
-    <div id="lista"></div>
+<div class="container" style="max-width: 500px;">
+  <header class="mini-header">
+    <div>
+      <h1>METEOAlert</h1>
+      <p class="sub">PrevisiÃ³n para maÃ±ana: <span id="fechaManana"></span></p>
+    </div>
+    <button class="refresh" onclick="render()">
+      <i class="fas fa-sync-alt"></i>
+    </button>
+  </header>
+
+  <div id="lista"></div>
+</div>
+
+<button id="btnPlus">
+  <i class="fas fa-plus"></i>
+</button>
+
+<!-- MODAL -->
+<div id="modalAdd" class="modal">
+  <div class="modal-background" onclick="cerrar()"></div>
+  <div class="modal-card">
+    <section class="modal-card-body">
+      <h3 class="title is-5">AÃ±adir lugar</h3>
+      <input id="inBusca" class="input" type="text" placeholder="Buscar..." oninput="buscar(this.value)">
+      <div id="res"></div>
+    </section>
   </div>
+</div>
 
-  <button id="btnPlus">+</button>
-
-  <script src="js/app.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
