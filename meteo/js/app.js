@@ -3,8 +3,7 @@ const hoy = new Date();
 const manana = new Date(hoy);
 manana.setDate(hoy.getDate() + 1);
 
-document.getElementById('fechaManana').textContent =
-  manana.toLocaleDateString();
+document.getElementById('fechaManana').textContent = manana.toLocaleDateString();
 
 // 🌍 Datos guardados
 let municipios = JSON.parse(localStorage.getItem("meteo")) || [];
@@ -12,13 +11,12 @@ let municipios = JSON.parse(localStorage.getItem("meteo")) || [];
 // 🌦️ Obtener clima
 async function obtenerTiempo(lat, lon) {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode&timezone=auto`;
-
   const res = await fetch(url);
   const data = await res.json();
 
   return {
-    tMax: data.daily.temperature_2m_max[1],
-    tMin: data.daily.temperature_2m_min[1],
+    tMax: Math.round(data.daily.temperature_2m_max[1]),
+    tMin: Math.round(data.daily.temperature_2m_min[1]),
     prob: data.daily.precipitation_probability_max[1],
     code: data.daily.weathercode[1]
   };
@@ -32,15 +30,10 @@ function getEmoji(code) {
   return "⛈️";
 }
 
-// 🔔 Alerta lluvia
-function hayAlerta(prob) {
-  return prob >= 70;
-}
-
-// 🧱 Render
+// 🧱 Render (Modificado para el nuevo diseño)
 async function render() {
   const cont = document.getElementById("lista");
-  cont.innerHTML = "Cargando...";
+  cont.innerHTML = "<p style='text-align:center; opacity:0.5;'>Actualizando...</p>";
 
   let html = "";
 
@@ -50,28 +43,28 @@ async function render() {
 
     html += `
     <div class="weather-card">
-      <button class="btn-delete" onclick="eliminar(${i})">✖</button>
-
-      <div class="is-flex is-justify-content-between">
-        <div>
-          <div class="city-name">
-            ${m.nombre}
-            ${hayAlerta(c.prob) ? "🔔" : ""}
-          </div>
-
-          <div class="temp-info">
-            <span class="rain">💧 ${c.prob}%</span> |
-            ↑ ${c.tMax}° ↓ ${c.tMin}°
-          </div>
-        </div>
-
-        <div style="font-size:30px">${getEmoji(c.code)}</div>
+      <div class="weather-icon">
+        ${getEmoji(c.code)}
       </div>
+
+      <div class="weather-content">
+        <span class="city-name">
+          ${m.nombre} ${c.prob >= 70 ? "🔔" : ""}
+        </span>
+        <div class="temp-info">
+          <span class="rain">${c.prob}%</span>
+          <span>${c.tMax}° / ${c.tMin}°</span>
+        </div>
+      </div>
+
+      <button class="btn-delete" onclick="eliminar(${i})">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     `;
   }
 
-  cont.innerHTML = html || "No hay ciudades";
+  cont.innerHTML = html || "<p style='text-align:center; opacity:0.5; margin-top:20px;'>No hay ciudades añadidas</p>";
 }
 
 // ➕ Abrir modal
@@ -89,47 +82,34 @@ function cerrar() {
 // 🔎 buscar ciudades
 async function buscar(v) {
   if (v.length < 3) return;
-
   const url = `https://geocoding-api.open-meteo.com/v1/search?name=${v}&count=5&language=es`;
-
   const res = await fetch(url);
   const data = await res.json();
-
   const cont = document.getElementById("res");
   cont.innerHTML = "";
 
   if (data.results) {
     data.results.forEach(l => {
       const div = document.createElement("div");
-      div.style = "padding:10px;background:#eee;margin-top:5px;cursor:pointer;color:black;";
-      div.innerHTML = `<strong>${l.name}</strong> (${l.admin1 || ""})`;
-
+      div.className = "search-result-item";
+      div.innerHTML = `<strong>${l.name}</strong> <small>${l.admin1 || ""}</small>`;
       div.onclick = () => guardar(l);
-
       cont.appendChild(div);
     });
   }
 }
 
-// 💾 guardar
 function guardar(l) {
-  municipios.push({
-    nombre: l.name,
-    lat: l.latitude,
-    lon: l.longitude
-  });
-
+  municipios.push({ nombre: l.name, lat: l.latitude, lon: l.longitude });
   localStorage.setItem("meteo", JSON.stringify(municipios));
   cerrar();
   render();
 }
 
-// 🗑️ eliminar
 function eliminar(i) {
   municipios.splice(i, 1);
   localStorage.setItem("meteo", JSON.stringify(municipios));
   render();
 }
 
-// 🚀 init
 render();
