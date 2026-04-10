@@ -60,7 +60,7 @@ async function render() {
           </div>
 
           <div class="temp-info">
-            💧 ${c.prob}% |
+            <span class="rain">💧 ${c.prob}%</span> |
             ↑ ${c.tMax}° ↓ ${c.tMin}°
           </div>
         </div>
