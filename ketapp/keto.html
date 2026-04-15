@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keto Tracker Final</title>
+    <style>
+        :root { --keto: #27ae60; --dark: #1a1a1a; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
+        .db { background: var(--dark); color: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; }
+        textarea { width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+        .btn-ai { background: var(--dark); color: white; }
+        .btn-add { background: var(--keto); color: white; margin-top: 15px; display: none; }
+        #status { font-size: 0.8rem; color: #666; margin-top: 10px; text-align: center; }
+        .food-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="db">
+        <h3 style="margin:0">Carbs Netos</h3>
+        <h2 style="margin:5px 0" id="total">0 / 30g</h2>
+    </div>
+
+    <textarea id="input" rows="2" placeholder="Ej: 100g de pollo y medio aguacate"></textarea>
+    <button class="btn-ia" onclick="analizar()">Analizar con IA ✨</button>
+    <div id="status"></div>
+
+    <div id="result" style="display:none; background: #f9f9f9; padding: 10px; margin-top: 15px; border-radius: 8px;">
+        <div id="resInfo"></div>
+        <button id="addBtn" class="btn-add" onclick="guardar()">Añadir al registro</button>
+    </div>
+
+    <div id="lista" style="margin-top:20px;"></div>
+    
+    <button onclick="borrarClave()" style="background:none; color:red; font-size:0.7rem; text-decoration:underline; margin-top:20px;">Borrar API Key</button>
+</div>
+
+<script>
+    let totalCarbs = 0;
+    let comidaActual = null;
+
+    // Al iniciar, cargar datos y pedir key si no hay
+    window.onload = () => {
+        actualizarVista();
+        if(!localStorage.getItem('KEY_KETO')) {
+            let k = prompt("Introduce tu API KEY:");
+            if(k) localStorage.setItem('KEY_KETO', k.trim());
+        }
+    };
+
+    async function analizar() {
+        const key = localStorage.getItem('KEY_KETO');
+        const text = document.getElementById('input').value;
+        const status = document.getElementById('status');
+        
+        if(!text) return;
+        status.innerText = "Consultando a Gemini...";
+
+        try {
+            // URL v1beta con gemini-1.5-flash (LA QUE FUNCIONA EN EL CHAT)
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Actúa como nutricionista. Analiza "${text}". Responde solo este JSON: {"n": "nombre corto", "c": carbs_netos_numero}` }] }]
+                })
+            });
+
+            const data = await response.json();
+
+            if(data.error) {
+                status.innerText = "Error: " + data.error.message;
+                return;
+            }
+
+            const raw = data.candidates[0].content.parts[0].text;
+            const limpio = raw.match(/\{.*\}/s)[0];
+            const res = JSON.parse(limpio);
+
+            comidaActual = { nombre: res.n, carbs: res.c };
+            
+            document.getElementById('resInfo').innerHTML = `<b>${res.n}</b>: ${res.c}g carbs`;
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('addBtn').style.display = 'block';
+            status.innerText = "";
+
+        } catch (e) {
+            status.innerText = "Error de red o JSON inválido";
+            console.error(e);
+        }
+    }
+
+    function guardar() {
+        let history = JSON.parse(localStorage.getItem('h_keto') || "[]");
+        history.push(comidaActual);
+        localStorage.setItem('h_keto', JSON.stringify(history));
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('input').value = "";
+        actualizarVista();
+    }
+
+    function actualizarVista() {
+        let history = JSON.parse(localStorage.getItem('h_keto') || "[]");
+        let listDiv = document.getElementById('lista');
+        listDiv.innerHTML = "";
+        totalCarbs = 0;
+
+        history.forEach(i => {
+            totalCarbs += i.carbs;
+            listDiv.innerHTML += `<div class="food-item"><span>${i.nombre}</span><b>${i.carbs}g</b></div>`;
+        });
+
+        document.getElementById('total').innerText = `${totalCarbs.toFixed(1)} / 30g`;
+    }
+
+    function borrarClave() {
+        localStorage.clear();
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
