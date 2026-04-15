@@ -255,31 +255,52 @@
   function eliminarRegistro(id) { db.ref(`keto_logs/${hoyISO()}/comidas/${id}`).remove(); db.ref(`keto_logs/${hoyISO()}/${id}`).remove(); }
 
   async function generarCalendario() {
-    const grid = document.getElementById('calendarDays');
-    const title = document.getElementById('calendarMonthName');
-    const y = fechaVistaCalendario.getFullYear(), m = fechaVistaCalendario.getMonth();
-    title.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVistaCalendario);
-    const snap = await db.ref('keto_logs').once('value');
-    const all = snap.val() || {};
-    grid.innerHTML = "LuMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:0.6rem;font-weight:bold;color:#999;margin-bottom:5px">${d}</div>`).join('');
-    const first = new Date(y, m, 1).getDay();
-    const offset = (first === 0) ? 6 : first - 1;
-    for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
-    const days = new Date(y, m + 1, 0).getDate();
-    for(let d=1; d<=days; d++){
-      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      let status = '', info = '', cls = (ds === hoyISO()) ? 'today' : '';
-      if(all[ds]){
-        let tc = 0, tkc = 0, tke = 0;
-        let regs = all[ds].comidas || all[ds];
-        Object.values(regs).forEach(v => { if(v.c){ tc += parseFloat(v.c); tkc += parseInt(v.k); } });
-        if(all[ds].ejercicio) Object.values(all[ds].ejercicio).forEach(e => tke += e.k);
-        status = `<span style="font-size:0.6rem;">${tc > 30 ? '❌' : '✅'}</span>`;
-        info = `<div class="cal-label">${tkc-tke}k<br>${all[ds].peso||''}</div>`;
+  const grid = document.getElementById('calendarDays');
+  const title = document.getElementById('calendarMonthName');
+  const y = fechaVistaCalendario.getFullYear(), m = fechaVistaCalendario.getMonth();
+  title.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVistaCalendario);
+  
+  const snap = await db.ref('keto_logs').once('value');
+  const all = snap.val() || {};
+  
+  grid.innerHTML = "LuMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:0.6rem;font-weight:bold;color:#999;margin-bottom:5px">${d}</div>`).join('');
+  
+  const first = new Date(y, m, 1).getDay();
+  const offset = (first === 0) ? 6 : first - 1;
+  for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
+
+  const days = new Date(y, m + 1, 0).getDate();
+  for(let d=1; d<=days; d++){
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let status = '', info = '', cls = (ds === hoyISO()) ? 'today' : '';
+    
+    if(all[ds]){
+      let tc = 0, tkc = 0, tke = 0;
+      
+      // 1. Sumar Comidas (buscamos solo los que tienen calorías 'k')
+      let regs = all[ds].comidas || all[ds];
+      Object.values(regs).forEach(v => { 
+        if(v && typeof v === 'object' && v.k){ 
+          tc += parseFloat(v.c || 0); 
+          tkc += parseInt(v.k || 0); 
+        } 
+      });
+
+      // 2. Sumar Ejercicio
+      if(all[ds].ejercicio) {
+        Object.values(all[ds].ejercicio).forEach(e => { if(e.k) tke += e.k; });
       }
-      grid.innerHTML += `<div class="calendar-day ${cls}" onclick="verDetalleDia('${ds}')"><b>${d}</b>${status}${info}</div>`;
+      
+      const netas = tkc - tke;
+      status = `<span style="font-size:0.6rem;">${tc > 30 ? '❌' : '✅'}</span>`;
+      
+      // 3. Mostrar Info: Calorías netas y Peso (si existe) con etiqueta clara
+      const pesoInfo = all[ds].peso ? `<br><span style="color:var(--keto)">${all[ds].peso}kg</span>` : '';
+      info = `<div class="cal-label">${netas} kcal${pesoInfo}</div>`;
     }
+    grid.innerHTML += `<div class="calendar-day ${cls}" onclick="verDetalleDia('${ds}')"><b>${d}</b>${status}${info}</div>`;
   }
+}
 
   async function verDetalleDia(fecha) {
     const snap = await db.ref(`keto_logs/${fecha}`).once('value');
