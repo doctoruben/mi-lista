@@ -305,37 +305,45 @@
 
   function escucharFirebase() {
     db.ref(`keto_logs/${getHoyISO()}`).on('value', snap => {
-      const data = snap.val() || {};
-      const list = document.getElementById('dailyList');
-      list.innerHTML = "";
-      
-      let tc = 0, tkCons = 0, tkEjer = 0;
-      
-      if(data.comidas) {
-        Object.keys(data.comidas).reverse().forEach(id => {
-          const item = data.comidas[id];
-          tc += parseFloat(item.c); tkCons += parseInt(item.k);
-          list.innerHTML += `<div class="log-item">
-            <div><div class="log-data">${item.n}</div><div class="log-sub">${item.c}g carbs · ${item.k} kcal</div></div>
-            <button class="btn-cancel" style="padding:5px 10px;" onclick="db.ref('keto_logs/${getHoyISO()}/comidas/${id}').remove()">✕</button>
-          </div>`;
+        const data = snap.val() || {};
+        const list = document.getElementById('dailyList');
+        list.innerHTML = "";
+        
+        let tc = 0, tkCons = 0, tkEjer = 0;
+        
+        // --- LÓGICA DE COMPATIBILIDAD ---
+        // 1. Miramos si hay datos en la nueva carpeta 'comidas'
+        let registros = data.comidas || {};
+        
+        // 2. Si no hay carpeta 'comidas', revisamos si los datos están sueltos (formato viejo)
+        if (Object.keys(registros).length === 0) {
+            // Filtramos para no confundir 'peso' o 'ejercicio' con comida vieja
+            Object.keys(data).forEach(key => {
+                if (key !== 'peso' && key !== 'ejercicio' && typeof data[key] === 'object') {
+                    registros[key] = data[key];
+                }
+            });
+        }
+
+        Object.keys(registros).reverse().forEach(id => {
+            const item = registros[id];
+            tc += parseFloat(item.c || 0); 
+            tkCons += parseInt(item.k || 0);
+            list.innerHTML += `<div class="log-item">
+                <div><div class="log-data">${item.n}</div><div class="log-sub">${item.c}g carbs · ${item.k} kcal</div></div>
+                <button class="btn-cancel" style="padding:5px 10px;" onclick="eliminarRegistro('${id}')">✕</button>
+            </div>`;
         });
-      }
-
-      if(data.ejercicio) {
-        Object.values(data.ejercicio).forEach(e => tkEjer += parseInt(e.k));
-      }
-
-      const neto = tkCons - tkEjer;
-      document.getElementById('totalCarbs').innerText = tc.toFixed(1);
-      document.getElementById('totalNetKcal').innerText = neto;
-      document.getElementById('totalConsumidas').innerText = `${tkCons} kcal consumidas / -${tkEjer} quemadas`;
-      
-      const p = Math.min((tc / 30) * 100, 100);
-      document.getElementById('barFill').style.width = p + '%';
-      document.getElementById('barFill').style.background = tc > 30 ? 'var(--red)' : 'var(--green)';
+        // ... (el resto del código de calorías netas y barra de progreso sigue igual)
     });
-  }
+}
+
+// Añade esta pequeña función de apoyo para que el botón de borrar funcione con ambos
+function eliminarRegistro(id) {
+    // Intenta borrar en ambas rutas por seguridad
+    db.ref(`keto_logs/${getHoyISO()}/comidas/${id}`).remove();
+    db.ref(`keto_logs/${getHoyISO()}/${id}`).remove();
+}
 
   async function generarCalendario() {
     const grid = document.getElementById('calGrid');
