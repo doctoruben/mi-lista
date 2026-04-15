@@ -72,41 +72,49 @@
     }
 
     async function askGemini() {
-        const apiKey = localStorage.getItem('GEMINI_KEY');
-        const text = document.getElementById('foodInput').value.trim();
+    const apiKey = localStorage.getItem('KETO_KEY_FINAL');
+    const text = document.getElementById('foodInput').value.trim();
+    
+    if (!apiKey) { updateApiKey(); return; }
+    if (!text) return;
+
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('resultCard').style.display = 'none';
+
+    // Lista de modelos a intentar en orden de compatibilidad
+    const modelosAProbar = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-pro" // El más antiguo y compatible
+    ];
+
+    let exito = false;
+
+    for (let m of modelosAProbar) {
+        if (exito) break;
         
-        if (!apiKey) { updateApiKey(); return; }
-        if (!text) return;
-
-        document.getElementById('loader').style.display = 'block';
-        document.getElementById('resultCard').style.display = 'none';
-
-        // Construimos el prompt mezclando la instrucción con el texto (como en el chat normal)
-        const fullPrompt = `Actúa como nutricionista keto. Analiza: "${text}". Responde SOLAMENTE con este formato JSON: {"nombre": "resumen", "carbs_netos": 0, "grasa": 0, "proteina": 0}`;
-
         try {
-            // URL idéntica a tu código funcional
-            const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: fullPrompt }] }]
-                        // Eliminamos systemInstruction porque tu API parece no aceptarlo en este contexto
-                    })
-                }
-            );
+            // Intentamos con la versión estable v1 que es la más segura para claves nuevas
+            const url = `https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${apiKey}`;
+            
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Analiza nutricionalmente: "${text}". Responde solo JSON: {"nombre": "resumen", "carbs_netos": 0, "grasa": 0, "proteina": 0}` }] }]
+                })
+            });
 
             const data = await res.json();
 
-            if (data.error) throw new Error(data.error.message);
+            if (data.error) {
+                console.log(`Fallo con modelo ${m}: ${data.error.message}`);
+                continue; // Si falla, salta al siguiente modelo de la lista
+            }
 
             const rawText = data.candidates[0].content.parts[0].text;
-            
-            // Limpiar posibles bloques de código que la IA suele añadir
-            const cleanJson = rawText.replace(/```json|```/g, "").trim();
-            const result = JSON.parse(cleanJson);
+            const jsonMatch = rawText.match(/\{.*\}/s);
+            const result = JSON.parse(jsonMatch[0]);
 
             lastFoundFood = { 
                 name: result.nombre, 
@@ -120,14 +128,18 @@
             document.getElementById('resFat').innerText = result.grasa;
             document.getElementById('resProt').innerText = result.proteina;
             document.getElementById('resultCard').style.display = 'block';
+            exito = true;
 
         } catch (e) {
-            alert("ERROR: " + e.message);
-            console.error(e);
-        } finally {
-            document.getElementById('loader').style.display = 'none';
+            console.error(`Error con ${m}:`, e);
         }
     }
+
+    document.getElementById('loader').style.display = 'none';
+    if (!exito) {
+        alert("No se pudo conectar con ningún modelo de Gemini. Revisa si tu API Key nueva está activa en Google AI Studio.");
+    }
+}
 
     function addFood() {
         if (!lastFoundFood) return;
