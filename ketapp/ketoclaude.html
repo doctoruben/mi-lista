@@ -22,21 +22,23 @@
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
   .btn-icon { background: #eee; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; }
   
+  /* DASHBOARD ELEGANTE */
   .dashboard { 
     background: var(--dark); color: white; padding: 22px; border-radius: 24px; margin-bottom: 20px; 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
   }
   .dash-main { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; }
   .dash-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
   .dash-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
-  .dash-value small { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
+  .dash-value small { font-size: 0.9rem; font-weight: 400; color: var(--muted); }
 
   .dash-stats-row { 
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; 
     padding-top: 15px; border-top: 1px solid #333; margin-top: 15px;
   }
   .stat-item { text-align: center; }
-  .stat-item div:first-child { font-size: 0.6rem; color: var(--muted); margin-bottom: 3px; }
-  .stat-item div:last-child { font-size: 0.85rem; font-weight: 600; }
+  .stat-item div:first-child { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; }
+  .stat-item div:last-child { font-size: 0.95rem; font-weight: 600; }
 
   .progress-bar { background: #333; border-radius: 10px; height: 6px; overflow: hidden; }
   #barFill { background: var(--keto); height: 100%; width: 0%; transition: 1s ease; }
@@ -44,29 +46,32 @@
   .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 15px; }
   .btn-sec { background: #eee; border: none; padding: 10px 4px; border-radius: 12px; font-weight: bold; cursor: pointer; color: var(--dark); font-size: 0.75rem; }
 
-  textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 15px; font-size: 1rem; box-sizing: border-box; outline: none; resize: none; }
+  textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 1rem; outline: none; resize: none; font-family: inherit; }
   .btn-main { background: var(--dark); color: white; border: none; padding: 14px; width: 100%; border-radius: 15px; cursor: pointer; margin-top: 10px; font-weight: bold; }
   
+  .result-card { display: none; margin-top: 15px; padding: 15px; border-radius: 15px; background: #f0fff4; border: 1px solid #c6f6d5; }
   .food-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
 
-  /* MODAL Y CALENDARIO OPTIMIZADO */
+  /* MODALES */
   .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
   .modal.open { display: flex; }
   .modal-content { background:white; padding:15px; border-radius:24px; width:95%; max-width:380px; box-sizing: border-box; }
 
+  /* CALENDARIO ULTRA COMPACTO */
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
   .calendar-day { 
-    aspect-ratio: 0.75; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    border-radius: 6px; font-size: 0.6rem; background: #f9f9f9; cursor: pointer; padding: 1px;
-    border: 1px solid transparent; overflow: hidden;
+    aspect-ratio: 0.7; display: flex; flex-direction: column; align-items: center; 
+    justify-content: center; border-radius: 8px; font-size: 0.55rem; 
+    border: 1px solid transparent; background: #f9f9f9; cursor: pointer; padding: 1px;
+    overflow: hidden;
   }
   .calendar-day.today { border-color: var(--keto); background: #f0fff4; }
-  .calendar-day b { font-size: 0.75rem; margin-bottom: 1px; }
-  .cal-label { font-size: 0.5rem; color: #666; line-height: 1.1; }
+  .calendar-day b { font-size: 0.7rem; margin-bottom: 1px; }
+  .cal-label { font-size: 0.45rem; line-height: 1; color: #666; }
   .cal-weight { color: var(--keto); font-weight: bold; font-size: 0.45rem; }
 
   .chart-container { margin-bottom: 25px; }
-  .chart-title { font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 8px; border-left: 3px solid var(--keto); padding-left: 8px; }
+  .chart-title { font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 8px; border-left: 3px solid var(--keto); padding-left: 8px; }
 
   .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -84,19 +89,30 @@
   <div class="dashboard">
     <div class="dash-main">
       <div>
-        <div class="dash-label">Carbos</div>
+        <div class="dash-label">Carbohidratos</div>
         <div class="dash-value"><span id="totalCarbs">0</span><small>/30g</small></div>
       </div>
       <div style="text-align: right;">
-        <div class="dash-label">Netas</div>
-        <div class="dash-value"><span id="totalNetKcal">0</span> <small>kcal</small></div>
+        <div class="dash-label">Total Netas</div>
+        <div class="dash-value" id="totalNetKcal">0</div>
       </div>
     </div>
+    
     <div class="progress-bar"><div id="barFill"></div></div>
+
     <div class="dash-stats-row">
-      <div class="stat-item"><div>Consumidas</div><div><span id="kcalConsumidas">0</span><small> kcal</small></div></div>
-      <div class="stat-item"><div>Quemadas</div><div><span id="kcalQuemadas">0</span><small> kcal</small></div></div>
-      <div class="stat-item"><div>Peso</div><div id="currentWeight">--</div></div>
+      <div class="stat-item">
+        <div>Consumidas</div>
+        <div><span id="kcalConsumidas">0</span><small> kcal</small></div>
+      </div>
+      <div class="stat-item">
+        <div>Quemadas</div>
+        <div><span id="kcalQuemadas">0</span><small> kcal</small></div>
+      </div>
+      <div class="stat-item">
+        <div>Peso</div>
+        <div id="currentWeight">--</div>
+      </div>
     </div>
   </div>
 
@@ -107,14 +123,16 @@
   </div>
 
   <textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
-  <button class="btn-main" id="btnAnalyze" onclick="analizarIA()"><span id="btnText">Analizar ✨</span></button>
-  
-  <div id="resultCard" style="display:none; margin-top:10px; padding:15px; border-radius:15px; background:#f0fff4; border:1px solid #c6f6d5;">
-    <h4 id="resName" style="margin:0; font-size:0.9rem;"></h4>
-    <p id="resNutri" style="margin:5px 0; font-size:0.8rem;"></p>
+  <button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
+    <span id="btnText">Analizar ✨</span>
+  </button>
+
+  <div id="resultCard" class="result-card">
+    <h4 id="resName" style="margin:0; font-size:0.95rem;"></h4>
+    <p id="resNutri" style="margin:8px 0; font-size:0.85rem;"></p>
     <div style="display:flex; gap:10px;">
-        <button onclick="guardar()" style="flex:2; background:var(--keto); color:white; border:none; padding:8px; border-radius:10px; font-weight:bold;">Añadir</button>
-        <button onclick="cancelarAnalisis()" style="flex:1; background:#eee; padding:8px; border-radius:10px;">X</button>
+        <button onclick="guardar()" style="flex:2; background:var(--keto); color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">Añadir</button>
+        <button onclick="cancelarAnalisis()" style="flex:1; background:#eee; color:#333; border:none; padding:10px; border-radius:10px; cursor:pointer;">X</button>
     </div>
   </div>
 
@@ -124,29 +142,30 @@
 <div id="historyModal" class="modal"><div class="modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <button class="btn-icon" onclick="cambiarMes(-1)" style="padding:5px 10px;">‹</button>
-      <b id="calendarMonthName" style="font-size:0.85rem; text-transform: capitalize;"></b>
+      <b id="calendarMonthName" style="text-transform: capitalize; font-size:0.9rem;"></b>
       <button class="btn-icon" onclick="cambiarMes(1)" style="padding:5px 10px;">›</button>
     </div>
     <div class="calendar-grid" id="calendarDays"></div>
-    <button onclick="closeModal('historyModal')" class="btn-main" style="padding:10px; margin-top:15px;">Cerrar</button>
+    <button onclick="closeModal('historyModal')" class="btn-main" style="padding:10px; margin-top:10px;">Cerrar</button>
 </div></div>
 
 <div id="dayDetailModal" class="modal"><div class="modal-content">
     <h3 id="detailDateTitle" style="font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px;"></h3>
-    <div id="dayDetailContent" style="max-height:300px; overflow-y:auto; margin:10px 0; font-size:0.8rem;"></div>
-    <button onclick="closeModal('dayDetailModal')" class="btn-main">Cerrar</button>
+    <div id="dayDetailContent" style="max-height:300px; overflow-y:auto; margin:12px 0; font-size:0.85rem; line-height:1.4;"></div>
+    <button onclick="closeModal('dayDetailModal')" class="btn-main">Volver</button>
 </div></div>
 
 <div id="chartModal" class="modal"><div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
+    <h3 style="margin-bottom:20px;">Análisis 30 Días</h3>
     <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Calorías Netas</div><canvas id="kcalChart"></canvas></div>
-    <div class="chart-container"><div class="chart-title">Carbos (g)</div><canvas id="carbChart"></canvas></div>
+    <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
     <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
 </div></div>
 
 <div id="configModal" class="modal"><div class="modal-content">
     <h3>Ajustes</h3>
-    <button class="btn-main" onclick="cambiarKey()">🔑 API Key Gemini</button>
+    <button class="btn-main" onclick="cambiarKey()">🔑 Configurar API Key</button>
     <button onclick="closeModal('configModal')" class="btn-main" style="background:#eee; color:#333;">Cerrar</button>
 </div></div>
 
@@ -180,11 +199,6 @@
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   function cambiarMes(delta) { fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta); generarCalendario(); }
 
-  function cambiarKey() {
-    const k = prompt("Pega tu API Key:");
-    if(k) localStorage.setItem('GEMINI_KEY', k.trim());
-  }
-
   async function analizarIA() {
     const key = localStorage.getItem('GEMINI_KEY');
     const text = document.getElementById('foodInput').value.trim();
@@ -204,7 +218,7 @@
       document.getElementById('resName').innerText = tempFood.n;
       document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
       document.getElementById('resultCard').style.display = 'block';
-    } catch (err) { alert("Error de IA"); }
+    } catch (err) { alert("Error"); }
     btn.disabled = false; btnText.innerText = "Analizar ✨";
   }
 
@@ -240,15 +254,11 @@
     const grid = document.getElementById('calendarDays');
     const y = fechaVistaCalendario.getFullYear(), m = fechaVistaCalendario.getMonth();
     document.getElementById('calendarMonthName').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVistaCalendario);
-    
     const snap = await db.ref('keto_logs').once('value');
     const all = snap.val() || {};
-    grid.innerHTML = "L M X J V S D".split(' ').map(d => `<div style="font-size:0.55rem;font-weight:bold;color:#aaa">${d}</div>`).join('');
-    
-    const first = new Date(y, m, 1).getDay();
-    const offset = (first === 0) ? 6 : first - 1;
+    grid.innerHTML = "L M X J V S D".split(' ').map(d => `<div style="font-size:0.55rem;color:#aaa">${d}</div>`).join('');
+    const offset = (new Date(y, m, 1).getDay() || 7) - 1;
     for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
-
     for(let d=1; d<=new Date(y, m+1, 0).getDate(); d++){
       const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       let info = '', status = '', cls = (ds === hoyISO()) ? 'today' : '';
@@ -280,14 +290,15 @@
         const all = snap.val() || {};
         const labels = [], pesos = [], carbos = [], kcals = [];
         const hoy = new Date();
-        for (let d = 1; d <= new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate(); d++) {
-            const ds = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            labels.push(d);
+        for (let d = 1; d <= 30; d++) {
+            const dObj = new Date(); dObj.setDate(hoy.getDate() - (30 - d));
+            const ds = dObj.toISOString().split('T')[0];
+            labels.push(ds.split('-')[2]);
             if (all[ds]) {
                 pesos.push(all[ds].peso || null);
                 let c = 0, k = 0, e = 0, has = false;
                 Object.values(all[ds].comidas || {}).forEach(v => { c += parseFloat(v.c); k += parseInt(v.k); has = true; });
-                Object.values(all[ds].ejercicio || {}).forEach(ex => { e += ex.k; has = true; });
+                if(all[ds].ejercicio) Object.values(all[ds].ejercicio).forEach(ex => { e += ex.k; has = true; });
                 carbos.push(has ? c : null); kcals.push(has ? k-e : null);
             } else { pesos.push(null); carbos.push(null); kcals.push(null); }
         }
