@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keto Tracker - Versión Estable</title>
+    <title>Keto Tracker - Scanner Mode</title>
     <style>
         :root { --keto: #27ae60; --dark: #1a1a1a; }
         body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
@@ -12,8 +12,7 @@
         textarea { width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 10px; box-sizing: border-box; resize: none; }
         button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
         .btn-ia { background: var(--dark); color: white; }
-        .btn-add { background: var(--keto); color: white; margin-top: 15px; display: none; }
-        #status { font-size: 0.8rem; color: #d35400; margin-top: 10px; text-align: center; font-weight: bold; }
+        #status { font-size: 0.75rem; color: #666; margin-top: 10px; text-align: center; white-space: pre-wrap; }
         .food-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
     </style>
 </head>
@@ -21,117 +20,112 @@
 
 <div class="card">
     <div class="db">
-        <h3 style="margin:0">Carbs Hoy</h3>
+        <h3 style="margin:0">Keto AI Scanner</h3>
         <h2 style="margin:5px 0" id="total">0 / 30g</h2>
     </div>
 
-    <textarea id="input" rows="2" placeholder="Ej: 2 huevos fritos..."></textarea>
-    <button class="btn-ia" onclick="analizar()">Analizar con IA ✨</button>
-    <div id="status"></div>
+    <textarea id="input" rows="2" placeholder="Ej: un filete y espárragos"></textarea>
+    <button class="btn-ia" onclick="analizarConAutoDeteccion()">Analizar ✨</button>
+    <div id="status">Esperando...</div>
 
     <div id="result" style="display:none; background: #f9f9f9; padding: 10px; margin-top: 15px; border-radius: 8px;">
         <div id="resInfo"></div>
-        <button id="addBtn" class="btn-add" onclick="guardar()">Añadir al registro</button>
+        <button onclick="guardar()" style="background:var(--keto); color:white">Añadir</button>
     </div>
 
     <div id="lista" style="margin-top:20px;"></div>
-    
-    <button onclick="borrarTodo()" style="background:none; color:red; font-size:0.7rem; text-decoration:underline; margin-top:20px; width: 100%;">Borrar todo (incluida API Key)</button>
+    <button onclick="localStorage.clear(); location.reload();" style="background:none; color:red; font-size:0.7rem; text-decoration:underline; width:100%">Borrar todo y cambiar Key</button>
 </div>
 
 <script>
     let totalCarbs = 0;
     let comidaActual = null;
-
-    // CONFIGURACIÓN: Usamos gemini-pro que es el más compatible
-    const MODELO = "gemini-pro"; 
+    let modeloFuncional = null; // Aquí guardaremos el que funcione
 
     window.onload = () => {
         actualizarVista();
-        if(!localStorage.getItem('API_KETO_FIX')) {
+        if(!localStorage.getItem('API_KEY_SCANNER')) {
             let k = prompt("Introduce tu NUEVA API KEY de Gemini:");
-            if(k) localStorage.setItem('API_KETO_FIX', k.trim());
+            if(k) localStorage.setItem('API_KEY_SCANNER', k.trim());
         }
     };
 
-    async function analizar() {
-        const key = localStorage.getItem('API_KETO_FIX');
+    async function analizarConAutoDeteccion() {
+        const key = localStorage.getItem('API_KEY_SCANNER');
         const text = document.getElementById('input').value;
         const status = document.getElementById('status');
-        
         if(!text) return;
-        status.innerText = "Conectando con Gemini Pro...";
+
+        status.innerText = "Buscando modelo compatible...";
 
         try {
-            // Usamos la URL v1 (ESTABLE) para evitar el error de v1beta
-            const url = `https://generativelanguage.googleapis.com/v1/models/${MODELO}:generateContent?key=${key}`;
+            // 1. SI NO SABEMOS EL MODELO, LE PREGUNTAMOS A GOOGLE QUÉ TENEMOS
+            if (!modeloFuncional) {
+                const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const listData = await listRes.json();
+                
+                if (listData.models) {
+                    // Buscamos cualquier modelo que soporte generar contenido
+                    const found = listData.models.find(m => m.supportedGenerationMethods.includes("generateContent"));
+                    if (found) {
+                        modeloFuncional = found.name; // Ej: "models/gemini-1.5-flash-latest"
+                        console.log("Modelo encontrado:", modeloFuncional);
+                    }
+                }
+            }
+
+            if (!modeloFuncional) {
+                // Si la lista falla, intentamos uno genérico por desesperación
+                modeloFuncional = "models/gemini-1.5-flash";
+            }
+
+            // 2. HACEMOS LA PETICIÓN CON EL MODELO DETECTADO
+            const url = `https://generativelanguage.googleapis.com/v1beta/${modeloFuncional}:generateContent?key=${key}`;
             
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Actúa como nutricionista keto. Analiza nutricionalmente "${text}". Responde únicamente con este formato JSON: {"n": "nombre del alimento", "c": numero_carbs_netos}` }] }]
+                    contents: [{ parts: [{ text: `Responde solo JSON: {"n": "nombre", "c": numero_carbs}. Analiza: ${text}` }] }]
                 })
             });
 
             const data = await response.json();
-
-            if(data.error) {
-                // Si gemini-pro tampoco funciona, intentamos el último recurso: gemini-1.0-pro
-                status.innerText = "Error: " + data.error.message;
-                return;
-            }
+            if (data.error) throw new Error(data.error.message);
 
             const raw = data.candidates[0].content.parts[0].text;
-            // Limpiar el texto para encontrar el JSON
-            const inicio = raw.indexOf('{');
-            const fin = raw.lastIndexOf('}') + 1;
-            const limpio = raw.substring(inicio, fin);
-            const res = JSON.parse(limpio);
+            const res = JSON.parse(raw.match(/\{.*\}/s)[0]);
 
             comidaActual = { nombre: res.n, carbs: res.c };
-            
             document.getElementById('resInfo').innerHTML = `<b>${res.n}</b>: ${res.c}g carbs`;
             document.getElementById('result').style.display = 'block';
-            document.getElementById('addBtn').style.display = 'block';
-            status.innerText = "";
+            status.innerText = "Modelo usado: " + modeloFuncional;
 
         } catch (e) {
-            status.innerText = "Error procesando la respuesta";
-            console.error(e);
+            status.innerText = "Error: " + e.message + "\nIntenta crear una Key en un proyecto NUEVO de Google Cloud.";
         }
     }
 
     function guardar() {
-        let history = JSON.parse(localStorage.getItem('h_keto_final') || "[]");
+        let history = JSON.parse(localStorage.getItem('h_scanner') || "[]");
         history.push(comidaActual);
-        localStorage.setItem('h_keto_final', JSON.stringify(history));
+        localStorage.setItem('h_scanner', JSON.stringify(history));
         document.getElementById('result').style.display = 'none';
         document.getElementById('input').value = "";
         actualizarVista();
     }
 
     function actualizarVista() {
-        let history = JSON.parse(localStorage.getItem('h_keto_final') || "[]");
+        let history = JSON.parse(localStorage.getItem('h_scanner') || "[]");
         let listDiv = document.getElementById('lista');
         listDiv.innerHTML = "";
         totalCarbs = 0;
-
         history.forEach(i => {
             totalCarbs += parseFloat(i.carbs);
             listDiv.innerHTML += `<div class="food-item"><span>${i.nombre}</span><b>${i.carbs}g</b></div>`;
         });
-
         document.getElementById('total').innerText = `${totalCarbs.toFixed(1)} / 30g`;
     }
-
-    function borrarTodo() {
-        if(confirm("¿Borrar todo?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
 </script>
-
 </body>
 </html>
