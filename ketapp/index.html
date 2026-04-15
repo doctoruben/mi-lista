@@ -8,17 +8,13 @@
         :root { --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
         .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        
         .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
         .progress-bar { background: #333; border-radius: 10px; height: 14px; margin: 15px 0; overflow: hidden; }
         #barFill { background: var(--keto); height: 100%; width: 0%; transition: 0.8s ease; }
-        
         textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; resize: none; outline: none; }
         .btn-ia { background: var(--dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 1rem; }
-        
         .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 12px; background: #f0fff4; border: 1px solid #c6f6d5; }
         .btn-add { background: var(--keto); color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-
         .food-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         #loader { display: none; text-align: center; padding: 15px; color: var(--keto); font-weight: bold; }
         .settings-link { display: block; text-align: center; margin-top: 20px; font-size: 0.7rem; color: #bbb; cursor: pointer; }
@@ -58,9 +54,8 @@
 </div>
 
 <script>
-    // --- CONFIGURACIÓN DEL MODELO ---
-    const MODEL_NAME = "gemini-pro"; 
-    // --------------------------------
+    // Usamos EXACTAMENTE la configuración que te funcionó en el otro código
+    const MODEL_NAME = "gemini-1.5-flash"; 
 
     let dailyCarbs = 0;
     const LIMIT = 30;
@@ -72,7 +67,7 @@
     };
 
     function updateApiKey() {
-        const key = prompt("Introduce tu Gemini API Key de Google AI Studio:");
+        const key = prompt("Introduce tu Gemini API Key:");
         if (key) localStorage.setItem('GEMINI_KEY', key);
     }
 
@@ -86,48 +81,44 @@
         document.getElementById('loader').style.display = 'block';
         document.getElementById('resultCard').style.display = 'none';
 
+        // Construimos el prompt mezclando la instrucción con el texto (como en el chat normal)
+        const fullPrompt = `Actúa como nutricionista keto. Analiza: "${text}". Responde SOLAMENTE con este formato JSON: {"nombre": "resumen", "carbs_netos": 0, "grasa": 0, "proteina": 0}`;
+
         try {
-            // Usamos la estructura que te funcionó en el otro código
-            const response = await fetch(
+            // URL idéntica a tu código funcional
+            const res = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Analiza: ${text}` }] }],
-                        systemInstruction: { 
-                            parts: [{ 
-                                text: 'Eres un experto nutricionista Keto. Responde SOLO con un objeto JSON (sin markdown): {"nombre": "resumen", "carbs_netos": numero, "grasa": numero, "proteina": numero}' 
-                            }] 
-                        },
-                        generationConfig: { 
-                            temperature: 0.1,
-                            maxOutputTokens: 200 
-                        }
+                        contents: [{ parts: [{ text: fullPrompt }] }]
+                        // Eliminamos systemInstruction porque tu API parece no aceptarlo en este contexto
                     })
                 }
             );
 
-            const data = await response.json();
+            const data = await res.json();
 
             if (data.error) throw new Error(data.error.message);
 
             const rawText = data.candidates[0].content.parts[0].text;
-            // Limpiamos la respuesta por si la IA añade bloques de código
+            
+            // Limpiar posibles bloques de código que la IA suele añadir
             const cleanJson = rawText.replace(/```json|```/g, "").trim();
-            const res = JSON.parse(cleanJson);
+            const result = JSON.parse(cleanJson);
 
             lastFoundFood = { 
-                name: res.nombre, 
-                carbs: res.carbs_netos, 
-                fat: res.grasa, 
-                prot: res.proteina 
+                name: result.nombre, 
+                carbs: result.carbs_netos, 
+                fat: result.grasa, 
+                prot: result.proteina 
             };
 
-            document.getElementById('resName').innerText = res.nombre;
-            document.getElementById('resCarbs').innerText = res.carbs_netos;
-            document.getElementById('resFat').innerText = res.grasa;
-            document.getElementById('resProt').innerText = res.proteina;
+            document.getElementById('resName').innerText = result.nombre;
+            document.getElementById('resCarbs').innerText = result.carbs_netos;
+            document.getElementById('resFat').innerText = result.grasa;
+            document.getElementById('resProt').innerText = result.proteina;
             document.getElementById('resultCard').style.display = 'block';
 
         } catch (e) {
