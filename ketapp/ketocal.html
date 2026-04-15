@@ -43,9 +43,9 @@
         </div>
     </div>
 
-    <textarea id="foodInput" rows="2" placeholder="Ej: 100g de pechuga de pollo..."></textarea>
-    <button class="btn-main" onclick="analizarConIA()">Analizar ✨</button>
-    <div id="status" style="text-align:center; font-size:0.8rem; color:#888; margin-top:8px;"></div>
+    <textarea id="foodInput" rows="2" placeholder="Ej: ensalada césar..."></textarea>
+    <button class="btn-main" onclick="analizarIA()">Analizar Plato ✨</button>
+    <div id="status" style="text-align:center; font-size:0.75rem; color:#888; margin-top:8px;"></div>
 
     <div id="resultCard" class="result-card">
         <h4 id="resName" style="margin:0"></h4>
@@ -56,21 +56,8 @@
     <div id="dailyList" style="margin-top:20px;"></div>
 </div>
 
-<div id="historyModal" class="modal">
-    <div class="modal-content">
-        <h3 id="calendarMonthName"></h3>
-        <div class="calendar-grid" id="calendarDays"></div>
-        <button onclick="toggleModal('historyModal')" style="width:100%; margin-top:20px; border:none; background:#eee; padding:10px; border-radius:10px;">Cerrar</button>
-    </div>
-</div>
-
-<div id="configModal" class="modal">
-    <div class="modal-content">
-        <h3>Ajustes</h3>
-        <button class="btn-main" onclick="cambiarKey()">🔑 Cambiar Gemini Key</button>
-        <button onclick="toggleModal('configModal')" style="width:100%; margin-top:15px; border:none; background:none; text-decoration:underline;">Cerrar</button>
-    </div>
-</div>
+<div id="historyModal" class="modal"><div class="modal-content"><h3 id="calendarMonthName"></h3><div class="calendar-grid" id="calendarDays"></div><button onclick="toggleModal('historyModal')" style="width:100%; margin-top:20px; border:none; background:#eee; padding:10px; border-radius:10px;">Cerrar</button></div></div>
+<div id="configModal" class="modal"><div class="modal-content"><h3>Ajustes</h3><button class="btn-main" onclick="cambiarKey()">🔑 Reintroducir API Key</button><button onclick="toggleModal('configModal')" style="width:100%; margin-top:15px; border:none; background:none; text-decoration:underline;">Cerrar</button></div></div>
 
 <script>
     const firebaseConfig = {
@@ -90,7 +77,6 @@
 
     window.onload = () => {
         document.getElementById('displayDate').innerText = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'short'});
-        if (!localStorage.getItem('GEMINI_KEY')) cambiarKey();
         escucharFirebase();
     };
 
@@ -102,74 +88,52 @@
 
     function cambiarKey() {
         const k = prompt("Introduce tu Gemini API Key:");
-        if(k) localStorage.setItem('GEMINI_KEY', k.trim());
+        if(k) { localStorage.setItem('GEMINI_KEY', k.trim()); alert("Key guardada."); }
     }
 
-    async function analizarConIA() {
+    async function analizarIA() {
         const key = localStorage.getItem('GEMINI_KEY');
         const text = document.getElementById('foodInput').value.trim();
         const status = document.getElementById('status');
-        if(!text || !key) return;
+        
+        if(!key) { alert("Primero configura tu API Key en el engranaje."); return; }
+        if(!text) return;
 
-        status.innerText = "Conectando con Gemini...";
+        status.innerText = "Consultando a Gemini...";
         document.getElementById('resultCard').style.display = 'none';
 
-        // Usamos la v1 (estable) en lugar de v1beta para mayor compatibilidad
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
-
         try {
-            const response = await fetch(url, {
+            // Probamos directamente con la URL más compatible y el modelo más reciente disponible
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve solo JSON: {"n": "nombre plato", "c": carbs_num, "k": kcal_num}` }] }]
+                    contents: [{ parts: [{ text: `Actúa como nutricionista keto. Analiza: "${text}". Responde UNICAMENTE un objeto JSON con este formato exacto: {"n": "Nombre corto del plato", "c": numero_carbohidratos_netos, "k": numero_calorias}. No añadas nada más.` }] }]
                 })
             });
 
             const data = await response.json();
             
             if (data.error) {
-                // Si la v1 falla, intentamos una última vez con la v1beta pero un nombre de modelo más genérico
-                throw new Error(data.error.message);
+                status.innerText = "Error Google: " + data.error.message;
+                console.log(data.error);
+                return;
             }
 
-            let rawText = data.candidates[0].content.parts[0].text;
-            rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+            // Extraer el texto de la respuesta
+            let raw = data.candidates[0].content.parts[0].text;
+            // Limpieza por si la IA pone ```json ... ```
+            raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
             
-            tempFood = JSON.parse(rawText);
+            tempFood = JSON.parse(raw);
             document.getElementById('resName').innerText = tempFood.n;
             document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
             document.getElementById('resultCard').style.display = 'block';
             status.innerText = "";
-        } catch (err) {
-            console.error("Error original:", err);
-            status.innerText = "Error de conexión. Reintentando...";
-            // Reintento automático con fallback
-            analizarFallback(key, text);
-        }
-    }
 
-    async function analizarFallback(key, text) {
-        const status = document.getElementById('status');
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve solo JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }] }]
-                })
-            });
-            const data = await response.json();
-            let rawText = data.candidates[0].content.parts[0].text;
-            rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-            tempFood = JSON.parse(rawText);
-            document.getElementById('resName').innerText = tempFood.n;
-            document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
-            document.getElementById('resultCard').style.display = 'block';
-            status.innerText = "";
-        } catch (e) {
-            status.innerText = "Error definitivo. Revisa tu API Key.";
+        } catch (err) {
+            console.error(err);
+            status.innerText = "Error de conexión o de API Key. Revisa la consola (F12).";
         }
     }
 
@@ -182,19 +146,15 @@
         }
     }
 
+    // --- FUNCIONES FIREBASE Y CALENDARIO IGUALES ---
     function escucharFirebase() {
         db.ref(`keto_logs/${todayISO}`).on('value', snap => {
             const data = snap.val() || {};
-            const list = document.getElementById('dailyList');
-            list.innerHTML = "";
+            const list = document.getElementById('dailyList'); list.innerHTML = "";
             let tc = 0, tk = 0;
             Object.keys(data).reverse().forEach(id => {
-                const item = data[id];
-                tc += parseFloat(item.c || 0); tk += parseInt(item.k || 0);
-                list.innerHTML += `<div class="food-item">
-                    <div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div>
-                    <div style="color:#ccc; cursor:pointer;" onclick="db.ref('keto_logs/${todayISO}/${id}').remove()">✕</div>
-                </div>`;
+                const item = data[id]; tc += parseFloat(item.c || 0); tk += parseInt(item.k || 0);
+                list.innerHTML += `<div class="food-item"><div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div><div style="color:#ccc; cursor:pointer;" onclick="db.ref('keto_logs/${todayISO}/${id}').remove()">✕</div></div>`;
             });
             document.getElementById('totalCarbs').innerText = tc.toFixed(1);
             document.getElementById('totalKcal').innerText = tk;
@@ -206,9 +166,8 @@
 
     async function generarCalendario() {
         const grid = document.getElementById('calendarDays');
-        const monthLabel = document.getElementById('calendarMonthName');
         const now = new Date();
-        monthLabel.innerText = now.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        document.getElementById('calendarMonthName').innerText = now.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
         const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
         const startOffset = firstDay === 0 ? 6 : firstDay - 1;
@@ -216,17 +175,17 @@
         const allData = snap.val() || {};
         grid.innerHTML = "LMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:0.7rem; font-weight:bold; color:#999">${d}</div>`).join('');
         for (let i = 0; i < startOffset; i++) grid.innerHTML += `<div></div>`;
-        for (let d = 1; d <= daysInMonth; d++) {
+        for (let d = 1; d <= diasEnMes(now); d++) {
             const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             let dot = "";
             if (allData[dateStr]) {
-                let carbs = 0;
-                Object.values(allData[dateStr]).forEach(item => carbs += (parseFloat(item.c) || 0));
+                let carbs = 0; Object.values(allData[dateStr]).forEach(item => carbs += (parseFloat(item.c) || 0));
                 dot = `<div class="status-dot" style="background:${carbs > 30 ? 'var(--danger)' : 'var(--keto)'}"></div>`;
             }
             grid.innerHTML += `<div class="calendar-day">${d}${dot}</div>`;
         }
     }
+    function diasEnMes(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
 </script>
 </body>
 </html>
