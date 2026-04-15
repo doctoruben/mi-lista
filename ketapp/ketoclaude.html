@@ -49,20 +49,22 @@
   .modal.open { display: flex; }
   .modal-content { background:white; padding:20px; border-radius:24px; width:95%; max-width:380px; }
 
-  /* CALENDARIO MOBILE OPTIMIZED */
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
   .calendar-day { 
     aspect-ratio: 0.8; display: flex; flex-direction: column; align-items: center; 
     justify-content: center; border-radius: 8px; font-size: 0.65rem; 
     border: 1px solid transparent; background: #f9f9f9; cursor: pointer; padding: 2px;
   }
-  .calendar-day b { font-size: 0.75rem; }
   .calendar-day.today { border-color: var(--keto); background: #f0fff4; }
   .status-icon { font-size: 0.6rem; margin: 1px 0; }
   .cal-label { font-size: 0.5rem; color: #777; line-height: 1; margin-top: 1px; }
 
   .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Estilos específicos para gráficas */
+  .chart-container { margin-bottom: 25px; }
+  .chart-title { font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 8px; text-align: left; border-left: 3px solid var(--keto); padding-left: 8px; }
 </style>
 </head>
 <body>
@@ -126,10 +128,24 @@
 </div>
 
 <div id="chartModal" class="modal">
-    <div class="modal-content" style="max-width: 500px;">
-      <h3 style="font-size:1rem;">Progreso 30 días</h3>
-      <canvas id="weightChart" style="margin-bottom:20px;"></canvas>
-      <canvas id="carbChart"></canvas>
+    <div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
+      <h3 style="margin-bottom:20px;">Análisis 30 Días</h3>
+      
+      <div class="chart-container">
+        <div class="chart-title">Evolución de Peso (kg)</div>
+        <canvas id="weightChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Calorías Netas (kcal)</div>
+        <canvas id="kcalChart"></canvas>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Carbohidratos (g)</div>
+        <canvas id="carbChart"></canvas>
+      </div>
+
       <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
     </div>
 </div>
@@ -168,7 +184,7 @@
   function openModal(id) { 
     document.getElementById(id).classList.add('open'); 
     if(id === 'historyModal') generarCalendario();
-    if(id === 'chartModal') setTimeout(cargarGraficas, 300);
+    if(id === 'chartModal') setTimeout(cargarGraficas, 400);
   }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   function cambiarMes(delta) { fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta); generarCalendario(); }
@@ -221,7 +237,7 @@
 
   function registrarPeso() {
     const p = prompt("Peso hoy (kg):");
-    if(p) db.ref(`keto_logs/${hoyISO()}/peso`).set(parseFloat(p)); // .set sobreescribe el anterior del mismo día
+    if(p) db.ref(`keto_logs/${hoyISO()}/peso`).set(parseFloat(p));
   }
 
   function registrarEjercicio() {
@@ -291,7 +307,6 @@
         let regs = all[ds].comidas || all[ds];
         Object.values(regs).forEach(v => { if(v.c){ tc += parseFloat(v.c); tkc += parseInt(v.k); } });
         if(all[ds].ejercicio) Object.values(all[ds].ejercicio).forEach(e => tke += e.k);
-        
         status = `<span class="status-icon">${tc > 30 ? '❌' : '✅'}</span>`;
         const pesoInfo = all[ds].peso ? `${all[ds].peso}k` : '';
         info = `<div class="cal-label">${tkc-tke}kcal<br>${pesoInfo}</div>`;
@@ -304,30 +319,13 @@
     const snap = await db.ref(`keto_logs/${fecha}`).once('value');
     const data = snap.val();
     if(!data) return;
-
     document.getElementById('detailDateTitle').innerText = new Date(fecha).toLocaleDateString('es-ES', {day:'numeric', month:'long'});
-    let html = `<b>⚖️ Peso:</b> ${data.peso ? data.peso + ' kg' : 'Sin registro'}<br><hr style="opacity:0.2;margin:10px 0;">`;
-    
     let tcTotal = 0, tkCons = 0, tkEjer = 0;
+    let html = `<b>⚖️ Peso:</b> ${data.peso ? data.peso + ' kg' : 'Sin registro'}<br><hr style="opacity:0.2;margin:10px 0;"><b>🍴 Comidas:</b><br>`;
     let regs = data.comidas || data;
-    html += `<b>🍴 Comidas:</b><br>`;
-    Object.values(regs).forEach(v => {
-        if(v.n) { 
-            html += `• ${v.n} (${v.c}g C | ${v.k} Kcal)<br>`;
-            tcTotal += parseFloat(v.c);
-            tkCons += parseInt(v.k);
-        }
-    });
-
+    Object.values(regs).forEach(v => { if(v.n) { html += `• ${v.n} (${v.c}g C | ${v.k} Kcal)<br>`; tcTotal += parseFloat(v.c); tkCons += parseInt(v.k); } });
     if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tkEjer += e.k);
-
-    html += `<hr style="opacity:0.2;margin:10px 0;">`;
-    html += `<b>📊 Resumen del día:</b><br>`;
-    html += `Total Carbs: ${tcTotal.toFixed(1)}g<br>`;
-    html += `Consumidas: ${tkCons} Kcal<br>`;
-    html += `Gastadas: ${tkEjer} Kcal<br>`;
-    html += `<b>Netas: ${tkCons - tkEjer} Kcal</b>`;
-
+    html += `<hr style="opacity:0.2;margin:10px 0;"><b>📊 Resumen:</b><br>Carbs: ${tcTotal.toFixed(1)}g<br>Kcal Cons: ${tkCons}<br>Kcal Quem: ${tkEjer}<br><b>Netas: ${tkCons - tkEjer} Kcal</b>`;
     document.getElementById('dayDetailContent').innerHTML = html;
     openModal('dayDetailModal');
   }
@@ -335,37 +333,50 @@
   function cargarGraficas() {
     db.ref('keto_logs').once('value', snap => {
         const all = snap.val() || {};
-        const labels = [], pesos = [], carbos = [];
+        const labels = [], pesos = [], carbos = [], kcals = [];
         const ultimos30 = [...Array(30).keys()].map(i => {
             const d = new Date(); d.setDate(d.getDate() - i);
             return d.toISOString().split('T')[0];
         }).reverse();
 
         ultimos30.forEach(d => {
-            labels.push(d.split('-')[2]);
+            labels.push(d.split('-')[2]); // Solo el número del día
             pesos.push(all[d]?.peso || null);
-            let c = 0;
+            let c = 0, k = 0, e = 0;
             let regs = all[d]?.comidas || all[d] || {};
-            Object.values(regs).forEach(v => { if(v.c) c += parseFloat(v.c); });
+            Object.values(regs).forEach(v => { if(v.c) { c += parseFloat(v.c); k += parseInt(v.k); } });
+            if(all[d]?.ejercicio) Object.values(all[d].ejercicio).forEach(ex => e += ex.k);
             carbos.push(c);
+            kcals.push(k - e);
         });
 
-        const chartW = document.getElementById('weightChart');
-        const chartC = document.getElementById('carbChart');
-        
-        // Destruir instancias previas si existen para evitar solapamiento
+        const options = {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { 
+                x: { ticks: { font: { size: 9 }, maxRotation: 0 } },
+                y: { ticks: { font: { size: 10 } } }
+            }
+        };
+
         if (window.wChart) window.wChart.destroy();
         if (window.cChart) window.cChart.destroy();
+        if (window.kChart) window.kChart.destroy();
 
-        window.wChart = new Chart(chartW, {
+        window.wChart = new Chart(document.getElementById('weightChart'), {
             type: 'line',
-            data: { labels, datasets: [{ label: 'Peso (kg)', data: pesos, borderColor: '#27ae60', tension: 0.3 }] },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { display: true } } }
+            data: { labels, datasets: [{ data: pesos, borderColor: '#3b82f6', tension: 0.3, pointRadius: 2 }] },
+            options: options
         });
-        window.cChart = new Chart(chartC, {
+        window.kChart = new Chart(document.getElementById('kcalChart'), {
+            type: 'line',
+            data: { labels, datasets: [{ data: kcals, borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)', fill: true, tension: 0.3 }] },
+            options: options
+        });
+        window.cChart = new Chart(document.getElementById('carbChart'), {
             type: 'bar',
-            data: { labels, datasets: [{ label: 'Carbos (g)', data: carbos, backgroundColor: '#333' }] },
-            options: { responsive: true, plugins: { legend: { display: false } } }
+            data: { labels, datasets: [{ data: carbos, backgroundColor: '#333' }] },
+            options: options
         });
     });
   }
