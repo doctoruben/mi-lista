@@ -6,6 +6,7 @@
 <title>Keto Tracker Pro</title>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #0f1117;
@@ -17,6 +18,9 @@
     --green-dim: rgba(34,197,94,0.12);
     --red: #ef4444;
     --red-dim: rgba(239,68,68,0.12);
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --purple: #a855f7;
     --text: #f1f5f9;
     --muted: #64748b;
     --accent: #3b82f6;
@@ -32,10 +36,7 @@
     justify-content: center;
     padding: 16px;
   }
-  .app {
-    width: 100%;
-    max-width: 390px;
-  }
+  .app { width: 100%; max-width: 390px; }
 
   /* HEADER */
   .header {
@@ -92,12 +93,17 @@
     margin-bottom: 4px;
   }
   .stat-value {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 600;
     color: var(--text);
     line-height: 1;
   }
   .stat-value span { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .stat-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
   .progress-track {
     background: rgba(255,255,255,0.06);
     border-radius: 6px;
@@ -119,13 +125,41 @@
     color: var(--muted);
   }
 
-  /* INPUT AREA */
-  .input-section {
+  /* QUICK ACTIONS */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
     margin-bottom: 16px;
   }
-  .input-wrap {
-    position: relative;
+  .btn-quick {
+    padding: 12px 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: border-color 0.15s, background 0.15s;
+    line-height: 1.2;
+    text-align: center;
   }
+  .btn-quick:hover { border-color: var(--border2); background: var(--surface2); }
+  .btn-quick .q-icon { font-size: 18px; }
+  .btn-quick.exercise { border-color: rgba(249,115,22,0.3); }
+  .btn-quick.exercise:hover { border-color: var(--orange); }
+  .btn-quick.weight { border-color: rgba(168,85,247,0.3); }
+  .btn-quick.weight:hover { border-color: var(--purple); }
+  .btn-quick.stats { border-color: rgba(59,130,246,0.3); }
+  .btn-quick.stats:hover { border-color: var(--blue); }
+
+  /* INPUT AREA */
+  .input-section { margin-bottom: 16px; }
   textarea {
     width: 100%;
     background: var(--surface);
@@ -178,16 +212,8 @@
     padding: 16px;
     margin-top: 12px;
   }
-  .result-name {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  .result-macros {
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 14px;
-  }
+  .result-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .result-macros { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
   .btn-add {
     width: 100%;
     background: var(--green);
@@ -234,7 +260,7 @@
   }
   .btn-remove:hover { border-color: var(--red); color: var(--red); }
 
-  /* MODAL */
+  /* MODAL BASE */
   .modal {
     display: none;
     position: fixed;
@@ -254,6 +280,10 @@
     padding: 24px 20px 20px;
     width: 100%;
     max-width: 390px;
+  }
+  .modal-box.tall {
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
   /* CALENDAR */
@@ -295,21 +325,25 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
-    gap: 2px;
+    gap: 1px;
     border: 1px solid transparent;
     cursor: default;
+    padding: 2px 1px;
   }
+  .cal-day.has-data { cursor: pointer; }
+  .cal-day.has-data:hover { border-color: var(--border2); background: var(--surface2); }
   .cal-day.today { border-color: var(--border2); background: var(--surface2); }
-  .cal-day .dot {
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    flex-shrink: 0;
+  .cal-day .cal-badge {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
   }
-  .cal-day.ok .dot { background: var(--green); }
-  .cal-day.over .dot { background: var(--red); }
-  .cal-day .cal-kcal { font-size: 9px; color: var(--muted); }
+  .cal-day.ok .cal-badge { color: var(--green); }
+  .cal-day.over .cal-badge { color: var(--red); }
+  .cal-day .cal-kcal { font-size: 8px; color: var(--muted); line-height: 1; }
+  .cal-day .cal-weight { font-size: 8px; color: var(--purple); line-height: 1; }
 
   .btn-close {
     width: 100%;
@@ -360,6 +394,132 @@
     font-size: 13px;
     padding: 24px 0;
   }
+
+  /* DAY DETAIL MODAL */
+  .day-detail-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    text-transform: capitalize;
+  }
+  .detail-section {
+    margin-bottom: 16px;
+  }
+  .detail-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .detail-row .label { color: var(--muted); }
+  .detail-row .value { font-weight: 500; }
+  .detail-total {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .detail-total-card {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .detail-total-card .dtc-val {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .detail-total-card .dtc-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .dtc-carbs { color: var(--orange); }
+  .dtc-kcal { color: var(--blue); }
+  .dtc-weight { color: var(--purple); }
+
+  /* STATS MODAL */
+  .stats-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-transform: capitalize;
+  }
+  .stats-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .chart-block {
+    margin-bottom: 24px;
+  }
+  .chart-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .chart-wrap {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 12px;
+    height: 130px;
+    position: relative;
+  }
+
+  /* SIMPLE INPUT MODAL */
+  .simple-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .simple-modal-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .simple-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+    margin-bottom: 14px;
+  }
+  .simple-input:focus { border-color: var(--accent); }
+  .btn-confirm {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    margin-bottom: 8px;
+  }
+  .btn-confirm:hover { opacity: 0.9; }
+  .btn-confirm.orange { background: var(--orange); }
+  .btn-confirm.purple { background: var(--purple); }
 </style>
 </head>
 <body>
@@ -390,14 +550,31 @@
         <div class="stat-value"><span id="totalCarbs">0</span><span> / 30g</span></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Calorías</div>
+        <div class="stat-label">Calorías netas</div>
         <div class="stat-value" id="totalKcal">0</div>
+        <div class="stat-sub" id="kcalDetail"></div>
       </div>
     </div>
     <div class="progress-track"><div id="barFill"></div></div>
     <div class="progress-labels">
       <span>0g</span><span>Límite diario keto: 30g</span><span>30g</span>
     </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="quick-actions">
+    <button class="btn-quick exercise" onclick="openModal('exerciseModal')">
+      <span class="q-icon">🏃</span>
+      <span>Añadir<br>ejercicio</span>
+    </button>
+    <button class="btn-quick weight" onclick="openModal('weightModal')">
+      <span class="q-icon">⚖️</span>
+      <span>Registrar<br>peso</span>
+    </button>
+    <button class="btn-quick stats" onclick="openStatsModal()">
+      <span class="q-icon">📈</span>
+      <span>Evolución<br>del mes</span>
+    </button>
   </div>
 
   <!-- INPUT -->
@@ -424,7 +601,7 @@
 
 <!-- MODAL HISTORIAL -->
 <div id="histModal" class="modal" onclick="closeOnBg(event,'histModal')">
-  <div class="modal-box" onclick="event.stopPropagation()">
+  <div class="modal-box tall" onclick="event.stopPropagation()">
     <div class="cal-header">
       <button class="cal-nav" onclick="cambiarMes(-1)">‹</button>
       <span class="cal-title" id="calTitle"></span>
@@ -450,6 +627,60 @@
   </div>
 </div>
 
+<!-- MODAL EJERCICIO -->
+<div id="exerciseModal" class="modal" onclick="closeOnBg(event,'exerciseModal')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="simple-modal-title">🏃 Añadir ejercicio</div>
+    <div class="simple-modal-sub">¿Cuántas calorías has quemado?</div>
+    <input class="simple-input" id="exerciseInput" type="number" placeholder="0" min="0" inputmode="numeric">
+    <button class="btn-confirm orange" onclick="guardarEjercicio()">Guardar ejercicio</button>
+    <button class="btn-close" style="margin-top:0" onclick="closeModal('exerciseModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL PESO -->
+<div id="weightModal" class="modal" onclick="closeOnBg(event,'weightModal')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="simple-modal-title">⚖️ Registrar peso</div>
+    <div class="simple-modal-sub">Introduce tu peso de hoy (kg)</div>
+    <input class="simple-input" id="weightInput" type="number" placeholder="0.0" step="0.1" min="0" inputmode="decimal">
+    <button class="btn-confirm purple" onclick="guardarPeso()">Guardar peso</button>
+    <button class="btn-close" style="margin-top:0" onclick="closeModal('weightModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL DETALLE DÍA -->
+<div id="dayModal" class="modal" onclick="closeOnBg(event,'dayModal')">
+  <div class="modal-box tall" onclick="event.stopPropagation()">
+    <div class="day-detail-title" id="dayModalTitle"></div>
+    <div id="dayModalContent"></div>
+    <button class="btn-close" onclick="closeModal('dayModal')">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL ESTADÍSTICAS -->
+<div id="statsModal" class="modal" onclick="closeOnBg(event,'statsModal')">
+  <div class="modal-box tall" onclick="event.stopPropagation()">
+    <div class="stats-title" id="statsTitle"></div>
+    <div class="stats-subtitle">Evolución mensual</div>
+
+    <div class="chart-block">
+      <div class="chart-label">Carbohidratos (g)</div>
+      <div class="chart-wrap"><canvas id="chartCarbs"></canvas></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-label">Calorías (consumidas vs quemadas)</div>
+      <div class="chart-wrap"><canvas id="chartKcal"></canvas></div>
+    </div>
+    <div class="chart-block">
+      <div class="chart-label">Peso (kg)</div>
+      <div class="chart-wrap"><canvas id="chartWeight"></canvas></div>
+    </div>
+
+    <button class="btn-close" onclick="closeModal('statsModal')">Cerrar</button>
+  </div>
+</div>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
@@ -466,6 +697,7 @@
 
   let calView = new Date();
   let tempFood = null;
+  let chartInstances = {};
 
   function getHoyISO() {
     return new Date().toISOString().split('T')[0];
@@ -480,6 +712,14 @@
     document.getElementById('foodInput').addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analizarIA(); }
     });
+
+    // Enter en inputs numéricos
+    document.getElementById('exerciseInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') guardarEjercicio();
+    });
+    document.getElementById('weightInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') guardarPeso();
+    });
   };
 
   function actualizarKeyStatus() {
@@ -491,10 +731,16 @@
     const m = document.getElementById(id);
     m.classList.add('open');
     if (id === 'histModal') { calView = new Date(); generarCalendario(); }
+    if (id === 'exerciseModal') { setTimeout(() => document.getElementById('exerciseInput').focus(), 50); }
+    if (id === 'weightModal') { setTimeout(() => document.getElementById('weightInput').focus(), 50); }
   }
+
   function closeModal(id) {
     document.getElementById(id).classList.remove('open');
+    if (id === 'exerciseModal') document.getElementById('exerciseInput').value = '';
+    if (id === 'weightModal') document.getElementById('weightInput').value = '';
   }
+
   function closeOnBg(e, id) {
     if (e.target === document.getElementById(id)) closeModal(id);
   }
@@ -512,6 +758,25 @@
     }
   }
 
+  // ── EJERCICIO ──────────────────────────────────────────
+  function guardarEjercicio() {
+    const val = parseFloat(document.getElementById('exerciseInput').value);
+    if (!val || val <= 0) { alert("Introduce unas calorías válidas"); return; }
+    const hoy = getHoyISO();
+    db.ref(`keto_extra/${hoy}/exercise`).set(val);
+    closeModal('exerciseModal');
+  }
+
+  // ── PESO ───────────────────────────────────────────────
+  function guardarPeso() {
+    const val = parseFloat(document.getElementById('weightInput').value);
+    if (!val || val <= 0) { alert("Introduce un peso válido"); return; }
+    const hoy = getHoyISO();
+    db.ref(`keto_extra/${hoy}/weight`).set(val);
+    closeModal('weightModal');
+  }
+
+  // ── ANÁLISIS IA ────────────────────────────────────────
   async function analizarIA() {
     const key = localStorage.getItem('GEMINI_KEY');
     const text = document.getElementById('foodInput').value.trim();
@@ -540,7 +805,6 @@
       });
 
       const data = await res.json();
-
       if (!data.candidates || !data.candidates[0]?.content) {
         throw new Error(data.error?.message || "La IA no generó respuesta. Inténtalo de nuevo.");
       }
@@ -550,7 +814,6 @@
       if (i === -1 || f === -1) throw new Error("Formato de respuesta inesperado.");
 
       tempFood = JSON.parse(txt.substring(i, f + 1));
-
       document.getElementById('resName').innerText = tempFood.n;
       document.getElementById('resNutri').innerText =
         `${parseFloat(tempFood.c).toFixed(1)}g carbohidratos  ·  ${parseInt(tempFood.k)} kcal`;
@@ -572,15 +835,21 @@
     tempFood = null;
   }
 
+  // ── FIREBASE LISTENER (hoy) ────────────────────────────
   function escucharFirebase() {
-    db.ref(`keto_logs/${getHoyISO()}`).on('value', snap => {
+    const hoy = getHoyISO();
+
+    // Escuchar comidas
+    db.ref(`keto_logs/${hoy}`).on('value', snap => {
       const data = snap.val() || {};
       const list = document.getElementById('dailyList');
-
       const keys = Object.keys(data).reverse();
+
       if (!keys.length) {
         list.innerHTML = '<div class="empty-state">Sin registros aún</div>';
-        actualizarTotales(0, 0);
+        window._todayFoodCarbs = 0;
+        window._todayFoodKcal = 0;
+        actualizarTotales();
         return;
       }
 
@@ -595,7 +864,7 @@
               <div class="food-name">${item.n}</div>
               <div class="food-macro">${parseFloat(item.c).toFixed(1)}g carbs · ${parseInt(item.k)} kcal</div>
             </div>
-            <button class="btn-remove" onclick="db.ref('keto_logs/${getHoyISO()}/${id}').remove()" title="Eliminar">
+            <button class="btn-remove" onclick="db.ref('keto_logs/${hoy}/${id}').remove()" title="Eliminar">
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
                 <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
               </svg>
@@ -603,19 +872,42 @@
           </div>`;
       });
       list.innerHTML = html;
-      actualizarTotales(tc, tk);
+      window._todayFoodCarbs = tc;
+      window._todayFoodKcal = tk;
+      actualizarTotales();
+    });
+
+    // Escuchar ejercicio + peso
+    db.ref(`keto_extra/${hoy}`).on('value', snap => {
+      const data = snap.val() || {};
+      window._todayExercise = data.exercise || 0;
+      window._todayWeight = data.weight || null;
+      actualizarTotales();
     });
   }
 
-  function actualizarTotales(tc, tk) {
+  function actualizarTotales() {
+    const tc = window._todayFoodCarbs || 0;
+    const foodKcal = window._todayFoodKcal || 0;
+    const exercise = window._todayExercise || 0;
+    const netKcal = foodKcal - exercise;
+
     document.getElementById('totalCarbs').innerText = tc.toFixed(1);
-    document.getElementById('totalKcal').innerText = tk;
+    document.getElementById('totalKcal').innerText = netKcal;
+
+    let detail = '';
+    if (exercise > 0) {
+      detail = `${foodKcal} ingeridas − ${exercise} quemadas`;
+    }
+    document.getElementById('kcalDetail').innerText = detail;
+
     const pct = Math.min((tc / 30) * 100, 100);
     const bar = document.getElementById('barFill');
     bar.style.width = pct + '%';
     bar.style.background = tc > 30 ? 'var(--red)' : 'var(--green)';
   }
 
+  // ── CALENDARIO ────────────────────────────────────────
   async function generarCalendario() {
     const grid = document.getElementById('calGrid');
     const year = calView.getFullYear();
@@ -629,8 +921,12 @@
       grid.innerHTML += `<div class="cal-weekday">${d}</div>`;
     });
 
-    const snap = await db.ref('keto_logs').once('value');
-    const all = snap.val() || {};
+    const [snapLogs, snapExtra] = await Promise.all([
+      db.ref('keto_logs').once('value'),
+      db.ref('keto_extra').once('value')
+    ]);
+    const allLogs = snapLogs.val() || {};
+    const allExtra = snapExtra.val() || {};
 
     const firstDayRaw = new Date(year, month, 1).getDay();
     const offset = (firstDayRaw === 0) ? 6 : firstDayRaw - 1;
@@ -643,26 +939,230 @@
       const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
 
-      let dotHtml = '', kcalHtml = '', cls = '';
-      if (all[ds]) {
+      let badgeHtml = '', kcalHtml = '', weightHtml = '', cls = '', hasData = false;
+
+      const dayLogs = allLogs[ds];
+      const dayExtra = allExtra[ds] || {};
+
+      if (dayLogs) {
+        hasData = true;
         let carbs = 0, kcal = 0;
-        Object.values(all[ds]).forEach(v => {
+        Object.values(dayLogs).forEach(v => {
           carbs += parseFloat(v.c || 0);
           kcal += parseInt(v.k || 0);
         });
+        const exercise = dayExtra.exercise || 0;
+        const netKcal = kcal - exercise;
         cls = carbs > 30 ? 'over' : 'ok';
-        dotHtml = '<div class="dot"></div>';
-        kcalHtml = `<span class="cal-kcal">${kcal}</span>`;
+        badgeHtml = `<div class="cal-badge">${carbs > 30 ? '✗' : '✓'}</div>`;
+        kcalHtml = `<span class="cal-kcal">${netKcal} kcal</span>`;
+      } else if (dayExtra.weight) {
+        hasData = true;
+      }
+
+      if (dayExtra.weight) {
+        weightHtml = `<span class="cal-weight">${dayExtra.weight}kg</span>`;
       }
 
       if (isToday) cls += ' today';
+      if (hasData) cls += ' has-data';
+
+      const clickAttr = hasData ? `onclick="verDia('${ds}')"` : '';
+
       grid.innerHTML += `
-        <div class="cal-day ${cls}">
+        <div class="cal-day ${cls}" ${clickAttr}>
           <span>${d}</span>
-          ${dotHtml}
+          ${badgeHtml}
           ${kcalHtml}
+          ${weightHtml}
         </div>`;
     }
+  }
+
+  // ── DETALLE DÍA ───────────────────────────────────────
+  async function verDia(ds) {
+    const [snapLogs, snapExtra] = await Promise.all([
+      db.ref(`keto_logs/${ds}`).once('value'),
+      db.ref(`keto_extra/${ds}`).once('value')
+    ]);
+    const logs = snapLogs.val() || {};
+    const extra = snapExtra.val() || {};
+
+    const fecha = new Date(ds + 'T12:00:00');
+    document.getElementById('dayModalTitle').innerText =
+      fecha.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+
+    let totalCarbs = 0, totalKcal = 0;
+    const items = Object.values(logs);
+    items.forEach(v => {
+      totalCarbs += parseFloat(v.c || 0);
+      totalKcal += parseInt(v.k || 0);
+    });
+    const exercise = extra.exercise || 0;
+    const weight = extra.weight || null;
+    const netKcal = totalKcal - exercise;
+
+    let foodHtml = '';
+    if (items.length) {
+      foodHtml = `
+        <div class="detail-section">
+          <div class="detail-section-title">Alimentos</div>
+          ${items.map(v => `
+            <div class="detail-row">
+              <span class="label">${v.n}</span>
+              <span class="value">${parseFloat(v.c).toFixed(1)}g · ${parseInt(v.k)} kcal</span>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    const carbsOk = totalCarbs <= 30;
+
+    document.getElementById('dayModalContent').innerHTML = `
+      <div class="detail-total">
+        <div class="detail-total-card">
+          <div class="dtc-val dtc-carbs">${totalCarbs.toFixed(1)}g</div>
+          <div class="dtc-label">Carbos</div>
+          <div style="font-size:14px;margin-top:4px">${carbsOk ? '✓' : '✗'}</div>
+        </div>
+        <div class="detail-total-card">
+          <div class="dtc-val dtc-kcal">${netKcal}</div>
+          <div class="dtc-label">Kcal netas</div>
+          ${exercise > 0 ? `<div style="font-size:9px;color:var(--muted);margin-top:4px">${totalKcal}−${exercise}</div>` : ''}
+        </div>
+        <div class="detail-total-card">
+          <div class="dtc-val dtc-weight">${weight ? weight + 'kg' : '—'}</div>
+          <div class="dtc-label">Peso</div>
+        </div>
+      </div>
+      ${foodHtml}
+      ${exercise > 0 ? `
+        <div class="detail-section">
+          <div class="detail-section-title">Ejercicio</div>
+          <div class="detail-row">
+            <span class="label">Calorías quemadas</span>
+            <span class="value" style="color:var(--orange)">${exercise} kcal</span>
+          </div>
+        </div>` : ''}
+    `;
+
+    closeModal('histModal');
+    openModal('dayModal');
+  }
+
+  // ── ESTADÍSTICAS ──────────────────────────────────────
+  async function openStatsModal() {
+    const now = new Date();
+    document.getElementById('statsTitle').innerText =
+      new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(now);
+
+    openModal('statsModal');
+
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const [snapLogs, snapExtra] = await Promise.all([
+      db.ref('keto_logs').once('value'),
+      db.ref('keto_extra').once('value')
+    ]);
+    const allLogs = snapLogs.val() || {};
+    const allExtra = snapExtra.val() || {};
+
+    const labels = [], carbs = [], kcalIn = [], kcalNet = [], weights = [];
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      labels.push(d);
+      const dayLogs = allLogs[ds];
+      const dayExtra = allExtra[ds] || {};
+      let dayCarbs = 0, dayKcal = 0;
+      if (dayLogs) {
+        Object.values(dayLogs).forEach(v => {
+          dayCarbs += parseFloat(v.c || 0);
+          dayKcal += parseInt(v.k || 0);
+        });
+      }
+      const exercise = dayExtra.exercise || 0;
+      carbs.push(dayCarbs || null);
+      kcalIn.push(dayKcal || null);
+      kcalNet.push(dayKcal > 0 || exercise > 0 ? dayKcal - exercise : null);
+      weights.push(dayExtra.weight || null);
+    }
+
+    // Destruir gráficas anteriores si existen
+    ['chartCarbs','chartKcal','chartWeight'].forEach(id => {
+      if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+    });
+
+    const baseOpts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    };
+
+    // Carbs
+    chartInstances['chartCarbs'] = new Chart(document.getElementById('chartCarbs'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data: carbs,
+          backgroundColor: carbs.map(v => v > 30 ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)'),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        ...baseOpts,
+        plugins: {
+          ...baseOpts.plugins,
+          annotation: {
+            annotations: {
+              limit: { type: 'line', yMin: 30, yMax: 30, borderColor: 'rgba(239,68,68,0.4)', borderWidth: 1, borderDash: [4,4] }
+            }
+          }
+        }
+      }
+    });
+
+    // Kcal
+    chartInstances['chartKcal'] = new Chart(document.getElementById('chartKcal'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Ingeridas', data: kcalIn, backgroundColor: 'rgba(59,130,246,0.5)', borderRadius: 4 },
+          { label: 'Netas', data: kcalNet, backgroundColor: 'rgba(249,115,22,0.7)', borderRadius: 4 }
+        ]
+      },
+      options: {
+        ...baseOpts,
+        plugins: { legend: { display: true, labels: { color: '#64748b', font: { size: 9 }, boxWidth: 10 } } }
+      }
+    });
+
+    // Peso
+    chartInstances['chartWeight'] = new Chart(document.getElementById('chartWeight'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: weights,
+          borderColor: 'rgba(168,85,247,0.9)',
+          backgroundColor: 'rgba(168,85,247,0.1)',
+          pointBackgroundColor: 'rgba(168,85,247,1)',
+          pointRadius: 4,
+          tension: 0.3,
+          fill: true,
+          spanGaps: true
+        }]
+      },
+      options: baseOpts
+    });
   }
 </script>
 </body>
