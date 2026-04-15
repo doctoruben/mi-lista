@@ -3,120 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keto Tracker Pro v2</title>
+<title>Keto Tracker Pro v2.1</title>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-<!-- Chart.js para las gráficas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root {
     --bg: #0f1117;
     --surface: #181c24;
     --surface2: #1e2330;
-    --border: rgba(255,255,255,0.07);
-    --border2: rgba(255,255,255,0.13);
+    --border: rgba(255,255,255,0.08);
     --green: #22c55e;
-    --green-dim: rgba(34,197,94,0.12);
     --red: #ef4444;
-    --red-dim: rgba(239,68,68,0.12);
     --text: #f1f5f9;
-    --muted: #64748b;
+    --muted: #94a3b8;
     --accent: #3b82f6;
-    --radius: 16px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: var(--bg);
     color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    padding: 16px;
+    display: flex; justify-content: center; padding: 16px;
   }
-  .app { width: 100%; max-width: 390px; }
+  .app { width: 100%; max-width: 400px; }
 
   /* HEADER */
-  .header { display: flex; justify-content: space-between; align-items: center; padding: 8px 0 20px; }
-  .header-title { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 25px; }
+  .header b { font-size: 18px; font-weight: 600; }
   .icon-btn {
-    width: 38px; height: 38px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--muted);
-    transition: border-color 0.15s, color 0.15s;
-    text-decoration: none;
-    font-size: 16px;
-  }
-  .icon-btn:hover { border-color: var(--border2); color: var(--text); }
-
-  /* DASHBOARD */
-  .dashboard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
-  .dash-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-  .stat-value { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1; }
-  .stat-value span { font-size: 13px; font-weight: 400; color: var(--muted); }
-  .progress-track { background: rgba(255,255,255,0.06); border-radius: 6px; height: 6px; overflow: hidden; }
-  #barFill { height: 100%; border-radius: 6px; background: var(--green); width: 0%; transition: width 0.6s ease; }
-  .progress-labels { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--muted); }
-
-  /* ACTION BUTTONS */
-  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  .btn-secondary {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 42px; height: 42px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 12px;
+    cursor: pointer; color: var(--text); display: flex; align-items: center; justify-content: center;
   }
 
-  /* INPUT AREA */
+  /* DASHBOARD REFINADO */
+  .dashboard {
+    background: linear-gradient(145deg, var(--surface), var(--bg));
+    border: 1px solid var(--border); border-radius: 24px;
+    padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  }
+  .dash-stats { display: flex; justify-content: space-between; margin-bottom: 20px; }
+  .stat-card { text-align: center; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; }
+  .stat-value small { font-size: 14px; color: var(--muted); font-weight: 400; }
+
+  .progress-track { background: #2d3748; border-radius: 10px; height: 8px; overflow: hidden; }
+  #barFill { height: 100%; background: var(--green); width: 0%; transition: width 0.8s ease; }
+
+  /* ACCIONES */
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .btn-sec {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 14px; border-radius: 14px; color: var(--text); font-weight: 500; cursor: pointer;
+  }
+
   textarea {
-    width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 16px; color: var(--text); font-size: 14px; font-family: inherit; resize: none; outline: none;
+    width: 100%; background: var(--surface); border: 2px solid var(--border);
+    border-radius: 18px; padding: 16px; color: var(--text); font-size: 15px; outline: none;
   }
-  .btn-analyze {
-    width: 100%; margin-top: 10px; padding: 14px; background: var(--accent); color: white; border: none;
-    border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  .btn-main {
+    width: 100%; margin-top: 12px; padding: 16px; background: var(--accent);
+    color: white; border: none; border-radius: 16px; font-size: 15px; font-weight: 600; cursor: pointer;
   }
 
-  /* RESULT CARD */
-  .result-card { display: none; background: var(--green-dim); border: 1px solid rgba(34,197,94,0.2); border-radius: var(--radius); padding: 16px; margin-top: 12px; }
-  .result-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-  .result-macros { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-  .btn-group { display: flex; gap: 8px; }
-  .btn-add { flex: 2; background: var(--green); color: #0a1a0f; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; }
-  .btn-cancel { flex: 1; background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 12px; border-radius: 10px; cursor: pointer; }
+  /* RESULTADOS */
+  .result-card {
+    display: none; background: #1e293b; border: 1px solid var(--accent);
+    border-radius: 20px; padding: 20px; margin-top: 15px;
+  }
+  .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+  .btn-confirm { flex: 2; background: var(--green); color: #000; border: none; padding: 12px; border-radius: 12px; font-weight: 700; }
+  .btn-cancel { flex: 1; background: transparent; color: var(--text); border: 1px solid var(--border); padding: 12px; border-radius: 12px; }
 
-  /* LOG */
-  .log-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .log-data { font-size: 14px; }
-  .log-sub { font-size: 12px; color: var(--muted); }
+  /* LISTADO */
+  .log-item {
+    background: var(--surface); margin-bottom: 10px; padding: 16px;
+    border-radius: 16px; display: flex; justify-content: space-between; align-items: center;
+  }
 
-  /* MODALS */
-  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+  /* MODALES */
+  .modal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  }
   .modal.open { display: flex; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 20px; padding: 20px; width: 100%; max-width: 390px; max-height: 90vh; overflow-y: auto; }
+  .modal-box { background: var(--surface); border-radius: 28px; padding: 25px; width: 100%; max-width: 400px; }
 
-  /* CALENDAR */
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 15px; }
+  /* CALENDARIO ESTILO ANTERIOR */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 20px; }
   .cal-day {
-    aspect-ratio: 0.8; background: var(--surface2); border-radius: 8px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; font-size: 11px; cursor: pointer; border: 1px solid transparent;
+    aspect-ratio: 1; background: var(--surface2); border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 12px; cursor: pointer; border: 1px solid transparent; position: relative;
   }
-  .cal-day.today { border-color: var(--accent); }
-  .cal-status { font-size: 10px; font-weight: bold; margin: 2px 0; }
-  .cal-info { font-size: 8px; color: var(--muted); text-align: center; }
+  .cal-day.today { border-color: var(--accent); background: #252b3b; }
+  .cal-mark { font-size: 10px; font-weight: bold; margin-top: 2px; }
+  .cal-kcal { font-size: 8px; color: var(--muted); margin-top: 1px; }
 
-  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -125,96 +111,92 @@
 <div class="app">
   <div class="header">
     <button class="icon-btn" onclick="openModal('histModal')">📅</button>
-    <span class="header-title" id="displayDate"></span>
+    <b id="displayDate">Cargando...</b>
     <button class="icon-btn" onclick="openModal('cfgModal')">⚙️</button>
   </div>
 
   <div class="dashboard">
     <div class="dash-stats">
       <div class="stat-card">
-        <div class="stat-label">Netas (In - Out)</div>
+        <div class="stat-label">Calorías Netas</div>
         <div class="stat-value" id="totalNetKcal">0</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Carbos</div>
-        <div class="stat-value"><span id="totalCarbs">0</span><span>/30g</span></div>
+        <div class="stat-label">Carbohidratos</div>
+        <div class="stat-value"><span id="totalCarbs">0</span><small>/30g</small></div>
       </div>
     </div>
     <div class="progress-track"><div id="barFill"></div></div>
-    <div class="progress-labels"><span>Hoy</span><span id="totalConsumidas">0 kcal consumidas</span></div>
   </div>
 
   <div class="action-grid">
-    <button class="btn-secondary" onclick="registrarPeso()">⚖️ Peso</button>
-    <button class="btn-secondary" onclick="registrarEjercicio()">🔥 Ejercicio</button>
+    <button class="btn-sec" onclick="registrarPeso()">⚖️ Peso</button>
+    <button class="btn-sec" onclick="registrarEjercicio()">🔥 Ejercicio</button>
   </div>
 
-  <textarea id="foodInput" rows="2" placeholder="¿Qué has comido?"></textarea>
-  <button class="btn-analyze" id="btnAnalyze" onclick="analizarIA()">
-    <span id="btnContent">Analizar ✨</span>
+  <textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
+  <button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
+    <span id="btnContent">Analizar con IA ✨</span>
   </button>
-  <div id="status" style="text-align:center; font-size:12px; color:var(--muted); margin-top:8px;"></div>
 
   <div id="resultCard" class="result-card">
-    <div class="result-name" id="resName"></div>
-    <div class="result-macros" id="resNutri"></div>
+    <h3 id="resName"></h3>
+    <p id="resNutri" style="color: var(--muted); margin: 5px 0 15px;"></p>
     <div class="btn-group">
-      <button class="btn-add" onclick="guardar()">Añadir</button>
+      <button class="btn-confirm" onclick="guardar()">Añadir</button>
       <button class="btn-cancel" onclick="cancelarAnalisis()">Cancelar</button>
     </div>
   </div>
 
-  <div style="margin-top:20px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <span class="header-title">Registros de hoy</span>
-      <button class="btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="openModal('chartModal')">📈 Gráficas</button>
+  <div style="margin-top: 30px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+      <span style="font-size:12px; color:var(--muted); text-transform:uppercase;">Hoy</span>
+      <button class="btn-sec" style="padding:6px 12px; font-size:11px;" onclick="openModal('chartModal')">Ver Gráficas 📈</button>
     </div>
     <div id="dailyList"></div>
   </div>
 </div>
 
-<!-- MODAL HISTORIAL -->
 <div id="histModal" class="modal" onclick="closeModal('histModal')">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
       <button onclick="cambiarMes(-1)" class="icon-btn">‹</button>
-      <b id="calTitle"></b>
+      <b id="calTitle" style="text-transform: capitalize;"></b>
       <button onclick="cambiarMes(1)" class="icon-btn">›</button>
     </div>
     <div class="cal-grid" id="calGrid"></div>
-    <button class="btn-analyze" style="background:var(--surface2); margin-top:20px;" onclick="closeModal('histModal')">Cerrar</button>
+    <button class="btn-main" style="background:var(--surface2);" onclick="closeModal('histModal')">Cerrar</button>
   </div>
 </div>
 
-<!-- MODAL DETALLE DÍA -->
 <div id="dayDetailModal" class="modal" onclick="closeModal('dayDetailModal')">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <h3 id="detailDateTitle" style="margin-bottom:15px;"></h3>
-    <div id="dayDetailContent"></div>
-    <button class="btn-analyze" style="margin-top:20px;" onclick="closeModal('dayDetailModal')">Cerrar</button>
+    <h3 id="detailDateTitle" style="margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:10px;"></h3>
+    <div id="dayDetailContent" style="line-height:1.6; font-size:14px;"></div>
+    <button class="btn-main" onclick="closeModal('dayDetailModal')">Cerrar</button>
   </div>
 </div>
 
-<!-- MODAL GRÁFICAS -->
 <div id="chartModal" class="modal" onclick="closeModal('chartModal')">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:500px;">
-    <h3 style="margin-bottom:15px;">Evolución Mensual</h3>
-    <canvas id="weightChart" style="margin-bottom:20px;"></canvas>
+    <h3 style="margin-bottom:20px;">Tu Evolución</h3>
+    <canvas id="weightChart" style="margin-bottom:30px;"></canvas>
     <canvas id="carbChart"></canvas>
-    <button class="btn-analyze" style="margin-top:20px;" onclick="closeModal('chartModal')">Cerrar</button>
+    <button class="btn-main" onclick="closeModal('chartModal')">Cerrar</button>
   </div>
 </div>
 
-<!-- MODAL CONFIG -->
 <div id="cfgModal" class="modal" onclick="closeModal('cfgModal')">
   <div class="modal-box" onclick="event.stopPropagation()">
     <h3>Ajustes</h3>
-    <button class="btn-analyze" onclick="cambiarKey()" style="margin-top:15px;">🔑 Configurar API Key</button>
-    <button class="btn-analyze" style="background:none; border:1px solid var(--border); margin-top:10px;" onclick="closeModal('cfgModal')">Cerrar</button>
+    <p style="color:var(--muted); font-size:13px; margin: 10px 0 20px;">Configura tu clave de acceso a la IA.</p>
+    <button class="btn-main" onclick="cambiarKey()">🔑 Cambiar API Key</button>
+    <button class="btn-main" style="background:none;" onclick="closeModal('cfgModal')">Cerrar</button>
   </div>
 </div>
 
 <script>
+  // CONFIGURACIÓN FIREBASE (Mantén la tuya)
   const firebaseConfig = {
     apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
     authDomain: "lista-compra-9d6f5.firebaseapp.com",
@@ -233,17 +215,16 @@
   const getHoyISO = () => new Date().toISOString().split('T')[0];
 
   window.onload = () => {
-    document.getElementById('displayDate').innerText = new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'short' });
+    document.getElementById('displayDate').innerText = new Date().toLocaleDateString('es-ES', { day:'numeric', month:'long' });
     escucharFirebase();
   };
 
   function openModal(id) { 
     document.getElementById(id).classList.add('open'); 
     if(id === 'histModal') generarCalendario();
-    if(id === 'chartModal') cargarGraficas();
+    if(id === 'chartModal') setTimeout(cargarGraficas, 100);
   }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
   function cambiarMes(d) { calView.setMonth(calView.getMonth() + d); generarCalendario(); }
 
   function cambiarKey() {
@@ -254,12 +235,12 @@
   async function analizarIA() {
     const key = localStorage.getItem('GEMINI_KEY');
     const text = document.getElementById('foodInput').value.trim();
-    if(!key || !text) return;
+    if(!key || !text) { alert("Configura la API Key primero."); return; }
 
     const btn = document.getElementById('btnAnalyze');
     const btnContent = document.getElementById('btnContent');
     btn.disabled = true;
-    btnContent.innerHTML = '<div class="spinner"></div>';
+    btnContent.innerHTML = '<div class="spinner" style="margin:auto"></div>';
 
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
@@ -273,11 +254,11 @@
       tempFood = JSON.parse(txt);
       
       document.getElementById('resName').innerText = tempFood.n;
-      document.getElementById('resNutri').innerText = `${tempFood.c}g carbs · ${tempFood.k} kcal`;
+      document.getElementById('resNutri').innerText = `${tempFood.c}g de Carbohidratos · ${tempFood.k} Kcal`;
       document.getElementById('resultCard').style.display = 'block';
-    } catch (e) { alert("Error en la IA"); }
+    } catch (e) { alert("Error al analizar. Revisa tu conexión o API Key."); }
     btn.disabled = false;
-    btnContent.innerHTML = 'Analizar ✨';
+    btnContent.innerText = 'Analizar con IA ✨';
   }
 
   function cancelarAnalisis() {
@@ -294,56 +275,44 @@
   }
 
   function registrarPeso() {
-    const p = prompt("Peso de hoy (kg):");
+    const p = prompt("Peso hoy (kg):");
     if(p && !isNaN(p)) db.ref(`keto_logs/${getHoyISO()}/peso`).set(parseFloat(p));
   }
 
   function registrarEjercicio() {
     const k = prompt("Calorías quemadas:");
-    if(k && !isNaN(k)) db.ref(`keto_logs/${getHoyISO()}/ejercicio`).push({ k: parseInt(k), t: new Date().toLocaleTimeString() });
+    if(k && !isNaN(k)) db.ref(`keto_logs/${getHoyISO()}/ejercicio`).push({ k: parseInt(k) });
   }
 
   function escucharFirebase() {
     db.ref(`keto_logs/${getHoyISO()}`).on('value', snap => {
-        const data = snap.val() || {};
-        const list = document.getElementById('dailyList');
-        list.innerHTML = "";
-        
-        let tc = 0, tkCons = 0, tkEjer = 0;
-        
-        // --- LÓGICA DE COMPATIBILIDAD ---
-        // 1. Miramos si hay datos en la nueva carpeta 'comidas'
-        let registros = data.comidas || {};
-        
-        // 2. Si no hay carpeta 'comidas', revisamos si los datos están sueltos (formato viejo)
-        if (Object.keys(registros).length === 0) {
-            // Filtramos para no confundir 'peso' o 'ejercicio' con comida vieja
-            Object.keys(data).forEach(key => {
-                if (key !== 'peso' && key !== 'ejercicio' && typeof data[key] === 'object') {
-                    registros[key] = data[key];
-                }
-            });
-        }
+      const data = snap.val() || {};
+      const list = document.getElementById('dailyList');
+      list.innerHTML = "";
+      
+      let tc = 0, tkCons = 0, tkEjer = 0;
+      
+      // Compatibilidad y lectura de comidas
+      const registros = data.comidas || {};
+      Object.keys(registros).reverse().forEach(id => {
+        const item = registros[id];
+        tc += parseFloat(item.c); tkCons += parseInt(item.k);
+        list.innerHTML += `<div class="log-item">
+          <div><div style="font-weight:600">${item.n}</div><div style="font-size:12px;color:var(--muted)">${item.c}g carbs · ${item.k} kcal</div></div>
+          <button style="background:none; border:none; color:var(--red); cursor:pointer;" onclick="db.ref('keto_logs/${getHoyISO()}/comidas/${id}').remove()">✕</button>
+        </div>`;
+      });
 
-        Object.keys(registros).reverse().forEach(id => {
-            const item = registros[id];
-            tc += parseFloat(item.c || 0); 
-            tkCons += parseInt(item.k || 0);
-            list.innerHTML += `<div class="log-item">
-                <div><div class="log-data">${item.n}</div><div class="log-sub">${item.c}g carbs · ${item.k} kcal</div></div>
-                <button class="btn-cancel" style="padding:5px 10px;" onclick="eliminarRegistro('${id}')">✕</button>
-            </div>`;
-        });
-        // ... (el resto del código de calorías netas y barra de progreso sigue igual)
+      if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tkEjer += parseInt(e.k));
+
+      document.getElementById('totalCarbs').innerText = tc.toFixed(1);
+      document.getElementById('totalNetKcal').innerText = (tkCons - tkEjer);
+      
+      const p = Math.min((tc / 30) * 100, 100);
+      document.getElementById('barFill').style.width = p + '%';
+      document.getElementById('barFill').style.background = tc > 30 ? 'var(--red)' : 'var(--green)';
     });
-}
-
-// Añade esta pequeña función de apoyo para que el botón de borrar funcione con ambos
-function eliminarRegistro(id) {
-    // Intenta borrar en ambas rutas por seguridad
-    db.ref(`keto_logs/${getHoyISO()}/comidas/${id}`).remove();
-    db.ref(`keto_logs/${getHoyISO()}/${id}`).remove();
-}
+  }
 
   async function generarCalendario() {
     const grid = document.getElementById('calGrid');
@@ -354,7 +323,7 @@ function eliminarRegistro(id) {
     const snap = await db.ref('keto_logs').once('value');
     const all = snap.val() || {};
     
-    grid.innerHTML = "LMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:10px; color:var(--muted); text-align:center;">${d}</div>`).join('');
+    grid.innerHTML = "LMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:10px; color:var(--muted); text-align:center; padding-bottom:10px;">${d}</div>`).join('');
     
     const first = new Date(y, m, 1).getDay();
     const offset = (first === 0) ? 6 : first - 1;
@@ -370,8 +339,10 @@ function eliminarRegistro(id) {
         if(all[ds].comidas) Object.values(all[ds].comidas).forEach(c => { tc += parseFloat(c.c); tkc += parseInt(c.k); });
         if(all[ds].ejercicio) Object.values(all[ds].ejercicio).forEach(e => tke += parseInt(e.k));
         
-        status = tc > 30 ? '<span style="color:var(--red)">X</span>' : '<span style="color:var(--green)">V</span>';
-        info = `<div class="cal-info">${tkc-tke} kcal<br>${all[ds].peso || '--'}kg</div>`;
+        status = `<span class="cal-mark" style="color:${tc > 30 ? 'var(--red)' : 'var(--green)'}">${tc > 30 ? 'X' : 'V'}</span>`;
+        // Cambio clave: Si no hay peso, no se pone dato de peso
+        const pesoInfo = all[ds].peso ? `${all[ds].peso}kg` : '';
+        info = `<div class="cal-kcal">${tkc-tke} kcal<br>${pesoInfo}</div>`;
       }
       grid.innerHTML += `<div class="cal-day ${cls}" onclick="verDetalleDia('${ds}')"><b>${d}</b>${status}${info}</div>`;
     }
@@ -382,17 +353,18 @@ function eliminarRegistro(id) {
     const data = snap.val();
     if(!data) return;
 
-    document.getElementById('detailDateTitle').innerText = fecha;
-    let html = `<b>Peso:</b> ${data.peso || '--'} kg<br><hr style="margin:10px 0; opacity:0.1;">`;
+    document.getElementById('detailDateTitle').innerText = new Date(fecha).toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+    let html = `<strong>⚖️ Peso:</strong> ${data.peso ? data.peso + ' kg' : 'No registrado'}<br><br>`;
     
     if(data.comidas) {
-      html += `<b>Comidas:</b><br>`;
+      html += `<strong>🍴 Comidas:</strong><br>`;
       Object.values(data.comidas).forEach(c => html += `• ${c.n} (${c.c}g C / ${c.k} Kcal)<br>`);
     }
     
     if(data.ejercicio) {
-      html += `<br><b>Ejercicio:</b><br>`;
-      Object.values(data.ejercicio).forEach(e => html += `• ${e.k} Kcal quemadas<br>`);
+      let tke = 0;
+      Object.values(data.ejercicio).forEach(e => tke += e.k);
+      html += `<br><strong>🔥 Ejercicio:</strong> ${tke} Kcal quemadas<br>`;
     }
 
     document.getElementById('dayDetailContent').innerHTML = html;
@@ -404,24 +376,31 @@ function eliminarRegistro(id) {
     const data = snap.val() || {};
     const labels = [], pesos = [], carbos = [];
     
-    Object.keys(data).sort().slice(-7).forEach(date => {
+    const ultimos7Dias = [...Array(7).keys()].map(i => {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      return d.toISOString().split('T')[0];
+    }).reverse();
+
+    ultimos7Dias.forEach(date => {
       labels.push(date.split('-')[2]);
-      pesos.push(data[date].peso || null);
+      pesos.push(data[date]?.peso || null);
       let c = 0;
-      if(data[date].comidas) Object.values(data[date].comidas).forEach(f => c += parseFloat(f.c));
+      if(data[date]?.comidas) Object.values(data[date].comidas).forEach(f => c += parseFloat(f.c));
       carbos.push(c);
     });
 
-    new Chart(document.getElementById('weightChart'), {
+    const ctxW = document.getElementById('weightChart').getContext('2d');
+    new Chart(ctxW, {
       type: 'line',
-      data: { labels, datasets: [{ label: 'Peso (kg)', data: pesos, borderColor: '#3b82f6', tension: 0.3 }] },
-      options: { plugins: { legend: { labels: { color: '#fff' } } } }
+      data: { labels, datasets: [{ label: 'Peso (kg)', data: pesos, borderColor: '#3b82f6', tension: 0.3, fill: false }] },
+      options: { scales: { y: { beginAtZero: false }, x: { ticks: { color: '#94a3b8' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
     });
 
-    new Chart(document.getElementById('carbChart'), {
+    const ctxC = document.getElementById('carbChart').getContext('2d');
+    new Chart(ctxC, {
       type: 'bar',
-      data: { labels, datasets: [{ label: 'Carbohidratos', data: carbos, backgroundColor: '#22c55e' }] },
-      options: { plugins: { legend: { labels: { color: '#fff' } } } }
+      data: { labels, datasets: [{ label: 'Carbohidratos (g)', data: carbos, backgroundColor: '#22c55e' }] },
+      options: { scales: { y: { beginAtZero: true }, x: { ticks: { color: '#94a3b8' } } }, plugins: { legend: { labels: { color: '#fff' } } } }
     });
   }
 </script>
