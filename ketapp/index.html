@@ -96,64 +96,63 @@
     const apiKey = localStorage.getItem('GEMINI_KEY');
     const text = document.getElementById('foodInput').value.trim();
     
-    if (!apiKey) { checkApiKey(); return; }
+    if (!apiKey) { updateApiKey(); return; }
     if (!text) return;
 
     document.getElementById('loader').style.display = 'block';
     document.getElementById('resultCard').style.display = 'none';
 
-    // Usamos el nombre de modelo más compatible y la versión estable de la API
-    const model = "gemini-1.5-flash"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-    const promptText = `Analiza nutricionalmente esto: "${text}". 
-    Responde estrictamente con este formato JSON: 
-    {"nombre": "resumen", "carbs_netos": 0, "grasa": 0, "proteina": 0}`;
-
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: promptText }]
-                }]
-            })
-        });
+        // Usamos la misma estructura de URL y versión que te funciona
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Analiza nutricionalmente: ${text}` }] }],
+                    // Separamos la instrucción del sistema como en tu otro código
+                    systemInstruction: { 
+                        parts: [{ 
+                            text: 'Actúa como experto keto. Responde exclusivamente con un JSON: {"nombre": "...", "carbs_netos": 0, "grasa": 0, "proteina": 0}' 
+                        }] 
+                    },
+                    generationConfig: { 
+                        maxOutputTokens: 500,
+                        temperature: 0.1 // Bajamos la temperatura para que sea más preciso con el JSON
+                    }
+                })
+            }
+        );
 
-        const data = await response.json();
+        const data = await res.json();
 
         if (data.error) {
-            // Si da error de "modelo no encontrado", probamos con gemini-pro
-            if (data.error.message.includes("not found")) {
-                throw new Error("El modelo Flash no está disponible en tu región todavía. Prueba cambiando el nombre del modelo a 'gemini-pro' en el código.");
-            }
             throw new Error(data.error.message);
         }
 
-        // Gemini a veces devuelve el JSON dentro de bloques de código markdown
-        let rawText = data.candidates[0].content.parts[0].text;
-        const jsonMatch = rawText.match(/\{.*\}/s); // Busca el objeto JSON dentro del texto
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         
-        if (!jsonMatch) throw new Error("La IA no devolvió un formato válido.");
-        
-        const res = JSON.parse(jsonMatch[0]);
+        // Limpiamos posibles marcas de markdown si la IA las pone
+        const cleanJson = rawText.replace(/```json|```/g, "").trim();
+        const resData = JSON.parse(cleanJson);
 
         lastFoundFood = { 
-            name: res.nombre, 
-            carbs: res.carbs_netos, 
-            fat: res.grasa, 
-            prot: res.proteina 
+            name: resData.nombre, 
+            carbs: resData.carbs_netos, 
+            fat: resData.grasa, 
+            prot: resData.proteina 
         };
 
-        document.getElementById('resName').innerText = res.nombre;
-        document.getElementById('resCarbs').innerText = res.carbs_netos;
-        document.getElementById('resFat').innerText = res.grasa;
-        document.getElementById('resProt').innerText = res.proteina;
+        // Mostrar en la tarjeta
+        document.getElementById('resName').innerText = resData.nombre;
+        document.getElementById('resCarbs').innerText = resData.carbs_netos;
+        document.getElementById('resFat').innerText = resData.grasa;
+        document.getElementById('resProt').innerText = resData.proteina;
         document.getElementById('resultCard').style.display = 'block';
 
     } catch (e) {
-        alert("ERROR: " + e.message);
+        alert("DETALLE DEL ERROR: " + e.message);
         console.error(e);
     } finally {
         document.getElementById('loader').style.display = 'none';
