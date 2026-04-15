@@ -54,70 +54,81 @@
     const LIMIT = 30;
     let lastFoundFood = null;
 
-    // Cargar datos al iniciar
+    // 1. BASE DE DATOS LOCAL (Para alimentos naturales/básicos)
+    const alimentosBasicos = {
+        "aguacate": { name: "Aguacate (1 unidad)", carbs: 2.5 },
+        "huevo": { name: "Huevo (1 unidad)", carbs: 0.6 },
+        "pollo": { name: "Pechuga de Pollo (100g)", carbs: 0 },
+        "carne": { name: "Carne de Ternera (100g)", carbs: 0 },
+        "tomate": { name: "Tomate (100g)", carbs: 3.5 },
+        "lechuga": { name: "Lechuga (100g)", carbs: 1.5 },
+        "aceite": { name: "Aceite de Oliva (1 cucharada)", carbs: 0 },
+        "mantequilla": { name: "Mantequilla (100g)", carbs: 0.1 },
+        "nuez": { name: "Nueces (30g)", carbs: 2.1 },
+        "almendra": { name: "Almendras (30g)", carbs: 2.8 },
+        "salmon": { name: "Salmón (100g)", carbs: 0 },
+        "brocoli": { name: "Brócoli (100g)", carbs: 4.0 },
+        "espinaca": { name: "Espinacas (100g)", carbs: 1.4 },
+        "queso": { name: "Queso Curado (100g)", carbs: 0.5 },
+        "atun": { name: "Atún al natural (100g)", carbs: 0 }
+    };
+
     window.onload = () => {
         const saved = JSON.parse(localStorage.getItem('ketoData')) || [];
         saved.forEach(f => renderFoodItem(f.name, f.carbs));
         updateProgress();
     };
 
-async function searchFood() {
-    const query = document.getElementById('foodInput').value.trim();
-    const loader = document.getElementById('loader');
-    const card = document.getElementById('resultCard');
-    
-    if(!query) return;
-    loader.style.display = 'block';
-    card.style.display = 'none';
-
-    // Usamos una URL de búsqueda que suele dar menos problemas de CORS
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
-
-    try {
-        const res = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                // Identificamos la app (esto ayuda a que la API no nos bloquee)
-                'User-Agent': 'MiKetoApp - Web - Version 1.0'
-            }
-        });
-
-        if (!res.ok) throw new Error("Error en la respuesta del servidor");
-
-        const data = await res.json();
+    async function searchFood() {
+        const query = document.getElementById('foodInput').value.toLowerCase().trim();
+        const loader = document.getElementById('loader');
+        const card = document.getElementById('resultCard');
         
-        if(data.products && data.products.length > 0) {
-            // Filtramos el primer producto que tenga datos de carbohidratos
-            const p = data.products.find(item => item.nutriments && item.nutriments.carbohydrates_100g !== undefined) || data.products[0];
-            
-            lastFoundFood = {
-                name: p.product_name_es || p.product_name || "Producto sin nombre",
-                carbs: p.nutriments.carbohydrates_100g || 0
-            };
-            
-            document.getElementById('resName').innerText = lastFoundFood.name;
-            document.getElementById('resCarbs').innerText = lastFoundFood.carbs.toFixed(1);
-            card.style.display = 'block';
-        } else { 
-            alert("No se encontró ningún producto con ese nombre."); 
+        if(!query) return;
+        loader.style.display = 'block';
+        card.style.display = 'none';
+
+        // 2. PRIMERO BUSCAMOS EN LA LISTA LOCAL
+        if (alimentosBasicos[query]) {
+            lastFoundFood = alimentosBasicos[query];
+            showResult(lastFoundFood.name, lastFoundFood.carbs);
+            loader.style.display = 'none';
+            return;
         }
-    } catch(e) { 
-        console.error("Error detallado:", e);
-        alert("Error de conexión o de la base de datos. Intenta de nuevo."); 
-    } finally {
+
+        // 3. SI NO ESTÁ EN LOCAL, BUSCAMOS EN LA API MUNDIAL
+        try {
+            const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if(data.products && data.products.length > 0) {
+                const p = data.products.find(item => item.nutriments && item.nutriments.carbohydrates_100g !== undefined) || data.products[0];
+                lastFoundFood = {
+                    name: p.product_name_es || p.product_name,
+                    carbs: p.nutriments.carbohydrates_100g || 0
+                };
+                showResult(lastFoundFood.name, lastFoundFood.carbs);
+            } else { 
+                alert("No encontrado en ninguna base de datos."); 
+            }
+        } catch(e) { 
+            alert("Error de conexión."); 
+        }
         loader.style.display = 'none';
     }
-}
+
+    function showResult(name, carbs) {
+        document.getElementById('resName').innerText = name;
+        document.getElementById('resCarbs').innerText = parseFloat(carbs).toFixed(1);
+        document.getElementById('resultCard').style.display = 'block';
+    }
 
     function addFood() {
         if(!lastFoundFood) return;
-        
-        // Guardar en array para LocalStorage
         const saved = JSON.parse(localStorage.getItem('ketoData')) || [];
         saved.push(lastFoundFood);
         localStorage.setItem('ketoData', JSON.stringify(saved));
-
         renderFoodItem(lastFoundFood.name, lastFoundFood.carbs);
         updateProgress();
         document.getElementById('resultCard').style.display = 'none';
@@ -128,26 +139,24 @@ async function searchFood() {
         const list = document.getElementById('dailyList');
         const div = document.createElement('div');
         div.className = 'food-item';
-        div.innerHTML = `<span>${name}</span> <b>${carbs}g</b>`;
+        div.innerHTML = `<span>${name}</span> <b>${parseFloat(carbs).toFixed(1)}g</b>`;
         list.appendChild(div);
         dailyCarbs += parseFloat(carbs);
     }
 
     function updateProgress() {
         const percent = Math.min((dailyCarbs / LIMIT) * 100, 100);
-        document.getElementById('progressBar').style.width = percent + '%';
+        const bar = document.getElementById('progressBar');
+        bar.style.width = percent + '%';
         document.getElementById('totalCarbs').innerText = dailyCarbs.toFixed(1);
-        
-        if(dailyCarbs > LIMIT) {
-            document.getElementById('progressBar').style.background = 'var(--danger)';
-        } else {
-            document.getElementById('progressBar').style.background = 'var(--keto)';
-        }
+        bar.style.background = dailyCarbs > LIMIT ? 'var(--danger)' : 'var(--keto)';
     }
 
     function resetDay() {
-        localStorage.removeItem('ketoData');
-        location.reload();
+        if(confirm("¿Quieres borrar los datos de hoy?")) {
+            localStorage.removeItem('ketoData');
+            location.reload();
+        }
     }
 </script>
 
