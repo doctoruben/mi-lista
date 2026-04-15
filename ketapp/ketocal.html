@@ -9,27 +9,45 @@
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
     <style>
-        :root { --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); display: flex; justify-content: center; padding: 15px; margin: 0; }
-        .container { background: white; padding: 25px; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; position: relative; }
+        :root { --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; --text: #333; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); display: flex; justify-content: center; padding: 15px; margin: 0; color: var(--text); }
+        
+        .container { background: white; padding: 25px; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; position: relative; min-height: 80vh; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-icon { background: #eee; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 1.2rem; }
+        .btn-icon { background: #eee; border: none; padding: 12px; border-radius: 14px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; }
 
-        .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
+        .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 22px; text-align: center; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .progress-bar { background: #333; border-radius: 10px; height: 10px; margin: 15px 0; overflow: hidden; }
-        #barFill { background: var(--keto); height: 100%; width: 0%; transition: 0.8s ease; }
+        #barFill { background: var(--keto); height: 100%; width: 0%; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 1rem; resize: none; outline: none; }
-        .btn-main { background: var(--dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 1rem; resize: none; outline: none; transition: 0.3s; }
+        textarea:focus { border-color: var(--keto); }
+        .btn-main { background: var(--dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 1rem; }
         
-        .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 15px; background: #f0fff4; border: 1px solid #c6f6d5; }
+        .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 15px; background: #f0fff4; border: 1px solid #c6f6d5; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
         .food-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
         .delete-x { color: #ccc; cursor: pointer; font-weight: bold; padding: 5px; }
 
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
-        .modal-content { background:white; padding:20px; border-radius:20px; width:85%; max-width:320px; max-height: 75vh; overflow-y: auto; }
-        .history-row { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; border-radius: 8px; color: white; font-weight: bold; }
+        /* Estilos del Calendario Visual */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
+        .modal-content { background:white; padding:20px; border-radius:24px; width:90%; max-width:350px; }
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; margin-top: 15px; }
+        .calendar-day-name { font-size: 0.7rem; font-weight: bold; color: #999; text-transform: uppercase; }
+        .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.85rem; position: relative; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .calendar-day:hover { background: #f0f0f0; }
+        .calendar-day.today { border: 2px solid var(--dark); font-weight: bold; }
+        
+        /* Puntos de color para el estado Keto */
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; position: absolute; bottom: 4px; }
+        .status-success { background: var(--keto); box-shadow: 0 0 5px var(--keto); }
+        .status-fail { background: var(--danger); box-shadow: 0 0 5px var(--danger); }
+        .status-none { background: #eee; }
+
+        #calendarMonthName { font-weight: bold; font-size: 1.1rem; text-transform: capitalize; }
     </style>
 </head>
 <body>
@@ -37,26 +55,26 @@
 <div class="container">
     <div class="header">
         <button class="btn-icon" onclick="toggleModal('historyModal')">📅</button>
-        <b id="displayDate"></b>
+        <b id="displayDate" style="font-size: 1.1rem;"></b>
         <button class="btn-icon" onclick="toggleModal('configModal')">⚙️</button>
     </div>
 
     <div class="dashboard">
         <div class="progress-bar"><div id="barFill"></div></div>
         <div style="display:flex; justify-content: space-around; font-size: 0.9rem;">
-            <div>Carbs: <b id="totalCarbs">0</b>/30g</div>
-            <div>Kcal: <b id="totalKcal">0</b></div>
+            <div><small style="opacity:0.7">CARBS</small><br><b id="totalCarbs">0</b>/30g</div>
+            <div><small style="opacity:0.7">KCAL</small><br><b id="totalKcal">0</b></div>
         </div>
     </div>
 
-    <textarea id="foodInput" rows="2" placeholder="Ej: 2 huevos y jamón..."></textarea>
-    <button class="btn-main" onclick="analizarConIA()">Analizar ✨</button>
-    <div id="status" style="text-align:center; font-size:0.8rem; color:#888; margin-top:5px; min-height:1rem;"></div>
+    <textarea id="foodInput" rows="2" placeholder="¿Qué has comido hoy?"></textarea>
+    <button class="btn-main" onclick="analizarConIA()">Analizar Plato ✨</button>
+    <div id="status" style="text-align:center; font-size:0.8rem; color:#888; margin-top:8px; min-height:1rem;"></div>
 
     <div id="resultCard" class="result-card">
-        <h4 id="resName" style="margin:0"></h4>
-        <p id="resNutri" style="margin:10px 0; font-size:0.9rem;"></p>
-        <button onclick="guardar()" style="width:100%; background:var(--keto); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Confirmar e Insertar</button>
+        <h4 id="resName" style="margin:0; color: var(--dark);"></h4>
+        <p id="resNutri" style="margin:10px 0; font-size:0.9rem; color: #555;"></p>
+        <button onclick="guardar()" style="width:100%; background:var(--keto); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Añadir al registro</button>
     </div>
 
     <div id="dailyList" style="margin-top:20px;"></div>
@@ -64,15 +82,30 @@
 
 <div id="historyModal" class="modal">
     <div class="modal-content">
-        <h3>Historial</h3>
-        <div id="historyContent"></div>
-        <button onclick="toggleModal('historyModal')" style="width:100%; margin-top:15px; padding:10px; border-radius:10px; border:1px solid #ccc; background:none;">Cerrar</button>
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <div id="calendarMonthName">Abril 2026</div>
+            <button onclick="toggleModal('historyModal')" style="border:none; background:none; font-size:1.2rem; cursor:pointer;">✕</button>
+        </div>
+        
+        <div class="calendar-grid">
+            <div class="calendar-day-name">Lu</div><div class="calendar-day-name">Ma</div>
+            <div class="calendar-day-name">Mi</div><div class="calendar-day-name">Ju</div>
+            <div class="calendar-day-name">Vi</div><div class="calendar-day-name">Sa</div>
+            <div class="calendar-day-name">Do</div>
+        </div>
+        <div id="calendarDays" class="calendar-grid">
+            </div>
+        
+        <div style="margin-top:20px; font-size:0.75rem; color:#777; display:flex; gap:15px; justify-content:center;">
+            <span><span style="color:var(--keto)">●</span> Keto OK</span>
+            <span><span style="color:var(--danger)">●</span> Exceso</span>
+        </div>
     </div>
 </div>
 
 <div id="configModal" class="modal">
     <div class="modal-content">
-        <h3>Ajustes</h3>
+        <h3>Configuración</h3>
         <button class="btn-main" onclick="cambiarKey()">🔑 Actualizar API Key</button>
         <button onclick="toggleModal('configModal')" style="width:100%; margin-top:15px; border:none; background:none; text-decoration:underline;">Cerrar</button>
     </div>
@@ -91,11 +124,12 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const today = new Date().toISOString().split('T')[0];
+    const todayDate = new Date();
+    const todayISO = todayDate.toISOString().split('T')[0];
     let tempFood = null;
 
     window.onload = () => {
-        document.getElementById('displayDate').innerText = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'short'});
+        document.getElementById('displayDate').innerText = todayDate.toLocaleDateString('es-ES', {day:'numeric', month:'short'});
         if (!localStorage.getItem('GEMINI_KEY')) cambiarKey();
         escucharFirebase();
     };
@@ -103,7 +137,7 @@
     function toggleModal(id) {
         const m = document.getElementById(id);
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
-        if(id === 'historyModal' && m.style.display === 'flex') cargarHistorial();
+        if(id === 'historyModal' && m.style.display === 'flex') generarCalendario();
     }
 
     function cambiarKey() {
@@ -116,49 +150,30 @@
         const text = document.getElementById('foodInput').value.trim();
         const status = document.getElementById('status');
         if(!text) return;
-
-        status.innerText = "Consultando IA...";
+        status.innerText = "IA Analizando...";
         document.getElementById('resultCard').style.display = 'none';
 
-        // Intentamos con Flash 1.5 que es el más estable para texto
-        const modelos = ["gemini-1.5-flash", "gemini-1.5-pro"];
-        
-        for (let m of modelos) {
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO un objeto JSON (sin bloques de código markdown) con este formato: {"n": "nombre del plato", "c": carbohidratos_netos_numero, "k": calorias_numero}` }] }]
-                    })
-                });
-
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
-
-                let raw = data.candidates[0].content.parts[0].text;
-                // Limpiar posibles bloques de código markdown si la IA los pone
-                raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
-                
-                const res = JSON.parse(raw);
-                tempFood = res;
-
-                document.getElementById('resName').innerText = res.n;
-                document.getElementById('resNutri').innerText = `${res.c}g Carbs | ${res.k} Kcal`;
-                document.getElementById('resultCard').style.display = 'block';
-                status.innerText = "";
-                return; // Éxito
-            } catch (err) {
-                console.warn(`Fallo con ${m}:`, err);
-                status.innerText = "Reintentando con otro modelo...";
-            }
-        }
-        status.innerText = "Error IA: Revisa tu conexión o la API Key.";
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }] }]
+                })
+            });
+            const data = await response.json();
+            let raw = data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim();
+            tempFood = JSON.parse(raw);
+            document.getElementById('resName').innerText = tempFood.n;
+            document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
+            document.getElementById('resultCard').style.display = 'block';
+            status.innerText = "";
+        } catch (err) { status.innerText = "Error en IA. Revisa la Key."; }
     }
 
     function guardar() {
         if(tempFood) {
-            db.ref(`keto_logs/${today}`).push(tempFood);
+            db.ref(`keto_logs/${todayISO}`).push(tempFood);
             document.getElementById('resultCard').style.display = 'none';
             document.getElementById('foodInput').value = "";
             tempFood = null;
@@ -166,7 +181,7 @@
     }
 
     function escucharFirebase() {
-        db.ref(`keto_logs/${today}`).on('value', snap => {
+        db.ref(`keto_logs/${todayISO}`).on('value', snap => {
             const data = snap.val() || {};
             const list = document.getElementById('dailyList');
             list.innerHTML = "";
@@ -174,11 +189,10 @@
 
             Object.keys(data).reverse().forEach(id => {
                 const item = data[id];
-                tc += parseFloat(item.c || 0); 
-                tk += parseInt(item.k || 0);
+                tc += parseFloat(item.c || 0); tk += parseInt(item.k || 0);
                 list.innerHTML += `<div class="food-item">
-                    <div><b>${item.n}</b><br><small>${item.c}g carbs | ${item.k} kcal</small></div>
-                    <div class="delete-x" onclick="db.ref('keto_logs/${today}/${id}').remove()">✕</div>
+                    <div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div>
+                    <div class="delete-x" onclick="db.ref('keto_logs/${todayISO}/${id}').remove()">✕</div>
                 </div>`;
             });
 
@@ -190,21 +204,50 @@
         });
     }
 
-    function cargarHistorial() {
-        const container = document.getElementById('historyContent');
-        container.innerHTML = "Cargando...";
-        db.ref('keto_logs').once('value', snap => {
-            const all = snap.val() || {};
-            container.innerHTML = "";
-            Object.keys(all).sort().reverse().forEach(date => {
-                let dc = 0; 
-                Object.values(all[date]).forEach(f => dc += (parseFloat(f.c) || 0));
-                const color = dc > 30 ? '#e74c3c' : '#27ae60';
-                container.innerHTML += `<div class="history-row" style="background:${color}">
-                    <span>${date}</span><span>${dc.toFixed(1)}g</span>
-                </div>`;
-            });
-        });
+    async function generarCalendario() {
+        const grid = document.getElementById('calendarDays');
+        const monthLabel = document.getElementById('calendarMonthName');
+        grid.innerHTML = "Cargando...";
+
+        const year = todayDate.getFullYear();
+        const month = todayDate.getMonth();
+        
+        monthLabel.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(todayDate);
+
+        const primerDiaMes = new Date(year, month, 1).getDay();
+        const ajusteDia = primerDiaMes === 0 ? 6 : primerDiaMes - 1; // Ajuste para que empiece en Lunes
+        const diasEnMes = new Date(year, month + 1, 0).getDate();
+
+        // Traer todos los datos del mes de Firebase
+        const snap = await db.ref('keto_logs').once('value');
+        const allData = snap.val() || {};
+
+        grid.innerHTML = "";
+
+        // Espacios vacíos hasta el primer día
+        for (let i = 0; i < ajusteDia; i++) {
+            grid.innerHTML += `<div></div>`;
+        }
+
+        // Generar días
+        for (let d = 1; d <= diasEnMes; d++) {
+            const fechaStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            let dotClass = "status-none";
+            
+            if (allData[fechaStr]) {
+                let carbsDia = 0;
+                Object.values(allData[fechaStr]).forEach(item => carbsDia += (parseFloat(item.c) || 0));
+                dotClass = carbsDia > 30 ? "status-fail" : "status-success";
+            }
+
+            const esHoy = d === todayDate.getDate() ? "today" : "";
+            grid.innerHTML += `
+                <div class="calendar-day ${esHoy}">
+                    ${d}
+                    <div class="status-dot ${dotClass}"></div>
+                </div>
+            `;
+        }
     }
 </script>
 </body>
