@@ -103,7 +103,7 @@
     document.getElementById('resultCard').style.display = 'none';
 
     // Usamos el nombre de modelo más compatible y la versión estable de la API
-    const model = "gemini-pro"; 
+    const model = "gemini-1.5-flash"; 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const promptText = `Analiza nutricionalmente esto: "${text}". 
