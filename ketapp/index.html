@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keto Tracker Pro 🥑</title>
+    <style>
+        :root { --keto: #2ecc71; --warning: #f1c40f; --danger: #e74c3c; --dark: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        
+        /* Dashboard de Progreso */
+        .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+        .progress-container { background: #444; border-radius: 10px; height: 20px; margin: 15px 0; overflow: hidden; }
+        #progressBar { background: var(--keto); height: 100%; width: 0%; transition: 0.5s; }
+        
+        /* Buscador */
+        input { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* Resultados y Lista */
+        .result-card { display: none; margin-top: 20px; padding: 15px; border: 2px solid var(--keto); border-radius: 12px; }
+        .btn-add { background: var(--keto); color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        
+        .daily-list { margin-top: 20px; width: 100%; }
+        .food-item { display: flex; justify-content: space-between; background: white; padding: 10px; margin-bottom: 5px; border-radius: 8px; border-left: 5px solid var(--keto); font-size: 0.9rem; }
+        .btn-reset { background: #95a5a6; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="dashboard">
+        <h3>Mi Día Keto</h3>
+        <div class="progress-container"><div id="progressBar"></div></div>
+        <p><span id="totalCarbs">0</span> / 30g Carbs Netos</p>
+        <button class="btn-reset" onclick="resetDay()">Reiniciar Día</button>
+    </div>
+
+    <input type="text" id="foodInput" placeholder="Busca un alimento y pulsa Enter..." onkeypress="if(event.key==='Enter') searchFood()">
+    <div id="loader" style="display:none; text-align:center; padding:10px;">Buscando...</div>
+
+    <div id="resultCard" class="result-card">
+        <h4 id="resName" style="margin:0"></h4>
+        <p style="margin:5px 0; font-size:0.8rem;">Carbs: <strong id="resCarbs"></strong>g (por 100g)</p>
+        <button class="btn-add" onclick="addFood()">Añadir a mi dieta</button>
+    </div>
+
+    <div class="daily-list" id="dailyList">
+        </div>
+</div>
+
+<script>
+    let dailyCarbs = 0;
+    const LIMIT = 30;
+    let lastFoundFood = null;
+
+    // Cargar datos al iniciar
+    window.onload = () => {
+        const saved = JSON.parse(localStorage.getItem('ketoData')) || [];
+        saved.forEach(f => renderFoodItem(f.name, f.carbs));
+        updateProgress();
+    };
+
+async function searchFood() {
+    const query = document.getElementById('foodInput').value.trim();
+    const loader = document.getElementById('loader');
+    const card = document.getElementById('resultCard');
+    
+    if(!query) return;
+    loader.style.display = 'block';
+    card.style.display = 'none';
+
+    // Usamos una URL de búsqueda que suele dar menos problemas de CORS
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=5`;
+
+    try {
+        const res = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                // Identificamos la app (esto ayuda a que la API no nos bloquee)
+                'User-Agent': 'MiKetoApp - Web - Version 1.0'
+            }
+        });
+
+        if (!res.ok) throw new Error("Error en la respuesta del servidor");
+
+        const data = await res.json();
+        
+        if(data.products && data.products.length > 0) {
+            // Filtramos el primer producto que tenga datos de carbohidratos
+            const p = data.products.find(item => item.nutriments && item.nutriments.carbohydrates_100g !== undefined) || data.products[0];
+            
+            lastFoundFood = {
+                name: p.product_name_es || p.product_name || "Producto sin nombre",
+                carbs: p.nutriments.carbohydrates_100g || 0
+            };
+            
+            document.getElementById('resName').innerText = lastFoundFood.name;
+            document.getElementById('resCarbs').innerText = lastFoundFood.carbs.toFixed(1);
+            card.style.display = 'block';
+        } else { 
+            alert("No se encontró ningún producto con ese nombre."); 
+        }
+    } catch(e) { 
+        console.error("Error detallado:", e);
+        alert("Error de conexión o de la base de datos. Intenta de nuevo."); 
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+    function addFood() {
+        if(!lastFoundFood) return;
+        
+        // Guardar en array para LocalStorage
+        const saved = JSON.parse(localStorage.getItem('ketoData')) || [];
+        saved.push(lastFoundFood);
+        localStorage.setItem('ketoData', JSON.stringify(saved));
+
+        renderFoodItem(lastFoundFood.name, lastFoundFood.carbs);
+        updateProgress();
+        document.getElementById('resultCard').style.display = 'none';
+        document.getElementById('foodInput').value = '';
+    }
+
+    function renderFoodItem(name, carbs) {
+        const list = document.getElementById('dailyList');
+        const div = document.createElement('div');
+        div.className = 'food-item';
+        div.innerHTML = `<span>${name}</span> <b>${carbs}g</b>`;
+        list.appendChild(div);
+        dailyCarbs += parseFloat(carbs);
+    }
+
+    function updateProgress() {
+        const percent = Math.min((dailyCarbs / LIMIT) * 100, 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('totalCarbs').innerText = dailyCarbs.toFixed(1);
+        
+        if(dailyCarbs > LIMIT) {
+            document.getElementById('progressBar').style.background = 'var(--danger)';
+        } else {
+            document.getElementById('progressBar').style.background = 'var(--keto)';
+        }
+    }
+
+    function resetDay() {
+        localStorage.removeItem('ketoData');
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
