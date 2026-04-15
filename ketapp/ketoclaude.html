@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keto Tracker Pro</title>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c24;
+    --surface2: #1e2330;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --accent: #3b82f6;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+  }
+  .app {
+    width: 100%;
+    max-width: 390px;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 20px;
+  }
+  .header-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .icon-btn {
+    width: 38px; height: 38px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .icon-btn:hover { border-color: var(--border2); color: var(--text); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* DASHBOARD */
+  .dashboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .dash-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-value span { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .progress-track {
+    background: rgba(255,255,255,0.06);
+    border-radius: 6px;
+    height: 6px;
+    overflow: hidden;
+  }
+  #barFill {
+    height: 100%;
+    border-radius: 6px;
+    background: var(--green);
+    width: 0%;
+    transition: width 0.6s ease, background 0.3s;
+  }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* INPUT AREA */
+  .input-section {
+    margin-bottom: 16px;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+    line-height: 1.5;
+  }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus { border-color: var(--border2); }
+  .btn-analyze {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s;
+  }
+  .btn-analyze:hover { opacity: 0.9; }
+  .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status-msg {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    min-height: 16px;
+  }
+
+  /* RESULT CARD */
+  .result-card {
+    display: none;
+    background: var(--green-dim);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 12px;
+  }
+  .result-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .result-macros {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .btn-add {
+    width: 100%;
+    background: var(--green);
+    color: #0a1a0f;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-add:hover { opacity: 0.85; }
+
+  /* FOOD LOG */
+  .log-section { margin-top: 8px; }
+  .log-header {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .food-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .food-item:last-child { border-bottom: none; }
+  .food-name { font-size: 14px; font-weight: 500; }
+  .food-macro { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .btn-remove {
+    width: 28px; height: 28px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-remove:hover { border-color: var(--red); color: var(--red); }
+
+  /* MODAL */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal.open { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 24px 20px 20px;
+    width: 100%;
+    max-width: 390px;
+  }
+
+  /* CALENDAR */
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .cal-title { font-size: 15px; font-weight: 600; text-transform: capitalize; }
+  .cal-nav {
+    width: 34px; height: 34px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+  }
+  .cal-weekday {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding-bottom: 8px;
+    letter-spacing: 0.04em;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    gap: 2px;
+    border: 1px solid transparent;
+    cursor: default;
+  }
+  .cal-day.today { border-color: var(--border2); background: var(--surface2); }
+  .cal-day .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cal-day.ok .dot { background: var(--green); }
+  .cal-day.over .dot { background: var(--red); }
+  .cal-day .cal-kcal { font-size: 9px; color: var(--muted); }
+
+  .btn-close {
+    width: 100%;
+    margin-top: 20px;
+    padding: 13px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* CONFIG */
+  .config-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .config-label { font-size: 14px; }
+  .config-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .btn-config {
+    padding: 8px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* SPINNER */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 24px 0;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <button class="icon-btn" onclick="openModal('histModal')" title="Historial">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="12" height="12" rx="2"/>
+        <line x1="5" y1="6" x2="11" y2="6"/>
+        <line x1="5" y1="9" x2="9" y2="9"/>
+      </svg>
+    </button>
+    <span class="header-title" id="displayDate"></span>
+    <button class="icon-btn" onclick="openModal('cfgModal')" title="Ajustes">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="2.2"/>
+        <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.42 1.42M11.53 11.53l1.42 1.42M3.05 12.95l1.42-1.42M11.53 4.47l1.42-1.42"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+    <div class="dash-stats">
+      <div class="stat-card">
+        <div class="stat-label">Carbohidratos</div>
+        <div class="stat-value"><span id="totalCarbs">0</span><span> / 30g</span></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Calorías</div>
+        <div class="stat-value" id="totalKcal">0</div>
+      </div>
+    </div>
+    <div class="progress-track"><div id="barFill"></div></div>
+    <div class="progress-labels">
+      <span>0g</span><span>Límite diario keto: 30g</span><span>30g</span>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-section">
+    <textarea id="foodInput" rows="2" placeholder="Describe tu comida… ej: 2 huevos fritos con bacon"></textarea>
+    <button class="btn-analyze" id="btnAnalyze" onclick="analizarIA()">
+      <span id="btnContent">Analizar</span>
+    </button>
+    <div class="status-msg" id="status"></div>
+
+    <div id="resultCard" class="result-card">
+      <div class="result-name" id="resName"></div>
+      <div class="result-macros" id="resNutri"></div>
+      <button class="btn-add" onclick="guardar()">+ Añadir al registro</button>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-section">
+    <div class="log-header">Registro de hoy</div>
+    <div id="dailyList"><div class="empty-state">Sin registros aún</div></div>
+  </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div id="histModal" class="modal" onclick="closeOnBg(event,'histModal')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="cambiarMes(-1)">‹</button>
+      <span class="cal-title" id="calTitle"></span>
+      <button class="cal-nav" onclick="cambiarMes(1)">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <button class="btn-close" onclick="closeModal('histModal')">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIG -->
+<div id="cfgModal" class="modal" onclick="closeOnBg(event,'cfgModal')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div style="font-size:15px;font-weight:600;margin-bottom:16px;">Ajustes</div>
+    <div class="config-row">
+      <div>
+        <div class="config-label">API Key de Gemini</div>
+        <div class="config-sub" id="keyStatus">No configurada</div>
+      </div>
+      <button class="btn-config" onclick="cambiarKey()">Cambiar</button>
+    </div>
+    <button class="btn-close" onclick="closeModal('cfgModal')">Cerrar</button>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+    authDomain: "lista-compra-9d6f5.firebaseapp.com",
+    databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "lista-compra-9d6f5",
+    storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+    messagingSenderId: "241322134457",
+    appId: "1:241322134457:web:1b765857911f94d69cc468"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let calView = new Date();
+  let tempFood = null;
+
+  function getHoyISO() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  window.onload = () => {
+    document.getElementById('displayDate').innerText =
+      new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+    actualizarKeyStatus();
+    escucharFirebase();
+
+    document.getElementById('foodInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analizarIA(); }
+    });
+  };
+
+  function actualizarKeyStatus() {
+    const k = localStorage.getItem('GEMINI_KEY');
+    document.getElementById('keyStatus').innerText = k ? '●●●●●●●●' + k.slice(-4) : 'No configurada';
+  }
+
+  function openModal(id) {
+    const m = document.getElementById(id);
+    m.classList.add('open');
+    if (id === 'histModal') { calView = new Date(); generarCalendario(); }
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+  function closeOnBg(e, id) {
+    if (e.target === document.getElementById(id)) closeModal(id);
+  }
+
+  function cambiarMes(d) {
+    calView.setMonth(calView.getMonth() + d);
+    generarCalendario();
+  }
+
+  function cambiarKey() {
+    const k = prompt("Pega tu API Key de Gemini:");
+    if (k && k.trim()) {
+      localStorage.setItem('GEMINI_KEY', k.trim());
+      actualizarKeyStatus();
+    }
+  }
+
+  async function analizarIA() {
+    const key = localStorage.getItem('GEMINI_KEY');
+    const text = document.getElementById('foodInput').value.trim();
+    const btn = document.getElementById('btnAnalyze');
+    const btnContent = document.getElementById('btnContent');
+    const status = document.getElementById('status');
+
+    if (!key) { alert("Configura la API Key en ⚙️"); return; }
+    if (!text) return;
+
+    btn.disabled = true;
+    btnContent.innerHTML = '<div class="spinner"></div>';
+    status.innerText = "";
+    document.getElementById('resultCard').style.display = 'none';
+
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `Analiza el valor nutricional de: "${text}". Devuelve SOLO un objeto JSON sin markdown: {"n": "nombre del plato", "c": carbohidratos_en_gramos, "k": calorias}` }]
+          }]
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.candidates || !data.candidates[0]?.content) {
+        throw new Error(data.error?.message || "La IA no generó respuesta. Inténtalo de nuevo.");
+      }
+
+      let txt = data.candidates[0].content.parts[0].text;
+      const i = txt.indexOf('{'), f = txt.lastIndexOf('}');
+      if (i === -1 || f === -1) throw new Error("Formato de respuesta inesperado.");
+
+      tempFood = JSON.parse(txt.substring(i, f + 1));
+
+      document.getElementById('resName').innerText = tempFood.n;
+      document.getElementById('resNutri').innerText =
+        `${parseFloat(tempFood.c).toFixed(1)}g carbohidratos  ·  ${parseInt(tempFood.k)} kcal`;
+      document.getElementById('resultCard').style.display = 'block';
+
+    } catch (err) {
+      status.innerText = "Error: " + err.message;
+    } finally {
+      btn.disabled = false;
+      btnContent.innerHTML = 'Analizar';
+    }
+  }
+
+  function guardar() {
+    if (!tempFood) return;
+    db.ref(`keto_logs/${getHoyISO()}`).push(tempFood);
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('foodInput').value = "";
+    tempFood = null;
+  }
+
+  function escucharFirebase() {
+    db.ref(`keto_logs/${getHoyISO()}`).on('value', snap => {
+      const data = snap.val() || {};
+      const list = document.getElementById('dailyList');
+
+      const keys = Object.keys(data).reverse();
+      if (!keys.length) {
+        list.innerHTML = '<div class="empty-state">Sin registros aún</div>';
+        actualizarTotales(0, 0);
+        return;
+      }
+
+      let tc = 0, tk = 0, html = '';
+      keys.forEach(id => {
+        const item = data[id];
+        tc += parseFloat(item.c || 0);
+        tk += parseInt(item.k || 0);
+        html += `
+          <div class="food-item">
+            <div>
+              <div class="food-name">${item.n}</div>
+              <div class="food-macro">${parseFloat(item.c).toFixed(1)}g carbs · ${parseInt(item.k)} kcal</div>
+            </div>
+            <button class="btn-remove" onclick="db.ref('keto_logs/${getHoyISO()}/${id}').remove()" title="Eliminar">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8">
+                <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+              </svg>
+            </button>
+          </div>`;
+      });
+      list.innerHTML = html;
+      actualizarTotales(tc, tk);
+    });
+  }
+
+  function actualizarTotales(tc, tk) {
+    document.getElementById('totalCarbs').innerText = tc.toFixed(1);
+    document.getElementById('totalKcal').innerText = tk;
+    const pct = Math.min((tc / 30) * 100, 100);
+    const bar = document.getElementById('barFill');
+    bar.style.width = pct + '%';
+    bar.style.background = tc > 30 ? 'var(--red)' : 'var(--green)';
+  }
+
+  async function generarCalendario() {
+    const grid = document.getElementById('calGrid');
+    const year = calView.getFullYear();
+    const month = calView.getMonth();
+
+    document.getElementById('calTitle').innerText =
+      new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(calView);
+
+    grid.innerHTML = '';
+    ['Lu','Ma','Mi','Ju','Vi','Sa','Do'].forEach(d => {
+      grid.innerHTML += `<div class="cal-weekday">${d}</div>`;
+    });
+
+    const snap = await db.ref('keto_logs').once('value');
+    const all = snap.val() || {};
+
+    const firstDayRaw = new Date(year, month, 1).getDay();
+    const offset = (firstDayRaw === 0) ? 6 : firstDayRaw - 1;
+    for (let i = 0; i < offset; i++) grid.innerHTML += '<div></div>';
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+
+      let dotHtml = '', kcalHtml = '', cls = '';
+      if (all[ds]) {
+        let carbs = 0, kcal = 0;
+        Object.values(all[ds]).forEach(v => {
+          carbs += parseFloat(v.c || 0);
+          kcal += parseInt(v.k || 0);
+        });
+        cls = carbs > 30 ? 'over' : 'ok';
+        dotHtml = '<div class="dot"></div>';
+        kcalHtml = `<span class="cal-kcal">${kcal}</span>`;
+      }
+
+      if (isToday) cls += ' today';
+      grid.innerHTML += `
+        <div class="cal-day ${cls}">
+          <span>${d}</span>
+          ${dotHtml}
+          ${kcalHtml}
+        </div>`;
+    }
+  }
+</script>
+</body>
+</html>
