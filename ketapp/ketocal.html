@@ -1,240 +1,54 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keto Tracker Pro</title>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
-    <style>
-        :root { --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; }
-        body { font-family: system-ui, sans-serif; background: var(--gray); display: flex; justify-content: center; padding: 15px; margin: 0; }
-        .container { background: white; padding: 25px; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; min-height: 85vh; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-icon { background: #eee; border: none; padding: 12px; border-radius: 14px; cursor: pointer; font-size: 1.2rem; }
-        .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 22px; text-align: center; margin-bottom: 20px; }
-        .progress-bar { background: #333; border-radius: 10px; height: 10px; margin: 15px 0; overflow: hidden; }
-        #barFill { background: var(--keto); height: 100%; width: 0%; transition: 1s ease; }
-        
-        textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 1rem; outline: none; }
-        .btn-main { background: var(--dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 15px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-        
-        .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 15px; background: #f0fff4; border: 1px solid #c6f6d5; }
-        .food-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-
-        /* Estilos Calendario */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:100; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
-        .modal-content { background:white; padding:20px; border-radius:24px; width:95%; max-width:380px; }
-        
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .nav-btn { background: #f0f0f0; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
-        
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .calendar-day { 
-            aspect-ratio: 1; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 12px; 
-            font-size: 0.8rem; 
-            position: relative; 
-            padding: 2px;
-            border: 1px solid transparent;
-        }
-        .status-icon { font-size: 0.65rem; line-height: 1; margin: 2px 0; }
-        .cal-label { font-size: 0.6rem; color: #777; font-weight: 500; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">
-        <button class="btn-icon" onclick="toggleModal('historyModal')">📅</button>
-        <b id="displayDate"></b>
-        <button class="btn-icon" onclick="toggleModal('configModal')">⚙️</button>
-    </div>
-
-    <div class="dashboard">
-        <div class="progress-bar"><div id="barFill"></div></div>
-        <div style="display:flex; justify-content: space-around; font-size: 0.9rem;">
-            <div>Carbs: <b id="totalCarbs">0</b>/30g</div>
-            <div>Kcal: <b id="totalKcal">0</b></div>
-        </div>
-    </div>
-
-    <textarea id="foodInput" rows="2" placeholder="Analiza tu comida..."></textarea>
-    <button class="btn-main" onclick="analizarIA()">Analizar ✨</button>
-    <div id="status" style="text-align:center; font-size:0.75rem; color:#888; margin-top:8px;"></div>
-
-    <div id="resultCard" class="result-card">
-        <h4 id="resName" style="margin:0"></h4>
-        <p id="resNutri" style="margin:10px 0; font-size:0.9rem;"></p>
-        <button onclick="guardar()" style="width:100%; background:var(--keto); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Añadir</button>
-    </div>
-
-    <div id="dailyList" style="margin-top:20px;"></div>
-</div>
-
-<div id="historyModal" class="modal">
-    <div class="modal-content">
-        <div class="calendar-header">
-            <button class="nav-btn" onclick="cambiarMes(-1)">‹</button>
-            <b id="calendarMonthName" style="text-transform: capitalize;"></b>
-            <button class="nav-btn" onclick="cambiarMes(1)">›</button>
-        </div>
-        <div class="calendar-grid" id="calendarDays"></div>
-        <button onclick="toggleModal('historyModal')" style="width:100%; margin-top:20px; border:none; background:#eee; padding:12px; border-radius:12px; font-weight:bold;">Cerrar</button>
-    </div>
-</div>
-
-<div id="configModal" class="modal">
-    <div class="modal-content">
-        <h3>Ajustes</h3>
-        <button class="btn-main" onclick="cambiarKey()">🔑 Configurar API Key</button>
-        <button onclick="toggleModal('configModal')" style="width:100%; margin-top:15px; border:none; background:none; text-decoration:underline;">Cerrar</button>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
-        authDomain: "lista-compra-9d6f5.firebaseapp.com",
-        databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "lista-compra-9d6f5",
-        storageBucket: "lista-compra-9d6f5.firebasestorage.app",
-        messagingSenderId: "241322134457",
-        appId: "1:241322134457:web:1b765857911f94d69cc468"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    let fechaVistaCalendario = new Date();
-    const hoyISO = new Date().toISOString().split('T')[0];
-    let tempFood = null;
-
-    window.onload = () => {
-        document.getElementById('displayDate').innerText = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'short'});
-        escucharFirebase();
-    };
-
-    function toggleModal(id) {
-        const m = document.getElementById(id);
-        m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
-        if(id === 'historyModal' && m.style.display === 'flex') {
-            fechaVistaCalendario = new Date();
-            generarCalendario();
-        }
-    }
-
-    function cambiarMes(delta) {
-        fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta);
-        generarCalendario();
-    }
-
-    function cambiarKey() {
-        const k = prompt("Pega tu API Key:");
-        if(k) localStorage.setItem('GEMINI_KEY', k.trim());
-    }
-
-    async function analizarIA() {
+async function analizarIA() {
         const key = localStorage.getItem('GEMINI_KEY');
         const text = document.getElementById('foodInput').value.trim();
         const status = document.getElementById('status');
-        if(!key || !text) return;
-        status.innerText = "Analizando...";
+        
+        if(!key) { alert("Configura la Key en ⚙️"); return; }
+        if(!text) return;
+
+        status.innerText = "Analizando con motor 2.5...";
+        document.getElementById('resultCard').style.display = 'none';
+
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }] }] })
+                body: JSON.stringify({ 
+                    contents: [{ 
+                        parts: [{ text: `Analiza: "${text}". Devuelve exclusivamente un objeto JSON: {"n": "nombre plato", "c": carbohidratos_numero, "k": calorias_numero}` }] 
+                    }] 
+                })
             });
+
             const data = await response.json();
-            let txt = data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim();
-            tempFood = JSON.parse(txt);
+
+            // VALIDACIÓN DE SEGURIDAD PARA EVITAR EL ERROR 'UNDEFINED'
+            if (!data.candidates || data.candidates.length === 0 || !data.candidates[0].content) {
+                if (data.error) {
+                    throw new Error(data.error.message);
+                } else {
+                    throw new Error("La IA no ha podido generar una respuesta. Inténtalo de nuevo.");
+                }
+            }
+
+            let txt = data.candidates[0].content.parts[0].text;
+            
+            // LIMPIEZA ROBUSTA DEL JSON
+            const inicio = txt.indexOf('{');
+            const fin = txt.lastIndexOf('}');
+            if (inicio === -1 || fin === -1) throw new Error("Formato de respuesta inválido");
+            
+            const jsonLimpio = txt.substring(inicio, fin + 1);
+            tempFood = JSON.parse(jsonLimpio);
+            
             document.getElementById('resName').innerText = tempFood.n;
             document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
             document.getElementById('resultCard').style.display = 'block';
             status.innerText = "";
-        } catch (err) { status.innerText = "Error IA: " + err.message; }
-    }
 
-    function guardar() {
-        if(tempFood) {
-            db.ref(`keto_logs/${hoyISO}`).push(tempFood);
-            document.getElementById('resultCard').style.display = 'none';
-            document.getElementById('foodInput').value = "";
-            tempFood = null;
+        } catch (err) {
+            console.error("Detalle del error:", err);
+            status.innerText = "Error: " + err.message;
         }
     }
-
-    function escucharFirebase() {
-        db.ref(`keto_logs/${hoyISO}`).on('value', snap => {
-            const data = snap.val() || {};
-            const list = document.getElementById('dailyList'); list.innerHTML = "";
-            let tc = 0, tk = 0;
-            Object.keys(data).reverse().forEach(id => {
-                const item = data[id]; tc += parseFloat(item.c || 0); tk += parseInt(item.k || 0);
-                list.innerHTML += `<div class="food-item"><div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div><div style="color:#ccc; cursor:pointer;" onclick="db.ref('keto_logs/${hoyISO}/${id}').remove()">✕</div></div>`;
-            });
-            document.getElementById('totalCarbs').innerText = tc.toFixed(1);
-            document.getElementById('totalKcal').innerText = tk;
-            const p = Math.min((tc / 30) * 100, 100);
-            document.getElementById('barFill').style.width = p + '%';
-            document.getElementById('barFill').style.background = tc > 30 ? 'var(--danger)' : 'var(--keto)';
-        });
-    }
-
-    async function generarCalendario() {
-        const grid = document.getElementById('calendarDays');
-        const monthLabel = document.getElementById('calendarMonthName');
-        const year = fechaVistaCalendario.getFullYear();
-        const month = fechaVistaCalendario.getMonth();
-        monthLabel.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVistaCalendario);
-
-        const snap = await db.ref('keto_logs').once('value');
-        const all = snap.val() || {};
-
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const offset = (firstDay === 0) ? 6 : firstDay - 1;
-
-        grid.innerHTML = "LMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:0.7rem;font-weight:bold;color:#999;margin-bottom:8px">${d}</div>`).join('');
-        
-        for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
-
-        const hoyCheck = new Date();
-        for(let d=1; d<=daysInMonth; d++){
-            const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            let content = "";
-            
-            if(all[ds]){
-                let carbs = 0;
-                let calories = 0;
-                Object.values(all[ds]).forEach(v => {
-                    carbs += parseFloat(v.c || 0);
-                    calories += parseInt(v.k || 0);
-                });
-                
-                const icon = carbs > 30 ? '❌' : '✅';
-                content = `
-                    <span class="status-icon">${icon}</span>
-                    <span class="cal-label">${calories}</span>
-                `;
-            }
-            
-            const esHoy = (d === hoyCheck.getDate() && month === hoyCheck.getMonth() && year === hoyCheck.getFullYear());
-            const bg = esHoy ? 'background: #f0f0f0; border-color: #ccc;' : '';
-
-            grid.innerHTML += `
-                <div class="calendar-day" style="${bg}">
-                    <b>${d}</b>
-                    ${content}
-                </div>`;
-        }
-    }
-</script>
-</body>
-</html>
