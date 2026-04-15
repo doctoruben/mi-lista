@@ -3,153 +3,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keto AI Tracker 🥑</title>
+    <title>Keto Tracker AI</title>
     <style>
         :root { --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .container { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
         .progress-bar { background: #333; border-radius: 10px; height: 14px; margin: 15px 0; overflow: hidden; }
         #barFill { background: var(--keto); height: 100%; width: 0%; transition: 0.8s ease; }
-        textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; resize: none; outline: none; }
-        .btn-ia { background: var(--dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; margin-top: 10px; font-weight: bold; font-size: 1rem; }
+        textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-size: 1rem; resize: none; outline: none; margin-bottom: 10px; }
+        .btn-ia { background: var(--dark); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 12px; background: #f0fff4; border: 1px solid #c6f6d5; }
         .btn-add { background: var(--keto); color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        #loader { display: none; text-align: center; padding: 15px; color: var(--keto); font-weight: bold; font-size: 0.9rem; }
         .food-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-        #loader { display: none; text-align: center; padding: 15px; color: var(--keto); font-weight: bold; }
-        .settings-link { display: block; text-align: center; margin-top: 20px; font-size: 0.7rem; color: #bbb; cursor: pointer; }
+        .footer-btns { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-sub { background: none; border: none; color: #999; cursor: pointer; font-size: 0.75rem; text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="dashboard">
-        <h2 style="margin:0">Mi Día Keto</h2>
+        <h2 style="margin:0">Keto AI Manager</h2>
         <div class="progress-bar"><div id="barFill"></div></div>
-        <p style="margin:0"><span id="totalCarbs">0</span> / 30g Carbs Netos</p>
+        <p style="margin:0"><span id="totalCarbs">0</span> / 30g Carbs</p>
     </div>
 
-    <textarea id="foodInput" rows="3" placeholder="Ej: '2 huevos fritos y un aguacate'"></textarea>
-    <button class="btn-ia" onclick="askGemini()">Analizar con IA ✨</button>
+    <textarea id="foodInput" rows="3" placeholder="Ej: 2 huevos y jamón..."></textarea>
+    <button class="btn-ia" onclick="askGemini()">Analizar Alimento ✨</button>
     
-    <div id="loader">Gemini analizando...</div>
+    <div id="loader">Buscando modelo disponible...</div>
 
     <div id="resultCard" class="result-card">
-        <h4 id="resName" style="margin:0"></h4>
-        <div style="margin:10px 0; display:flex; justify-content: space-between; font-size: 0.85rem;">
-            <span>Carbs Netos: <b id="resCarbs"></b>g</span>
+        <h4 id="resName" style="margin:0; color: var(--dark)"></h4>
+        <div style="margin:10px 0; display:flex; justify-content: space-between; font-size: 0.85rem; color: #444;">
+            <span>Carbs: <b id="resCarbs"></b>g</span>
             <span>Grasas: <b id="resFat"></b>g</span>
-            <span>Proteína: <b id="resProt"></b>g</span>
+            <span>Prot: <b id="resProt"></b>g</span>
         </div>
         <button class="btn-add" onclick="addFood()">Añadir al registro</button>
     </div>
 
     <div id="dailyList" style="margin-top:20px;"></div>
     
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="resetDay()" style="color:red; border:none; background:none; cursor:pointer; font-size:0.8rem;">Reiniciar Día</button>
+    <div class="footer-btns">
+        <button class="btn-sub" onclick="setNewKey()">⚙️ Cambiar API Key</button>
+        <button class="btn-sub" onclick="resetAll()" style="color: var(--danger)">🗑️ Borrar todo y reiniciar</button>
     </div>
-
-    <span class="settings-link" onclick="updateApiKey()">⚙️ Configurar API Key</span>
 </div>
 
 <script>
-    // Usamos EXACTAMENTE la configuración que te funcionó en el otro código
-    const MODEL_NAME = "gemini-1.5-flash"; 
-
+    // Variables de estado
     let dailyCarbs = 0;
     const LIMIT = 30;
     let lastFoundFood = null;
+    const STORAGE_KEY = 'GEMINI_API_KEY_KETO';
 
+    // Al cargar la página
     window.onload = () => {
-        if (!localStorage.getItem('GEMINI_KEY')) updateApiKey();
+        if (!localStorage.getItem(STORAGE_KEY)) {
+            setNewKey();
+        }
         loadDailyData();
     };
 
-    function updateApiKey() {
-        const key = prompt("Introduce tu Gemini API Key:");
-        if (key) localStorage.setItem('GEMINI_KEY', key);
-    }
-
-    async function askGemini() {
-    const apiKey = localStorage.getItem('KETO_KEY_FINAL');
-    const text = document.getElementById('foodInput').value.trim();
-    
-    if (!apiKey) { updateApiKey(); return; }
-    if (!text) return;
-
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('resultCard').style.display = 'none';
-
-    // Lista de modelos a intentar en orden de compatibilidad
-    const modelosAProbar = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-pro" // El más antiguo y compatible
-    ];
-
-    let exito = false;
-
-    for (let m of modelosAProbar) {
-        if (exito) break;
-        
-        try {
-            // Intentamos con la versión estable v1 que es la más segura para claves nuevas
-            const url = `https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${apiKey}`;
-            
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Analiza nutricionalmente: "${text}". Responde solo JSON: {"nombre": "resumen", "carbs_netos": 0, "grasa": 0, "proteina": 0}` }] }]
-                })
-            });
-
-            const data = await res.json();
-
-            if (data.error) {
-                console.log(`Fallo con modelo ${m}: ${data.error.message}`);
-                continue; // Si falla, salta al siguiente modelo de la lista
-            }
-
-            const rawText = data.candidates[0].content.parts[0].text;
-            const jsonMatch = rawText.match(/\{.*\}/s);
-            const result = JSON.parse(jsonMatch[0]);
-
-            lastFoundFood = { 
-                name: result.nombre, 
-                carbs: result.carbs_netos, 
-                fat: result.grasa, 
-                prot: result.proteina 
-            };
-
-            document.getElementById('resName').innerText = result.nombre;
-            document.getElementById('resCarbs').innerText = result.carbs_netos;
-            document.getElementById('resFat').innerText = result.grasa;
-            document.getElementById('resProt').innerText = result.proteina;
-            document.getElementById('resultCard').style.display = 'block';
-            exito = true;
-
-        } catch (e) {
-            console.error(`Error con ${m}:`, e);
+    function setNewKey() {
+        const key = prompt("Introduce tu API Key de Gemini (Google AI Studio):");
+        if (key && key.trim().length > 10) {
+            localStorage.setItem(STORAGE_KEY, key.trim());
+            alert("API Key guardada correctamente.");
+        } else {
+            alert("No has introducido una clave válida.");
         }
     }
 
-    document.getElementById('loader').style.display = 'none';
-    if (!exito) {
-        alert("No se pudo conectar con ningún modelo de Gemini. Revisa si tu API Key nueva está activa en Google AI Studio.");
+    async function askGemini() {
+        const apiKey = localStorage.getItem(STORAGE_KEY);
+        if (!apiKey) { setNewKey(); return; }
+
+        const text = document.getElementById('foodInput').value.trim();
+        if (!text) return;
+
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('resultCard').style.display = 'none';
+
+        // Intentaremos estos modelos en orden de disponibilidad
+        const models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"];
+        let success = false;
+
+        for (const m of models) {
+            if (success) break;
+            try {
+                // Probamos con la URL v1 estable (más compatible)
+                const url = `https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Analiza: "${text}". Responde solo JSON: {"nombre": "...", "carbs_netos": 0, "grasa": 0, "proteina": 0}` }] }]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.warn(`Modelo ${m} falló: ${data.error.message}`);
+                    continue; 
+                }
+
+                const rawText = data.candidates[0].content.parts[0].text;
+                const jsonMatch = rawText.match(/\{.*\}/s);
+                if (!jsonMatch) continue;
+
+                const res = JSON.parse(jsonMatch[0]);
+                
+                // Mostrar resultados
+                lastFoundFood = { name: res.nombre, carbs: res.carbs_netos, fat: res.grasa, prot: res.proteina };
+                document.getElementById('resName').innerText = res.nombre;
+                document.getElementById('resCarbs').innerText = res.carbs_netos;
+                document.getElementById('resFat').innerText = res.grasa;
+                document.getElementById('resProt').innerText = res.proteina;
+                document.getElementById('resultCard').style.display = 'block';
+                success = true;
+
+            } catch (e) {
+                console.error(`Error crítico con ${m}:`, e);
+            }
+        }
+
+        document.getElementById('loader').style.display = 'none';
+        if (!success) alert("Error de conexión. Verifica tu clave o tu conexión a internet.");
     }
-}
 
     function addFood() {
         if (!lastFoundFood) return;
-        const saved = JSON.parse(localStorage.getItem('ketoData')) || [];
+        const saved = JSON.parse(localStorage.getItem('keto_history')) || [];
         saved.push(lastFoundFood);
-        localStorage.setItem('ketoData', JSON.stringify(saved));
+        localStorage.setItem('keto_history', JSON.stringify(saved));
+        
         renderItem(lastFoundFood);
         updateProgress();
+        
         document.getElementById('resultCard').style.display = 'none';
         document.getElementById('foodInput').value = '';
+        lastFoundFood = null;
     }
 
     function renderItem(item) {
@@ -162,7 +161,9 @@
     }
 
     function loadDailyData() {
-        const saved = JSON.parse(localStorage.getItem('ketoData')) || [];
+        const saved = JSON.parse(localStorage.getItem('keto_history')) || [];
+        dailyCarbs = 0;
+        document.getElementById('dailyList').innerHTML = '';
         saved.forEach(renderItem);
         updateProgress();
     }
@@ -174,9 +175,9 @@
         document.getElementById('barFill').style.background = dailyCarbs > LIMIT ? 'var(--danger)' : 'var(--keto)';
     }
 
-    function resetDay() {
-        if(confirm("¿Borrar todo el día?")) {
-            localStorage.removeItem('ketoData');
+    function resetAll() {
+        if (confirm("Se borrará la API Key y todo el historial. ¿Estás seguro?")) {
+            localStorage.clear();
             location.reload();
         }
     }
