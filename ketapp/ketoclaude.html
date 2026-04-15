@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keto Tracker Pro - Classic</title>
+<title>Keto Tracker Pro - Premium</title>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root { 
-    --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; --text: #333;
+    --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; --text: #333; --muted: #888;
   }
   body { 
     font-family: system-ui, -apple-system, sans-serif; background: var(--gray); 
@@ -22,10 +22,25 @@
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
   .btn-icon { background: #eee; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; }
   
+  /* DASHBOARD ELEGANTE */
   .dashboard { 
-    background: var(--dark); color: white; padding: 18px; border-radius: 22px; text-align: center; margin-bottom: 15px; 
+    background: var(--dark); color: white; padding: 22px; border-radius: 24px; margin-bottom: 20px; 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
   }
-  .progress-bar { background: #333; border-radius: 10px; height: 8px; margin: 12px 0; overflow: hidden; }
+  .dash-main { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; }
+  .dash-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .dash-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+  .dash-value small { font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+
+  .dash-stats-row { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; 
+    padding-top: 15px; border-top: 1px solid #333; margin-top: 15px;
+  }
+  .stat-item { text-align: center; }
+  .stat-item div:first-child { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; }
+  .stat-item div:last-child { font-size: 0.95rem; font-weight: 600; }
+
+  .progress-bar { background: #333; border-radius: 10px; height: 6px; overflow: hidden; }
   #barFill { background: var(--keto); height: 100%; width: 0%; transition: 1s ease; }
   
   .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 15px; }
@@ -56,15 +71,12 @@
     border: 1px solid transparent; background: #f9f9f9; cursor: pointer; padding: 2px;
   }
   .calendar-day.today { border-color: var(--keto); background: #f0fff4; }
-  .status-icon { font-size: 0.6rem; margin: 1px 0; }
-  .cal-label { font-size: 0.5rem; color: #777; line-height: 1; margin-top: 1px; }
+
+  .chart-container { margin-bottom: 25px; }
+  .chart-title { font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 8px; border-left: 3px solid var(--keto); padding-left: 8px; }
 
   .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Estilos específicos para gráficas */
-  .chart-container { margin-bottom: 25px; }
-  .chart-title { font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 8px; text-align: left; border-left: 3px solid var(--keto); padding-left: 8px; }
 </style>
 </head>
 <body>
@@ -77,10 +89,32 @@
   </div>
 
   <div class="dashboard">
+    <div class="dash-main">
+      <div>
+        <div class="dash-label">Carbohidratos</div>
+        <div class="dash-value"><span id="totalCarbs">0</span><small>/30g</small></div>
+      </div>
+      <div style="text-align: right;">
+        <div class="dash-label">Total Netas</div>
+        <div class="dash-value" id="totalNetKcal">0</div>
+      </div>
+    </div>
+    
     <div class="progress-bar"><div id="barFill"></div></div>
-    <div style="display:flex; justify-content: space-around; font-size: 0.85rem;">
-      <div>Carbs: <b id="totalCarbs">0</b>/30g</div>
-      <div>Netas: <b id="totalNetKcal">0</b> kcal</div>
+
+    <div class="dash-stats-row">
+      <div class="stat-item">
+        <div>Consumidas</div>
+        <div id="kcalConsumidas">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Quemadas</div>
+        <div id="kcalQuemadas">0</div>
+      </div>
+      <div class="stat-item">
+        <div>Peso</div>
+        <div id="currentWeight">--</div>
+      </div>
     </div>
   </div>
 
@@ -92,7 +126,7 @@
 
   <textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
   <button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
-    <span id="btnText">Analizar ✨</span>
+    <span id="btnText">Analizar con Gemini ✨</span>
   </button>
 
   <div id="resultCard" class="result-card">
@@ -107,56 +141,35 @@
   <div id="dailyList" style="margin-top:15px;"></div>
 </div>
 
-<div id="historyModal" class="modal">
-  <div class="modal-content">
+<div id="historyModal" class="modal"><div class="modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-      <button class="btn-icon" style="padding:4px 8px;" onclick="cambiarMes(-1)">‹</button>
-      <b id="calendarMonthName" style="text-transform: capitalize; font-size:0.9rem;"></b>
-      <button class="btn-icon" style="padding:4px 8px;" onclick="cambiarMes(1)">›</button>
+      <button class="btn-icon" onclick="cambiarMes(-1)">‹</button>
+      <b id="calendarMonthName" style="text-transform: capitalize;"></b>
+      <button class="btn-icon" onclick="cambiarMes(1)">›</button>
     </div>
     <div class="calendar-grid" id="calendarDays"></div>
     <button onclick="closeModal('historyModal')" class="btn-main">Cerrar</button>
-  </div>
-</div>
+</div></div>
 
-<div id="dayDetailModal" class="modal">
-    <div class="modal-content">
-      <h3 id="detailDateTitle" style="font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px;"></h3>
-      <div id="dayDetailContent" style="max-height:350px; overflow-y:auto; margin:12px 0; font-size:0.85rem; line-height:1.4;"></div>
-      <button onclick="closeModal('dayDetailModal')" class="btn-main">Volver</button>
-    </div>
-</div>
+<div id="dayDetailModal" class="modal"><div class="modal-content">
+    <h3 id="detailDateTitle" style="font-size:1rem; border-bottom:1px solid #eee; padding-bottom:10px;"></h3>
+    <div id="dayDetailContent" style="max-height:350px; overflow-y:auto; margin:12px 0; font-size:0.85rem; line-height:1.4;"></div>
+    <button onclick="closeModal('dayDetailModal')" class="btn-main">Volver</button>
+</div></div>
 
-<div id="chartModal" class="modal">
-    <div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
-      <h3 style="margin-bottom:20px;">Análisis 30 Días</h3>
-      
-      <div class="chart-container">
-        <div class="chart-title">Evolución de Peso (kg)</div>
-        <canvas id="weightChart"></canvas>
-      </div>
+<div id="chartModal" class="modal"><div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
+    <h3 style="margin-bottom:20px;">Análisis 30 Días</h3>
+    <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
+    <div class="chart-container"><div class="chart-title">Calorías Netas</div><canvas id="kcalChart"></canvas></div>
+    <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
+    <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
+</div></div>
 
-      <div class="chart-container">
-        <div class="chart-title">Calorías Netas (kcal)</div>
-        <canvas id="kcalChart"></canvas>
-      </div>
-
-      <div class="chart-container">
-        <div class="chart-title">Carbohidratos (g)</div>
-        <canvas id="carbChart"></canvas>
-      </div>
-
-      <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
-    </div>
-</div>
-
-<div id="configModal" class="modal">
-  <div class="modal-content">
+<div id="configModal" class="modal"><div class="modal-content">
     <h3>Ajustes</h3>
     <button class="btn-main" onclick="cambiarKey()">🔑 Configurar API Key</button>
     <button onclick="closeModal('configModal')" class="btn-main" style="background:#eee; color:#333;">Cerrar</button>
-  </div>
-</div>
+</div></div>
 
 <script>
   const firebaseConfig = {
@@ -190,7 +203,7 @@
   function cambiarMes(delta) { fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta); generarCalendario(); }
 
   function cambiarKey() {
-    const k = prompt("Pega tu API Key:");
+    const k = prompt("Pega tu API Key de Gemini:");
     if(k) localStorage.setItem('GEMINI_KEY', k.trim());
   }
 
@@ -198,17 +211,13 @@
     const key = localStorage.getItem('GEMINI_KEY');
     const text = document.getElementById('foodInput').value.trim();
     if(!key || !text) return;
-    
     const btn = document.getElementById('btnAnalyze');
     const btnText = document.getElementById('btnText');
-    btn.disabled = true;
-    btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
-
+    btn.disabled = true; btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
       const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }] }] })
       });
       const data = await response.json();
@@ -218,8 +227,7 @@
       document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
       document.getElementById('resultCard').style.display = 'block';
     } catch (err) { alert("Error de IA. Revisa tu clave."); }
-    btn.disabled = false;
-    btnText.innerText = "Analizar ✨";
+    btn.disabled = false; btnText.innerText = "Analizar con Gemini ✨";
   }
 
   function cancelarAnalisis() {
@@ -270,8 +278,13 @@
 
       if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tkEjer += e.k);
 
+      // Actualizar UI Dashboard
       document.getElementById('totalCarbs').innerText = tc.toFixed(1);
+      document.getElementById('kcalConsumidas').innerText = tkCons;
+      document.getElementById('kcalQuemadas').innerText = tkEjer;
       document.getElementById('totalNetKcal').innerText = (tkCons - tkEjer);
+      document.getElementById('currentWeight').innerText = data.peso ? data.peso + "kg" : "--";
+      
       const p = Math.min((tc / 30) * 100, 100);
       document.getElementById('barFill').style.width = p + '%';
       document.getElementById('barFill').style.background = tc > 30 ? 'var(--danger)' : 'var(--keto)';
@@ -288,16 +301,12 @@
     const title = document.getElementById('calendarMonthName');
     const y = fechaVistaCalendario.getFullYear(), m = fechaVistaCalendario.getMonth();
     title.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVistaCalendario);
-    
     const snap = await db.ref('keto_logs').once('value');
     const all = snap.val() || {};
-    
     grid.innerHTML = "LuMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:0.6rem;font-weight:bold;color:#999;margin-bottom:5px">${d}</div>`).join('');
-    
     const first = new Date(y, m, 1).getDay();
     const offset = (first === 0) ? 6 : first - 1;
     for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
-
     const days = new Date(y, m + 1, 0).getDate();
     for(let d=1; d<=days; d++){
       const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -307,9 +316,8 @@
         let regs = all[ds].comidas || all[ds];
         Object.values(regs).forEach(v => { if(v.c){ tc += parseFloat(v.c); tkc += parseInt(v.k); } });
         if(all[ds].ejercicio) Object.values(all[ds].ejercicio).forEach(e => tke += e.k);
-        status = `<span class="status-icon">${tc > 30 ? '❌' : '✅'}</span>`;
-        const pesoInfo = all[ds].peso ? `${all[ds].peso}k` : '';
-        info = `<div class="cal-label">${tkc-tke}kcal<br>${pesoInfo}</div>`;
+        status = `<span style="font-size:0.6rem;">${tc > 30 ? '❌' : '✅'}</span>`;
+        info = `<div class="cal-label">${tkc-tke}k<br>${all[ds].peso||''}</div>`;
       }
       grid.innerHTML += `<div class="calendar-day ${cls}" onclick="verDetalleDia('${ds}')"><b>${d}</b>${status}${info}</div>`;
     }
@@ -317,15 +325,14 @@
 
   async function verDetalleDia(fecha) {
     const snap = await db.ref(`keto_logs/${fecha}`).once('value');
-    const data = snap.val();
-    if(!data) return;
+    const data = snap.val(); if(!data) return;
     document.getElementById('detailDateTitle').innerText = new Date(fecha).toLocaleDateString('es-ES', {day:'numeric', month:'long'});
-    let tcTotal = 0, tkCons = 0, tkEjer = 0;
-    let html = `<b>⚖️ Peso:</b> ${data.peso ? data.peso + ' kg' : 'Sin registro'}<br><hr style="opacity:0.2;margin:10px 0;"><b>🍴 Comidas:</b><br>`;
+    let tcT = 0, tkC = 0, tkE = 0;
+    let html = `<b>⚖️ Peso:</b> ${data.peso || '?'}<br><hr style="opacity:0.1;margin:10px 0;"><b>🍴 Comidas:</b><br>`;
     let regs = data.comidas || data;
-    Object.values(regs).forEach(v => { if(v.n) { html += `• ${v.n} (${v.c}g C | ${v.k} Kcal)<br>`; tcTotal += parseFloat(v.c); tkCons += parseInt(v.k); } });
-    if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tkEjer += e.k);
-    html += `<hr style="opacity:0.2;margin:10px 0;"><b>📊 Resumen:</b><br>Carbs: ${tcTotal.toFixed(1)}g<br>Kcal Cons: ${tkCons}<br>Kcal Quem: ${tkEjer}<br><b>Netas: ${tkCons - tkEjer} Kcal</b>`;
+    Object.values(regs).forEach(v => { if(v.n) { html += `• ${v.n} (${v.c}g C | ${v.k} K)<br>`; tcT += parseFloat(v.c); tkC += parseInt(v.k); } });
+    if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tkE += e.k);
+    html += `<hr style="opacity:0.1;margin:10px 0;">Resumen:<br>Carbs: ${tcT.toFixed(1)}g<br>Cons: ${tkC} | Quem: ${tkE}<br><b>Netas: ${tkC - tkE} Kcal</b>`;
     document.getElementById('dayDetailContent').innerHTML = html;
     openModal('dayDetailModal');
   }
@@ -338,46 +345,22 @@
             const d = new Date(); d.setDate(d.getDate() - i);
             return d.toISOString().split('T')[0];
         }).reverse();
-
         ultimos30.forEach(d => {
-            labels.push(d.split('-')[2]); // Solo el número del día
+            labels.push(d.split('-')[2]);
             pesos.push(all[d]?.peso || null);
             let c = 0, k = 0, e = 0;
             let regs = all[d]?.comidas || all[d] || {};
             Object.values(regs).forEach(v => { if(v.c) { c += parseFloat(v.c); k += parseInt(v.k); } });
             if(all[d]?.ejercicio) Object.values(all[d].ejercicio).forEach(ex => e += ex.k);
-            carbos.push(c);
-            kcals.push(k - e);
+            carbos.push(c); kcals.push(k - e);
         });
-
-        const options = {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { 
-                x: { ticks: { font: { size: 9 }, maxRotation: 0 } },
-                y: { ticks: { font: { size: 10 } } }
-            }
-        };
-
+        const opt = { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } } } };
         if (window.wChart) window.wChart.destroy();
         if (window.cChart) window.cChart.destroy();
         if (window.kChart) window.kChart.destroy();
-
-        window.wChart = new Chart(document.getElementById('weightChart'), {
-            type: 'line',
-            data: { labels, datasets: [{ data: pesos, borderColor: '#3b82f6', tension: 0.3, pointRadius: 2 }] },
-            options: options
-        });
-        window.kChart = new Chart(document.getElementById('kcalChart'), {
-            type: 'line',
-            data: { labels, datasets: [{ data: kcals, borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)', fill: true, tension: 0.3 }] },
-            options: options
-        });
-        window.cChart = new Chart(document.getElementById('carbChart'), {
-            type: 'bar',
-            data: { labels, datasets: [{ data: carbos, backgroundColor: '#333' }] },
-            options: options
-        });
+        window.wChart = new Chart(document.getElementById('weightChart'), { type: 'line', data: { labels, datasets: [{ data: pesos, borderColor: '#3b82f6', tension: 0.3 }] }, options: opt });
+        window.kChart = new Chart(document.getElementById('kcalChart'), { type: 'line', data: { labels, datasets: [{ data: kcals, borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)', fill: true }] }, options: opt });
+        window.cChart = new Chart(document.getElementById('carbChart'), { type: 'bar', data: { labels, datasets: [{ data: carbos, backgroundColor: '#333' }] }, options: opt });
     });
   }
 </script>
