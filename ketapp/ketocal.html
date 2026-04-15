@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keto Tracker</title>
+    <title>Keto Tracker Pro</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
     
     <style>
         :root { --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--gray); display: flex; justify-content: center; padding: 15px; margin: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray); display: flex; justify-content: center; padding: 15px; margin: 0; }
         .container { background: white; padding: 25px; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; position: relative; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .btn-icon { background: #eee; border: none; padding: 10px; border-radius: 12px; cursor: pointer; font-size: 1.2rem; }
 
         .dashboard { background: var(--dark); color: white; padding: 20px; border-radius: 20px; text-align: center; margin-bottom: 20px; }
-        .progress-bar { background: #333; border-radius: 10px; height: 10px; margin: 10px 0; overflow: hidden; }
+        .progress-bar { background: #333; border-radius: 10px; height: 10px; margin: 15px 0; overflow: hidden; }
         #barFill { background: var(--keto); height: 100%; width: 0%; transition: 0.8s ease; }
         
         textarea { width: 100%; padding: 15px; border: 2px solid #eee; border-radius: 15px; box-sizing: border-box; font-size: 1rem; resize: none; outline: none; }
@@ -26,11 +26,10 @@
         .result-card { display: none; margin-top: 20px; padding: 15px; border-radius: 15px; background: #f0fff4; border: 1px solid #c6f6d5; }
         .food-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
         .delete-x { color: #ccc; cursor: pointer; font-weight: bold; padding: 5px; }
-        .delete-x:hover { color: var(--danger); }
 
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; }
-        .modal-content { background:white; padding:20px; border-radius:20px; width:85%; max-width:320px; max-height: 70vh; overflow-y: auto; }
-        .history-row { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; border-radius: 8px; color: white; }
+        .modal-content { background:white; padding:20px; border-radius:20px; width:85%; max-width:320px; max-height: 75vh; overflow-y: auto; }
+        .history-row { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; border-radius: 8px; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -50,14 +49,14 @@
         </div>
     </div>
 
-    <textarea id="foodInput" rows="2" placeholder="¿Qué comiste? Ej: 2 huevos..."></textarea>
-    <button class="btn-main" onclick="analizarIA()">Analizar con IA ✨</button>
-    <div id="status" style="text-align:center; font-size:0.8rem; color:#888; margin-top:5px;"></div>
+    <textarea id="foodInput" rows="2" placeholder="Ej: 2 huevos y jamón..."></textarea>
+    <button class="btn-main" onclick="analizarConIA()">Analizar ✨</button>
+    <div id="status" style="text-align:center; font-size:0.8rem; color:#888; margin-top:5px; min-height:1rem;"></div>
 
     <div id="resultCard" class="result-card">
         <h4 id="resName" style="margin:0"></h4>
         <p id="resNutri" style="margin:10px 0; font-size:0.9rem;"></p>
-        <button onclick="guardarEnFirebase()" style="width:100%; background:var(--keto); color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">Añadir Alimento</button>
+        <button onclick="guardar()" style="width:100%; background:var(--keto); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Confirmar e Insertar</button>
     </div>
 
     <div id="dailyList" style="margin-top:20px;"></div>
@@ -65,7 +64,7 @@
 
 <div id="historyModal" class="modal">
     <div class="modal-content">
-        <h3>Historial por Días</h3>
+        <h3>Historial</h3>
         <div id="historyContent"></div>
         <button onclick="toggleModal('historyModal')" style="width:100%; margin-top:15px; padding:10px; border-radius:10px; border:1px solid #ccc; background:none;">Cerrar</button>
     </div>
@@ -73,9 +72,8 @@
 
 <div id="configModal" class="modal">
     <div class="modal-content">
-        <h3>Configuración</h3>
-        <button class="btn-main" onclick="cambiarKey()">🔑 Cambiar Gemini API Key</button>
-        <button class="btn-main" style="background:var(--danger)" onclick="resetFirebase()">🗑️ Borrar Todo el Historial</button>
+        <h3>Ajustes</h3>
+        <button class="btn-main" onclick="cambiarKey()">🔑 Actualizar API Key</button>
         <button onclick="toggleModal('configModal')" style="width:100%; margin-top:15px; border:none; background:none; text-decoration:underline;">Cerrar</button>
     </div>
 </div>
@@ -93,14 +91,13 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
     const today = new Date().toISOString().split('T')[0];
     let tempFood = null;
 
     window.onload = () => {
         document.getElementById('displayDate').innerText = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'short'});
         if (!localStorage.getItem('GEMINI_KEY')) cambiarKey();
-        escucharDatos();
+        escucharFirebase();
     };
 
     function toggleModal(id) {
@@ -114,33 +111,52 @@
         if(k) localStorage.setItem('GEMINI_KEY', k.trim());
     }
 
-    async function analizarIA() {
+    async function analizarConIA() {
         const key = localStorage.getItem('GEMINI_KEY');
-        const text = document.getElementById('foodInput').value;
+        const text = document.getElementById('foodInput').value.trim();
+        const status = document.getElementById('status');
         if(!text) return;
+
+        status.innerText = "Consultando IA...";
+        document.getElementById('resultCard').style.display = 'none';
+
+        // Intentamos con Flash 1.5 que es el más estable para texto
+        const modelos = ["gemini-1.5-flash", "gemini-1.5-pro"];
         
-        document.getElementById('status').innerText = "Analizando...";
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({contents: [{parts: [{text: `Responde solo JSON: {"n": "nombre", "c": 0.0, "k": 0}. Analiza: ${text}`}]}]})
-            });
-            const data = await res.json();
-            const json = JSON.parse(data.candidates[0].content.parts[0].text.match(/\{.*\}/s)[0]);
-            
-            tempFood = json;
-            document.getElementById('resName').innerText = json.n;
-            document.getElementById('resNutri').innerText = `${json.c}g Carbohidratos | ${json.k} Calorías`;
-            document.getElementById('resultCard').style.display = 'block';
-            document.getElementById('status').innerText = "";
-        } catch(e) { 
-            document.getElementById('status').innerText = "Error en la IA";
+        for (let m of modelos) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO un objeto JSON (sin bloques de código markdown) con este formato: {"n": "nombre del plato", "c": carbohidratos_netos_numero, "k": calorias_numero}` }] }]
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                let raw = data.candidates[0].content.parts[0].text;
+                // Limpiar posibles bloques de código markdown si la IA los pone
+                raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
+                
+                const res = JSON.parse(raw);
+                tempFood = res;
+
+                document.getElementById('resName').innerText = res.n;
+                document.getElementById('resNutri').innerText = `${res.c}g Carbs | ${res.k} Kcal`;
+                document.getElementById('resultCard').style.display = 'block';
+                status.innerText = "";
+                return; // Éxito
+            } catch (err) {
+                console.warn(`Fallo con ${m}:`, err);
+                status.innerText = "Reintentando con otro modelo...";
+            }
         }
+        status.innerText = "Error IA: Revisa tu conexión o la API Key.";
     }
 
-    function guardarEnFirebase() {
+    function guardar() {
         if(tempFood) {
             db.ref(`keto_logs/${today}`).push(tempFood);
             document.getElementById('resultCard').style.display = 'none';
@@ -149,11 +165,7 @@
         }
     }
 
-    function eliminarAlimento(id) {
-        if(confirm("¿Eliminar?")) db.ref(`keto_logs/${today}/${id}`).remove();
-    }
-
-    function escucharDatos() {
+    function escucharFirebase() {
         db.ref(`keto_logs/${today}`).on('value', snap => {
             const data = snap.val() || {};
             const list = document.getElementById('dailyList');
@@ -162,10 +174,11 @@
 
             Object.keys(data).reverse().forEach(id => {
                 const item = data[id];
-                tc += parseFloat(item.c); tk += parseInt(item.k);
+                tc += parseFloat(item.c || 0); 
+                tk += parseInt(item.k || 0);
                 list.innerHTML += `<div class="food-item">
                     <div><b>${item.n}</b><br><small>${item.c}g carbs | ${item.k} kcal</small></div>
-                    <div class="delete-x" onclick="eliminarAlimento('${id}')">✕</div>
+                    <div class="delete-x" onclick="db.ref('keto_logs/${today}/${id}').remove()">✕</div>
                 </div>`;
             });
 
@@ -184,17 +197,14 @@
             const all = snap.val() || {};
             container.innerHTML = "";
             Object.keys(all).sort().reverse().forEach(date => {
-                let dc = 0; Object.values(all[date]).forEach(f => dc += f.c);
+                let dc = 0; 
+                Object.values(all[date]).forEach(f => dc += (parseFloat(f.c) || 0));
                 const color = dc > 30 ? '#e74c3c' : '#27ae60';
                 container.innerHTML += `<div class="history-row" style="background:${color}">
                     <span>${date}</span><span>${dc.toFixed(1)}g</span>
                 </div>`;
             });
         });
-    }
-
-    function resetFirebase() {
-        if(confirm("¿BORRAR TODO EL HISTORIAL permanentemente?")) db.ref('keto_logs').remove();
     }
 </script>
 </body>
