@@ -197,37 +197,50 @@
     if(k) localStorage.setItem('GEMINI_KEY', k.trim());
   }
 
-  async function analizarIA() {
-  const key = localStorage.getItem('GEMINI_KEY');
+ async function analizarIA() {
+  const key = localStorage.getItem('GEMINI_KEY'); // Puedes seguir usando el mismo nombre en localStorage o cambiarlo
   const text = document.getElementById('foodInput').value.trim();
   
-  if(!key) { alert("Falta la API Key. Configúrala en ajustes."); return; }
+  if(!key) { alert("Falta la API Key de Groq."); return; }
   if(!text) return;
 
   const btn = document.getElementById('btnAnalyze');
   const btnText = document.getElementById('btnText');
-  
   btn.disabled = true; 
   btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+    // URL de Groq (compatible con formato OpenAI)
+    const url = `https://api.groq.com/openai/v1/chat/completions`;
+    
     const response = await fetch(url, {
       method: 'POST', 
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`
+      },
       body: JSON.stringify({ 
-        contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }] }] 
+        model: "llama-3.3-70b-versatile", // Modelo muy potente y gratuito en Groq
+        messages: [{ 
+          role: "user", 
+          content: `Analiza: "${text}". Devuelve SOLO un objeto JSON sin texto extra: {"n": "nombre del alimento", "c": carbohidratos_num, "k": kcal_num}` 
+        }],
+        temperature: 0.1 // Para que sea preciso y no invente
       })
     });
 
     const data = await response.json();
 
-    // Si la API devuelve un error estructurado
     if (data.error) {
-      throw new Error(`Código ${data.error.code}: ${data.error.message}`);
+      throw new Error(`${data.error.code || 'Error'}: ${data.error.message}`);
     }
 
-    let txt = data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim();
+    // En Groq la respuesta viene en choices[0].message.content
+    let txt = data.choices[0].message.content.trim();
+    
+    // Limpiar posibles bloques de código Markdown
+    txt = txt.replace(/```json/g, "").replace(/```/g, "").trim();
+    
     tempFood = JSON.parse(txt);
     
     document.getElementById('resName').innerText = tempFood.n;
@@ -235,15 +248,13 @@
     document.getElementById('resultCard').style.display = 'block';
 
   } catch (err) {
-    // Muestra el mensaje de error real en un alert
     console.error(err);
-    alert("DETALLE DEL ERROR:\n" + err.message);
+    alert("DETALLE DEL ERROR (Groq):\n" + err.message);
   } finally {
     btn.disabled = false; 
     btnText.innerText = "Analizar ✨";
   }
 }
-
   function cancelarAnalisis() { document.getElementById('resultCard').style.display = 'none'; document.getElementById('foodInput').value = ""; tempFood = null; }
   function guardar() { if(tempFood) { db.ref(`keto_logs/${hoyISO()}/comidas`).push(tempFood); cancelarAnalisis(); } }
   function registrarPeso() { const p = prompt("Peso hoy (kg):"); if(p) db.ref(`keto_logs/${hoyISO()}/peso`).set(parseFloat(p)); }
