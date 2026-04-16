@@ -198,19 +198,23 @@
   }
 
  async function analizarIA() {
-  const key = localStorage.getItem('GEMINI_KEY'); // Puedes seguir usando el mismo nombre en localStorage o cambiarlo
+  const key = localStorage.getItem('GEMINI_KEY'); // Se asume que aquí guardas la clave de Groq (gsk_...)
   const text = document.getElementById('foodInput').value.trim();
   
-  if(!key) { alert("Falta la API Key de Groq."); return; }
+  if(!key) { 
+    alert("Falta la API Key en Ajustes."); 
+    return; 
+  }
   if(!text) return;
 
   const btn = document.getElementById('btnAnalyze');
   const btnText = document.getElementById('btnText');
+  
+  // Estado de carga
   btn.disabled = true; 
   btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
 
   try {
-    // URL de Groq (compatible con formato OpenAI)
     const url = `https://api.groq.com/openai/v1/chat/completions`;
     
     const response = await fetch(url, {
@@ -221,45 +225,52 @@
       },
       body: JSON.stringify({ 
         model: "llama-3.3-70b-versatile",
-        messages: [{ 
-          role: "system", 
-          content: "Eres un experto nutricionista. Tu tarea es desglosar cada ingrediente por separado, buscar sus kcal y carbohidratos estándar por ración lógica, y sumarlos con precisión."
-        },
-        { 
-          role: "user", 
-          content: `Analiza: "${text}". 
-          Instrucciones:
-          1. Identifica los ingredientes.
-          2. Calcula los macros de cada uno.
-          3. Suma los totales.
-          4. Responde EXCLUSIVAMENTE con este formato JSON: {"n": "nombre breve", "c": total_carbos, "k": total_kcal}` 
-        }],
-        temperature: 0 // Temperatura 0 para que sea determinista y siempre dé lo mismo
+        messages: [
+          { 
+            role: "system", 
+            content: "Eres un experto nutricionista. Tu tarea es desglosar ingredientes, buscar macros estándar y sumarlos. Responde ÚNICAMENTE con el objeto JSON solicitado." 
+          },
+          { 
+            role: "user", 
+            content: `Analiza: "${text}". Devuelve solo este JSON sin texto extra: {"n": "nombre breve", "c": carbohidratos_totales, "k": kcal_totales}` 
+          }
+        ],
+        temperature: 0 // Evita variaciones por orden de palabras
       })
     });
 
     const data = await response.json();
 
     if (data.error) {
-      throw new Error(`${data.error.code || 'Error'}: ${data.error.message}`);
+      throw new Error(`Error ${data.error.code}: ${data.error.message}`);
     }
 
-    // En Groq la respuesta viene en choices[0].message.content
-    let txt = data.choices[0].message.content.trim();
+    // 1. Obtener el texto crudo de la IA
+    let rawText = data.choices[0].message.content.trim();
     
-    // Limpiar posibles bloques de código Markdown
-    txt = txt.replace(/```json/g, "").replace(/```/g, "").trim();
+    // 2. Extraer solo el bloque JSON para evitar errores de "Unexpected token P"
+    const startIdx = rawText.indexOf('{');
+    const endIdx = rawText.lastIndexOf('}');
     
-    tempFood = JSON.parse(txt);
+    if (startIdx === -1 || endIdx === -1) {
+      throw new Error("La respuesta de la IA no contiene un JSON válido.");
+    }
     
+    const jsonString = rawText.substring(startIdx, endIdx + 1);
+    
+    // 3. Parsear el resultado
+    tempFood = JSON.parse(jsonString);
+    
+    // 4. Actualizar la interfaz
     document.getElementById('resName').innerText = tempFood.n;
-    document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
+    document.getElementById('resNutri').innerText = `${tempFood.c}g Carbos | ${tempFood.k} Kcal`;
     document.getElementById('resultCard').style.display = 'block';
 
   } catch (err) {
-    console.error(err);
-    alert("DETALLE DEL ERROR (Groq):\n" + err.message);
+    console.error("Error en analizarIA:", err);
+    alert("FALLO EN ANÁLISIS:\n" + err.message);
   } finally {
+    // Restaurar botón
     btn.disabled = false; 
     btnText.innerText = "Analizar ✨";
   }
