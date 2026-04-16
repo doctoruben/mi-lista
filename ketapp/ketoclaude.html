@@ -220,12 +220,21 @@
         'Authorization': `Bearer ${key}`
       },
       body: JSON.stringify({ 
-        model: "llama-3.3-70b-versatile", // Modelo muy potente y gratuito en Groq
+        model: "llama-3.3-70b-versatile",
         messages: [{ 
+          role: "system", 
+          content: "Eres un experto nutricionista. Tu tarea es desglosar cada ingrediente por separado, buscar sus kcal y carbohidratos estándar por ración lógica, y sumarlos con precisión."
+        },
+        { 
           role: "user", 
-          content: `Analiza: "${text}". Devuelve SOLO un objeto JSON sin texto extra: {"n": "nombre del alimento", "c": carbohidratos_num, "k": kcal_num}` 
+          content: `Analiza: "${text}". 
+          Instrucciones:
+          1. Identifica los ingredientes.
+          2. Calcula los macros de cada uno.
+          3. Suma los totales.
+          4. Responde EXCLUSIVAMENTE con este formato JSON: {"n": "nombre breve", "c": total_carbos, "k": total_kcal}` 
         }],
-        temperature: 0.1 // Para que sea preciso y no invente
+        temperature: 0 // Temperatura 0 para que sea determinista y siempre dé lo mismo
       })
     });
 
