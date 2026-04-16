@@ -204,37 +204,49 @@ function actualizarUI() {
   function registrarEjercicio() { const k = prompt("Kcal quemadas:"); if(k) db.ref(`keto_logs/${getISO(fechaActual)}/ejercicio`).push({ k: parseInt(k) }); }
 
   function cargarGraficas() {
-    db.ref('keto_logs').once('value', snap => {
-      const all = snap.val() || {};
-      const labels = [], pesos = [], carbos = [], kcals = [], carbColors = [];
-      const hoy = new Date();
-      for(let i=29; i>=0; i--) {
-        const d = new Date(); d.setDate(hoy.getDate() - i);
-        const iso = getISO(d);
-        labels.push(d.getDate());
-        if(all[iso]) {
-          pesos.push(all[iso].peso || null);
-          let c = 0, k = 0, e = 0;
-          Object.values(all[iso].comidas || {}).forEach(v => { c += v.c; k += v.k; });
-          Object.values(all[iso].ejercicio || {}).forEach(ex => e += ex.k);
-          carbos.push(c); kcals.push(k - e);
-          carbColors.push(c > 30 ? '#e74c3c' : '#27ae60');
-        } else { pesos.push(null); carbos.push(0); kcals.push(0); carbColors.push('#27ae60'); }
+  db.ref('keto_logs').once('value', snap => {
+    const all = snap.val() || {};
+    const labels = [], pesos = [], carbos = [], kcals = [], carbColors = [];
+    
+    // Obtener primer y último día del mes actual
+    const y = fechaActual.getFullYear();
+    const m = fechaActual.getMonth();
+    const ultimoDia = new Date(y, m + 1, 0).getDate();
+
+    for(let d = 1; d <= ultimoDia; d++) {
+      const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      labels.push(d); // Eje X: 1, 2, 3...
+      
+      if(all[iso]) {
+        pesos.push(all[iso].peso || null);
+        let c = 0, k = 0, e = 0;
+        if(all[iso].comidas) Object.values(all[iso].comidas).forEach(v => { c += v.c; k += v.k; });
+        if(all[iso].ejercicio) Object.values(all[iso].ejercicio).forEach(ex => e += ex.k);
+        carbos.push(c); 
+        kcals.push(k - e);
+        carbColors.push(c > 30 ? '#e74c3c' : '#27ae60');
+      } else {
+        pesos.push(null); carbos.push(0); kcals.push(0); carbColors.push('#27ae60');
       }
+    }
 
-      const commonOpt = (max) => ({ responsive: true, scales: { y: { min: 0, max: max } }, plugins: { legend: false } });
-
-      if(window.wChart) window.wChart.destroy();
-      window.wChart = new Chart(document.getElementById('weightChart'), { type: 'line', data: { labels, datasets: [{ data: pesos, borderColor: '#3498db', tension:0.3 }] }, options: commonOpt(100) });
-
-      if(window.kChart) window.kChart.destroy();
-      window.kChart = new Chart(document.getElementById('kcalChart'), { type: 'line', data: { labels, datasets: [{ data: kcals, borderColor: '#27ae60', fill: true, backgroundColor: 'rgba(39,174,96,0.1)' }] }, options: commonOpt(2000) });
-
-      if(window.cChart) window.cChart.destroy();
-      window.cChart = new Chart(document.getElementById('carbChart'), { type: 'bar', data: { labels, datasets: [{ data: carbos, backgroundColor: carbColors }] }, options: commonOpt(60) });
+    const opt = (max) => ({ 
+      responsive: true, 
+      maintainAspectRatio: false,
+      scales: { y: { min: 0, max: max, ticks: { stepSize: max/4 } } }, 
+      plugins: { legend: false } 
     });
-  }
 
+    if(window.wChart) window.wChart.destroy();
+    window.wChart = new Chart(document.getElementById('weightChart'), { type: 'line', data: { labels, datasets: [{ data: pesos, borderColor: '#3498db', tension:0.3, spanGaps: true }] }, options: opt(100) });
+
+    if(window.kChart) window.kChart.destroy();
+    window.kChart = new Chart(document.getElementById('kcalChart'), { type: 'line', data: { labels, datasets: [{ data: kcals, borderColor: '#27ae60', fill: true, backgroundColor: 'rgba(39,174,96,0.1)', spanGaps: true }] }, options: opt(2000) });
+
+    if(window.cChart) window.cChart.destroy();
+    window.cChart = new Chart(document.getElementById('carbChart'), { type: 'bar', data: { labels, datasets: [{ data: carbos, backgroundColor: carbColors }] }, options: opt(60) });
+  });
+}
   function openModal(id) { document.getElementById(id).classList.add('open'); if(id === 'chartModal') setTimeout(cargarGraficas, 300); }
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 </script>
