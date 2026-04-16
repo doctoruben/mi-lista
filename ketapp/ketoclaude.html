@@ -215,9 +215,19 @@
     const response = await fetch(url, {
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        contents: [{ parts: [{ text: `Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }] }] 
-      })
+     // ... dentro de tu JSON.stringify
+body: JSON.stringify({ 
+  contents: [{ 
+    parts: [{ 
+      text: `Actúa como nutricionista Keto experto. 
+             Analiza: "${text}". 
+             Si no hay cantidades, usa raciones estándar (ej: 1 sobre azúcar = 9g carbos).
+             Devuelve SOLO el objeto JSON, sin texto adicional: 
+             {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
+    }] 
+  }] 
+})
+// ...
     });
 
     const data = await response.json();
