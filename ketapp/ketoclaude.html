@@ -129,37 +129,53 @@
     actualizarUI();
   }
 
-  function actualizarUI() {
-    const iso = getISO(fechaActual);
-    document.getElementById('displayDate').innerText = fechaActual.toLocaleDateString('es-ES', {day:'numeric', month:'short'});
-    escucharDia(iso);
-  }
+function actualizarUI() {
+  const iso = getISO(fechaActual);
+  // Formato: "16 de abril"
+  document.getElementById('displayDate').innerText = fechaActual.toLocaleDateString('es-ES', {day:'numeric', month:'long'});
+  
+  // Limpiamos la lista antes de cargar el nuevo día para evitar parpadeos de datos viejos
+  document.getElementById('dailyList').innerHTML = "";
+  escucharDia(iso);
+}
 
   function escucharDia(iso) {
-    db.ref(`keto_logs/${iso}`).on('value', snap => {
-      const data = snap.val() || {};
-      const list = document.getElementById('dailyList');
-      list.innerHTML = "";
-      let tc = 0, tkc = 0, tke = 0;
+  // Importante: Usamos .off() para dejar de escuchar el día anterior antes de escuchar el nuevo
+  db.ref(`keto_logs`).off(); 
+  
+  db.ref(`keto_logs/${iso}`).on('value', snap => {
+    const data = snap.val() || {};
+    const list = document.getElementById('dailyList');
+    list.innerHTML = "";
+    let tc = 0, tkc = 0, tke = 0;
 
-      const regs = data.comidas || {};
-      Object.keys(regs).reverse().forEach(id => {
+    // Recuperar comidas (soporte para estructura antigua y nueva)
+    const regs = data.comidas || {};
+    const keys = Object.keys(regs);
+    
+    if (keys.length === 0) {
+      list.innerHTML = `<p style="text-align:center; color:#999; font-size:0.8rem;">No hay registros este día</p>`;
+    } else {
+      keys.reverse().forEach(id => {
         const item = regs[id];
-        tc += parseFloat(item.c || 0); tkc += parseInt(item.k || 0);
-        list.innerHTML += `<div class="food-item"><div><b>${item.n}</b><br><small>${item.c}g | ${item.k}k</small></div><div onclick="db.ref('keto_logs/${iso}/comidas/${id}').remove()">✕</div></div>`;
+        if (item && item.k !== undefined) {
+          tc += parseFloat(item.c || 0); tkc += parseInt(item.k || 0);
+          list.innerHTML += `<div class="food-item"><div><b>${item.n}</b><br><small>${item.c}g | ${item.k}k</small></div><div style="cursor:pointer; color:#ccc;" onclick="db.ref('keto_logs/${iso}/comidas/${id}').remove()">✕</div></div>`;
+        }
       });
+    }
 
-      if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tke += e.k);
-      
-      document.getElementById('totalCarbs').innerText = tc.toFixed(1);
-      document.getElementById('kcalConsumidas').innerText = tkc;
-      document.getElementById('kcalQuemadas').innerText = tke;
-      document.getElementById('totalNetKcal').innerText = tkc - tke;
-      document.getElementById('currentWeight').innerText = data.peso ? data.peso + "kg" : "--";
-      document.getElementById('barFill').style.width = Math.min((tc/30)*100, 100) + '%';
-      document.getElementById('barFill').style.background = tc > 30 ? 'var(--danger)' : 'var(--keto)';
-    });
-  }
+    if(data.ejercicio) Object.values(data.ejercicio).forEach(e => tke += e.k);
+    
+    document.getElementById('totalCarbs').innerText = tc.toFixed(1);
+    document.getElementById('kcalConsumidas').innerText = tkc;
+    document.getElementById('kcalQuemadas').innerText = tke;
+    document.getElementById('totalNetKcal').innerText = tkc - tke;
+    document.getElementById('currentWeight').innerText = data.peso ? data.peso + "kg" : "--";
+    document.getElementById('barFill').style.width = Math.min((tc/30)*100, 100) + '%';
+    document.getElementById('barFill').style.background = tc > 30 ? 'var(--danger)' : 'var(--keto)';
+  });
+}
 
   async function analizarIA() {
     const key = localStorage.getItem('GEMINI_KEY');
