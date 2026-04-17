@@ -447,11 +447,13 @@ let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', m
   function cambiarMes(delta) { fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta); generarCalendario(); }
 
   // IA GEMINI
-  function cambiarKey() {
-    const k = prompt("Pega tu API Key de Gemini:");
-    if(k) localStorage.setItem('GEMINI_KEY', k.trim());
-  }
-
+function cambiarKey() {
+    const k = prompt("Pega tus API Keys separadas por comas:\n(Ejemplo: Key1,Key2,Key3)");
+    if(k) {
+        localStorage.setItem('GEMINI_KEY', k.trim());
+        alert("Keys configuradas correctamente.");
+    }
+}
 function añadirManual() {
     const nombre = prompt("Nombre del alimento:");
     if (!nombre) return;
@@ -477,76 +479,89 @@ function añadirManual() {
 }
 
   async function analizarIA() {
-  const key = localStorage.getItem('GEMINI_KEY');
+  // Obtenemos el string de llaves (pueden ser varias separadas por coma)
+  const rawKeys = localStorage.getItem('GEMINI_KEY');
   const text = document.getElementById('foodInput').value.trim();
   
-  if(!key) { alert("Falta la API Key. Configúrala en ajustes."); return; }
+  if(!rawKeys) { alert("Falta la API Key. Configúrala en ajustes."); return; }
   if(!text) return;
 
+  // Convertimos en array y limpiamos espacios
+  const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k);
+  
   const btn = document.getElementById('btnAnalyze');
   const btnText = document.getElementById('btnText');
   
   btn.disabled = true; 
   btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-    const response = await fetch(url, {
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' },
-     // ... dentro de tu JSON.stringify
-body: JSON.stringify({ 
-  contents: [{ 
-    parts: [{ 
-      text: `Actúa como si fueras nutricionista Keto experto y esfuerzate en dar datos lo mas reables posibles. 
-             Analiza: "${text}". 
-             Si no hay cantidades, usa raciones estándar.
-             Devuelve SOLO el objeto JSON, sin texto adicional: 
-             {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
-    }] 
-  }] 
-})
-// ...
-    });
-// ....................................................
-// --- GESTIÓN DE ERRORES HTTP ---
-    if (!response.ok) {
-        if (response.status === 503) {
-            throw new Error("Servidor ocupado. Reintente en unos segundos.");
-        } else if (response.status === 429) {
-            throw new Error("Demasiadas peticiones. Espere un poco.");
-        } else if (response.status === 400) {
-            throw new Error("API Key inválida o error en el texto.");
-        } else {
-            throw new Error(`Error ${response.status}: Inténtalo de nuevo.`);
-        }
+  // Bucle para reintentar con cada llave disponible
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      console.log(`Intentando con API Key ${i + 1}...`);
+      
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys[i]}`;
+      
+      const response = await fetch(url, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          contents: [{ 
+            parts: [{ 
+              text: `Actúa como si fueras nutricionista Keto experto y esfuerzate en dar datos lo mas reables posibles. 
+                     Analiza: "${text}". 
+                     Si no hay cantidades, usa raciones estándar.
+                     Devuelve SOLO el objeto JSON, sin texto adicional: 
+                     {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
+            }] 
+          }] 
+        })
+      });
+
+      // Si la llave actual está agotada (Error 429), pasamos a la siguiente
+      if (response.status === 429) {
+        console.warn(`Key ${i + 1} agotada (429). Probando la siguiente...`);
+        continue; 
+      }
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.candidates || !data.candidates[0].content) {
+        throw new Error("Respuesta de IA vacía o bloqueada.");
+      }
+
+      let rawText = data.candidates[0].content.parts[0].text;
+      let cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+      
+      tempFood = JSON.parse(cleanJson);
+      
+      // Si todo va bien, mostramos resultados y cortamos el bucle con return
+      document.getElementById('resName').innerText = tempFood.n;
+      document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
+      document.getElementById('resultCard').style.display = 'block';
+      
+      btn.disabled = false; 
+      btnText.innerText = "Analizar ✨";
+      return; // <--- Éxito: salimos de la función por completo
+
+    } catch (err) {
+      console.error(`Fallo con la llave ${i + 1}:`, err.message);
+      
+      // Si es la última llave y falla, avisamos al usuario
+      if (i === keys.length - 1) {
+        alert("✨ NOTA DE IA:\nSe han agotado todos los intentos o hay un error de conexión: " + err.message);
+      }
+      // Si no es la última, el bucle for sigue a la siguiente llave
     }
-
-
-// ....................................................  
-  const data = await response.json();
-
-    if (!data.candidates || !data.candidates[0].content) {
-        throw new Error("La IA no pudo procesar esta descripción.");
-    }
-
-    let rawText = data.candidates[0].content.parts[0].text;
-    let cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-    
-    tempFood = JSON.parse(cleanJson);
-    
-    document.getElementById('resName').innerText = tempFood.n;
-    document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
-    document.getElementById('resultCard').style.display = 'block';
-
-  } catch (err) {
-    console.error("Error IA:", err);
-    // Mostramos el mensaje amigable en un alert o podrías ponerlo en un div de error
-    alert("✨ NOTA DE IA:\n" + err.message);
-  } finally {
-    btn.disabled = false; 
-    btnText.innerText = "Analizar ✨";
   }
+
+  // Si el bucle termina sin éxito
+  btn.disabled = false; 
+  btnText.innerText = "Analizar ✨";
 }
 
 
