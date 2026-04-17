@@ -1027,8 +1027,27 @@ const groqKey = localStorage.getItem('GROQ_KEY');
             </div>
         </div>
 
-        <div id="contenidoInforme" style="background: white; padding: 20px; border-radius: 8px; border: 1px dashed #bdc3c7; min-height: 200px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-            </div>
+        <div id="contenidoInforme" style="
+    background: white; 
+    padding: 15px; 
+    border-radius: 8px; 
+    border: 1px dashed #bdc3c7; 
+    color: #333; 
+    
+    /* ESTO ES LO QUE ACTIVA EL SCROLL */
+    height: 400px; /* Altura fija base */
+    max-height: 50vh; /* En móviles usará el 50% de la pantalla */
+    overflow-y: scroll; /* Forzamos a que la zona de scroll exista siempre */
+    overflow-x: hidden;
+    
+    display: block; /* Aseguramos que se comporte como bloque */
+    font-family: sans-serif; 
+    line-height: 1.5; 
+    font-size: 0.95rem; 
+    -webkit-overflow-scrolling: touch;
+">
+    Analizando datos...
+</div>
 
         <p style="font-size: 0.75rem; color: #95a5a6; margin-top: 20px; text-align: center; font-style: italic;">
             Este documento ha sido generado por inteligencia artificial. Consulte a su médico antes de realizar cambios drásticos en su dieta.
