@@ -141,9 +141,26 @@
   <span id="btnText">Analizar con Gemini ✨</span>
 </button>
 
-<button class="btn-main" onclick="openModal('manualModal')" style="background:#eee; color:#333; margin-top: 8px;">
-  Añadir manualmente ✍️
-</button>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+  <button class="btn-main" onclick="openModal('manualModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
+    ✍️ Añadir Manual
+  </button>
+  <button class="btn-main" onclick="openModal('recentModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
+    🕒 Añadir Reciente
+  </button>
+</div>
+
+<div id="recentModal" class="modal">
+  <div class="modal-content">
+    <h3>Alimentos Recientes</h3>
+    <input type="text" id="searchRecent" oninput="buscarEnHistorial()" placeholder="Escribe para buscar..." style="width:100%; padding:12px; border-radius:12px; border:2px solid var(--keto); box-sizing:border-box; outline:none;">
+    
+    <div id="recentResults" style="max-height: 250px; overflow-y: auto; margin-top: 15px;">
+      </div>
+    
+    <button onclick="closeModal('recentModal')" class="btn-main" style="background:#eee; color:#333; margin-top:15px;">Cancelar</button>
+  </div>
+</div>
 
 <div id="manualModal" class="modal">
   <div class="modal-content">
@@ -240,6 +257,57 @@
     escucharFirebase();
   };
 
+let historialAlimentos = [];
+
+async function prepararHistorial() {
+    const snap = await db.ref('keto_logs').once('value');
+    const all = snap.val() || {};
+    const diccionario = {};
+
+    // Recorremos todo el historial para crear una lista de alimentos únicos
+    Object.values(all).forEach(dia => {
+        const fuentes = [dia.comidas, dia];
+        fuentes.forEach(fuente => {
+            if (fuente && typeof fuente === 'object') {
+                Object.values(fuente).forEach(item => {
+                    if (item && item.n && item.c !== undefined) {
+                        // Usamos el nombre como clave para evitar duplicados
+                        diccionario[item.n.toLowerCase()] = { n: item.n, c: item.c, k: item.k };
+                    }
+                });
+            }
+        });
+    });
+    historialAlimentos = Object.values(diccionario);
+}
+
+function buscarEnHistorial() {
+    const term = document.getElementById('searchRecent').value.toLowerCase();
+    const resultsDiv = document.getElementById('recentResults');
+    resultsDiv.innerHTML = "";
+
+    if (term.length < 2) return; // Empezar a buscar tras 2 letras
+
+    const filtrados = historialAlimentos.filter(item => 
+        item.n.toLowerCase().includes(term)
+    );
+
+    filtrados.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'food-item';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `<div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div> <span>➕</span>`;
+        div.onclick = () => seleccionarReciente(item);
+        resultsDiv.appendChild(div);
+    });
+}
+
+function seleccionarReciente(item) {
+    tempFood = { n: item.n, c: item.c, k: item.k };
+    guardar();
+    closeModal('recentModal');
+    alert("Añadido: " + item.n);
+}
 
 // Función para mover el día (delta puede ser -1 o 1)
 function navegarDia(delta) {
@@ -364,7 +432,11 @@ let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', m
     document.getElementById(id).classList.add('open'); 
     if(id === 'historyModal') generarCalendario();
     if(id === 'chartModal') setTimeout(cargarGraficas, 400);
-    // Limpiar campos si es el manual
+    if(id === 'recentModal') {
+        document.getElementById('searchRecent').value = "";
+        document.getElementById('recentResults').innerHTML = "";
+        prepararHistorial(); // Carga los datos de Firebase
+    }
     if(id === 'manualModal') {
         document.getElementById('manNombre').value = "";
         document.getElementById('manCarbs').value = "";
