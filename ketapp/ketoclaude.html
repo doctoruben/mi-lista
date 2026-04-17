@@ -136,9 +136,41 @@
   </div>
 
   <textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
-  <button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
-    <span id="btnText">Analizar con Gemini ✨</span>
-  </button>
+
+<button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
+  <span id="btnText">Analizar con Gemini ✨</span>
+</button>
+
+<button class="btn-main" onclick="openModal('manualModal')" style="background:#eee; color:#333; margin-top: 8px;">
+  Añadir manualmente ✍️
+</button>
+
+<div id="manualModal" class="modal">
+  <div class="modal-content">
+    <h3>Nuevo Alimento</h3>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div>
+        <label style="font-size: 0.8rem; color: var(--muted);">Nombre</label>
+        <input type="text" id="manNombre" placeholder="Ej. Filete de ternera" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--muted);">Carbohidratos (g)</label>
+          <input type="number" id="manCarbs" step="0.1" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--muted);">Calorías (kcal)</label>
+          <input type="number" id="manKcal" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box;">
+        </div>
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top: 20px;">
+      <button onclick="guardarManual()" style="flex:2; background:var(--dark); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Guardar</button>
+      <button onclick="closeModal('manualModal')" style="flex:1; background:#eee; color:#333; border:none; padding:12px; border-radius:12px; cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
 
   <div id="resultCard" class="result-card">
     <h4 id="resName" style="margin:0; font-size:0.95rem;"></h4>
@@ -213,6 +245,30 @@
 function navegarDia(delta) {
     fechaSeleccionada.setDate(fechaSeleccionada.getDate() + delta);
     escucharFirebase(); // Refresca todo con la nueva fecha
+}
+
+function guardarManual() {
+    const nombre = document.getElementById('manNombre').value.trim();
+    const carbs = document.getElementById('manCarbs').value;
+    const kcal = document.getElementById('manKcal').value;
+
+    if (!nombre) { alert("Ponle un nombre al alimento"); return; }
+
+    // Creamos el objeto temporal
+    tempFood = {
+        n: nombre,
+        c: parseFloat(carbs) || 0,
+        k: parseInt(kcal) || 0
+    };
+
+    // Usamos tu función guardar() que ya maneja Firebase y la fecha seleccionada
+    guardar();
+
+    // Limpiamos y cerramos
+    document.getElementById('manNombre').value = "";
+    document.getElementById('manCarbs').value = "";
+    document.getElementById('manKcal').value = "";
+    closeModal('manualModal');
 }
 
 
@@ -308,7 +364,13 @@ let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', m
     document.getElementById(id).classList.add('open'); 
     if(id === 'historyModal') generarCalendario();
     if(id === 'chartModal') setTimeout(cargarGraficas, 400);
-  }
+    // Limpiar campos si es el manual
+    if(id === 'manualModal') {
+        document.getElementById('manNombre').value = "";
+        document.getElementById('manCarbs').value = "";
+        document.getElementById('manKcal').value = "";
+    }
+}
   function closeModal(id) { document.getElementById(id).classList.remove('open'); }
   function cambiarMes(delta) { fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta); generarCalendario(); }
 
@@ -317,6 +379,30 @@ let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', m
     const k = prompt("Pega tu API Key de Gemini:");
     if(k) localStorage.setItem('GEMINI_KEY', k.trim());
   }
+
+function añadirManual() {
+    const nombre = prompt("Nombre del alimento:");
+    if (!nombre) return;
+    
+    const carbs = prompt("Carbohidratos (g):", "0");
+    if (carbs === null) return;
+    
+    const kcal = prompt("Calorías (kcal):", "0");
+    if (kcal === null) return;
+
+    // Creamos el objeto con el mismo formato que usa la IA
+    tempFood = {
+        n: nombre,
+        c: parseFloat(carbs.replace(',', '.')) || 0,
+        k: parseInt(kcal) || 0
+    };
+
+    // Reutilizamos la función guardar() que ya tienes para subirlo a Firebase
+    guardar();
+    
+    // Feedback visual rápido
+    alert("✅ Añadido: " + nombre);
+}
 
   async function analizarIA() {
   const key = localStorage.getItem('GEMINI_KEY');
