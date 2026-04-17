@@ -103,12 +103,14 @@
     <div class="dash-main">
       <div>
         <div class="dash-label">Carbohidratos</div>
-        <div class="dash-value"><span id="totalCarbs">0</span><small>/30g</small></div>
+        <div class="dash-value"><span id="totalCarbs">0</span><small>/<span id="metaCarbsDisplay">30</span>g</small></div>
       </div>
-      <div style="text-align: right;">
-        <div class="dash-label">Netas</div>
-        <div class="dash-value"><span id="totalNetKcal">0</span> <small>kcal</small></div>
-      </div>
+      <div style="text-align:right">
+    <small>NETAS</small>
+    <div class="dash-value">
+        <span id="totalNetKcal">0</span> <small>kcal</small>
+    </div>
+</div>
     </div>
     
     <div class="progress-bar"><div id="barFill"></div></div>
@@ -241,11 +243,29 @@
   <button onclick="closeModal('historyModal')" class="btn-main">Cerrar</button>
 </div></div>
 
-<div id="configModal" class="modal"><div class="modal-content">
-  <h3>Ajustes</h3>
-  <button class="btn-main" onclick="cambiarKey()">🔑 Configurar API Key</button>
-  <button onclick="closeModal('configModal')" class="btn-main" style="background:#eee; color:#333;">Cerrar</button>
-</div></div>
+
+
+<div id="configModal" class="modal">
+  <div class="modal-content">
+    <h3>Ajustes y Metas</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+      <div>
+        <label style="font-size: 0.7rem; color: var(--muted); display:block; margin-bottom:4px;">Meta Carbs (g)</label>
+        <input type="number" id="metaCarbs" placeholder="30" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size: 0.7rem; color: var(--muted); display:block; margin-bottom:4px;">Meta Kcal</label>
+        <input type="number" id="metaKcal" placeholder="2000" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="guardarMetas()">Guardar Metas ✅</button>
+    <button class="btn-main" onclick="cambiarKey()" style="background:#f9f9f9; color:#333; margin-top:10px;">🔑 Configurar APIs</button>
+    <button class="btn-main" onclick="exportarExcel()" style="background:#eee; color:#333; margin-top:10px;">📊 Exportar Datos (CSV)</button>
+    
+    <button onclick="closeModal('configModal')" class="btn-main" style="background:none; color:var(--muted); font-size: 0.8rem; border:none;">Cerrar</button>
+  </div>
+</div>
 
 <script>
   // CONFIGURACIÓN FIREBASE
@@ -364,82 +384,111 @@ function guardarManual() {
 
 
   // NAVEGACIÓN
-  function escucharFirebase() {
-  const iso = formatISO(fechaSeleccionada);
-const hoyStr = formatISO(new Date());
+  // Variable global para que los datos del día puedan leer las metas en cualquier momento
+let metasGlobales = { carbs: 30, kcal: 2000 };
 
-let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', month:'long'});
-    if (iso === hoyStr) {
-        textoFecha = "Hoy";
+// 1. ESCUCHA DE METAS (Se ejecuta una sola vez al cargar y se queda vigilando)
+db.ref('config/metas').on('value', snap => {
+    const d = snap.val();
+    if (d) {
+        metasGlobales.carbs = parseFloat(d.carbs) || 30;
+        metasGlobales.kcal = parseInt(d.kcal) || 2000;
     }
-    
+    // Cada vez que cambien las metas, refrescamos la vista actual
+    actualizarVistaDiaria(); 
+});
+
+// 2. ESCUCHA DE LOGS (Se activa al cambiar de fecha o al cargar)
+function escucharFirebase() {
+    const iso = formatISO(fechaSeleccionada);
+    const hoyStr = formatISO(new Date());
+
+    let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    if (iso === hoyStr) textoFecha = "Hoy";
     document.getElementById('displayDate').innerText = textoFecha;
 
+    // Dejamos de escuchar el día anterior para no acumular procesos
+    db.ref('keto_logs').off(); 
 
-// ---  document.getElementById('displayDate').innerText = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', month:'long'});
+    // Escuchamos el nuevo día seleccionado
+    db.ref(`keto_logs/${iso}`).on('value', snap => {
+        window.datosDiaActual = snap.val() || {}; // Guardamos los datos en una variable global temporal
+        actualizarVistaDiaria();
+    });
+}
 
-  db.ref('keto_logs').off();
-
-  db.ref(`keto_logs/${iso}`).on('value', snap => {
-    const data = snap.val() || {};
+// 3. FUNCIÓN DE RENDERIZADO (Dibuja todo usando metas + datos del día)
+function actualizarVistaDiaria() {
+    const data = window.datosDiaActual || {};
     const list = document.getElementById('dailyList');
+    if (!list) return;
+
     list.innerHTML = "";
-    
     let tc = 0, tkCons = 0, tkEjer = 0;
 
-    // --- LÓGICA DE EXTRACCIÓN DE COMIDAS ---
-    let objetosComida = {};
-
-    // 1. Miramos si existe la carpeta 'comidas' (Estructura nueva)
-    if (data.comidas) {
-        objetosComida = data.comidas;
-    } 
-    
-    // 2. Buscamos registros sueltos que NO sean peso ni ejercicio (Estructura antigua)
-    // Esto evita que al añadir algo nuevo, lo viejo "desaparezca" de la vista
+    // --- Procesar Comidas ---
+    let objetosComida = data.comidas || {};
     Object.keys(data).forEach(key => {
         if (key !== 'peso' && key !== 'ejercicio' && key !== 'comidas') {
-            if (typeof data[key] === 'object' && data[key].n) {
-                objetosComida[key] = data[key];
-            }
+            if (typeof data[key] === 'object' && data[key].n) objetosComida[key] = data[key];
         }
     });
 
-    // Dibujamos la lista unificada
-    const keys = Object.keys(objetosComida);
-    if (keys.length === 0) {
+    Object.keys(objetosComida).reverse().forEach(id => {
+        const item = objetosComida[id];
+        tc += parseFloat(item.c || 0);
+        tkCons += parseInt(item.k || 0);
+        list.innerHTML += `
+            <div class="food-item">
+                <div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div>
+                <div style="color:#ccc; cursor:pointer; padding:5px;" onclick="eliminarRegistro('${id}')">✕</div>
+            </div>`;
+    });
+
+    if (Object.keys(objetosComida).length === 0) {
         list.innerHTML = "<p style='text-align:center;color:#ccc;font-size:0.8rem;'>Sin registros</p>";
-    } else {
-        keys.reverse().forEach(id => {
-            const item = objetosComida[id];
-            tc += parseFloat(item.c || 0); 
-            tkCons += parseInt(item.k || 0);
-            list.innerHTML += `
-                <div class="food-item">
-                    <div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div>
-                    <div style="color:#ccc; cursor:pointer; padding:5px;" onclick="eliminarRegistro('${id}')">✕</div>
-                </div>`;
+    }
+
+    // --- Procesar Ejercicio ---
+    if (data.ejercicio) {
+        Object.values(data.ejercicio).forEach(e => {
+            tkEjer += (typeof e === 'object') ? (parseInt(e.k) || 0) : (parseInt(e) || 0);
         });
     }
 
-    // --- PESO Y EJERCICIO ---
-    if(data.ejercicio) {
-        Object.values(data.ejercicio).forEach(e => {
-            if (typeof e === 'object') tkEjer += (e.k || 0);
-            else tkEjer += parseInt(e || 0); // Por si acaso hay datos simples
-        });
+    // --- Actualizar Interfaz ---
+    const netas = tkCons - tkEjer;
+
+    // Carbohidratos (Valor y Color)
+    const elCarbs = document.getElementById('totalCarbs');
+    if (elCarbs) {
+        elCarbs.innerText = tc.toFixed(1);
+        elCarbs.style.color = tc > metasGlobales.carbs ? 'var(--danger)' : 'white';
     }
     
-    document.getElementById('totalCarbs').innerText = tc.toFixed(1);
+    // Texto de la Meta (ej: /30g)
+    const elMetaDisplay = document.getElementById('metaCarbsDisplay');
+    if (elMetaDisplay) elMetaDisplay.innerText = metasGlobales.carbs;
+
+    // Calorías Netas (Valor y Color)
+    const elNetas = document.getElementById('totalNetKcal');
+    if (elNetas) {
+        elNetas.innerText = netas;
+        elNetas.style.color = netas > metasGlobales.kcal ? 'var(--danger)' : 'white';
+    }
+
+    // Otros
     document.getElementById('kcalConsumidas').innerText = tkCons;
     document.getElementById('kcalQuemadas').innerText = tkEjer;
-    document.getElementById('totalNetKcal').innerText = (tkCons - tkEjer);
     document.getElementById('currentWeight').innerText = data.peso ? data.peso + " kg" : "--";
-    
-    const p = Math.min((tc / 30) * 100, 100);
-    document.getElementById('barFill').style.width = p + '%';
-    document.getElementById('barFill').style.background = tc > 30 ? 'var(--danger)' : 'var(--keto)';
-  });
+
+    // Barra de progreso
+    const elBar = document.getElementById('barFill');
+    if (elBar) {
+        const p = Math.min((tc / metasGlobales.carbs) * 100, 100);
+        elBar.style.width = p + '%';
+        elBar.style.background = tc > metasGlobales.carbs ? 'var(--danger)' : 'var(--keto)';
+    }
 }
 
   function verDetalleDia(isoString) {
@@ -792,6 +841,71 @@ function eliminarRegistro(id) {
             options: opt(60) 
         });
     });
+}
+
+// --- FUNCIONES DE AJUSTES Y METAS ---
+function guardarMetas() {
+    const mCarbs = parseFloat(document.getElementById('metaCarbs').value);
+    const mKcal = parseInt(document.getElementById('metaKcal').value);
+
+    if (isNaN(mCarbs) || isNaN(mKcal)) {
+        alert("Por favor, introduce números válidos");
+        return;
+    }
+
+    // Guardamos en una rama especial llamada 'config' en Firebase
+    db.ref('config/metas').set({
+        carbs: mCarbs,
+        kcal: mKcal
+    }).then(() => {
+        alert("✅ Metas sincronizadas en la nube");
+        closeModal('configModal');
+    }).catch(err => {
+        console.error("Error al sincronizar:", err);
+    });
+}
+
+async function exportarExcel() {
+    const snap = await db.ref('keto_logs').once('value');
+    const all = snap.val() || {};
+    
+    // Cabecera. Usamos comas para CSV estándar
+    let csv = "Fecha,Peso,Carbohidratos,Kcal Consumidas,Kcal Quemadas,Netas\n";
+    
+    const fechas = Object.keys(all).sort();
+    
+    fechas.forEach(fecha => {
+        const dia = all[fecha];
+        let tc = 0, tkc = 0, tke = 0;
+        
+        // Sumar comidas (Flexible)
+        const fuentes = [dia.comidas, dia];
+        fuentes.forEach(f => {
+            if (f && typeof f === 'object') {
+                Object.values(f).forEach(item => {
+                    if (item && item.c !== undefined) {
+                        tc += parseFloat(item.c || 0);
+                        tkc += parseInt(item.k || 0);
+                    }
+                });
+            }
+        });
+
+        // Sumar ejercicio
+        if (dia.ejercicio) {
+            Object.values(dia.ejercicio).forEach(e => {
+                tke += parseInt(typeof e === 'object' ? e.k : e || 0);
+            });
+        }
+
+        csv += `${fecha},${dia.peso || ""},${tc.toFixed(1)},${tkc},${tke},${tkc - tke}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Keto_Reporte_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
 }
 </script>
 </body>
