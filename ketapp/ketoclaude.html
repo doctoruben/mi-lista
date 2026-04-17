@@ -388,7 +388,7 @@ function guardarManual() {
 let metasGlobales = { carbs: 30, kcal: 2000 };
 
 // 1. ESCUCHA DE METAS (Se ejecuta una sola vez al cargar y se queda vigilando)
-db.ref('config/metas').on('value', snap => {
+db.ref('keto_logs/config_metas').on('value', snap => {
     const d = snap.val();
     if (d) {
         metasGlobales.carbs = parseFloat(d.carbs) || 30;
@@ -849,22 +849,24 @@ function guardarMetas() {
     const mKcal = parseInt(document.getElementById('metaKcal').value);
 
     if (isNaN(mCarbs) || isNaN(mKcal)) {
-        alert("Por favor, introduce números válidos");
+        alert("Introduce números válidos");
         return;
     }
 
-    // Guardamos en una rama especial llamada 'config' en Firebase
-    db.ref('config/metas').set({
+    // Guardamos DENTRO de keto_logs para aprovechar tus reglas actuales
+    db.ref('keto_logs/config_metas').set({
         carbs: mCarbs,
         kcal: mKcal
-    }).then(() => {
-        alert("✅ Metas sincronizadas en la nube");
+    })
+    .then(() => {
+        alert("✅ Metas guardadas (dentro de keto_logs)");
         closeModal('configModal');
-    }).catch(err => {
-        console.error("Error al sincronizar:", err);
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Sigue fallando. Verifica que tus reglas permitan escribir en keto_logs");
     });
 }
-
 async function exportarExcel() {
     const snap = await db.ref('keto_logs').once('value');
     const all = snap.val() || {};
