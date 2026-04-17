@@ -132,16 +132,24 @@
     </div>
   </div>
 
+
+<div style="display: grid;  ">
+ <button onclick="generarInformeMedico()" class="btn-medico"> 👨‍⚕️ Informe</button>
+ </div>
+<br>
   <div class="action-grid">
     <button class="btn-sec" onclick="registrarPeso()">⚖️ Peso</button>
     <button class="btn-sec" onclick="registrarEjercicio()">🔥 Ejercicio</button>
     <button class="btn-sec" onclick="openModal('chartModal')">📈 Gráficas</button>
+ 
   </div>
+
+
 
   <textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
 
 <button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
-  <span id="btnText">Analizar con Gemini ✨</span>
+  <span id="btnText">Analizar con Gemini ✨</span></br>
 </button>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
@@ -269,6 +277,8 @@
 </div>
 
 <script>
+
+
   // CONFIGURACIÓN FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
@@ -923,7 +933,128 @@ function abrirAjustes() {
     // 3. Abrimos el modal
     openModal('configModal');
 }
+async function generarInformeMedico() {
+    const btn = document.querySelector('.btn-medico');
+    const contenedor = document.getElementById('contenidoInforme');
 
+    if (!btn || !contenedor) return;
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "⌛ Analizando mes...";
+    btn.disabled = true;
+
+    try {
+        const hoy = new Date();
+        let datosMensuales = [];
+
+        // 1. Recopilar datos (30 días)
+        for (let i = 0; i < 30; i++) {
+            let d = new Date();
+            d.setDate(hoy.getDate() - i);
+            const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            
+            const snap = await db.ref(`keto_logs/${iso}`).once('value');
+            if (snap.exists()) {
+                const dia = snap.val();
+                datosMensuales.push({
+                    fecha: iso,
+                    peso: dia.peso || "---",
+                    comidas: dia.comidas ? Object.values(dia.comidas).map(c => ({ n: c.n, c: c.c, k: c.k })) : []
+                });
+            }
+        }
+
+        if (datosMensuales.length === 0) {
+            alert("No hay registros en los últimos 30 días.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        // 2. Preparar el mensaje para Groq
+        const promptMedico = `Analiza este historial keto mensual: ${JSON.stringify(datosMensuales)}. 
+        Meta: ${metasGlobales.carbs}g carbs. Actúa como médico y dame: 
+        1. Resumen. 2. Análisis de peso. 3. 3 consejos rápidos. Usa HTML (<b>, <br>).`;
+
+        // 3. AQUÍ ESTÁ EL CAMBIO: 
+        // Cambia 'llamarIA' por el nombre de la función que ya usas para Groq en tu app.
+        // Si no sabes cuál es, busca en tu código "fetch" o "groq".
+        const respuestaIA = await llamarIA(promptMedico); 
+
+        contenedor.innerHTML = respuestaIA;
+        openModal('medicoModal');
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Error al obtener el informe. Revisa la consola.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+async function llamarIA(mensaje) {
+    // Asegúrate de que API_KEY_GROQ sea tu variable con la clave
+const groqKey = localStorage.getItem('GROQ_KEY');
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+         //   "Authorization": `Bearer ${API_KEY_GROQ}`, // Usa tu variable existente
+'Authorization': `Bearer ${groqKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{role: "user", content: mensaje}]
+        })
+    });
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
 </script>
+
+<div id="medicoModal" class="modal">
+    <div class="modal-content" style="background: #fdfdfd; color: #2c3e50; border-left: 10px solid #e74c3c; max-width: 650px;">
+        <div style="text-align: right;">
+            <span class="close" onclick="closeModal('medicoModal')" style="color: #aaa;">&times;</span>
+        </div>
+        
+        <div id="cabecera-medica" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div style="font-size: 40px;">👨‍⚕️</div>
+            <div>
+                <h2 style="margin: 0; color: #c0392b; font-family: 'Courier New', Courier, monospace;">DIAGNÓSTICO NUTRICIONAL IA</h2>
+                <small style="color: #7f8c8d;">Basado en actividad de los últimos 30 días</small>
+            </div>
+        </div>
+
+        <div id="contenidoInforme" style="background: white; padding: 20px; border-radius: 8px; border: 1px dashed #bdc3c7; min-height: 200px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            </div>
+
+        <p style="font-size: 0.75rem; color: #95a5a6; margin-top: 20px; text-align: center; font-style: italic;">
+            Este documento ha sido generado por inteligencia artificial. Consulte a su médico antes de realizar cambios drásticos en su dieta.
+        </p>
+    </div>
+</div>
+
+<div id="medicoModal" class="modal">
+    <div class="modal-content" style="background: #fdfdfd; color: #2c3e50; border-left: 10px solid #e74c3c; max-width: 650px;">
+        <span class="close" onclick="closeModal('medicoModal')">&times;</span>
+        
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <div style="font-size: 40px;">👨‍⚕️</div>
+            <div>
+                <h2 style="margin: 0; color: #c0392b;">INFORME MÉDICO IA</h2>
+                <small style="color: #7f8c8d;">Análisis mensual de salud</small>
+            </div>
+        </div>
+
+        <div id="contenidoInforme" style="background: white; padding: 20px; border-radius: 8px; border: 1px dashed #bdc3c7; color: #333; min-height: 100px;">
+            Esperando diagnóstico...
+        </div>
+
+        <p style="font-size: 0.7rem; color: #95a5a6; margin-top: 20px; text-align: center;">
+            *Consulta generada por IA. No sustituye el criterio de un médico profesional.
+        </p>
+    </div>
+</div>
 </body>
 </html>
