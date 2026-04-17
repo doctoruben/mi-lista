@@ -150,6 +150,26 @@
   </button>
 </div>
 
+<div id="apiKeyModal" class="modal">
+  <div class="modal-content">
+    <h3>Configurar APIs</h3>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+      <div>
+        <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 5px;">Gemini Keys (separadas por comas)</label>
+        <textarea id="inputGemini" rows="3" placeholder="Key1, Key2..." style="font-size: 0.8rem;"></textarea>
+      </div>
+      <div>
+        <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 5px;">Groq Key (Rescate)</label>
+        <input type="password" id="inputGroq" placeholder="gsk_..." style="width:100%; padding:12px; border-radius:12px; border:2px solid #eee; box-sizing:border-box; outline:none;">
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top: 20px;">
+      <button onclick="guardarKeys()" style="flex:2; background:var(--dark); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Aceptar</button>
+      <button onclick="closeModal('apiKeyModal')" style="flex:1; background:#eee; color:#333; border:none; padding:12px; border-radius:12px; cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
 <div id="recentModal" class="modal">
   <div class="modal-content">
     <h3>Alimentos Recientes</h3>
@@ -448,13 +468,26 @@ let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', m
 
   // IA GEMINI
 function cambiarKey() {
-    const gem = prompt("API Keys de Gemini (separadas por comas):", localStorage.getItem('GEMINI_KEY') || "");
-    if(gem !== null) localStorage.setItem('GEMINI_KEY', gem.trim());
+    // 1. Cerramos el modal de Ajustes para que no estorbe
+    closeModal('configModal'); 
     
-    const groq = prompt("API Key de Groq (Rescate):", localStorage.getItem('GROQ_KEY') || "");
-    if(groq !== null) localStorage.setItem('GROQ_KEY', groq.trim());
+    // 2. Cargamos los valores guardados en los inputs del nuevo modal
+    document.getElementById('inputGemini').value = localStorage.getItem('GEMINI_KEY') || "";
+    document.getElementById('inputGroq').value = localStorage.getItem('GROQ_KEY') || "";
     
-    alert("Configuración de IA actualizada.");
+    // 3. Abrimos el modal de las llaves
+    openModal('apiKeyModal');
+}
+function guardarKeys() {
+    const gemini = document.getElementById('inputGemini').value.trim();
+    const groq = document.getElementById('inputGroq').value.trim();
+
+    localStorage.setItem('GEMINI_KEY', gemini);
+    localStorage.setItem('GROQ_KEY', groq);
+
+    alert("✅ Configuración actualizada con éxito.");
+    closeModal('apiKeyModal');
+    closeModal('configModal'); // Cerramos también el de ajustes
 }
 function añadirManual() {
     const nombre = prompt("Nombre del alimento:");
