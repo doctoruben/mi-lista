@@ -448,11 +448,13 @@ let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', {day:'numeric', m
 
   // IA GEMINI
 function cambiarKey() {
-    const k = prompt("Pega tus API Keys separadas por comas:\n(Ejemplo: Key1,Key2,Key3)");
-    if(k) {
-        localStorage.setItem('GEMINI_KEY', k.trim());
-        alert("Keys configuradas correctamente.");
-    }
+    const gem = prompt("API Keys de Gemini (separadas por comas):", localStorage.getItem('GEMINI_KEY') || "");
+    if(gem !== null) localStorage.setItem('GEMINI_KEY', gem.trim());
+    
+    const groq = prompt("API Key de Groq (Rescate):", localStorage.getItem('GROQ_KEY') || "");
+    if(groq !== null) localStorage.setItem('GROQ_KEY', groq.trim());
+    
+    alert("Configuración de IA actualizada.");
 }
 function añadirManual() {
     const nombre = prompt("Nombre del alimento:");
@@ -478,29 +480,52 @@ function añadirManual() {
     alert("✅ Añadido: " + nombre);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   async function analizarIA() {
-  // Obtenemos el string de llaves (pueden ser varias separadas por coma)
   const rawKeys = localStorage.getItem('GEMINI_KEY');
+  const groqKey = localStorage.getItem('GROQ_KEY'); // Llave de rescate
   const text = document.getElementById('foodInput').value.trim();
   
-  if(!rawKeys) { alert("Falta la API Key. Configúrala en ajustes."); return; }
+  if(!rawKeys && !groqKey) { alert("Falta la API Key. Configúrala en ajustes."); return; }
   if(!text) return;
 
-  // Convertimos en array y limpiamos espacios
-  const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k);
-  
+  const keys = rawKeys ? rawKeys.split(',').map(k => k.trim()).filter(k => k) : [];
   const btn = document.getElementById('btnAnalyze');
   const btnText = document.getElementById('btnText');
   
   btn.disabled = true; 
   btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
 
-  // Bucle para reintentar con cada llave disponible
+  // --- FASE 1: BUCLE GEMINI ---
   for (let i = 0; i < keys.length; i++) {
     try {
-      console.log(`Intentando con API Key ${i + 1}...`);
-      
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys[i]}`;
+      console.log(`Intentando Gemini Key ${i + 1}...`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keys[i]}`;
       
       const response = await fetch(url, {
         method: 'POST', 
@@ -508,62 +533,71 @@ function añadirManual() {
         body: JSON.stringify({ 
           contents: [{ 
             parts: [{ 
-              text: `Actúa como si fueras nutricionista Keto experto y esfuerzate en dar datos lo mas reables posibles. 
-                     Analiza: "${text}". 
-                     Si no hay cantidades, usa raciones estándar.
-                     Devuelve SOLO el objeto JSON, sin texto adicional: 
-                     {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
+              text: `Actúa como si fueras nutricionista Keto experto. Analiza: "${text}". Si no hay cantidades, usa raciones estándar. Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
             }] 
           }] 
         })
       });
 
-      // Si la llave actual está agotada (Error 429), pasamos a la siguiente
       if (response.status === 429) {
-        console.warn(`Key ${i + 1} agotada (429). Probando la siguiente...`);
+        console.warn(`Key ${i + 1} agotada. Probando siguiente...`);
         continue; 
       }
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Error ${response.status}`);
 
       const data = await response.json();
-
-      if (!data.candidates || !data.candidates[0].content) {
-        throw new Error("Respuesta de IA vacía o bloqueada.");
-      }
-
-      let rawText = data.candidates[0].content.parts[0].text;
-      let cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-      
-      tempFood = JSON.parse(cleanJson);
-      
-      // Si todo va bien, mostramos resultados y cortamos el bucle con return
-      document.getElementById('resName').innerText = tempFood.n;
-      document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
-      document.getElementById('resultCard').style.display = 'block';
-      
-      btn.disabled = false; 
-      btnText.innerText = "Analizar ✨";
-      return; // <--- Éxito: salimos de la función por completo
+      procesarYMostrar(data.candidates[0].content.parts[0].text);
+      return; // ÉXITO
 
     } catch (err) {
-      console.error(`Fallo con la llave ${i + 1}:`, err.message);
-      
-      // Si es la última llave y falla, avisamos al usuario
-      if (i === keys.length - 1) {
-        alert("✨ NOTA DE IA:\nSe han agotado todos los intentos o hay un error de conexión: " + err.message);
-      }
-      // Si no es la última, el bucle for sigue a la siguiente llave
+      console.error(`Gemini ${i + 1} falló:`, err.message);
     }
   }
 
-  // Si el bucle termina sin éxito
+  // --- FASE 2: RESCATE CON GROQ ---
+  if (groqKey) {
+    try {
+      console.log("Gemini falló. Iniciando rescate con Groq...");
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${groqKey}`,
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: `Actúa como nutricionista Keto. Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        procesarYMostrar(data.choices[0].message.content);
+        return; // ÉXITO
+      }
+    } catch (err) {
+      console.error("Groq también falló:", err.message);
+    }
+  }
+
+  // Si llegamos aquí, todo falló
+  alert("❌ Todos los servicios de IA están agotados o fallaron.");
   btn.disabled = false; 
   btnText.innerText = "Analizar ✨";
 }
 
+// Función auxiliar para evitar repetir código de renderizado
+function procesarYMostrar(rawText) {
+    let cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    tempFood = JSON.parse(cleanJson);
+    document.getElementById('resName').innerText = tempFood.n;
+    document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('btnAnalyze').disabled = false;
+    document.getElementById('btnText').innerText = "Analizar ✨";
+}
 
   function cancelarAnalisis() { document.getElementById('resultCard').style.display = 'none'; document.getElementById('foodInput').value = ""; tempFood = null; }
 
