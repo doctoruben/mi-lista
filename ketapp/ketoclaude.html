@@ -96,7 +96,8 @@
     <b id="displayDate" style="font-size: 0.9rem; min-width: 80px; text-align: center;"></b>
     <button onclick="navegarDia(1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">›</button>
   </div>
-  <button class="btn-icon" onclick="openModal('configModal')">⚙️</button>
+  <button class="btn-icon" onclick="abrirAjustes()">⚙️</button>
+
 </div>
 
   <div class="dashboard">
@@ -909,6 +910,20 @@ async function exportarExcel() {
     link.download = `Keto_Reporte_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
 }
+
+function abrirAjustes() {
+    // 1. Buscamos los inputs del modal
+    const inputCarbs = document.getElementById('metaCarbs');
+    const inputKcal = document.getElementById('metaKcal');
+
+    // 2. Si existen, les ponemos el valor que tenemos guardado en la variable global
+    if (inputCarbs) inputCarbs.value = metasGlobales.carbs;
+    if (inputKcal) inputKcal.value = metasGlobales.kcal;
+
+    // 3. Abrimos el modal
+    openModal('configModal');
+}
+
 </script>
 </body>
 </html>
