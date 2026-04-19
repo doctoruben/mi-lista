@@ -53,7 +53,7 @@
         const base64Data = await toBase64(input.files[0]);
         const base64Content = base64Data.split(',')[1];
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         const response = await fetch(url, {
             method: 'POST',
