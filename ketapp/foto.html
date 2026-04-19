@@ -37,15 +37,14 @@
     <div id="resultado">El resultado del análisis aparecerá aquí...</div>
 </div>
 
-<script>
-    async function analizarImagen(input) {
+      async function analizarImagen(input) {
         const apiKey = document.getElementById('apiKey').value;
         const resultadoDiv = document.getElementById('resultado');
         const loader = document.getElementById('loader');
         const preview = document.getElementById('preview');
 
         if (!apiKey) {
-            alert("Por favor, introduce tu API Key primero.");
+            alert("⚠️ Pega tu API Key de Google AI Studio.");
             return;
         }
 
@@ -54,23 +53,18 @@
             
             // Mostrar vista previa
             const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            }
+            reader.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; }
             reader.readAsDataURL(file);
 
-            // Iniciar proceso
             loader.style.display = 'block';
-            resultadoDiv.innerText = "Procesando...";
+            resultadoDiv.innerText = "Conectando con Google Gemini...";
 
             try {
-                // Convertir imagen a Base64
                 const base64Data = await toBase64(file);
                 const base64Content = base64Data.split(',')[1];
 
-                // Configurar la llamada a Gemini 1.5 Flash
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                // URL del modelo estable
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -78,7 +72,7 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: "Actúa como nutricionista keto. Analiza la imagen y devuelve: 1. Nombre del plato. 2. Estimación de peso (g). 3. Calorías totales. 4. Carbohidratos netos, Proteínas y Grasas. 5. Veredicto: ¿Es apto para dieta keto? Responde de forma clara y estructurada." },
+                                { text: "Analiza la imagen. Dime: nombre del plato, estimación de kcal, carbohidratos netos, proteínas y grasas. Responde en español." },
                                 { inline_data: { mime_type: "image/jpeg", data: base64Content } }
                             ]
                         }]
@@ -87,30 +81,33 @@
 
                 const data = await response.json();
                 
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                // --- SECCIÓN DE DIAGNÓSTICO ---
+                if (data.error) {
+                    resultadoDiv.innerHTML = `<b style="color:red">Error de la API:</b><br>${data.error.message}`;
+                    console.error("Detalle del error:", data.error);
+                } 
+                else if (data.candidates && data.candidates[0].content) {
                     resultadoDiv.innerText = data.candidates[0].content.parts[0].text;
-                } else {
-                    resultadoDiv.innerText = "La IA no devolvió un formato esperado. Revisa la consola.";
-                    console.log(data);
+                } 
+                else {
+                    resultadoDiv.innerText = "Respuesta vacía. Posible bloqueo de contenido por la IA.";
+                    console.log("Respuesta completa de Google:", data);
                 }
 
             } catch (error) {
-                console.error(error);
-                resultadoDiv.innerText = "Error: " + error.message;
+                resultadoDiv.innerText = "Error de red/petición: " + error.message;
             } finally {
                 loader.style.display = 'none';
             }
         }
     }
 
-    // Función auxiliar para convertir imagen a base64
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
-</script>
-
+              
 </body>
 </html>
