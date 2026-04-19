@@ -61,7 +61,18 @@
             body: JSON.stringify({
                 contents: [{
                     parts: [
-                        { text: "Analiza la imagen. Devuelve SOLO un JSON: {\"titulo\": \"nombre\", \"carbos\": 0, \"kcal\": 0}. No digas nada más." },
+ { 
+    text: `Actúa como un experto en nutrición cetogénica y análisis visual de alimentos. 
+    Analiza la imagen y calcula los macros basándote en porciones estándar:
+    1. Identifica cada alimento y estima su peso en gramos.
+    2. Calcula las Calorías totales (kcal).
+    3. Calcula los Carbohidratos NETOS (Carbohidratos totales menos fibra).
+    4. El título debe ser breve (ej: 'Aguacate y Frutas').
+    
+    Responde ÚNICAMENTE con un objeto JSON puro, sin texto extra ni formato markdown:
+    {"titulo": "Nombre", "carbos": 0, "kcal": 0}` 
+}
+                   
                         { inline_data: { mime_type: "image/jpeg", data: base64Content } }
                     ]
                 }]
