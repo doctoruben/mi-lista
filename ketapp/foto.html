@@ -93,7 +93,18 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: "Actúa como nutricionista keto experto. Analiza la imagen y estima: 1. Título descriptivo. 2. Kcal totales. 3. Carbohidratos NETOS (restando fibra). Responde EXCLUSIVAMENTE con un JSON puro: {\"titulo\": \"Nombre\", \"carbos\": 0, \"kcal\": 0}" },
+                                
+{ text: `Eres un analizador nutricional experto en dieta Cetogénica.
+Tu tarea es analizar la imagen y calcular macros siguiendo estrictamente estos pasos:
+
+1. LISTAR: Identifica cada ingrediente y estima su peso en gramos.
+2. CALCULAR CARBOS NETOS: Para cada ingrediente, busca los carbohidratos totales y resta la fibra. (Carbos Netos = Totales - Fibra). Esto es crítico para el aguacate, frutos secos y verduras.
+3. CALCULAR KCAL: Suma las calorías basadas en la densidad de grasas, proteínas y carbohidratos de cada porción estimada.
+4. SER REALISTA: Si la comida parece grasosa o densa (aceites, aguacate, carnes), no subestimes las calorías.
+
+RESPONDE EXCLUSIVAMENTE EN ESTE FORMATO JSON:
+{"titulo": "Nombre del plato", "carbos": [suma_de_carbos_netos], "kcal": [suma_de_kcal_totales]}` }
+
                                 { inline_data: { mime_type: "image/jpeg", data: base64Content } }
                             ]
                         }]
