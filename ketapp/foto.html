@@ -39,8 +39,71 @@
 <script>
     // 1. La función principal que llamamos con el botón
     async function analizarImagen(input) {
-        // ... todo el código que te pasé antes (fetch, JSON.parse, etc.) ...
+    const apiKey = document.getElementById('apiKey').value;
+    const resultadoDiv = document.getElementById('resultado');
+    const loader = document.getElementById('loader');
+
+    if (!apiKey) { alert("Pega tu API Key"); return; }
+    if (!input.files || !input.files[0]) return;
+
+    loader.style.display = 'block';
+    resultadoDiv.innerText = "Enviando a Gemini...";
+
+    try {
+        const base64Data = await toBase64(input.files[0]);
+        const base64Content = base64Data.split(',')[1];
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: "Analiza la imagen. Devuelve SOLO un JSON: {\"titulo\": \"nombre\", \"carbos\": 0, \"kcal\": 0}. No digas nada más." },
+                        { inline_data: { mime_type: "image/jpeg", data: base64Content } }
+                    ]
+                }]
+            })
+        });
+
+        const data = await response.json();
+        console.log("Respuesta completa de la API:", data);
+
+        // Caso 1: La IA responde correctamente
+        if (data.candidates && data.candidates[0].content) {
+            let textoIA = data.candidates[0].content.parts[0].text;
+            
+            // Limpiar posibles etiquetas markdown
+            textoIA = textoIA.replace(/```json/g, "").replace(/```/g, "").trim();
+            
+            try {
+                const resJson = JSON.parse(textoIA);
+                resultadoDiv.innerHTML = `
+                    <div style="color: green; border: 1px solid green; padding: 10px;">
+                        <b>Título:</b> ${resJson.titulo}<br>
+                        <b>Carbos:</b> ${resJson.carbos}g<br>
+                        <b>Kcal:</b> ${resJson.kcal}
+                    </div>`;
+            } catch (e) {
+                resultadoDiv.innerHTML = `<b style="color:orange">La IA no envió un JSON puro:</b><br>${textoIA}`;
+            }
+        } 
+        // Caso 2: Bloqueo por seguridad o error de cuota
+        else if (data.promptFeedback) {
+            resultadoDiv.innerHTML = `<b style="color:red">Bloqueo de seguridad de Google:</b><br>La IA considera que esta imagen no se puede procesar.`;
+        }
+        else {
+            resultadoDiv.innerHTML = `<b style="color:red">Respuesta inesperada:</b><br>${JSON.stringify(data)}`;
+        }
+
+    } catch (error) {
+        resultadoDiv.innerText = "Error crítico: " + error.message;
+    } finally {
+        loader.style.display = 'none';
     }
+}
 
     // 2. La función auxiliar (DEBE ESTAR AQUÍ)
     const toBase64 = file => new Promise((resolve, reject) => {
