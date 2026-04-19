@@ -1,122 +1,140 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keto Vision Lab - Test</title>
+    <title>Keto Vision Lab - Test 2.5</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h2 { color: #c0392b; text-align: center; }
-        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:disabled { background: #bdc3c7; }
-        #resultado { margin-top: 20px; padding: 15px; background: #f9f9f9; border-left: 5px solid #27ae60; white-space: pre-wrap; font-size: 14px; min-height: 100px; overflow-y: auto; }
-        #preview { width: 100%; border-radius: 8px; margin-top: 15px; display: none; }
-        .loader { text-align: center; display: none; margin: 10px 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; color: #333; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: #c0392b; text-align: center; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        .btn-main { width: 100%; background: #27ae60; color: white; border: none; padding: 16px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-main:hover { background: #219150; }
+        .btn-main:disabled { background: #bdc3c7; }
+
+        #preview { width: 100%; border-radius: 10px; margin-top: 15px; display: none; border: 1px solid #ddd; }
+        
+        .loader { text-align: center; display: none; margin: 20px 0; font-weight: bold; color: #2980b9; }
+        
+        #resultado { margin-top: 20px; min-height: 50px; }
+        .result-box { border: 2px solid #27ae60; padding: 15px; border-radius: 10px; background: #fafffa; }
+        .error-box { border: 2px solid #e74c3c; padding: 15px; border-radius: 10px; background: #fffafa; color: #c0392b; font-size: 0.9rem; word-break: break-all; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🧪 Lab de Análisis Keto</h2>
+    <h2>🧪 Keto Vision 2.5</h2>
     
-    <label>Configura tu API Key de Gemini:</label>
-    <input type="text" id="apiKey" placeholder="Pega aquí tu AI Studio API Key">
+    <div class="input-group">
+        <label>API Key de Google AI Studio:</label>
+        <input type="text" id="apiKey" placeholder="Pega tu clave aquí...">
+    </div>
     
-    <button onclick="document.getElementById('fileInput').click()">
-        📸 CAPTURAR PLATO Y ANALIZAR
+    <button class="btn-main" id="btnAnalizar" onclick="document.getElementById('fileInput').click()">
+        📸 SACAR FOTO AL PLATO
     </button>
     
     <input type="file" id="fileInput" accept="image/*" capture="camera" style="display:none" onchange="analizarImagen(this)">
 
-    <img id="preview" alt="Vista previa">
+    <img id="preview" alt="Vista previa de la comida">
     
-    <div class="loader" id="loader">⌛ El médico IA está analizando la imagen...</div>
+    <div class="loader" id="loader">⌛ Analizando macros con Gemini 2.5...</div>
     
-    <div id="resultado">El resultado del análisis aparecerá aquí...</div>
+    <div id="resultado"></div>
 </div>
+
 <script>
-    // 1. La función principal que llamamos con el botón
+    // Función principal de análisis
     async function analizarImagen(input) {
-    const apiKey = document.getElementById('apiKey').value;
-    const resultadoDiv = document.getElementById('resultado');
-    const loader = document.getElementById('loader');
+        const apiKey = document.getElementById('apiKey').value;
+        const resultadoDiv = document.getElementById('resultado');
+        const loader = document.getElementById('loader');
+        const preview = document.getElementById('preview');
+        const btn = document.getElementById('btnAnalizar');
 
-    if (!apiKey) { alert("Pega tu API Key"); return; }
-    if (!input.files || !input.files[0]) return;
+        if (!apiKey) {
+            alert("⚠️ Por favor, introduce tu API Key.");
+            return;
+        }
 
-    loader.style.display = 'block';
-    resultadoDiv.innerText = "Enviando a Gemini...";
-
-    try {
-        const base64Data = await toBase64(input.files[0]);
-        const base64Content = base64Data.split(',')[1];
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [
- { 
-    text: `Actúa como un experto en nutrición cetogénica y análisis visual de alimentos. 
-    Analiza la imagen y calcula los macros basándote en porciones estándar:
-    1. Identifica cada alimento y estima su peso en gramos.
-    2. Calcula las Calorías totales (kcal).
-    3. Calcula los Carbohidratos NETOS (Carbohidratos totales menos fibra).
-    4. El título debe ser breve (ej: 'Aguacate y Frutas').
-    
-    Responde ÚNICAMENTE con un objeto JSON puro, sin texto extra ni formato markdown:
-    {"titulo": "Nombre", "carbos": 0, "kcal": 0}` 
-}
-                   
-                        { inline_data: { mime_type: "image/jpeg", data: base64Content } }
-                    ]
-                }]
-            })
-        });
-
-        const data = await response.json();
-        console.log("Respuesta completa de la API:", data);
-
-        // Caso 1: La IA responde correctamente
-        if (data.candidates && data.candidates[0].content) {
-            let textoIA = data.candidates[0].content.parts[0].text;
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
             
-            // Limpiar posibles etiquetas markdown
-            textoIA = textoIA.replace(/```json/g, "").replace(/```/g, "").trim();
-            
-            try {
-                const resJson = JSON.parse(textoIA);
-                resultadoDiv.innerHTML = `
-                    <div style="color: green; border: 1px solid green; padding: 10px;">
-                        <b>Título:</b> ${resJson.titulo}<br>
-                        <b>Carbos:</b> ${resJson.carbos}g<br>
-                        <b>Kcal:</b> ${resJson.kcal}
-                    </div>`;
-            } catch (e) {
-                resultadoDiv.innerHTML = `<b style="color:orange">La IA no envió un JSON puro:</b><br>${textoIA}`;
+            // 1. Mostrar vista previa
+            const reader = new FileReader();
+            reader.onload = e => { 
+                preview.src = e.target.result; 
+                preview.style.display = 'block'; 
             }
-        } 
-        // Caso 2: Bloqueo por seguridad o error de cuota
-        else if (data.promptFeedback) {
-            resultadoDiv.innerHTML = `<b style="color:red">Bloqueo de seguridad de Google:</b><br>La IA considera que esta imagen no se puede procesar.`;
-        }
-        else {
-            resultadoDiv.innerHTML = `<b style="color:red">Respuesta inesperada:</b><br>${JSON.stringify(data)}`;
-        }
+            reader.readAsDataURL(file);
 
-    } catch (error) {
-        resultadoDiv.innerText = "Error crítico: " + error.message;
-    } finally {
-        loader.style.display = 'none';
+            // 2. Preparar UI
+            loader.style.display = 'block';
+            resultadoDiv.innerHTML = "";
+            btn.disabled = true;
+
+            try {
+                // 3. Convertir a Base64
+                const base64Data = await toBase64(file);
+                const base64Content = base64Data.split(',')[1];
+
+                // 4. Configurar llamada a la API (Modelo 2.5 solicitado)
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: "Actúa como nutricionista keto experto. Analiza la imagen y estima: 1. Título descriptivo. 2. Kcal totales. 3. Carbohidratos NETOS (restando fibra). Responde EXCLUSIVAMENTE con un JSON puro: {\"titulo\": \"Nombre\", \"carbos\": 0, \"kcal\": 0}" },
+                                { inline_data: { mime_type: "image/jpeg", data: base64Content } }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+
+                // 5. Procesar Respuesta
+                if (data.candidates && data.candidates[0].content) {
+                    let textoIA = data.candidates[0].content.parts[0].text;
+                    
+                    // Limpiar Markdown por si la IA lo incluye
+                    textoIA = textoIA.replace(/```json/g, "").replace(/```/g, "").trim();
+                    
+                    try {
+                        const resJson = JSON.parse(textoIA);
+                        resultadoDiv.innerHTML = `
+                            <div class="result-box">
+                                <h3 style="margin:0; color:#27ae60;">${resJson.titulo}</h3>
+                                <p style="margin:10px 0 5px 0;">🔥 <b>Calorías:</b> ${resJson.kcal} kcal</p>
+                                <p style="margin:0;">🍞 <b>Carbos Netos:</b> ${resJson.carbos}g</p>
+                            </div>
+                        `;
+                    } catch (parseError) {
+                        resultadoDiv.innerHTML = `<div class="error-box"><b>Error en formato JSON:</b><br>${textoIA}</div>`;
+                    }
+                } else {
+                    resultadoDiv.innerHTML = `<div class="error-box"><b>Respuesta de API:</b><br>${JSON.stringify(data)}</div>`;
+                }
+
+            } catch (error) {
+                resultadoDiv.innerHTML = `<div class="error-box"><b>Error de conexión:</b><br>${error.message}</div>`;
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
     }
-}
 
-    // 2. La función auxiliar (DEBE ESTAR AQUÍ)
+    // Función auxiliar para conversión Base64
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -124,6 +142,6 @@
         reader.onerror = error => reject(error);
     });
 </script>
-         
+
 </body>
 </html>
