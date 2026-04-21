@@ -91,13 +91,14 @@
 
 <div class="container">
 <div class="header">
-  <button class="btn-icon" onclick="openModal('historyModal')">📅</button>
-  <div style="display: flex; align-items: center; gap: 10px;">
+ 
+    <div style="display: flex; align-items: center; gap: 10px;">
     <button onclick="navegarDia(-1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">‹</button>
-    <b id="displayDate" style="font-size: 0.9rem; min-width: 80px; text-align: center;"></b>
+    <b id="displayDate" style="font-size: 0.9rem; min-width: 180px; text-align: center;"></b>
     <button onclick="navegarDia(1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">›</button>
+<button class="btn-icon" onclick="openModal('historyModal')">📅</button><button onclick="generarInformeMedico()" class="btn-icon"> 👨‍⚕️ </button><button class="btn-icon" onclick="abrirAjustes()">⚙️</button> 
   </div>
-  <button class="btn-icon" onclick="abrirAjustes()">⚙️</button>
+  
 
 </div>
 
@@ -134,16 +135,11 @@
   </div>
 
 
-<div style="display: grid">
- <button onclick="generarInformeMedico()" class="btn-medico"> 👨‍⚕️ Informe</button>
- </div>
-<br>
   <div class="action-grid">
     <button class="btn-sec" onclick="registrarPeso()">⚖️ Peso</button>
     <button class="btn-sec" onclick="registrarEjercicio()">🔥 Ejercicio</button>
     <button class="btn-sec" onclick="openModal('chartModal')">📈 Gráficas</button>
- 
-  </div>
+   </div>
 
 
 
@@ -160,6 +156,7 @@
   <button class="btn-main" onclick="openModal('recentModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
     🕒 Añadir Reciente
   </button>
+
 </div>
 
 <div id="apiKeyModal" class="modal">
