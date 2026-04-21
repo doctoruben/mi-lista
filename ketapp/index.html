@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head> 
- <meta charset="UTF-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#27ae60">
-<link rel="apple-touch-icon" href="icons/icon-192.png">   
-<title>Keto Calendar Pro - Premium</title>
+<title>Keto Tracker Pro - Premium</title>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -985,9 +982,10 @@ async function generarInformeMedico() {
 
         // 2. Preparar el mensaje para Groq
         const promptMedico = `Analiza este historial keto mensual: ${JSON.stringify(datosMensuales)}. 
-        Meta: ${metasGlobales.carbs}g carbs. Actúa como nutricionista experto en dietas Keto, analiza todos los datos con detenimiento y en base a ello elaborame un informe estructurado en tres partes: 
-        1. Resumen. 2. Análisis de peso. 3. 3 consejos rápidos. Usa HTML (<b>, <br>).`;
-       Meta: ${metasGlobales.carbs}g carbs. Actúa como médico y dame: 
+        
+	Meta: ${metasGlobales.carbs}g carbs. Actúa como nutricionista experto en dietas Keto, analiza todos los datos con detenimiento y en base a ello elaborame un informe estructurado en tres partes: 
+        1. Resumen Análisis Alimentación. 2. Resumen Análisis de peso. 3. Algunos consejos rápidos. Usa HTML y dale un aspecto bien estructurado con saltos de linea entre secciones. (<b>, <br>).`;
+
         // 3. AQUÍ ESTÁ EL CAMBIO: 
         // Cambia 'llamarIA' por el nombre de la función que ya usas para Groq en tu app.
         // Si no sabes cuál es, busca en tu código "fetch" o "groq".
@@ -1083,13 +1081,7 @@ async function analizarFoto(input) {
     }
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registrado'))
-      .catch(err => console.log('Error al registrar SW', err));
-  });
-}
+
 </script>
 
 <div id="medicoModal" class="modal">
