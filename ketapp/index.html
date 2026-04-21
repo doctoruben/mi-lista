@@ -982,8 +982,9 @@ async function generarInformeMedico() {
 
         // 2. Preparar el mensaje para Groq
         const promptMedico = `Analiza este historial keto mensual: ${JSON.stringify(datosMensuales)}. 
-        Meta: ${metasGlobales.carbs}g carbs. Actúa como médico y dame: 
-        1. Resumen. 2. Análisis de peso. 3. 3 consejos rápidos. Usa HTML (<b>, <br>).`;
+        
+	Meta: ${metasGlobales.carbs}g carbs. Actúa como nutricionista experto en dietas Keto, analiza todos los datos con detenimiento y en base a ello elaborame un informe estructurado en tres partes: 
+        1. Resumen Análisis Alimentación. 2. Resumen Análisis de peso. 3. Algunos consejos rápidos. Usa HTML y dale un aspecto bien estructurado con saltos de linea entre secciones. (<b>, <br>).`;
 
         // 3. AQUÍ ESTÁ EL CAMBIO: 
         // Cambia 'llamarIA' por el nombre de la función que ya usas para Groq en tu app.
