@@ -980,11 +980,9 @@ async function generarInformeMedico() {
             return;
         }
 
+    
         // 2. Preparar el mensaje para Groq
-        // 2. Preparar el mensaje para Groq
-        const promptMedico = `Analiza este historial keto mensual: ${JSON.stringify(datosMensuales)}. 
-        Meta: ${metasGlobales.carbs}g carbs. Actúa como nutricionista médico y dame: 
-        1. Resumen. 2. Análisis de peso. 3. 3 consejos rápidos. Usa HTML (<b>, <br>).`;
+        const promptMedico = `Analiza este historial keto mensual: ${JSON.stringify(datosMensuales)}. Meta: ${metasGlobales.carbs}g carbs. Actúa como nutricionista médico y dame: 1. Resumen. 2. Análisis de peso. 3. 3 consejos rápidos. Usa HTML (<b>, <br>).`;
         // 3. AQUÍ ESTÁ EL CAMBIO: 
         // Cambia 'llamarIA' por el nombre de la función que ya usas para Groq en tu app.
         // Si no sabes cuál es, busca en tu código "fetch" o "groq".
