@@ -145,11 +145,20 @@
 
 
 
-  <textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
+<textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
 
-<button class="btn-main" id="btnAnalyze" onclick="analizarIA()">
-  <span id="btnText">Analizar con Gemini ✨</span></br>
+<div style="display: grid; grid-template-columns: 4fr 1fr; gap: 8px;">
+  
+  <button class="btn-main" id="btnAnalyze" onclick="analizarIA()" ">
+    <span id="btnText">Analizar con IA ✨</span>
+  </button>
+
+<button class="btn-main" onclick="document.getElementById('cameraInput').click()" style="background:#eee;">
+    📸
 </button>
+</div>
+
+<input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none" onchange="analizarFoto(this)">
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
   <button class="btn-main" onclick="openModal('manualModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
@@ -620,7 +629,7 @@ function añadirManual() {
   for (let i = 0; i < keys.length; i++) {
     try {
       console.log(`Intentando Gemini Key ${i + 1}...`);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keys[i]}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys[i]}`;
       
       const response = await fetch(url, {
         method: 'POST', 
@@ -628,7 +637,7 @@ function añadirManual() {
         body: JSON.stringify({ 
           contents: [{ 
             parts: [{ 
-              text: `Actúa como si fueras nutricionista Keto experto. Analiza: "${text}". Si no hay cantidades, usa raciones estándar. Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
+              text: `Actúa como si fueras nutricionista Keto experto. Analiza: "${text}". Si no hay cantidades, usa raciones estándar. Ten en cuenta que los carbohidratos sean netos, descontando fibra. Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
             }] 
           }] 
         })
@@ -662,7 +671,7 @@ function añadirManual() {
         },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: `Actúa como nutricionista Keto. Analiza: "${text}". Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }],
+          messages: [{ role: "user", content: `Actúa como nutricionista Keto experto. Analiza: "${text}". Si no hay cantidades, usa raciones estándar. Ten en cuenta que los carbohidratos sean netos, descontando fibra. Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }],
           response_format: { type: "json_object" }
         })
       });
@@ -1010,6 +1019,68 @@ const groqKey = localStorage.getItem('GROQ_KEY');
     const data = await response.json();
     return data.choices[0].message.content;
 }
+
+async function analizarFoto(input) {
+    const rawKeys = localStorage.getItem('GEMINI_KEY');
+    if (!rawKeys) { alert("Configura primero tu API Key de Gemini en Ajustes."); return; }
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k);
+        const btnText = document.getElementById('btnText');
+        const btn = document.getElementById('btnAnalyze');
+
+        // UI en carga
+        btn.disabled = true;
+        btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
+
+        try {
+            // Convertir imagen a Base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            const base64Promise = new Promise(res => reader.onload = () => res(reader.result));
+            const base64Data = await base64Promise;
+            const base64Content = base64Data.split(',')[1];
+
+            // Intentar con las llaves de Gemini disponibles
+            for (let i = 0; i < keys.length; i++) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys[i]}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: "Actúa como nutricionista keto experto. Analiza la imagen y estima: 1. Título descriptivo. 2. Kcal totales. 3. Carbohidratos NETOS descontando fibra. Responde EXCLUSIVAMENTE con un JSON puro: {\"n\": \"Nombre\", \"c\": 0, \"k\": 0}" },
+                                    { inline_data: { mime_type: "image/jpeg", data: base64Content } }
+                                ]
+                            }]
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        let textoIA = data.candidates[0].content.parts[0].text;
+                        // Usamos la misma función procesarYMostrar que ya tienes en tu código estable
+                        procesarYMostrar(textoIA); 
+                        return; // Éxito
+                    }
+                } catch (e) { console.error("Error Key Gemini Vision:", i); }
+            }
+            alert("No se pudo analizar la foto. Revisa tus llaves de Gemini.");
+        } catch (error) {
+            console.error("Error general cámara:", error);
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = "Analizar ✨";
+            input.value = ""; // Limpiar input para poder repetir
+        }
+    }
+}
+
+
 </script>
 
 <div id="medicoModal" class="modal">
