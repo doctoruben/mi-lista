@@ -3,15 +3,137 @@
 <head> 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keto Tracker Pro - Premium</title>
+<title>Keto Calendar Pro - Premium</title>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root { 
     --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; --text: #333; --muted: #888;
   }
-
+/* ── MODAL RECETA ─────────────────────────────── */
+.receta-modal-content {
+  background: white;
+  border-radius: 24px;
+  width: 95%;
+  max-width: 420px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.receta-header {
+  background: linear-gradient(135deg, var(--dark) 0%, #2d4a3e 100%);
+  padding: 22px 20px 16px;
+  border-radius: 24px 24px 0 0;
+  color: white;
+}
+.receta-header h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.receta-header small { opacity: 0.7; font-size: 0.78rem; }
+.receta-tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 20px;
+}
+.receta-tipo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border: 2px solid #eee;
+  border-radius: 16px;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #333;
+  transition: all 0.2s;
+}
+.receta-tipo-btn:hover, .receta-tipo-btn.active {
+  border-color: var(--keto);
+  background: #f0fff4;
+  color: var(--keto);
+  transform: translateY(-2px);
+}
+.receta-tipo-btn span { font-size: 1.8rem; }
+.receta-body { padding: 0 20px 20px; }
+.receta-resultado {
+  background: #f8fffe;
+  border: 1px solid #d4edda;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #2c3e50;
+  max-height: 260px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.receta-resultado h4 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  color: var(--dark);
+}
+.receta-macros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.macro-pill {
+  background: var(--dark);
+  color: white;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: bold;
+}
+.macro-pill.carbs { background: var(--keto); }
+.macro-pill.kcal  { background: #e67e22; }
+.btn-pdf {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-nueva-receta {
+  width: 100%;
+  padding: 11px;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.loading-receta {
+  text-align: center;
+  padding: 30px 20px;
+  color: #888;
+}
+.loading-receta .spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(39,174,96,0.2);
+  border-top-color: var(--keto);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
   body { 
     font-family: system-ui, -apple-system, sans-serif; background: var(--gray); 
     display: flex; justify-content: center; padding: 10px; margin: 0; color: var(--text);
@@ -96,7 +218,9 @@
     <button onclick="navegarDia(-1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">‹</button>
     <b id="displayDate" style="font-size: 0.9rem; min-width: 80px; text-align: center;"></b>
     <button onclick="navegarDia(1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">›</button>
-<button class="btn-icon" onclick="openModal('historyModal')">📅</button><button onclick="generarInformeMedico()" class="btn-medico"> 👨‍⚕️ </button><button class="btn-icon" onclick="abrirAjustes()">⚙️</button> 
+<button class="btn-icon" onclick="openModal('historyModal')">📅</button><button onclick="generarInformeMedico()" class="btn-medico"> 👨‍⚕️ </button>
+<button class="btn-icon" onclick="abrirModalReceta()">🍽️</button>
+<button class="btn-icon" onclick="abrirAjustes()">⚙️</button> 
   </div>
   
 
@@ -141,6 +265,7 @@
     <button class="btn-sec" onclick="registrarPeso()">⚖️ Peso</button>
     <button class="btn-sec" onclick="registrarEjercicio()">🔥 Ejercicio</button>
     <button class="btn-sec" onclick="openModal('chartModal')">📈 Gráficas</button>
+
    </div>
 
 
@@ -279,11 +404,73 @@
 
     <button class="btn-main" onclick="guardarMetas()">Guardar Metas ✅</button>
     <button class="btn-main" onclick="cambiarKey()" style="background:#f9f9f9; color:#333; margin-top:10px;">🔑 Configurar APIs</button>
-    <button class="btn-main" onclick="exportarExcel()" style="background:#eee; color:#333; margin-top:10px;">📊 Exportar Datos (CSV)</button>
+    <button class="btn-main" onclick="exportarPDF()" style="background:#f9f9f9; color:#333; margin-top:10px;">
+  📄 Exportar Informe PDF
+</button>
     
     <button onclick="closeModal('configModal')" class="btn-main" style="background:none; color:var(--muted); font-size: 0.8rem; border:none;">Cerrar</button>
   </div>
 </div>
+
+
+<div id="recetaTipoModal" class="modal">
+  <div class="receta-modal-content">
+    <div class="receta-header">
+      <h3>🥑 Sugerencia de Receta Keto</h3>
+      <small>¿Para qué momento del día?</small>
+    </div>
+    <div class="receta-tipo-grid">
+      <button class="receta-tipo-btn" onclick="generarReceta('desayuno')">
+        <span>🍳</span>Desayuno
+      </button>
+      <button class="receta-tipo-btn" onclick="generarReceta('almuerzo')">
+        <span>🥗</span>Almuerzo
+      </button>
+      <button class="receta-tipo-btn" onclick="generarReceta('cena')">
+        <span>🌙</span>Cena
+      </button>
+    </div>
+    <div style="padding: 0 20px 20px;">
+      <button class="btn-nueva-receta" onclick="closeModal('recetaTipoModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Resultado de receta -->
+<div id="recetaResultadoModal" class="modal">
+  <div class="receta-modal-content">
+    <div class="receta-header">
+      <h3 id="recetaTipoLabel">🍳 Receta Keto</h3>
+      <small>Generada por IA · Adaptada a tu meta de carbos</small>
+    </div>
+    <div class="receta-body"><br>
+      <div id="recetaLoadingZone" class="loading-receta">
+        <div class="spinner"></div>
+        <p>Consultando al chef keto IA...</p>
+      </div>
+      <div id="recetaContenidoZone" style="display:none">
+        <div class="receta-macros">
+          <span class="macro-pill carbs" id="recetaCarbsPill"></span>
+          <span class="macro-pill kcal"  id="recetaKcalPill"></span>
+          <span class="macro-pill"       id="recetaProtPill"></span>
+        </div>
+        <div class="receta-resultado" id="recetaTexto"></div>
+        <button class="btn-pdf" onclick="descargarRecetaPDF()">
+          📄 Descargar Receta en PDF
+        </button>
+        <button class="btn-nueva-receta" onclick="volverTipoReceta()">← Pedir otra receta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
 
 <script>
 
@@ -1081,6 +1268,517 @@ async function analizarFoto(input) {
     }
 }
 
+let recetaActual = null; // Almacena la receta generada para el PDF
+
+function abrirModalReceta() {
+openModal('recetaTipoModal');  
+closeModal('configModal');
+ }
+
+function volverTipoReceta() {
+  closeModal('recetaResultadoModal');
+  openModal('recetaTipoModal');
+}
+
+const EMOJIS_TIPO = { desayuno: '🍳', almuerzo: '🥗', cena: '🌙' };
+
+
+async function generarReceta(tipo) {
+  closeModal('recetaTipoModal');
+
+  // Preparar modal de resultado en estado "cargando"
+  document.getElementById('recetaTipoLabel').innerText = `${EMOJIS_TIPO[tipo]} Receta de ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+  document.getElementById('recetaLoadingZone').style.display = 'block';
+  document.getElementById('recetaContenidoZone').style.display = 'none';
+  openModal('recetaResultadoModal');
+
+  const metaCarbs = metasGlobales.carbs || 30;
+  const metaKcal  = metasGlobales.kcal  || 2000;
+
+  // Estimamos la proporción de kcal para cada comida
+  const proporcion = tipo === 'desayuno' ? 0.25 : tipo === 'almuerzo' ? 0.40 : 0.35;
+  const kcalObjetivo = Math.round(metaKcal * proporcion);
+  const carbsObjetivo = Math.round(metaCarbs * proporcion);
+
+  const prompt = `Eres un chef nutricionista experto en dieta cetogénica (keto).
+Sugiere UNA receta keto para el ${tipo} con estas metas aproximadas:
+- Carbohidratos netos: máximo ${carbsObjetivo}g
+- Calorías: aprox. ${kcalObjetivo} kcal
+- Proteína alta, grasa saludable, sin cereales ni azúcar.
+
+Devuelve EXCLUSIVAMENTE este JSON (sin texto extra ni markdown):
+{
+  "nombre": "Nombre de la receta",
+  "carbs": 5,
+  "kcal": 450,
+  "proteina": 35,
+  "ingredientes": ["100g de X", "2 huevos", "..."],
+  "pasos": ["Paso 1...", "Paso 2...", "Paso 3..."],
+  "nota": "Consejo breve del chef"
+}`;
+
+  try {
+    const respuestaRaw = await llamarIAReceta(prompt);
+    const clean = respuestaRaw.replace(/```json/g,'').replace(/```/g,'').trim();
+    recetaActual = JSON.parse(clean);
+    mostrarReceta(recetaActual, tipo);
+  } catch(err) {
+    console.error('Error receta:', err);
+    document.getElementById('recetaLoadingZone').innerHTML =
+      '❌ Error al generar la receta. Comprueba tu clave API.';
+ }
+}
+
+async function llamarIAReceta(prompt) {
+  // Intenta Gemini primero, luego Groq de rescate
+  const rawKeys = localStorage.getItem('GEMINI_KEY');
+  const groqKey  = localStorage.getItem('GROQ_KEY');
+
+  if (rawKeys) {
+    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k);
+    for (const key of keys) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        if (res.status === 429) continue;
+        if (res.ok) {
+          const data = await res.json();
+          return data.candidates[0].content.parts[0].text;
+        }
+      } catch(e) { /* probar siguiente */ }
+    }
+  }
+
+  if (groqKey) {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+  }
+
+  throw new Error('Sin API disponible');
+}
+
+
+function mostrarReceta(r, tipo) {
+  document.getElementById('recetaCarbsPill').innerText = `🥦 ${r.carbs}g carbs netos`;
+  document.getElementById('recetaKcalPill').innerText  = `🔥 ${r.kcal} kcal`;
+  document.getElementById('recetaProtPill').innerText  = `💪 ${r.proteina}g proteína`;
+
+  const ingredientesHTML = r.ingredientes.map(i => `
+${i}
+`).join('');
+  const pasosHTML        = r.pasos.map((p, idx) => `
+Paso ${idx+1}: ${p}
+`).join('');
+
+  document.getElementById('recetaTexto').innerHTML = `
+    
+🍽️<b> ${r.nombre}</b>
+
+<br>    
+<b>INGREDIENTES:</b>
+
+
+    
+${ingredientesHTML}
+
+<br>     
+<b>ELABORACIÓN:</b>
+
+
+    
+${pasosHTML}
+
+    ${r.nota ? `
+<br> 
+<b>CONSEJO:</b> ${r.nota}
+
+` : ''}
+  `;
+
+  document.getElementById('recetaLoadingZone').style.display  = 'none';
+  document.getElementById('recetaContenidoZone').style.display = 'block';
+}
+
+
+
+
+
+
+
+
+function descargarRecetaPDF() {
+  if (!recetaActual) return;
+  const r = recetaActual;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const W = doc.internal.pageSize.getWidth();
+  let y = 0;
+
+  // ── Cabecera verde ──────────────────────────
+  doc.setFillColor(27, 94, 60);
+  doc.rect(0, 0, W, 42, 'F');
+
+  doc.setFillColor(39, 174, 96);
+  doc.rect(0, 35, W, 7, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('KETO CALENDAR PRO · RECETA', 14, 12);
+
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  const tituloLines = doc.splitTextToSize(r.nombre);
+  doc.text(tituloLines, 14, 24);
+
+  y = 52;
+
+  // ── Pills de macros ──────────────────────────
+  const pills = [
+    { label: `${r.carbs}g Carbs Netos`,  bg: [39,174,96],   tx: [255,255,255] },
+    { label: `${r.kcal} kcal`,            bg: [230,126,34],  tx: [255,255,255] },
+    { label: `${r.proteina}g Proteína`,   bg: [44,62,80],    tx: [255,255,255] },
+  ];
+  let px = 14;
+  pills.forEach(p => {
+    const tw = doc.getTextWidth(p.label) + 10;
+    doc.setFillColor(...p.bg);
+    doc.roundedRect(px, y - 5, tw, 8, 2, 2, 'F');
+    doc.setTextColor(...p.tx);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(p.label, px + 5, y + 0.5);
+    px += tw + 5;
+  });
+  y += 12;
+
+  // ── Sección: Ingredientes ─────────────────────
+  doc.setDrawColor(39, 174, 96);
+  doc.setLineWidth(0.8);
+  doc.line(14, y, W - 14, y);
+  y += 6;
+
+  doc.setTextColor(27, 94, 60);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  
+doc.text('INGREDIENTES', 14, y);
+  y += 7;
+
+  doc.setTextColor(51, 51, 51);
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  r.ingredientes.forEach(ing => {
+    doc.setFillColor(39, 174, 96);
+    doc.circle(16, y - 1.5, 1, 'F');
+    const lines = doc.splitTextToSize(ing, W - 32);
+    doc.text(lines, 20, y);
+    y += lines.length * 5.5;
+    if (y > 270) { doc.addPage(); y = 20; }
+  });
+  y += 5;
+
+  // ── Sección: Elaboración ──────────────────────
+  doc.setDrawColor(39, 174, 96);
+  doc.line(14, y, W - 14, y);
+  y += 6;
+
+  doc.setTextColor(27, 94, 60);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ELABORACIÓN', 14, y);
+  y += 7;
+
+  doc.setTextColor(51, 51, 51);
+  doc.setFontSize(9.5);
+  r.pasos.forEach((paso, idx) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(39, 174, 96);
+    doc.text(`${idx + 1}.`, 14, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 51, 51);
+    const lines = doc.splitTextToSize(paso, W - 30);
+    doc.text(lines, 20, y);
+    y += lines.length * 5.5 + 2;
+    if (y > 270) { doc.addPage(); y = 20; }
+  });
+
+  // ── Nota del chef ─────────────────────────────
+  if (r.nota) {
+    y += 4;
+    doc.setFillColor(240, 255, 244);
+    doc.setDrawColor(39, 174, 96);
+    doc.setLineWidth(0.5);
+    const notaLines = doc.splitTextToSize(r.nota);
+    doc.roundedRect(14, y - 4, W - 28, notaLines.length * 5.5 + 8, 3, 3, 'FD');
+    doc.setTextColor(27, 94, 60);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Consejo del chef', 20, y + 1);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 51, 51);
+    doc.setFontSize(8.5);
+    doc.text(notaLines, 20, y + 7);
+    y += notaLines.length * 5.5 + 12;
+  }
+
+  // ── Pie de página ─────────────────────────────
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(245, 245, 245);
+    doc.rect(0, 287, W, 10, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Keto Calendar Pro · Receta generada por IA · No sustituye consejo médico', W/2, 293, { align: 'center' });
+  }
+
+  const fecha = new Date().toISOString().slice(0, 10);
+  doc.save(`Receta_Keto_${r.nombre.replace(/\s+/g,'_')}_${fecha}.pdf`);
+}
+
+
+
+
+
+
+
+async function exportarPDF() {
+  const btn = event.currentTarget;
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Generando...';
+  btn.disabled = true;
+
+  try {
+    const snap = await db.ref('keto_logs').once('value');
+    const all  = snap.val() || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W   = doc.internal.pageSize.getWidth();
+
+    // Procesar datos por fecha
+    const fechas = Object.keys(all).filter(k => k !== 'config_metas').sort();
+    const filas  = fechas.map(fecha => {
+      const dia = all[fecha];
+      let tc = 0, tkc = 0, tke = 0;
+      [dia.comidas, dia].forEach(f => {
+        if (f && typeof f === 'object') {
+          Object.values(f).forEach(item => {
+            if (item && item.c !== undefined) {
+              tc  += parseFloat(item.c || 0);
+              tkc += parseInt(item.k  || 0);
+            }
+          });
+        }
+      });
+      if (dia.ejercicio) Object.values(dia.ejercicio).forEach(e => {
+        tke += parseInt(typeof e === 'object' ? e.k : e || 0);
+      });
+      return { fecha, peso: dia.peso || '–', tc: tc.toFixed(1), tkc, tke, netas: tkc - tke };
+    });
+
+    const totalDias  = filas.length;
+    const diasBuenos = filas.filter(f => parseFloat(f.tc) <= metasGlobales.carbs).length;
+    const pesoInicio = filas.find(f => f.peso !== '–')?.peso || '–';
+    const pesoFin    = [...filas].reverse().find(f => f.peso !== '–')?.peso || '–';
+    const avgCarbs   = totalDias ? (filas.reduce((s,f) => s + parseFloat(f.tc), 0) / totalDias).toFixed(1) : 0;
+    const avgKcal    = totalDias ? Math.round(filas.reduce((s,f) => s + f.netas, 0) / totalDias) : 0;
+
+    // ── Portada ────────────────────────────────
+    doc.setFillColor(27, 94, 60);
+    doc.rect(0, 0, W, 55, 'F');
+    doc.setFillColor(39, 174, 96);
+    doc.rect(0, 49, W, 6, 'F');
+
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.text('KETO CALENDAR PRO', 14, 14);
+
+    doc.setFontSize(22);
+    doc.setFont('helvetica','bold');
+    doc.text('Informe de Progreso', 14, 28);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','normal');
+    doc.text('Dieta Cetogénica · Análisis completo', 14, 38);
+
+    doc.setFontSize(8);
+    const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+    doc.text(`Generado el ${hoy}`, W - 14, 14, { align: 'right' });
+
+    // ── Resumen ejecutivo ──────────────────────
+    let y = 68;
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.text('RESUMEN EJECUTIVO', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96);
+    doc.setLineWidth(0.7);
+    doc.line(14, y, W-14, y);
+    y += 8;
+
+    const kpis = [
+      { label: 'Días registrados', value: totalDias },
+      { label: 'Días dentro de meta', value: `${diasBuenos} (${totalDias ? Math.round(diasBuenos/totalDias*100) : 0}%)` },
+      { label: 'Media carbos/día', value: `${avgCarbs}g / ${metasGlobales.carbs}g meta` },
+      { label: 'Media kcal netas/día', value: `${avgKcal} kcal` },
+      { label: 'Peso inicial registrado', value: pesoInicio !== '–' ? `${pesoInicio} kg` : 'Sin datos' },
+      { label: 'Peso más reciente', value: pesoFin !== '–' ? `${pesoFin} kg` : 'Sin datos' },
+    ];
+
+    kpis.forEach((kpi, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const bx  = 14 + col * (W/2 - 10);
+      const by  = y + row * 18;
+
+      doc.setFillColor(col === 0 ? 240 : 248, 255, col === 0 ? 244 : 252);
+      doc.setDrawColor(200,230,200);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(bx, by - 5, W/2 - 14, 14, 2, 2, 'FD');
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(100);
+      doc.text(kpi.label, bx + 5, by + 1);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(27,94,60);
+      doc.text(String(kpi.value), bx + 5, by + 7);
+    });
+
+    y += Math.ceil(kpis.length / 2) * 18 + 10;
+
+    // ── Tabla de registros diarios ─────────────
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.text('REGISTRO DIARIO', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96);
+    doc.line(14, y, W-14, y);
+    y += 7;
+
+    // Cabecera tabla
+    const cols = [
+      { label:'Fecha',       x:14,  w:35 },
+      { label:'Peso',        x:49,  w:22 },
+      { label:'Carbs (g)',   x:71,  w:28 },
+      { label:'Cons. kcal', x:99,  w:28 },
+      { label:'Ej. kcal',   x:127, w:25 },
+      { label:'Netas',       x:152, w:25 },
+      { label:'Estado',      x:177, w:18 },
+    ];
+
+    doc.setFillColor(27,94,60);
+    doc.rect(14, y-4, W-28, 8, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    cols.forEach(c => doc.text(c.label, c.x + 1, y + 1));
+    y += 7;
+
+    // Filas
+    filas.forEach((f, idx) => {
+      if (y > 275) { doc.addPage(); y = 20; }
+
+      const dentroMeta = parseFloat(f.tc) <= metasGlobales.carbs;
+      if (idx % 2 === 0) {
+        doc.setFillColor(248,255,250);
+        doc.rect(14, y-3.5, W-28, 7, 'F');
+      }
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(51,51,51);
+
+      const vals = [f.fecha, f.peso !== '–' ? f.peso+'kg' : '–', f.tc+'g', f.tkc+'', f.tke+'', f.netas+'', dentroMeta ? 'V' : 'X'];
+      cols.forEach((c, ci) => {
+        if (ci === 6) {
+          doc.setTextColor(dentroMeta ? 39 : 231, dentroMeta ? 174 : 76, dentroMeta ? 96 : 60);
+          doc.setFont('helvetica','bold');
+        }
+        doc.text(vals[ci], c.x + 1, y + 1);
+        doc.setTextColor(51,51,51);
+        doc.setFont('helvetica','normal');
+      });
+
+      // Línea separadora
+      doc.setDrawColor(220,240,225);
+      doc.setLineWidth(0.2);
+      doc.line(14, y+3.5, W-14, y+3.5);
+      y += 7;
+    });
+
+    // ── Pie de página en todas las páginas ─────
+    const totalPgs = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPgs; i++) {
+      doc.setPage(i);
+      doc.setFillColor(245,245,245);
+      doc.rect(0, 287, W, 10, 'F');
+      doc.setFontSize(7);
+      doc.setTextColor(150);
+      doc.setFont('helvetica','normal');
+      doc.text(`Keto Calendar Pro · Informe generado automáticamente · Página ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
+    }
+
+    const fechaHoy = new Date().toISOString().slice(0,10);
+    doc.save(`Keto_Informe_${fechaHoy}.pdf`);
+
+  } catch(err) {
+    console.error('Error PDF:', err);
+    alert('❌ Error al generar el PDF: ' + err.message);
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </script>
 
@@ -1150,5 +1848,18 @@ async function analizarFoto(input) {
             </p>
     </div>
 </div>
+
+
+<!-- MODAL: Selector de tipo de receta -->
+
+
+
+
+
+
+
+
+
+
 </body>
 </html>
