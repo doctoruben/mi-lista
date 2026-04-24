@@ -371,7 +371,7 @@
 <div id="chartModal" class="modal"><div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
     <h3 style="margin-bottom:20px;">Mes Actual</h3>
     <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
-    <div class="chart-container"><div class="chart-title">Calorías Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
+    <div class="chart-container"><div class="chart-title">Calorías Consumidas/Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
     <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
 </div></div>
@@ -956,7 +956,7 @@ function eliminarRegistro(id) {
   function cargarGraficas() {
     db.ref('keto_logs').once('value', snap => {
         const all = snap.val() || {};
-        const labels = [], pesos = [], carbos = [], kcals = [];
+        const labels = [], pesos = [], carbos = [], kcals = [], kcalsdia = [];
         
         // Usamos el mes que el usuario está viendo actualmente en el calendario
         const y = fechaVistaCalendario.getFullYear();
@@ -1004,14 +1004,17 @@ function eliminarRegistro(id) {
                 if (tieneDatos) {
                     carbos.push(cDia);
                     kcals.push(kDia - eDia);
+		kcalsdia.push(kDia);
                 } else {
                     carbos.push(null);
                     kcals.push(null);
+		kcalsdia.push(null);
                 }
             } else {
                 pesos.push(null);
                 carbos.push(null);
                 kcals.push(null);
+		kcalsdia.push(null);
             }
         }
 
@@ -1032,23 +1035,28 @@ function eliminarRegistro(id) {
 
         window.wChart = new Chart(document.getElementById('weightChart'), { 
             type: 'line', 
-            data: { labels, datasets: [{ data: pesos, borderColor: '#3b82f6', tension: 0.3, pointRadius: 3 }] }, 
+            data: { labels, datasets: [{ data: pesos, label:"Peso",borderColor: '#3b82f6', tension: 0.3, pointRadius: 3, fill: true }] }, 
             options: opt(100) 
         });
 
+
         window.kChart = new Chart(document.getElementById('kcalChart'), { 
             type: 'line', 
-            data: { labels, datasets: [{ data: kcals, borderColor: '#27ae60', fill: true, backgroundColor: 'rgba(39,174,96,0.1)', tension: 0.3 }] }, 
-            options: opt(2000) 
+            data: { labels, datasets: [
+	{ data: kcalsdia,label: 'Consumidas (Bruto)', borderColor: '#F54927', fill: true, backgroundColor: 'rgba(39,174,96,0.1)', tension: 0.3 },
+	{label: 'Netas', data: kcals, borderColor: '#27ae60', borderWidth: 2, tension: 0.3, fill: true}
+	] }, 
+        options: opt(2000) 
         });
+
 
         window.cChart = new Chart(document.getElementById('carbChart'), { 
             type: 'bar', 
-            data: { labels, datasets: [{ data: carbos, backgroundColor: carbos.map(v => v > 30 ? '#e74c3c' : '#333') }] }, 
+            data: { labels, datasets: [{ data: carbos,label: 'Carbohidratos', backgroundColor: carbos.map(v => v > 30 ? '#e74c3c' : '#333') }] }, 
             options: opt(60) 
         });
-    });
-}
+	});
+	}
 
 // --- FUNCIONES DE AJUSTES Y METAS ---
 function guardarMetas() {
