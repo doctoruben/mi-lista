@@ -286,7 +286,7 @@
 #btnCerrarSesion {
   background: none; border: none; cursor: pointer;
   font-size: 1.1rem; padding: 6px; border-radius: 12px;
-  display: none;
+  display: none; 
 }
 
 </style>
@@ -363,7 +363,7 @@
     <button onclick="navegarDia(1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">›</button>
     </div>
     <div style="display: flex; align-items: center; gap: 6px;">
-    <button id="btnCerrarSesion" onclick="cerrarSesion()" title="Cerrar sesión / Cambiar usuario">👤</button>
+    
     <button class="btn-icon" onclick="openModal('historyModal')">📅</button>
     <button onclick="generarInformeMedico()" class="btn-medico"> 👨‍⚕️ </button>
     <button class="btn-icon" onclick="abrirModalReceta()">🍽️</button>
@@ -553,9 +553,17 @@
     <button class="btn-main" onclick="exportarPDF()" style="background:#f9f9f9; color:#333; margin-top:10px;">
   📄 Exportar Informe PDF
 </button>
+
+
     <button id="btnAdminPanel" class="btn-main" onclick="abrirAdmin()" style="background:#f9f9f9; color:#333; margin-top:10px; display:none;">
       👑 Panel de Administración
     </button>
+
+<center>
+<button  id="btnCerrarSesion" onclick="cerrarSesion()" style="background:#a9a9a9; color:#333; margin-top:10px;title="Cerrar sesión / Cambiar usuario"><center>Cerrar usuario 👤</center></button>
+</center>
+
+
     
     <button onclick="closeModal('configModal')" class="btn-main" style="background:none; color:var(--muted); font-size: 0.8rem; border:none;">Cerrar</button>
   </div>
