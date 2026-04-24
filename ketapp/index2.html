@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head> 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keto Pro - Multiusuario</title>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  :root { 
+    --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; --text: #333; --muted: #888;
+  }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--gray); margin: 0; padding: 10px; color: var(--text); display: flex; justify-content: center; }
+  .container { background: white; padding: 20px; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 400px; min-height: 90vh; position: relative; padding-bottom: 80px; }
+  
+  /* ── ESTILOS LOGIN ── */
+  #loginModal { position: fixed; inset: 0; background: var(--dark); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { background: white; width: 100%; max-width: 320px; padding: 30px; border-radius: 24px; text-align: center; }
+  .user-badge { background: var(--gray); padding: 15px; margin-bottom: 12px; border-radius: 16px; cursor: pointer; font-weight: bold; transition: 0.2s; border: 2px solid transparent; }
+  .user-badge:hover { border-color: var(--keto); background: #eef9f2; }
+  .pin-display { font-size: 2.5rem; letter-spacing: 10px; margin: 20px 0; color: var(--keto); height: 40px; }
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .btn-pin { padding: 15px; font-size: 1.2rem; border: none; border-radius: 12px; background: var(--gray); cursor: pointer; font-weight: bold; }
+  .btn-pin:active { background: #ddd; }
+
+  /* Reutilización de tus estilos anteriores */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .modal-content { background: white; padding: 25px; border-radius: 24px; width: 90%; max-width: 350px; position: relative; }
+  .btn-main { width: 100%; padding: 14px; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+  .stat-card { background: var(--gray); padding: 15px; border-radius: 18px; text-align: center; }
+  .fab { position: fixed; bottom: 20px; right: 20px; background: var(--dark); color: white; width: 56px; height: 56px; border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); cursor: pointer; z-index: 100; }
+</style>
+</head>
+<body>
+
+<div id="loginModal">
+    <div class="login-card">
+        <h2 id="loginTitle">Selecciona Usuario</h2>
+        <div id="listaUsuarios">
+            <p style="color:var(--muted)">Cargando perfiles...</p>
+        </div>
+
+        <div id="pinSection" style="display:none;">
+            <p id="targetUserName" style="font-weight:bold; color:var(--muted);"></p>
+            <div class="pin-display" id="pinDots"></div>
+            <div class="pin-grid">
+                <button class="btn-pin" onclick="addPin('1')">1</button>
+                <button class="btn-pin" onclick="addPin('2')">2</button>
+                <button class="btn-pin" onclick="addPin('3')">3</button>
+                <button class="btn-pin" onclick="addPin('4')">4</button>
+                <button class="btn-pin" onclick="addPin('5')">5</button>
+                <button class="btn-pin" onclick="addPin('6')">6</button>
+                <button class="btn-pin" onclick="addPin('7')">7</button>
+                <button class="btn-pin" onclick="addPin('8')">8</button>
+                <button class="btn-pin" onclick="addPin('9')">9</button>
+                <button class="btn-pin" style="color:var(--danger)" onclick="clearPin()">C</button>
+                <button class="btn-pin" onclick="addPin('0')">0</button>
+                <button class="btn-pin" style="color:var(--keto)" onclick="validatePin()">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="mainApp" style="display:none;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1 style="margin:0; font-size:1.4rem;">Keto Pro</h1>
+            <span id="userNameHeader" style="color:var(--keto); font-weight:bold; font-size:0.8rem;"></span>
+        </div>
+        <button onclick="openModal('settingsModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">⚙️</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <small>🔥 Neto</small>
+            <div id="kcalTotal" style="font-size:1.3rem; font-weight:bold; color:var(--keto);">0</div>
+        </div>
+        <div class="stat-card">
+            <small>🥑 Carbs</small>
+            <div id="carbsTotal" style="font-size:1.3rem; font-weight:bold;">0g</div>
+        </div>
+    </div>
+
+    <div style="margin-top:25px; height:180px;">
+        <canvas id="caloriesChart"></canvas>
+    </div>
+
+    <h3 style="margin-top:25px; font-size:1rem;">Hoy</h3>
+    <div id="historyList"></div>
+</div>
+
+<div class="fab" onclick="openModal('addModal')">+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <h3>Configuración</h3>
+        <p>Metas Diarias:</p>
+        <input type="number" id="setKcal" placeholder="Kcal Meta" style="width:100%; padding:10px; margin-bottom:10px;">
+        <button class="btn-main" style="background:var(--keto); color:white;" onclick="saveMetas()">Guardar Cambios</button>
+        <hr style="margin:20px 0; border:none; border-top:1px solid #eee;">
+        <button class="btn-main" style="background:var(--danger); color:white;" onclick="logout()">Cerrar Sesión</button>
+        <button class="btn-main" onclick="closeModal('settingsModal')">Cancelar</button>
+    </div>
+</div>
+
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <h3>Añadir Alimento</h3>
+        <input type="text" id="foodName" placeholder="¿Qué comiste?" style="width:100%; padding:10px; margin-bottom:10px;">
+        <input type="number" id="foodKcal" placeholder="Calorías" style="width:100%; padding:10px; margin-bottom:10px;">
+        <button class="btn-main" style="background:var(--dark); color:white;" onclick="saveFood()">Registrar</button>
+        <button class="btn-main" onclick="closeModal('addModal')">Volver</button>
+    </div>
+</div>
+
+<script>
+// ── CONFIGURACIÓN FIREBASE ──
+const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROYECTO.firebaseapp.com",
+    databaseURL: "https://TU_PROYECTO.firebaseio.com",
+    projectId: "TU_PROYECTO",
+    storageBucket: "TU_PROYECTO.appspot.com",
+    messagingSenderId: "ID",
+    appId: "APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ── VARIABLES DE ESTADO ──
+let currentUser = localStorage.getItem('keto_user_id') || null;
+let currentPin = "";
+let selectedUserId = null;
+let usuariosAcceso = {};
+let metasGlobales = { kcal: 2000, carbs: 20 };
+
+// ── LÓGICA DE INICIO ──
+window.onload = async () => {
+    if (!currentUser) {
+        initLogin();
+    } else {
+        startApp();
+    }
+};
+
+// ── SISTEMA DE LOGIN ──
+async function initLogin() {
+    const snap = await db.ref('config/usuarios_lista').once('value');
+    usuariosAcceso = snap.val() || {};
+    const list = document.getElementById('listaUsuarios');
+    list.innerHTML = "";
+    
+    Object.keys(usuariosAcceso).forEach(id => {
+        const div = document.createElement('div');
+        div.className = 'user-badge';
+        div.innerText = usuariosAcceso[id].nombre;
+        div.onclick = () => selectUser(id);
+        list.appendChild(div);
+    });
+}
+
+function selectUser(id) {
+    selectedUserId = id;
+    document.getElementById('listaUsuarios').style.display = 'none';
+    document.getElementById('loginTitle').innerText = "Introduce PIN";
+    document.getElementById('targetUserName').innerText = usuariosAcceso[id].nombre;
+    document.getElementById('pinSection').style.display = 'block';
+}
+
+function addPin(n) {
+    if (currentPin.length < 4) {
+        currentPin += n;
+        document.getElementById('pinDots').innerText = "•".repeat(currentPin.length);
+    }
+}
+
+function clearPin() {
+    currentPin = "";
+    document.getElementById('pinDots').innerText = "";
+}
+
+function validatePin() {
+    if (currentPin === usuariosAcceso[selectedUserId].pin) {
+        currentUser = selectedUserId;
+        localStorage.setItem('keto_user_id', currentUser);
+        startApp();
+    } else {
+        alert("PIN incorrecto");
+        clearPin();
+    }
+}
+
+function logout() {
+    localStorage.removeItem('keto_user_id');
+    location.reload();
+}
+
+// ── LÓGICA DE LA APP ──
+async function startApp() {
+    document.getElementById('loginModal').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    
+    // Cargar nombre del usuario
+    const userSnap = await db.ref(`config/usuarios_lista/${currentUser}`).once('value');
+    document.getElementById('userNameHeader').innerText = "Hola, " + userSnap.val().nombre;
+
+    // Cargar Metas
+    const metaSnap = await db.ref(`usuarios/${currentUser}/metas`).once('value');
+    if (metaSnap.exists()) metasGlobales = metaSnap.val();
+    
+    loadData();
+}
+
+function loadData() {
+    const fecha = new Date().toISOString().split('T')[0];
+    db.ref(`usuarios/${currentUser}/logs/${fecha}`).on('value', snap => {
+        const data = snap.val() || { kcal: 0, carbs: 0, items: [] };
+        document.getElementById('kcalTotal').innerText = data.kcal;
+        document.getElementById('carbsTotal').innerText = data.carbs + "g";
+        renderHistory(data.items || []);
+    });
+    updateChart();
+}
+
+// ── FUNCIONES DE GUARDADO (RUTAS MULTIUSUARIO) ──
+function saveFood() {
+    const name = document.getElementById('foodName').value;
+    const kcal = parseInt(document.getElementById('foodKcal').value);
+    const fecha = new Date().toISOString().split('T')[0];
+
+    const ref = db.ref(`usuarios/${currentUser}/logs/${fecha}`);
+    ref.transaction(current => {
+        if (!current) current = { kcal: 0, carbs: 0, items: [] };
+        current.kcal += kcal;
+        current.items = current.items || [];
+        current.items.push({ name, kcal, time: new Date().toLocaleTimeString() });
+        return current;
+    });
+    closeModal('addModal');
+}
+
+// ── UTILS ──
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// Función para el administrador (ejecutar en consola para crear usuarios)
+function admin_crearUser(id, nombre, pin) {
+    db.ref(`config/usuarios_lista/${id}`).set({ nombre, pin });
+    db.ref(`usuarios/${id}/metas`).set({ kcal: 2000, carbs: 20 });
+    console.log("Usuario " + nombre + " creado correctamente.");
+}
+</script>
+</body>
+</html>
