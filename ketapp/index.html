@@ -436,7 +436,7 @@
     ✍️ Añadir Manual
   </button>
   <button class="btn-main" onclick="openModal('recentModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
-    🕒 Recientes
+    🕒 Añadir Reciente
   </button>
 
 </div>
@@ -515,7 +515,18 @@
 </div>
 
 <div id="chartModal" class="modal"><div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
-    <h3 style="margin-bottom:20px;">Mes Actual</h3>
+
+    <!-- Selector de periodo -->
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+      <button onclick="graficaMes(-1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">‹</button>
+      <b id="graficaMesLabel" style="font-size:1rem; min-width:120px; text-align:center;"></b>
+      <button onclick="graficaMes(1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">›</button>
+      <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:0.85rem;color:#555;cursor:pointer;">
+        <input type="checkbox" id="chk30dias" onchange="cargarGraficas()" style="width:16px;height:16px;accent-color:var(--dark);">
+        Últimos 30 días
+      </label>
+    </div>
+
     <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Calorías Consumidas/Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
@@ -1351,34 +1362,56 @@ function eliminarRegistro(id) {
   }
 
   // GRÁFICAS
+  let graficaFecha = new Date();
+
+  function graficaMes(delta) {
+    const chk = document.getElementById('chk30dias');
+    if (chk && chk.checked) { chk.checked = false; }
+    graficaFecha = new Date(graficaFecha.getFullYear(), graficaFecha.getMonth() + delta, 1);
+    cargarGraficas();
+  }
+
   function cargarGraficas() {
+    const chk30 = document.getElementById('chk30dias');
+    const modo30 = chk30 && chk30.checked;
+    const labelEl = document.getElementById('graficaMesLabel');
+
     dbBase().once('value', snap => {
         const all = snap.val() || {};
         const labels = [], pesos = [], carbos = [], kcals = [], kcalsdia = [];
-        
-        // Usamos el mes que el usuario está viendo actualmente en el calendario
-        const y = fechaVistaCalendario.getFullYear();
-        const m = fechaVistaCalendario.getMonth();
-        const ultimoDia = new Date(y, m + 1, 0).getDate();
+        const dias = [];
 
-        for (let d = 1; d <= ultimoDia; d++) {
-            const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            labels.push(d);
+        if (modo30) {
+            if (labelEl) labelEl.textContent = 'Últimos 30 días';
+            const hoy = new Date();
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date(hoy); d.setDate(hoy.getDate() - i);
+                const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                labels.push(`${d.getDate()}/${d.getMonth()+1}`);
+                dias.push(ds);
+            }
+        } else {
+            const y = graficaFecha.getFullYear();
+            const m = graficaFecha.getMonth();
+            const nombreMes = graficaFecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            if (labelEl) labelEl.textContent = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+            const ultimoDia = new Date(y, m + 1, 0).getDate();
+            for (let d = 1; d <= ultimoDia; d++) {
+                const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                labels.push(d);
+                dias.push(ds);
+            }
+        }
 
+        dias.forEach(ds => {
             if (all[ds]) {
                 const dia = all[ds];
                 pesos.push(dia.peso ? parseFloat(dia.peso) : null);
-                
                 let cDia = 0, kDia = 0, tieneDatos = false;
-
-                // --- PROCESAR COMIDAS (Cualquier estructura) ---
-                // Buscamos tanto en dia.comidas como en el propio objeto dia
-                const fuentes = [dia.comidas, dia]; 
-
+                const fuentes = [dia.comidas, dia];
                 fuentes.forEach(fuente => {
                     if (fuente && typeof fuente === 'object') {
                         Object.values(fuente).forEach(item => {
-                            // Verificamos si el objeto tiene las propiedades de comida (n, c, k)
                             if (item && typeof item === 'object' && (item.c !== undefined || item.k !== undefined)) {
                                 cDia += parseFloat(item.c || 0);
                                 kDia += parseFloat(item.k || 0);
@@ -1387,8 +1420,6 @@ function eliminarRegistro(id) {
                         });
                     }
                 });
-
-                // --- PROCESAR EJERCICIO ---
                 let eDia = 0;
                 if (dia.ejercicio) {
                     Object.values(dia.ejercicio).forEach(ex => {
@@ -1397,64 +1428,51 @@ function eliminarRegistro(id) {
                         tieneDatos = true;
                     });
                 }
-                
-                // Si encontramos cualquier dato (comida o ejercicio), enviamos el total
                 if (tieneDatos) {
-                    carbos.push(cDia);
-                    kcals.push(kDia - eDia);
-		kcalsdia.push(kDia);
+                    carbos.push(cDia); kcals.push(kDia - eDia); kcalsdia.push(kDia);
                 } else {
-                    carbos.push(null);
-                    kcals.push(null);
-		kcalsdia.push(null);
+                    carbos.push(null); kcals.push(null); kcalsdia.push(null);
                 }
             } else {
-                pesos.push(null);
-                carbos.push(null);
-                kcals.push(null);
-		kcalsdia.push(null);
+                pesos.push(null); carbos.push(null); kcals.push(null); kcalsdia.push(null);
             }
-        }
+        });
 
-        const opt = (max) => ({ 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { legend: { display: false } }, 
-            scales: { 
-                y: { min: 0, max, ticks: { font: { size: 10 } } }, 
-                x: { ticks: { font: { size: 9 } } } 
-            }, 
-            spanGaps: true 
+        const opt = (max) => ({
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max, ticks: { font: { size: 10 } } },
+                x: { ticks: { font: { size: 9 }, maxRotation: modo30 ? 45 : 0 } }
+            },
+            spanGaps: true
         });
 
         if (window.wChart) window.wChart.destroy();
         if (window.cChart) window.cChart.destroy();
         if (window.kChart) window.kChart.destroy();
 
-        window.wChart = new Chart(document.getElementById('weightChart'), { 
-            type: 'line', 
-            data: { labels, datasets: [{ data: pesos, label:"Peso",borderColor: '#3b82f6', tension: 0.3, pointRadius: 3, fill: true }] }, 
-            options: opt(100) 
+        window.wChart = new Chart(document.getElementById('weightChart'), {
+            type: 'line',
+            data: { labels, datasets: [{ data: pesos, label: "Peso", borderColor: '#3b82f6', tension: 0.3, pointRadius: 3, fill: true }] },
+            options: opt(100)
         });
-
-
-        window.kChart = new Chart(document.getElementById('kcalChart'), { 
-            type: 'line', 
+        window.kChart = new Chart(document.getElementById('kcalChart'), {
+            type: 'line',
             data: { labels, datasets: [
-	{ data: kcalsdia,label: 'Consumidas (Bruto)', borderColor: '#F54927', fill: true, backgroundColor: 'rgba(39,174,96,0.1)', tension: 0.3 },
-	{label: 'Netas', data: kcals, borderColor: '#27ae60', borderWidth: 2, tension: 0.3, fill: true}
-	] }, 
-        options: opt(2000) 
+                { data: kcalsdia, label: 'Consumidas (Bruto)', borderColor: '#F54927', fill: true, backgroundColor: 'rgba(39,174,96,0.1)', tension: 0.3 },
+                { label: 'Netas', data: kcals, borderColor: '#27ae60', borderWidth: 2, tension: 0.3, fill: true }
+            ]},
+            options: opt(2000)
         });
-
-
-        window.cChart = new Chart(document.getElementById('carbChart'), { 
-            type: 'bar', 
-            data: { labels, datasets: [{ data: carbos,label: 'Carbohidratos', backgroundColor: carbos.map(v => v > 30 ? '#e74c3c' : '#333') }] }, 
-            options: opt(60) 
+        window.cChart = new Chart(document.getElementById('carbChart'), {
+            type: 'bar',
+            data: { labels, datasets: [{ data: carbos, label: 'Carbohidratos', backgroundColor: carbos.map(v => v > 30 ? '#e74c3c' : '#333') }] },
+            options: opt(60)
         });
-	});
-	}
+    });
+  }
 
 // --- FUNCIONES DE AJUSTES Y METAS ---
 function guardarMetas() {
