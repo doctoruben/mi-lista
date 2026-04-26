@@ -517,15 +517,14 @@
 <div id="chartModal" class="modal"><div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
 
     <!-- Selector de periodo -->
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
-      <button onclick="graficaMes(-1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">‹</button>
+   
+     <center> <button onclick="graficaMes(-1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">‹</button>
       <b id="graficaMesLabel" style="font-size:1rem; min-width:120px; text-align:center;"></b>
-      <button onclick="graficaMes(1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">›</button>
-      <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:0.85rem;color:#555;cursor:pointer;">
-        <input type="checkbox" id="chk30dias" onchange="cargarGraficas()" style="width:16px;height:16px;accent-color:var(--dark);">
+      <button onclick="graficaMes(1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">›</button></center>
+      <br>   <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:0.85rem;color:#555;cursor:pointer;">
+      <input type="checkbox" id="chk30dias" onchange="cargarGraficas()" style="width:16px;height:16px;accent-color:var(--dark);">
         Últimos 30 días
-      </label>
-    </div>
+      </label>    <br>
 
     <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Calorías Consumidas/Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
