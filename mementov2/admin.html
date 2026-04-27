@@ -163,7 +163,7 @@
     </div>
     <div class="card">
       <label>CONTRASEÑA DE ADMINISTRADOR</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="a_pass" placeholder="••••••••" />
+      <input type="password" id="a_pass" placeholder="Contraseña actual..." />
       <p id="loginErr" class="error">Contraseña incorrecta</p>
       <button class="btn" onclick="adminLogin()" style="width:100%;">Entrar</button>
       <button onclick="window.location.href='index.html'" style="width:100%;margin-top:8px;background:none;border:0.5px solid #e0ddd6;border-radius:12px;padding:12px;font-size:14px;font-weight:700;font-family:inherit;color:#888;cursor:pointer;">← Volver a MEMENTO</button>
@@ -185,7 +185,7 @@
       <label>NOMBRE DE USUARIO</label>
       <input type="text" id="nu_user" placeholder="nombre..." autocapitalize="none" autocomplete="off" />
       <label>CONTRASEÑA</label>
-      <input type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" id="nu_pass" placeholder="••••••••" />
+      <input type="password" id="nu_pass" placeholder="Contraseña actual..." />
       <button class="btn" onclick="createUser()">+ Crear usuario</button>
       <p id="createErr" class="error"></p>
       <p id="createOk" class="success"></p>
