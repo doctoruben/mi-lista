@@ -413,7 +413,7 @@
     const ok   = document.getElementById('createOk');
     err.style.display = 'none'; ok.style.display = 'none';
     if (!user || !pass) { err.textContent='Rellena nombre y contraseña'; err.style.display='block'; return; }
-    if (pass.length !== 4 || !/^[0-9]{4}$/.test(pass)) { err.textContent='El PIN debe ser 4 dígitos numéricos's'; err.style.display='block'; return; }
+    if (!pass) { err.textContent='Introduce la contraseña's'; err.style.display='block'; return; }
     if (usuarios[user]) { err.textContent='Ese usuario ya existe en MEMENTO'; err.style.display='block'; return; }
     try {
       let uid;
