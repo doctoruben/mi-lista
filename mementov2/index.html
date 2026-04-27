@@ -167,8 +167,8 @@ input[type=text],input[type=password],input[type=datetime-local],input[type=date
     <p>Introduce tu usuario y contraseña</p>
     <div class="field"><label>USUARIO</label>
       <input id="l_user" placeholder="Tu nombre..." autocomplete="username" autocapitalize="none"/></div>
-    <div class="field"><label>CONTRASEÑA</label>
-      <input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+    <div class="field"><label>PIN (4 dígitos)</label>
+      <input id="l_pass" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="••••" autocomplete="current-password"/></div>
     <div class="login-err" id="loginErr">Usuario o contraseña incorrectos</div>
     <button class="login-btn" onclick="doLogin()">Entrar</button>
   </div>
@@ -421,7 +421,23 @@ function trysilentGcalRefresh() {
 }
 async function ensureToken() {
   if (gcalToken) return gcalToken;
-  return requestGcalToken();
+  // Try silent refresh first (no popup)
+  try {
+    const t = await new Promise((res, rej) => {
+      if (!window.google) { rej('no google'); return; }
+      const cl = google.accounts.oauth2.initTokenClient({
+        client_id: GCAL_ID, scope: GCAL_SCOPE, prompt: '',
+        callback: r => r.error ? rej(r.error) : res(r.access_token)
+      });
+      cl.requestAccessToken();
+    });
+    saveGcalToken(t);
+    updateGcalUI(true);
+    return t;
+  } catch {
+    // Silent failed, request with popup (requires user gesture)
+    return requestGcalToken();
+  }
 }
 async function gcalCreateEvent(name, ts, allDay) {
   const token = await ensureToken();
@@ -755,10 +771,8 @@ async function initApp(s) {
   loadSelectedCal();
   if (loadGcalToken()) {
     updateGcalUI(true);
-  } else if (selectedCalId) {
-    // Token expired but we had a calendar - try silent refresh
-    trysilentGcalRefresh();
   } else {
+    // Token expired - just show disconnected, user will reconnect on next action
     updateGcalUI(false);
   }
 }
