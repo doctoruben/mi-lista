@@ -388,7 +388,7 @@
   window.savePass = async function(key) {
     const newPass = document.getElementById('pass-' + key).value.trim();
     if (!newPass) { showToast('❌ Escribe una contraseña'); return; }
-    if (newPass.length < 6) { showToast('❌ Mínimo 6 caracteres'); return; }
+    if (newPass.length < 4) { showToast('❌ Mínimo 6 caracteres'); return; }
     const currentPass = prompt('Contraseña ACTUAL de ' + key + ':');
     if (!currentPass) return;
     const savedAdminPass = _adminPass;
