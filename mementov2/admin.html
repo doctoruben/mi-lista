@@ -388,7 +388,7 @@
   window.savePass = async function(key) {
     const newPass = document.getElementById('pass-' + key).value.trim();
     if (!newPass) { showToast('❌ Escribe una contraseña'); return; }
-    if (newPass.length < 4) { showToast('❌ Mínimo 6 caracteres'); return; }
+    if (newPass.length < 4) { showToast('❌ Mínimo 4 caracteres'); return; }
     const currentPass = prompt('Contraseña ACTUAL de ' + key + ':');
     if (!currentPass) return;
     const savedAdminPass = _adminPass;
@@ -413,7 +413,7 @@
     const ok   = document.getElementById('createOk');
     err.style.display = 'none'; ok.style.display = 'none';
     if (!user || !pass) { err.textContent='Rellena nombre y contraseña'; err.style.display='block'; return; }
-    if (pass.length < 6) { err.textContent='Mínimo 6 caracteres'; err.style.display='block'; return; }
+    if (pass.length < 4) { err.textContent='Mínimo 4 caracteres'; err.style.display='block'; return; }
     if (usuarios[user]) { err.textContent='Ese usuario ya existe en MEMENTO'; err.style.display='block'; return; }
     try {
       let uid;
