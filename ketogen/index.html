@@ -265,101 +265,111 @@
 }
         
 
-     window.exportToPDF = async function() {
+  window.exportToPDF = async function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
     const content = document.getElementById('recipeContent');
     
-    if (!content.innerText.trim()) return alert("No hay receta para exportar");
+    if (!content || !content.innerText.trim()) return alert("Genera una receta primero");
 
-    // --- CONFIGURACIÓN DE ESTILO ---
     const margin = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    let cursorY = 20;
+    let cursorY = 15;
 
-    // Función auxiliar para verificar espacio y saltar de página
-    const checkPageBreak = (neededHeight) => {
-        if (cursorY + neededHeight > pageHeight - 20) {
-            doc.addPage();
-            cursorY = 20;
-            return true;
-        }
-        return false;
-    };
-
-    // 1. CABECERA GOURMET
-    doc.setFillColor(16, 185, 129); // Verde Esmeralda
-    doc.rect(0, 0, pageWidth, 35, 'F');
+    // --- 1. IMAGEN DE CABECERA Y TÍTULO ---
+    // Usamos una imagen de stock de alta calidad (Comida Keto)
+    const imgUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
     
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("KetoGen AI", margin, 20);
-    
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("RECETA NUTRICIONAL PERSONALIZADA", margin, 27);
-    
-    cursorY = 50;
+    try {
+        // Dibujamos un rectángulo de fondo para la cabecera
+        doc.setFillColor(16, 185, 129); // Verde KetoGen
+        doc.rect(0, 0, pageWidth, 45, 'F');
 
-    // 2. TÍTULO PRINCIPAL (H2)
-    const title = content.querySelector('h2')?.innerText || "Receta Keto";
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    
-    const splitTitle = doc.splitTextToSize(title.toUpperCase(), pageWidth - (margin * 2));
-    doc.text(splitTitle, margin, cursorY);
-    cursorY += (splitTitle.length * 10) + 5;
-
-    // 3. PROCESAR CONTENIDO (H3, P, LI, TABLE)
-    const elements = content.querySelectorAll('h3, p, li, tr');
-    
-    elements.forEach((el) => {
-        let text = el.innerText.trim();
-        if (!text || text.length < 2) return;
-
-        let fontSize = 11;
-        let fontStyle = "normal";
-        let color = [51, 65, 85];
-        let spacing = 7;
-
-        // Estilo según tipo de etiqueta
-        if (el.tagName === 'H3') {
-            fontSize = 14;
-            fontStyle = "bold";
-            color = [16, 185, 129];
-            spacing = 10;
-            cursorY += 4;
-        } else if (el.tagName === 'TR') {
-            fontSize = 10;
-            text = "• " + text.replace(/\t/g, '  |  '); // Formatear tablas como lista técnica
-        }
-
-        doc.setFont("helvetica", fontStyle);
-        doc.setFontSize(fontSize);
-        doc.setTextColor(color[0], color[1], color[2]);
-
-        const lines = doc.splitTextToSize(text, pageWidth - (margin * 2));
-        checkPageBreak(lines.length * spacing);
-
-        doc.text(lines, margin, cursorY);
-        cursorY += (lines.length * spacing);
-    });
-
-    // 4. PIE DE PÁGINA (Numeración)
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setDrawColor(226, 232, 240);
-        doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(`KetoGen AI Gourmet - Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        // Intentamos cargar la imagen (con manejo de errores)
+        doc.addImage(imgUrl, 'JPEG', 0, 0, pageWidth, 45, undefined, 'FAST');
+    } catch (e) {
+        console.warn("No se pudo cargar la imagen de cabecera, usando fondo sólido.");
     }
 
-    doc.save(`KetoGen_${title.replace(/\s+/g, '_')}.pdf`);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(26);
+    doc.text("KetoGen Gourmet", margin, 30);
+    
+    cursorY = 55;
+
+    // --- 2. TÍTULO DE LA RECETA ---
+    const title = content.querySelector('h2')?.innerText || "Receta Keto";
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(20);
+    const splitTitle = doc.splitTextToSize(title, pageWidth - (margin * 2));
+    doc.text(splitTitle, margin, cursorY);
+    cursorY += (splitTitle.length * 10) + 10;
+
+    // --- 3. PROCESAR ELEMENTOS ---
+    const elements = Array.from(content.children);
+
+    for (const el of elements) {
+        // Control de salto de página simple
+        if (cursorY > 270) { doc.addPage(); cursorY = 20; }
+
+        if (el.tagName === 'H3') {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(16, 185, 129);
+            doc.text(el.innerText, margin, cursorY);
+            cursorY += 8;
+        } 
+        else if (el.tagName === 'P' || el.tagName === 'UL' || el.tagName === 'OL') {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.setTextColor(71, 85, 105);
+            const lines = doc.splitTextToSize(el.innerText, pageWidth - (margin * 2));
+            doc.text(lines, margin, cursorY);
+            cursorY += (lines.length * 6) + 4;
+        }
+        // --- DETECCIÓN Y CREACIÓN DE TABLA REAL ---
+        else if (el.tagName === 'TABLE') {
+            const rows = [];
+            const headers = [];
+            
+            // Extraer cabeceras
+            el.querySelectorAll('th').forEach(th => headers.push(th.innerText));
+            
+            // Extraer datos
+            el.querySelectorAll('tr').forEach((tr, index) => {
+                if (index === 0 && el.querySelector('th')) return; // Saltar si ya procesamos headers
+                const rowData = [];
+                tr.querySelectorAll('td').forEach(td => rowData.push(td.innerText));
+                if (rowData.length > 0) rows.push(rowData);
+            });
+
+            // Usar autoTable para dibujar la tabla real
+            doc.autoTable({
+                startY: cursorY,
+                head: [headers.length > 0 ? headers : ["Macro", "Cantidad"]], // Fallback si no hay th
+                body: rows,
+                margin: { left: margin },
+                styles: { fontSize: 10, cellPadding: 3 },
+                headStyles: { fillColor: [16, 185, 129], textColor: 255 },
+                alternateRowStyles: { fillColor: [248, 250, 252] },
+                theme: 'striped'
+            });
+            
+            cursorY = doc.lastAutoTable.finalY + 10;
+        }
+    }
+
+    // --- 4. PIE DE PÁGINA ---
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`KetoGen AI - Página ${i} de ${pageCount}`, pageWidth/2, 285, { align: 'center' });
+    }
+
+    doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
 };
 
         // Cargar keys guardadas
