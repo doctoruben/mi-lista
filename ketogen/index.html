@@ -91,8 +91,8 @@
     <div class="container">
         <div id="selectionArea">
             <div class="menu-grid">
-                <button class="btn-card" onclick="generateRecipe('desayuno')"><span>🍳</span><h3>Día</h3></button>
-                <button class="btn-card" onclick="generateRecipe('almuerzo')"><span>🥗</span><h3>Alm</h3></button>
+                <button class="btn-card" onclick="generateRecipe('desayuno')"><span>🍳</span><h3>Desayuno</h3></button>
+                <button class="btn-card" onclick="generateRecipe('almuerzo')"><span>🥗</span><h3>Almuerzo</h3></button>
                 <button class="btn-card" onclick="generateRecipe('cena')"><span>🌙</span><h3>Cena</h3></button>
             </div>
             <button class="btn-full" onclick="generateRecipe('menú completo del día')">📅 MENÚ COMPLETO</button>
@@ -150,58 +150,93 @@
             document.getElementById('loading').classList.add('hidden');
         }
 
-        async function generateRecipe(tipo) {
-            const gKey = localStorage.getItem('G_KEY');
-            const qKey = localStorage.getItem('Q_KEY');
-            if (!gKey && !qKey) return toggleModal(true);
+      async function generateRecipe(tipo) {
+    const gKey = localStorage.getItem('G_KEY');
+    const qKey = localStorage.getItem('Q_KEY');
+    if (!gKey && !qKey) return toggleModal(true);
 
-            document.getElementById('selectionArea').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('selectionArea').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
 
-            const prompt = `Chef Keto. Receta original para ${tipo}. Solo HTML (h2, h3, table). Sin markdown ni texto extra.`;
+    const prompt = `Actúa como Chef Keto. Genera una receta para ${tipo}. REGLAS: Devuelve solo HTML limpio (h2, h3, table). Sin bloques de código markdown ni texto extra.`;
 
-            let html = "";
-            let exito = false;
+    let html = "";
+    let exito = false;
 
-            // Intento Gemini
-            if (gKey) {
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    const data = await res.json();
-                    if (data?.candidates?.[0]?.content) {
-                        html = data.candidates[0].content.parts[0].text;
-                        exito = true;
-                    }
-                } catch (e) { console.warn("Gemini falló"); }
-            }
+    // --- INTENTO GEMINI (URL CORREGIDA) ---
+    if (gKey) {
+        try {
+            // URL actualizada y más robusta
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
+            
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
 
-            // Fallback Groq
-            if (!exito && qKey) {
-                try {
-                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${qKey}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: prompt}] })
-                    });
-                    const data = await res.json();
-                    html = data.choices[0].message.content;
-                    exito = true;
-                } catch (e) { console.error("Groq falló"); }
-            }
-
-            if (exito) {
-                document.getElementById('recipeContent').innerHTML = html.replace(/```html|```/g, '');
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('recipeResult').classList.remove('hidden');
+            const data = await res.json();
+            
+            if (data && data.candidates && data.candidates[0].content) {
+                html = data.candidates[0].content.parts[0].text;
+                exito = true;
+                console.log("Conectado con Gemini");
             } else {
-                alert("Error en las APIs");
-                resetUI();
+                console.warn("Gemini respondió pero sin contenido", data);
             }
+        } catch (e) {
+            console.error("Error físico en Gemini:", e);
         }
+    }
+
+    // --- INTENTO GROQ (HEADERS CORREGIDOS) ---
+    if (!exito && qKey) {
+        try {
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${qKey}`,
+                    'Content-Type': 'application/json' // Obligatorio para evitar Error 400
+                },
+                body: JSON.stringify({
+                    model: "mixtral-8x7b-32768",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.7
+                })
+            });
+
+            const data = await res.json();
+            
+            if (data && data.choices && data.choices[0]) {
+                html = data.choices[0].message.content;
+                exito = true;
+                console.log("Conectado con Groq");
+            }
+        } catch (e) {
+            console.error("Error físico en Groq:", e);
+        }
+    }
+
+    // --- FINALIZACIÓN ---
+    if (exito) {
+        // Limpiamos etiquetas de bloque de código si la IA las pone por error
+        const cleanHtml = html.replace(/```html|```/g, '').trim();
+        document.getElementById('recipeContent').innerHTML = cleanHtml;
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('recipeResult').classList.remove('hidden');
+        
+        // Registro en Firebase
+        try {
+            const title = document.querySelector('#recipeContent h2')?.innerText || "Receta Keto";
+            db.ref('keto_recetas').push({ titulo: title, timestamp: Date.now() });
+        } catch(err) {}
+    } else {
+        alert("Ambas APIs fallaron. Revisa que tus Keys no tengan espacios extra y que tengas conexión.");
+        resetUI();
+    }
+}
 
         // --- PDF OPTIMIZADO PARA MÓVIL ---
         async function exportToPDF() {
