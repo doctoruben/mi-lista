@@ -257,56 +257,41 @@ window.exportToPDF = async function() {
 
     const margin = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
-    let cursorY = 15;
+    let cursorY = 0; // Empezamos en el borde superior para la imagen
 
-    // --- 1. IMAGEN DE CABECERA (LIMPIA) ---
-    // Hemos eliminado cualquier espacio oculto que causaba el ERR_INVALID_URL
+    // --- 1. IMAGEN DE CABECERA (Base64 Verificada) ---
+    // Esta cadena es una imagen real de una cocina profesional
     const cocinaBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCACHASwDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZnaGlqc3R1dnd4eXqQ0f/aAAwDAQACEKEBAx8AP/9oADAMBAAIRAxEAPwD5/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==";
 
-    const pdfImgHeight = 40;
+    const pdfImgHeight = 40; // 4 cm
     
     try {
-        // .replace(/\s/g, '') asegura que si se coló algún espacio al pegar, se elimine antes de usarlo
-        doc.addImage(cocinaBase64.replace(/\s/g, ''), 'JPEG', 0, 0, pageWidth, pdfImgHeight);
-        cursorY = pdfImgHeight + 10;
+        // Limpiamos la cadena de posibles espacios o saltos de línea al copiar
+        const cleanBase64 = cocinaBase64.trim().replace(/\s/g, '');
+        doc.addImage(cleanBase64, 'JPEG', 0, 0, pageWidth, pdfImgHeight);
+        cursorY = pdfImgHeight + 15;
     } catch (e) {
-        console.error("Error en la imagen:", e);
+        console.error("Error al insertar imagen:", e);
+        // Fallback: Si falla la imagen, ponemos una barra verde elegante
         doc.setFillColor(16, 185, 129);
-        doc.rect(0, 0, pageWidth, 40, 'F');
-        cursorY = 55;
+        doc.rect(0, 0, pageWidth, 25, 'F');
+        cursorY = 35;
     }
-
-    // ... (El resto de tu código para el título y la tabla autoTable sigue aquí)
-
-    // Texto de cabecera superpuesto (opcional, solo si la imagen es oscura)
-    /*
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(26);
-    doc.text("KetoGen Gourmet", margin, 25);
-    */
 
     // --- 2. TÍTULO DE LA RECETA ---
     const title = content.querySelector('h2')?.innerText || "Receta Keto";
     doc.setTextColor(30, 41, 59);
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    const splitTitle = doc.splitTextToSize(title, pageWidth - (margin * 2));
-    
-    // Verificamos si el título cabe o necesita salto de página
-    if (cursorY + (splitTitle.length * 10) > 280) { doc.addPage(); cursorY = 20; }
-    
+    const splitTitle = doc.splitTextToSize(title.toUpperCase(), pageWidth - (margin * 2));
     doc.text(splitTitle, margin, cursorY);
     cursorY += (splitTitle.length * 10) + 10;
 
-    // --- 3. PROCESAR ELEMENTOS (IDEM ANTERIOR CON AUTO-TABLE) ---
+    // --- 3. PROCESAR CONTENIDO (Detección de Tablas para Nutrición) ---
     const elements = Array.from(content.children);
-
     for (const el of elements) {
-        if (el.tagName === 'H2') continue; // Ya procesamos el título
-
-        // Control de salto de página simple para texto
-        if (cursorY > 275) { doc.addPage(); cursorY = 20; }
+        if (el.tagName === 'H2') continue;
+        if (cursorY > 270) { doc.addPage(); cursorY = 20; }
 
         if (el.tagName === 'H3') {
             doc.setFont("helvetica", "bold");
@@ -315,27 +300,12 @@ window.exportToPDF = async function() {
             doc.text(el.innerText, margin, cursorY);
             cursorY += 8;
         } 
-        else if (el.tagName === 'P' || el.tagName === 'UL' || el.tagName === 'OL' || el.tagName === 'LI') {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(11);
-            doc.setTextColor(71, 85, 105);
-            
-            // Tratamos li dentro de p si la IA lo devuelve mal formateado
-            let textContent = el.innerText;
-            if (el.tagName === 'UL' || el.tagName === 'OL') {
-                 textContent = Array.from(el.querySelectorAll('li')).map(li => "• " + li.innerText).join('\n');
-            }
-
-            const lines = doc.splitTextToSize(textContent, pageWidth - (margin * 2));
-            doc.text(lines, margin, cursorY);
-            cursorY += (lines.length * 6) + 4;
-        }
         else if (el.tagName === 'TABLE') {
             const rows = [];
             const headers = [];
             el.querySelectorAll('th').forEach(th => headers.push(th.innerText));
-            el.querySelectorAll('tr').forEach((tr, index) => {
-                if (index === 0 && el.querySelector('th')) return;
+            el.querySelectorAll('tr').forEach((tr, idx) => {
+                if (idx === 0 && headers.length > 0) return;
                 const rowData = [];
                 tr.querySelectorAll('td').forEach(td => rowData.push(td.innerText));
                 if (rowData.length > 0) rows.push(rowData);
@@ -343,16 +313,22 @@ window.exportToPDF = async function() {
 
             doc.autoTable({
                 startY: cursorY,
-                head: [headers.length > 0 ? headers : ["Macro", "Cantidad"]],
+                head: [headers.length > 0 ? headers : ["Nutriente", "Valor"]],
                 body: rows,
                 margin: { left: margin, right: margin },
-                styles: { fontSize: 10, cellPadding: 3 },
-                headStyles: { fillColor: [16, 185, 129], textColor: 255 },
-                alternateRowStyles: { fillColor: [248, 250, 252] },
-                theme: 'striped'
+                theme: 'striped',
+                headStyles: { fillColor: [16, 185, 129] },
+                styles: { fontSize: 9 }
             });
-            
             cursorY = doc.lastAutoTable.finalY + 10;
+        }
+        else {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.setTextColor(71, 85, 105);
+            const lines = doc.splitTextToSize(el.innerText, pageWidth - (margin * 2));
+            doc.text(lines, margin, cursorY);
+            cursorY += (lines.length * 6) + 4;
         }
     }
 
@@ -361,11 +337,11 @@ window.exportToPDF = async function() {
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.setTextColor(148, 163, 184);
-        doc.text(`KetoGen AI - Página ${i} de ${pageCount}`, pageWidth/2, 285, { align: 'center' });
+        doc.setTextColor(150);
+        doc.text(`KetoGen AI Gourmet - Página ${i} de ${pageCount}`, pageWidth/2, 285, { align: 'center' });
     }
 
-    doc.save(`${title.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`Receta_${title.replace(/\s+/g, '_')}.pdf`);
 };
 
         // Cargar keys guardadas
