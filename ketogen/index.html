@@ -166,69 +166,86 @@
         }
 
         // --- GENERACIÓN DE RECETAS ---
-        window.generateRecipe = async function(tipo) {
-            const gKey = localStorage.getItem('G_KEY');
-            const qKey = localStorage.getItem('Q_KEY');
-            if (!gKey && !qKey) return toggleModal(true);
+      window.generateRecipe = async function(tipo) {
+    const gKey = localStorage.getItem('G_KEY');
+    const qKey = localStorage.getItem('Q_KEY');
+    if (!gKey && !qKey) return toggleModal(true);
 
-            document.getElementById('selectionArea').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('selectionArea').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
 
-     const prompt = `Actúa como Chef Keto Profesional. Crea una receta para ${tipo}. 
-    REGLAS ESTRICTAS: 
-    1. Devuelve SOLO el HTML (h2, h3, table). 
-    2. El h2 debe ser solo el nombre de la receta (máximo 5 palabras). 
-    3. Prohibido usar frases como "Aquí tienes tu receta", "Directo de mi cocina" o exclamaciones innecesarias. 
-    4. Sin bloques de código markdown.`;
+    const prompt = `Chef Keto Profesional. Receta para ${tipo}. 
+    REGLAS: Solo HTML (h2, h3, table). h2 nombre corto. Sin charla ni markdown.`;
 
     let html = "";
     let exito = false;
 
-            // Gemini
-            if (gKey) {
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    const data = await res.json();
-                    if (data?.candidates?.[0]?.content) {
-                        html = data.candidates[0].content.parts[0].text;
-                        exito = true;
-                    }
-                } catch (e) { console.warn("Gemini falló"); }
-            }
+    // --- 1. INTENTO GEMINI (MODELO CORREGIDO) ---
+    if (gKey) {
+        try {
+            // Cambiado gemini-2.5 a gemini-1.5-flash que es el estable
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`;
+            
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
 
-            // Groq Fallback
-            if (!exito && qKey) {
-                try {
-                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${qKey}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: prompt}] })
-                    });
-                    const data = await res.json();
-                    html = data.choices[0].message.content;
-                    exito = true;
-                } catch (e) { console.error("Groq falló"); }
+            const data = await res.json();
+            
+            if (data && data.candidates && data.candidates[0].content) {
+                html = data.candidates[0].content.parts[0].text;
+                exito = true;
+            } else {
+                console.warn("Gemini falló con respuesta: ", data);
             }
+        } catch (e) {
+            console.error("Error conexión Gemini:", e);
+        }
+    }
 
-            if (exito) {
+    // --- 2. INTENTO GROQ (HEADERS Y ESTRUCTURA REFORZADA) ---
+    if (!exito && qKey) {
+        console.log("Gemini falló o no disponible. Saltando a Groq...");
+        try {
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${qKey}`,
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({
+                    model: "mixtral-8x7b-32768",
+                    messages: [{ role: "user", content: prompt }],
+                    temperature: 0.5 // Menos creatividad para evitar títulos largos
+                })
+            });
+
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+            const data = await res.json();
+            if (data && data.choices && data.choices[0]) {
+                html = data.choices[0].message.content;
+                exito = true;
+            }
+        } catch (e) {
+            console.error("Groq también falló:", e);
+        }
+    }
+
+    // --- 3. PROCESAMIENTO FINAL ---
+    if (exito) {
         let cleanHtml = html.replace(/```html|```/g, '').trim();
 
-        // --- FILTRO ANT-CHARLATÁN ---
-        // Si el h2 es demasiado largo o contiene frases típicas de IA, lo limpiamos
+        // Filtro de títulos "charlatanes"
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = cleanHtml;
         const h2 = tempDiv.querySelector('h2');
-        
         if (h2) {
-            let titulo = h2.innerText;
-            // Eliminamos frases de relleno comunes
-            titulo = titulo.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Disfruta de|Hola|Bienvenido)/gi, '');
-            titulo = titulo.replace(/(Keto de Campeón|de mi cocina a la tuya)/gi, '');
-            h2.innerText = titulo.trim();
+            h2.innerText = h2.innerText.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Campeón|Cocina)/gi, '').trim();
             cleanHtml = tempDiv.innerHTML;
         }
 
@@ -236,10 +253,11 @@
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('recipeResult').classList.remove('hidden');
         
+        // Firebase
         const finalTitle = h2 ? h2.innerText : "Receta Keto";
         db.ref('keto_recetas').push({ titulo: finalTitle, contenido: cleanHtml, timestamp: Date.now() });
     } else {
-        alert("Error en APIs");
+        alert("Lo siento, los servidores de IA están saturados ahora mismo. Inténtalo en un minuto.");
         resetUI();
     }
 }
