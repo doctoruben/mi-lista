@@ -143,64 +143,7 @@
 
         let todasLasRecetas = []; // Variable global para el filtro rápido
 
-async function openRecientes() {
-    document.getElementById('recientesModal').classList.remove('hidden');
-    const container = document.getElementById('listaRecientes');
-    container.innerHTML = "<p style='text-align:center'>Cargando...</p>";
 
-    try {
-        const snapshot = await db.ref('keto_recetas').orderByChild('timestamp').once('value');
-        todasLasRecetas = [];
-        
-        snapshot.forEach(child => {
-            todasLasRecetas.unshift({ id: child.key, ...child.val() }); // Lo más nuevo primero
-        });
-        
-        renderizarLista(todasLasRecetas);
-    } catch (e) {
-        container.innerHTML = "Error al cargar.";
-    }
-}
-
-function renderizarLista(recetas) {
-    const container = document.getElementById('listaRecientes');
-    container.innerHTML = "";
-    
-    if (recetas.length === 0) {
-        container.innerHTML = "<p style='color:#999; text-align:center'>No hay recetas.</p>";
-        return;
-    }
-
-    recetas.forEach(r => {
-        const btn = document.createElement('div');
-        btn.style = "padding:12px; border:1px solid #f0f0f0; border-radius:12px; cursor:pointer; background:#f9f9f9; transition:0.2s;";
-        btn.innerHTML = `<div style="font-weight:bold; font-size:14px; color:#333;">${r.titulo}</div>
-                         <div style="font-size:10px; color:#999;">${new Date(r.timestamp).toLocaleDateString()}</div>`;
-        btn.onclick = () => cargarRecetaGuardada(r.contenido);
-        btn.onmouseover = () => btn.style.borderColor = "var(--primary)";
-        btn.onmouseout = () => btn.style.borderColor = "#f0f0f0";
-        container.appendChild(btn);
-    });
-}
-
-function filtrarRecetas() {
-    const term = document.getElementById('searchRecetas').value.toLowerCase();
-    const filtradas = todasLasRecetas.filter(r => 
-        r.titulo.toLowerCase().includes(term)
-    );
-    renderizarLista(filtradas);
-}
-
-function cargarRecetaGuardada(html) {
-    document.getElementById('recipeContent').innerHTML = html;
-    document.getElementById('selectionArea').classList.add('hidden');
-    document.getElementById('recipeResult').classList.remove('hidden');
-    closeRecientes();
-}
-
-function closeRecientes() {
-    document.getElementById('recientesModal').classList.add('hidden');
-}
 
         
         // Configuración Firebase (Reutiliza la tuya)
@@ -342,6 +285,65 @@ try {
             pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
             pdf.save('receta.pdf');
         }
+async function openRecientes() {
+    document.getElementById('recientesModal').classList.remove('hidden');
+    const container = document.getElementById('listaRecientes');
+    container.innerHTML = "<p style='text-align:center'>Cargando...</p>";
+
+    try {
+        const snapshot = await db.ref('keto_recetas').orderByChild('timestamp').once('value');
+        todasLasRecetas = [];
+        
+        snapshot.forEach(child => {
+            todasLasRecetas.unshift({ id: child.key, ...child.val() }); // Lo más nuevo primero
+        });
+        
+        renderizarLista(todasLasRecetas);
+    } catch (e) {
+        container.innerHTML = "Error al cargar.";
+    }
+}
+
+function renderizarLista(recetas) {
+    const container = document.getElementById('listaRecientes');
+    container.innerHTML = "";
+    
+    if (recetas.length === 0) {
+        container.innerHTML = "<p style='color:#999; text-align:center'>No hay recetas.</p>";
+        return;
+    }
+
+    recetas.forEach(r => {
+        const btn = document.createElement('div');
+        btn.style = "padding:12px; border:1px solid #f0f0f0; border-radius:12px; cursor:pointer; background:#f9f9f9; transition:0.2s;";
+        btn.innerHTML = `<div style="font-weight:bold; font-size:14px; color:#333;">${r.titulo}</div>
+                         <div style="font-size:10px; color:#999;">${new Date(r.timestamp).toLocaleDateString()}</div>`;
+        btn.onclick = () => cargarRecetaGuardada(r.contenido);
+        btn.onmouseover = () => btn.style.borderColor = "var(--primary)";
+        btn.onmouseout = () => btn.style.borderColor = "#f0f0f0";
+        container.appendChild(btn);
+    });
+}
+
+function filtrarRecetas() {
+    const term = document.getElementById('searchRecetas').value.toLowerCase();
+    const filtradas = todasLasRecetas.filter(r => 
+        r.titulo.toLowerCase().includes(term)
+    );
+    renderizarLista(filtradas);
+}
+
+function cargarRecetaGuardada(html) {
+    document.getElementById('recipeContent').innerHTML = html;
+    document.getElementById('selectionArea').classList.add('hidden');
+    document.getElementById('recipeResult').classList.remove('hidden');
+    closeRecientes();
+}
+
+function closeRecientes() {
+    document.getElementById('recientesModal').classList.add('hidden');
+}
+          
     </script>
 </body>
 </html>
