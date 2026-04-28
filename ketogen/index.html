@@ -216,7 +216,7 @@
             document.getElementById('loading').classList.add('hidden');
         }
 
-        async function generateRecipe(tipo) {
+       async function generateRecipe(tipo) {
     const gKey = localStorage.getItem('G_KEY');
     const qKey = localStorage.getItem('Q_KEY');
 
@@ -225,68 +225,85 @@
     document.getElementById('selectionArea').classList.add('hidden');
     document.getElementById('loading').classList.remove('hidden');
 
-    let historyText = "";
-    try {
-        const snapshot = await db.ref('keto_recetas').limitToLast(10).once('value');
-        if (snapshot.val()) {
-            historyText = "No repitas estas recetas: " + Object.values(snapshot.val()).map(v => v.titulo).join(', ');
-        }
-    } catch (e) { console.error("Error Firebase:", e); }
+    const prompt = `Chef Keto Profesional. Crea una receta original para ${tipo}. REGLAS: Solo devuelve código HTML (h2 para titulo, h3 secciones, table para macros). Sin bloques de código markdown.`;
 
-    const prompt = `Chef Keto Profesional. Crea una receta para ${tipo}. ${historyText}. REGLAS: Solo devuelve código HTML (h2 para titulo, h3 secciones, table para macros). Sin comentarios adicionales ni bloques de código markdown.`;
+    let html = "";
+    let exito = false;
 
-    try {
-        let html = "";
-        
-        if (gKey) {
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                
-                const data = await res.json();
+    // --- INTENTO 1: GEMINI ---
+    if (gKey) {
+        console.log("Intentando con Gemini...");
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            
+            const data = await res.json();
 
-                // VALIDACIÓN CRÍTICA PARA EVITAR EL ERROR '0'
-                if (data.error) {
-                    throw new Error(`Gemini Error: ${data.error.message}`);
-                }
-                
-                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                    throw new Error("La respuesta de Gemini no tiene el formato esperado.");
-                }
-
+            // Verificamos si data tiene la estructura correcta antes de leer el índice [0]
+            if (data && data.candidates && data.candidates[0] && data.candidates[0].content) {
                 html = data.candidates[0].content.parts[0].text;
-            } catch (e) {
-                console.warn("Gemini falló, intentando Groq...", e.message);
-                if (qKey) {
-                    html = await callGroq(prompt, qKey);
-                } else {
-                    throw e; // Si no hay Groq, lanzamos el error original
-                }
+                exito = true;
+                console.log("Éxito con Gemini");
+            } else {
+                // Si la respuesta no es válida, lanzamos error para ir al catch
+                throw new Error("Estructura de Gemini inválida o Key errónea");
             }
-        } else if (qKey) {
-            html = await callGroq(prompt, qKey);
+        } catch (e) {
+            console.warn("Gemini falló:", e.message);
         }
+    }
 
-        // Limpieza de posibles bloques de código que mande la IA
+    // --- INTENTO 2: GROQ (Solo si Gemini falló) ---
+    if (!exito && qKey) {
+        console.log("Saltando a Groq...");
+        try {
+            html = await callGroq(prompt, qKey);
+            exito = true;
+            console.log("Éxito con Groq");
+        } catch (e) {
+            console.error("Groq también falló:", e.message);
+        }
+    }
+
+    // --- RENDERIZADO FINAL ---
+    if (exito) {
         const cleanHtml = html.replace(/```html|```/g, '').trim();
-        
         document.getElementById('recipeContent').innerHTML = cleanHtml;
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('recipeResult').classList.remove('hidden');
-
-        // Guardar en Firebase
-        const titleElement = document.querySelector('#recipeContent h2');
-        const title = titleElement ? titleElement.innerText : `Receta ${tipo}`;
-        await db.ref('keto_recetas').push({ titulo: title, timestamp: Date.now() });
-
-    } catch (err) {
-        console.error(err);
-        alert("Error de API: " + err.message);
+        
+        // Guardar en Firebase (opcional, envuelto en try para que no bloquee)
+        try {
+            const title = document.querySelector('#recipeContent h2')?.innerText || "Receta Keto";
+            db.ref('keto_recetas').push({ titulo: title, timestamp: Date.now() });
+        } catch(f) {}
+    } else {
+        alert("Ambas APIs han fallado. Revisa tus llaves y tu conexión.");
         resetUI();
     }
+}
+
+// Función auxiliar Groq blindada
+async function callGroq(prompt, key) {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${key}`, 
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+            model: "mixtral-8x7b-32768", 
+            messages: [{role: "user", content: prompt}] 
+        })
+    });
+    const d = await res.json();
+    if (d && d.choices && d.choices[0]) {
+        return d.choices[0].message.content;
+    }
+    throw new Error("Groq no devolvió contenido");
 }
 
 async function callGroq(prompt, key) {
