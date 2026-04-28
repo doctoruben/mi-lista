@@ -175,80 +175,63 @@
     document.getElementById('selectionArea').classList.add('hidden');
     document.getElementById('loading').classList.remove('hidden');
 
-    const prompt = `Chef Keto Profesional. Receta para ${tipo}. 
-    REGLAS: Solo HTML (h2, h3, table). h2 nombre corto. Sin charla ni markdown.`;
+    // Prompt actualizado para incluir valores nutricionales obligatorios
+    const prompt = `Actúa como Chef Keto Profesional y Nutricionista. 
+    Crea una receta detallada para ${tipo}. 
+    REGLAS ESTRICTAS:
+    1. Estructura: <h2>Nombre</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3> y <h3>Información Nutricional</h3>.
+    2. La sección de Información Nutricional DEBE ser una <table> con dos columnas: "Nutriente" y "Cantidad por ración".
+    3. Incluye obligatoriamente: Calorías, Grasas, Proteínas y Carbohidratos Netos.
+    4. Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`;
 
     let html = "";
     let exito = false;
 
-    // --- 1. INTENTO GEMINI (MODELO CORREGIDO) ---
+    // --- 1. INTENTO GEMINI ---
     if (gKey) {
         try {
-            // Cambiado gemini-2.5 a gemini-1.5-flash que es el estable
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`;
-            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-
             const data = await res.json();
-            
-            if (data && data.candidates && data.candidates[0].content) {
+            if (data?.candidates?.[0]?.content) {
                 html = data.candidates[0].content.parts[0].text;
                 exito = true;
-            } else {
-                console.warn("Gemini falló con respuesta: ", data);
             }
-        } catch (e) {
-            console.error("Error conexión Gemini:", e);
-        }
+        } catch (e) { console.error("Gemini falló"); }
     }
 
-    // --- 2. INTENTO GROQ (HEADERS Y ESTRUCTURA REFORZADA) ---
+    // --- 2. INTENTO GROQ (FALLBACK) ---
     if (!exito && qKey) {
-        console.log("Saltando a Groq por fallo de Gemini...");
         try {
             const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${qKey.trim()}`, // Limpiamos espacios
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Authorization': `Bearer ${qKey.trim()}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: "llama-3.3-70b-versatile", // Modelo más estable en Groq actualmente
+                    model: "llama-3.3-70b-versatile",
                     messages: [{ role: "user", content: prompt }]
-                    // Eliminamos temperature, max_tokens, etc., para evitar el Error 400
                 })
             });
-
             const data = await res.json();
-            
-            if (res.ok && data.choices && data.choices[0]) {
+            if (data?.choices?.[0]) {
                 html = data.choices[0].message.content;
                 exito = true;
-                console.log("Éxito con Groq");
-            } else {
-                console.error("Groq rechazó la petición:", data);
             }
-        } catch (e) {
-            console.error("Error físico en Groq:", e);
-        }
+        } catch (e) { console.error("Groq falló"); }
     }
 
-    // --- 3. PROCESAMIENTO FINAL ---
     if (exito) {
         let cleanHtml = html.replace(/```html|```/g, '').trim();
 
-        // Filtro de títulos "charlatanes"
+        // Limpieza de títulos (el filtro que ya teníamos)
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = cleanHtml;
         const h2 = tempDiv.querySelector('h2');
         if (h2) {
-            h2.innerText = h2.innerText.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Campeón|Cocina)/gi, '').trim();
+            h2.innerText = h2.innerText.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Campeón|Chef)/gi, '').trim();
             cleanHtml = tempDiv.innerHTML;
         }
 
@@ -256,15 +239,14 @@
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('recipeResult').classList.remove('hidden');
         
-        // Firebase
+        // Guardar en Firebase con los nuevos valores
         const finalTitle = h2 ? h2.innerText : "Receta Keto";
         db.ref('keto_recetas').push({ titulo: finalTitle, contenido: cleanHtml, timestamp: Date.now() });
     } else {
-        alert("Lo siento, los servidores de IA están saturados ahora mismo. Inténtalo en un minuto.");
+        alert("Error al generar la receta.");
         resetUI();
     }
-}
-        
+} 
 
 window.exportToPDF = async function() {
     const { jsPDF } = window.jspdf;
