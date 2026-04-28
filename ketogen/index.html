@@ -174,9 +174,15 @@
             document.getElementById('selectionArea').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
 
-            const prompt = `Actúa como Chef Keto. Receta para ${tipo}. Devuelve solo HTML (h2, h3, table).`;
-            let html = "";
-            let exito = false;
+     const prompt = `Actúa como Chef Keto Profesional. Crea una receta para ${tipo}. 
+    REGLAS ESTRICTAS: 
+    1. Devuelve SOLO el HTML (h2, h3, table). 
+    2. El h2 debe ser solo el nombre de la receta (máximo 5 palabras). 
+    3. Prohibido usar frases como "Aquí tienes tu receta", "Directo de mi cocina" o exclamaciones innecesarias. 
+    4. Sin bloques de código markdown.`;
+
+    let html = "";
+    let exito = false;
 
             // Gemini
             if (gKey) {
@@ -209,17 +215,34 @@
             }
 
             if (exito) {
-                const cleanHtml = html.replace(/```html|```/g, '').trim();
-                document.getElementById('recipeContent').innerHTML = cleanHtml;
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('recipeResult').classList.remove('hidden');
-                
-                const title = document.querySelector('#recipeContent h2')?.innerText || "Receta";
-                db.ref('keto_recetas').push({ titulo: title, contenido: cleanHtml, timestamp: Date.now() });
-            } else {
-                alert("Error en APIs");
-                resetUI();
-            }
+        let cleanHtml = html.replace(/```html|```/g, '').trim();
+
+        // --- FILTRO ANT-CHARLATÁN ---
+        // Si el h2 es demasiado largo o contiene frases típicas de IA, lo limpiamos
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cleanHtml;
+        const h2 = tempDiv.querySelector('h2');
+        
+        if (h2) {
+            let titulo = h2.innerText;
+            // Eliminamos frases de relleno comunes
+            titulo = titulo.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Disfruta de|Hola|Bienvenido)/gi, '');
+            titulo = titulo.replace(/(Keto de Campeón|de mi cocina a la tuya)/gi, '');
+            h2.innerText = titulo.trim();
+            cleanHtml = tempDiv.innerHTML;
+        }
+
+        document.getElementById('recipeContent').innerHTML = cleanHtml;
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('recipeResult').classList.remove('hidden');
+        
+        const finalTitle = h2 ? h2.innerText : "Receta Keto";
+        db.ref('keto_recetas').push({ titulo: finalTitle, contenido: cleanHtml, timestamp: Date.now() });
+    } else {
+        alert("Error en APIs");
+        resetUI();
+    }
+}
         }
 
         window.exportToPDF = async function() {
