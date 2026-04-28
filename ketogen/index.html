@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KetoGen | Smart Chef</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root { --primary: #10b981; --dark: #0f172a; --bg: #f8fafc; }
+
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); margin: 0; color: #334155; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navbar Responsiva */
+        .navbar {
+            background: #fff; padding: 0.8rem 1.2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;
+        }
+
+        .container { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
+
+        /* Grid de Botones Optimizada para Móvil */
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 0.8rem; 
+        }
+        
+        .btn-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 1rem;
+            padding: 1.5rem 0.5rem; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .btn-card span { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .btn-card h3 { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .btn-full {
+            width: 100%; margin-top: 1rem; padding: 1.1rem; background: var(--dark);
+            color: white; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* --- VISUALIZACIÓN DE RECETA (MÓVIL) --- */
+        .recipe-box { 
+            background: white; padding: 1.5rem; border-radius: 1.5rem; 
+            border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            overflow-x: hidden; /* Evita que la tarjeta se ensanche */
+        }
+
+        #recipeContent { all: revert; line-height: 1.6; font-size: 0.95rem; }
+        
+        #recipeContent h2 { 
+            color: #064e3b; font-size: 1.6rem; text-align: center; 
+            border-bottom: 2px solid #ecfdf5; padding-bottom: 10px; 
+        }
+
+        /* Tablas Responsivas: Importante para móvil */
+        #recipeContent table { 
+            display: block; width: 100%; overflow-x: auto; /* Scroll lateral si es ancha */
+            border-collapse: collapse; margin: 1.5rem 0; 
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #recipeContent th { background: #f8fafc; padding: 10px; font-size: 0.75rem; text-align: left; }
+        #recipeContent td { padding: 10px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+
+        /* Modal Ajustado */
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1.5rem; width: 85%; max-width: 320px; }
+
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 2rem auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <h2 style="margin:0; font-size: 1.2rem;">KetoGen 🥗</h2>
+        <button onclick="toggleModal(true)" style="background:none; border:1px solid #eee; border-radius:10px; padding:8px 12px; cursor:pointer;">⚙️</button>
+    </nav>
+
+    <div class="container">
+        <div id="selectionArea">
+            <div class="menu-grid">
+                <button class="btn-card" onclick="generateRecipe('desayuno')"><span>🍳</span><h3>Día</h3></button>
+                <button class="btn-card" onclick="generateRecipe('almuerzo')"><span>🥗</span><h3>Alm</h3></button>
+                <button class="btn-card" onclick="generateRecipe('cena')"><span>🌙</span><h3>Cena</h3></button>
+            </div>
+            <button class="btn-full" onclick="generateRecipe('menú completo del día')">📅 MENÚ COMPLETO</button>
+        </div>
+
+        <div id="loading" class="hidden"><div class="loader"></div></div>
+
+        <div id="recipeResult" class="hidden">
+            <div class="recipe-box" id="printArea">
+                <div id="recipeContent"></div>
+            </div>
+            <div style="margin-top: 1.2rem; display: flex; gap: 0.8rem;">
+                <button onclick="exportToPDF()" style="flex:2; padding: 1rem; background: var(--primary); color:white; border:none; border-radius: 1rem; font-weight: bold;">PDF</button>
+                <button onclick="resetUI()" style="flex:1; padding: 1rem; background: #fff; border: 1px solid #ddd; border-radius: 1rem;">↩</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="configModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+        <div class="modal-content">
+            <h3 style="margin:0 0 1rem 0">Ajustes API</h3>
+            <input type="password" id="gemKey" placeholder="Gemini Key" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
+            <input type="password" id="groKey" placeholder="Groq Key" style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
+            <button onclick="saveKeys()" style="width:100%; padding:12px; background:var(--dark); color:white; border:none; border-radius:10px; font-weight:bold;">Guardar</button>
+            <button onclick="toggleModal(false)" style="width:100%; margin-top:10px; background:none; border:none; color:#999;">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuración Firebase (Reutiliza la tuya)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+            authDomain: "lista-compra-9d6f5.firebaseapp.com",
+            databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lista-compra-9d6f5",
+            storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+            messagingSenderId: "241322134457",
+            appId: "1:241322134457:web:1b765857911f94d69cc468"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
+        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
+
+        function toggleModal(show) { document.getElementById('configModal').classList.toggle('hidden', !show); }
+        function saveKeys() {
+            localStorage.setItem('G_KEY', document.getElementById('gemKey').value);
+            localStorage.setItem('Q_KEY', document.getElementById('groKey').value);
+            toggleModal(false);
+        }
+        function resetUI() {
+            document.getElementById('selectionArea').classList.remove('hidden');
+            document.getElementById('recipeResult').classList.add('hidden');
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        async function generateRecipe(tipo) {
+            const gKey = localStorage.getItem('G_KEY');
+            const qKey = localStorage.getItem('Q_KEY');
+            if (!gKey && !qKey) return toggleModal(true);
+
+            document.getElementById('selectionArea').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            const prompt = `Chef Keto. Receta original para ${tipo}. Solo HTML (h2, h3, table). Sin markdown ni texto extra.`;
+
+            let html = "";
+            let exito = false;
+
+            // Intento Gemini
+            if (gKey) {
+                try {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const data = await res.json();
+                    if (data?.candidates?.[0]?.content) {
+                        html = data.candidates[0].content.parts[0].text;
+                        exito = true;
+                    }
+                } catch (e) { console.warn("Gemini falló"); }
+            }
+
+            // Fallback Groq
+            if (!exito && qKey) {
+                try {
+                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${qKey}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: prompt}] })
+                    });
+                    const data = await res.json();
+                    html = data.choices[0].message.content;
+                    exito = true;
+                } catch (e) { console.error("Groq falló"); }
+            }
+
+            if (exito) {
+                document.getElementById('recipeContent').innerHTML = html.replace(/```html|```/g, '');
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('recipeResult').classList.remove('hidden');
+            } else {
+                alert("Error en las APIs");
+                resetUI();
+            }
+        }
+
+        // --- PDF OPTIMIZADO PARA MÓVIL ---
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('printArea');
+            
+            // Forzamos un ancho de renderizado "virtual" para que el PDF no salga estrecho
+            const canvas = await html2canvas(element, { 
+                scale: 2, 
+                useCORS: true,
+                width: 700, // Ancho simulado para que la tabla quepa bien
+                windowWidth: 700 
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 190; 
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            pdf.save('receta.pdf');
+        }
+    </script>
+</body>
+</html>
