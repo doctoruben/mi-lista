@@ -209,30 +209,32 @@
 
     // --- 2. INTENTO GROQ (HEADERS Y ESTRUCTURA REFORZADA) ---
     if (!exito && qKey) {
-        console.log("Gemini falló o no disponible. Saltando a Groq...");
+        console.log("Saltando a Groq por fallo de Gemini...");
         try {
             const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: { 
-                    'Authorization': `Bearer ${qKey}`,
-                    'Content-Type': 'application/json' 
+                    'Authorization': `Bearer ${qKey.trim()}`, // Limpiamos espacios
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: "mixtral-8x7b-32768",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.5 // Menos creatividad para evitar títulos largos
+                    model: "llama-3.3-70b-versatile", // Modelo más estable en Groq actualmente
+                    messages: [{ role: "user", content: prompt }]
+                    // Eliminamos temperature, max_tokens, etc., para evitar el Error 400
                 })
             });
 
-            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
             const data = await res.json();
-            if (data && data.choices && data.choices[0]) {
+            
+            if (res.ok && data.choices && data.choices[0]) {
                 html = data.choices[0].message.content;
                 exito = true;
+                console.log("Éxito con Groq");
+            } else {
+                console.error("Groq rechazó la petición:", data);
             }
         } catch (e) {
-            console.error("Groq también falló:", e);
+            console.error("Error físico en Groq:", e);
         }
     }
 
