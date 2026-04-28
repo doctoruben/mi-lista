@@ -263,14 +263,95 @@
 }
         
 
-        window.exportToPDF = async function() {
-            const { jsPDF } = window.jspdf;
-            const element = document.getElementById('printArea');
-            const canvas = await html2canvas(element, { scale: 2, windowWidth: 700 });
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 190, (canvas.height * 190) / canvas.width);
-            pdf.save('receta-keto.pdf');
+     window.exportToPDF = async function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const content = document.getElementById('recipeContent');
+    
+    // Configuración inicial
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let cursorY = 20;
+
+    // 1. CABECERA ELEGANTE (Fondo Verde)
+    doc.setFillColor(16, 185, 129); // Verde KetoGen
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("KetoGen AI Gourmet", margin, 25);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Tu plan nutricional inteligente", margin, 32);
+    
+    cursorY = 55;
+
+    // 2. TÍTULO DE LA RECETA
+    const title = content.querySelector('h2')?.innerText || "Receta Keto";
+    doc.setTextColor(15, 23, 42); // Color oscuro
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    
+    // Ajustar título si es muy largo
+    const splitTitle = doc.splitTextToSize(title, pageWidth - (margin * 2));
+    doc.text(splitTitle, margin, cursorY);
+    cursorY += (splitTitle.length * 10) + 5;
+
+    // 3. LÍNEA DIVISORIA
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, cursorY, pageWidth - margin, cursorY);
+    cursorY += 10;
+
+    // 4. CONTENIDO (Ingredientes y Pasos)
+    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+
+    const sections = content.querySelectorAll('h3, p, li, tr');
+    
+    sections.forEach((el) => {
+        let text = el.innerText.trim();
+        if (!text) return;
+
+        // Si es un subtítulo (H3)
+        if (el.tagName === 'H3') {
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(16, 185, 129);
+            cursorY += 5;
+        } else {
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(51, 65, 85);
         }
+
+        const lines = doc.splitTextToSize(text, pageWidth - (margin * 2));
+        
+        // Control de salto de página
+        if (cursorY + (lines.length * 7) > pageHeight - 20) {
+            doc.addPage();
+            cursorY = 20;
+        }
+
+        doc.text(lines, margin, cursorY);
+        cursorY += (lines.length * 7);
+
+        // Espacio extra tras subtítulos
+        if (el.tagName === 'H3') cursorY += 2;
+    });
+
+    // 5. PIE DE PÁGINA
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Página ${i} de ${totalPages} - Generado por KetoGen AI`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+    }
+
+    doc.save(`Receta_${title.replace(/\s+/g, '_')}.pdf`);
+}
 
         // Cargar keys guardadas
         document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
