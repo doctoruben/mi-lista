@@ -11,6 +11,46 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
+/* Estilo de "Papel de Restaurante" para el PDF */
+#recipeContent { 
+    all: revert; 
+    font-family: 'Inter', sans-serif; 
+}
+
+#recipeContent h2 { 
+    font-family: serif; 
+    text-align: center; 
+    color: #064e3b; 
+    font-size: 2.2rem; 
+    margin-bottom: 20px;
+    border-bottom: 3px double #10b981;
+    padding-bottom: 10px;
+}
+
+#recipeContent h3 { 
+    color: #10b981; 
+    font-size: 1.2rem; 
+    text-transform: uppercase; 
+    margin-top: 25px;
+    border-left: 4px solid #10b981;
+    padding-left: 15px;
+}
+
+#recipeContent table { 
+    width: 100%; 
+    border: 1px solid #e2e8f0; 
+    margin-top: 20px; 
+    background: #fdfdfd;
+}
+
+#recipeContent th { 
+    background: #064e3b; 
+    color: white; 
+    text-transform: uppercase; 
+    font-size: 0.7rem; 
+}
+        
+        
         /* CSS PURO: Carga instantánea sin dependencias externas */
         :root {
             --primary: #10b981;
@@ -284,17 +324,56 @@ async function callGroq(prompt, key) {
             const d = await res.json();
             return d.choices[0].message.content;
         }
+async function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const element = document.getElementById('printArea');
+    
+    // Añadimos una clase temporal para el estilo de impresión elegante
+    element.style.padding = "20px";
+    element.style.border = "none";
 
-        async function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const element = document.getElementById('printArea');
-            const canvas = await html2canvas(element, { scale: 2 });
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const width = pdf.internal.pageSize.getWidth();
-            const height = (canvas.height * width) / canvas.width;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, width, height);
-            pdf.save('KetoGen_Recipe.pdf');
+    try {
+        const canvas = await html2canvas(element, { 
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: element.scrollWidth,
+            windowHeight: element.scrollHeight
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const imgWidth = 210; // Ancho A4 en mm
+        const pageHeight = 295; // Alto A4 en mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // Primera página
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Añadir páginas extras si el contenido sobrepasa la hoja
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
         }
+
+        const title = document.querySelector('#recipeContent h2')?.innerText || "Receta";
+        pdf.save(`KetoGen_${title.replace(/\s+/g, '_')}.pdf`);
+        
+    } catch (error) {
+        console.error("Error generando PDF:", error);
+        alert("No se pudo generar el PDF completo.");
+    } finally {
+        // Restauramos el estilo visual de la web
+        element.style.padding = ""; 
+    }
+}
+       
     </script>
 </body>
 </html>
