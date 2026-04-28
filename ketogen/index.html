@@ -270,90 +270,97 @@
     const doc = new jsPDF('p', 'mm', 'a4');
     const content = document.getElementById('recipeContent');
     
-    // Configuración inicial
+    if (!content.innerText.trim()) return alert("No hay receta para exportar");
+
+    // --- CONFIGURACIÓN DE ESTILO ---
     const margin = 20;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     let cursorY = 20;
 
-    // 1. CABECERA ELEGANTE (Fondo Verde)
-    doc.setFillColor(16, 185, 129); // Verde KetoGen
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    // Función auxiliar para verificar espacio y saltar de página
+    const checkPageBreak = (neededHeight) => {
+        if (cursorY + neededHeight > pageHeight - 20) {
+            doc.addPage();
+            cursorY = 20;
+            return true;
+        }
+        return false;
+    };
+
+    // 1. CABECERA GOURMET
+    doc.setFillColor(16, 185, 129); // Verde Esmeralda
+    doc.rect(0, 0, pageWidth, 35, 'F');
     
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("KetoGen AI Gourmet", margin, 25);
+    doc.setFontSize(20);
+    doc.text("KetoGen AI", margin, 20);
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Tu plan nutricional inteligente", margin, 32);
+    doc.text("RECETA NUTRICIONAL PERSONALIZADA", margin, 27);
     
-    cursorY = 55;
+    cursorY = 50;
 
-    // 2. TÍTULO DE LA RECETA
+    // 2. TÍTULO PRINCIPAL (H2)
     const title = content.querySelector('h2')?.innerText || "Receta Keto";
-    doc.setTextColor(15, 23, 42); // Color oscuro
-    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     
-    // Ajustar título si es muy largo
-    const splitTitle = doc.splitTextToSize(title, pageWidth - (margin * 2));
+    const splitTitle = doc.splitTextToSize(title.toUpperCase(), pageWidth - (margin * 2));
     doc.text(splitTitle, margin, cursorY);
     cursorY += (splitTitle.length * 10) + 5;
 
-    // 3. LÍNEA DIVISORIA
-    doc.setDrawColor(226, 232, 240);
-    doc.line(margin, cursorY, pageWidth - margin, cursorY);
-    cursorY += 10;
-
-    // 4. CONTENIDO (Ingredientes y Pasos)
-    doc.setTextColor(51, 65, 85);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-
-    const sections = content.querySelectorAll('h3, p, li, tr');
+    // 3. PROCESAR CONTENIDO (H3, P, LI, TABLE)
+    const elements = content.querySelectorAll('h3, p, li, tr');
     
-    sections.forEach((el) => {
+    elements.forEach((el) => {
         let text = el.innerText.trim();
-        if (!text) return;
+        if (!text || text.length < 2) return;
 
-        // Si es un subtítulo (H3)
+        let fontSize = 11;
+        let fontStyle = "normal";
+        let color = [51, 65, 85];
+        let spacing = 7;
+
+        // Estilo según tipo de etiqueta
         if (el.tagName === 'H3') {
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(16, 185, 129);
-            cursorY += 5;
-        } else {
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(51, 65, 85);
+            fontSize = 14;
+            fontStyle = "bold";
+            color = [16, 185, 129];
+            spacing = 10;
+            cursorY += 4;
+        } else if (el.tagName === 'TR') {
+            fontSize = 10;
+            text = "• " + text.replace(/\t/g, '  |  '); // Formatear tablas como lista técnica
         }
+
+        doc.setFont("helvetica", fontStyle);
+        doc.setFontSize(fontSize);
+        doc.setTextColor(color[0], color[1], color[2]);
 
         const lines = doc.splitTextToSize(text, pageWidth - (margin * 2));
-        
-        // Control de salto de página
-        if (cursorY + (lines.length * 7) > pageHeight - 20) {
-            doc.addPage();
-            cursorY = 20;
-        }
+        checkPageBreak(lines.length * spacing);
 
         doc.text(lines, margin, cursorY);
-        cursorY += (lines.length * 7);
-
-        // Espacio extra tras subtítulos
-        if (el.tagName === 'H3') cursorY += 2;
+        cursorY += (lines.length * spacing);
     });
 
-    // 5. PIE DE PÁGINA
+    // 4. PIE DE PÁGINA (Numeración)
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
+        doc.setDrawColor(226, 232, 240);
+        doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
         doc.setFontSize(8);
         doc.setTextColor(150);
-        doc.text(`Página ${i} de ${totalPages} - Generado por KetoGen AI`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        doc.text(`KetoGen AI Gourmet - Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
     }
 
-    doc.save(`Receta_${title.replace(/\s+/g, '_')}.pdf`);
-}
+    doc.save(`KetoGen_${title.replace(/\s+/g, '_')}.pdf`);
+};
 
         // Cargar keys guardadas
         document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
