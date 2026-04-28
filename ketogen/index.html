@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KetoGen | Smart Cuisine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background: #fdfdfd; color: #1a1a1a; margin: 0; }
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* Contenedor de la Receta (Forzar estilos para que no se vea plano) */
+        #recipeContent { all: revert; font-family: 'Inter', sans-serif; color: #333; line-height: 1.6; }
+        #recipeContent h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #064e3b; margin-bottom: 1rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+        #recipeContent h3 { font-size: 1.1rem; font-weight: 700; color: #10b981; margin-top: 1.5rem; text-transform: uppercase; }
+        #recipeContent ul { padding-left: 1.2rem; margin: 1rem 0; }
+        #recipeContent li { margin-bottom: 0.5rem; }
+        #recipeContent table { width: 100%; border-collapse: collapse; margin: 1rem 0; border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
+        #recipeContent th { background: #064e3b; color: white; padding: 10px; text-align: left; }
+        #recipeContent td { padding: 10px; border-bottom: 1px solid #eee; }
+
+        .btn-card { transition: all 0.2s ease; border: 1px solid #eee; background: white; border-radius: 16px; cursor: pointer; }
+        .btn-card:hover { transform: translateY(-3px); border-color: #10b981; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        input::placeholder { color: #ccc; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <button onclick="toggleModal('configModal')" class="fixed bottom-6 right-6 p-3 bg-white border border-gray-200 rounded-full shadow-lg hover:bg-gray-50 z-40 transition-all">
+        <i data-lucide="settings" class="w-5 h-5 text-gray-400"></i>
+    </button>
+
+    <div class="max-w-4xl mx-auto px-6 py-12">
+        <header class="mb-16 text-center md:text-left">
+            <h1 class="serif text-4xl text-slate-900">KetoGen</h1>
+            <p class="text-[10px] tracking-[0.3em] uppercase text-gray-400 font-bold mt-2">Personal AI Chef</p>
+        </header>
+
+        <div id="selectionArea" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="generateRecipe('desayuno')" class="btn-card p-8 flex flex-col items-center">
+                    <i data-lucide="coffee" class="text-orange-400 mb-3"></i>
+                    <span class="font-semibold text-sm">Desayuno</span>
+                </button>
+                <button onclick="generateRecipe('almuerzo')" class="btn-card p-8 flex flex-col items-center">
+                    <i data-lucide="sun" class="text-emerald-500 mb-3"></i>
+                    <span class="font-semibold text-sm">Almuerzo</span>
+                </button>
+                <button onclick="generateRecipe('cena')" class="btn-card p-8 flex flex-col items-center">
+                    <i data-lucide="moon" class="text-indigo-400 mb-3"></i>
+                    <span class="font-semibold text-sm">Cena</span>
+                </button>
+            </div>
+            <button onclick="generateRecipe('un menú completo de 3 comidas')" class="w-full btn-card p-6 bg-slate-900 text-white flex justify-between items-center px-10">
+                <span class="font-bold">Menú Diario Completo</span>
+                <i data-lucide="calendar" class="w-5 h-5 text-emerald-400"></i>
+            </button>
+        </div>
+
+        <div id="loading" class="hidden py-20 text-center">
+            <div class="loader"></div>
+            <p class="serif text-xl mt-6 text-gray-500 italic">Consultando con la IA...</p>
+        </div>
+
+        <div id="recipeResult" class="hidden space-y-6">
+            <div id="printArea" class="bg-white border border-gray-100 p-8 md:p-12 rounded-3xl shadow-sm">
+                <div id="recipeContent"></div>
+            </div>
+            <div class="flex flex-col md:flex-row justify-center gap-3">
+                <button onclick="exportToPDF()" class="bg-emerald-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-emerald-700 flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> Exportar PDF
+                </button>
+                <button onclick="resetUI()" class="bg-white border border-gray-200 px-8 py-3 rounded-full font-semibold text-gray-500 hover:bg-gray-50">
+                    Nueva receta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="configModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-[340px] w-full shadow-2xl">
+            <h2 class="serif text-xl mb-1">Configuración</h2>
+            <p class="text-[11px] text-gray-400 mb-6">API Keys (almacenadas localmente)</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase ml-1">Gemini Key</label>
+                    <input type="password" id="gemKey" placeholder="AIza..." class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase ml-1">Groq Key</label>
+                    <input type="password" id="groKey" placeholder="gsk_..." class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 outline-none text-sm">
+                </div>
+            </div>
+            
+            <button onclick="saveKeys()" class="w-full mt-8 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Guardar Cambios</button>
+            <button onclick="toggleModal('configModal')" class="w-full mt-2 text-gray-400 text-xs py-2">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+            authDomain: "lista-compra-9d6f5.firebaseapp.com",
+            databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lista-compra-9d6f5",
+            storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+            messagingSenderId: "241322134457",
+            appId: "1:241322134457:web:1b765857911f94d69cc468"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Cargar Keys
+        document.getElementById('gemKey').value = localStorage.getItem('K_GEMINI') || '';
+        document.getElementById('groKey').value = localStorage.getItem('K_GROQ') || '';
+
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        
+        function saveKeys() {
+            localStorage.setItem('K_GEMINI', document.getElementById('gemKey').value);
+            localStorage.setItem('K_GROQ', document.getElementById('groKey').value);
+            toggleModal('configModal');
+        }
+
+        function resetUI() {
+            document.getElementById('selectionArea').classList.remove('hidden');
+            document.getElementById('recipeResult').classList.add('hidden');
+        }
+
+        async function generateRecipe(tipo) {
+            const gemKey = localStorage.getItem('K_GEMINI');
+            const groKey = localStorage.getItem('K_GROQ');
+            if(!gemKey && !groKey) return toggleModal('configModal');
+
+            document.getElementById('selectionArea').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            let historial = "";
+            try {
+                const snap = await db.ref('keto_recetas').limitToLast(10).once('value');
+                if(snap.val()) historial = `No repitas: ${Object.values(snap.val()).map(x=>x.titulo).join(', ')}.`;
+            } catch(e){}
+
+            const prompt = `Actúa como Chef Keto Gourmet. Crea una receta HTML original para: ${tipo}. ${historial} 
+            REGLAS: Solo devuelve el HTML (h2 para título, h3 secciones, table para macros). Evita explicaciones previas.`;
+
+            try {
+                let html = "";
+                // Intento Gemini
+                if (gemKey) {
+                    try {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gemKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                        });
+                        const data = await res.json();
+                        if(data.error) throw new Error(data.error.message);
+                        html = data.candidates[0].content.parts[0].text;
+                    } catch (e) {
+                        console.warn("Gemini falló, intentando Groq...");
+                        if (groKey) html = await callGroq(prompt, groKey);
+                        else throw e;
+                    }
+                } else {
+                    html = await callGroq(prompt, groKey);
+                }
+
+                const cleanHtml = html.replace(/```html|```/g, '').trim();
+                document.getElementById('recipeContent').innerHTML = cleanHtml;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('recipeResult').classList.remove('hidden');
+
+                const title = document.querySelector('#recipeContent h2')?.innerText || `Receta ${tipo}`;
+                await db.ref('keto_recetas').push({ titulo: title, timestamp: Date.now() });
+                lucide.createIcons();
+
+            } catch (err) {
+                alert("Error de API: " + err.message);
+                resetUI();
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        async function callGroq(prompt, key) {
+            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: prompt}] })
+            });
+            const d = await res.json();
+            if(d.error) throw new Error(d.error.message);
+            return d.choices[0].message.content;
+        }
+
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('printArea');
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const width = pdf.internal.pageSize.getWidth();
+            const height = (canvas.height * width) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+            pdf.save('KetoGen-Receta.pdf');
+        }
+    </script>
+</body>
+</html>
