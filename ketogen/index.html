@@ -3,117 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KetoGen | Smart Cuisine</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>KetoGen | AI Gourmet</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; background: #fdfdfd; color: #1a1a1a; margin: 0; }
-        .serif { font-family: 'Playfair Display', serif; }
+        /* CSS PURO: Carga instantánea sin dependencias externas */
+        :root {
+            --primary: #10b981;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+        }
 
-        /* Contenedor de la Receta (Forzar estilos para que no se vea plano) */
-        #recipeContent { all: revert; font-family: 'Inter', sans-serif; color: #333; line-height: 1.6; }
-        #recipeContent h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #064e3b; margin-bottom: 1rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
-        #recipeContent h3 { font-size: 1.1rem; font-weight: 700; color: #10b981; margin-top: 1.5rem; text-transform: uppercase; }
-        #recipeContent ul { padding-left: 1.2rem; margin: 1rem 0; }
-        #recipeContent li { margin-bottom: 0.5rem; }
-        #recipeContent table { width: 100%; border-collapse: collapse; margin: 1rem 0; border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
-        #recipeContent th { background: #064e3b; color: white; padding: 10px; text-align: left; }
-        #recipeContent td { padding: 10px; border-bottom: 1px solid #eee; }
+        body { 
+            font-family: -apple-system, system-ui, sans-serif; 
+            background: var(--bg); margin: 0; color: #334155; 
+        }
 
-        .btn-card { transition: all 0.2s ease; border: 1px solid #eee; background: white; border-radius: 16px; cursor: pointer; }
-        .btn-card:hover { transform: translateY(-3px); border-color: #10b981; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .navbar {
+            background: #ffffff; padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Tarjetas de menú */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
         
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .btn-card {
+            background: white; border: 1px solid #e2e8f0; border-radius: 1rem;
+            padding: 2rem 1rem; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+
+        .btn-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .btn-card span { display: block; font-size: 2rem; margin-bottom: 0.5rem; }
+        .btn-card h3 { margin: 0; font-size: 1rem; color: var(--dark); }
+
+        .btn-full {
+            width: 100%; margin-top: 1rem; padding: 1.2rem; background: var(--dark);
+            color: white; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer;
+        }
+
+        /* Área de Receta */
+        .recipe-box { background: white; padding: 2.5rem; border-radius: 1.5rem; border: 1px solid #e2e8f0; }
+        .recipe-box h2 { color: #064e3b; margin-top: 0; font-family: serif; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        .recipe-box table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .recipe-box th { background: #f8fafc; text-align: left; padding: 10px; font-size: 0.8rem; color: #64748b; }
+        .recipe-box td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+
+        /* Loader */
+        .loader { 
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); 
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 3rem auto;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        input::placeholder { color: #ccc; font-size: 0.8rem; }
+
+        /* Modal Compacto */
+        .modal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
+            display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;
+        }
+        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 350px; }
+        .field { margin-bottom: 1rem; }
+        .field label { display: block; font-size: 11px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; }
+        .field input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; }
+
+        /* Botón Configuración (Siempre Visible) */
+        .config-btn {
+            background: white; border: 1px solid #e2e8f0; width: 45px; height: 45px;
+            border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <button onclick="toggleModal('configModal')" class="fixed bottom-6 right-6 p-3 bg-white border border-gray-200 rounded-full shadow-lg hover:bg-gray-50 z-40 transition-all">
-        <i data-lucide="settings" class="w-5 h-5 text-gray-400"></i>
-    </button>
+    <nav class="navbar">
+        <h2 style="margin:0; font-size: 1.5rem;">KetoGen 🥗</h2>
+        <button class="config-btn" onclick="toggleModal(true)">⚙️</button>
+    </nav>
 
-    <div class="max-w-4xl mx-auto px-6 py-12">
-        <header class="mb-16 text-center md:text-left">
-            <h1 class="serif text-4xl text-slate-900">KetoGen</h1>
-            <p class="text-[10px] tracking-[0.3em] uppercase text-gray-400 font-bold mt-2">Personal AI Chef</p>
-        </header>
-
-        <div id="selectionArea" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button onclick="generateRecipe('desayuno')" class="btn-card p-8 flex flex-col items-center">
-                    <i data-lucide="coffee" class="text-orange-400 mb-3"></i>
-                    <span class="font-semibold text-sm">Desayuno</span>
+    <div class="container">
+        <div id="selectionArea">
+            <div class="menu-grid">
+                <button class="btn-card" onclick="generateRecipe('desayuno')">
+                    <span>🍳</span>
+                    <h3>Desayuno</h3>
                 </button>
-                <button onclick="generateRecipe('almuerzo')" class="btn-card p-8 flex flex-col items-center">
-                    <i data-lucide="sun" class="text-emerald-500 mb-3"></i>
-                    <span class="font-semibold text-sm">Almuerzo</span>
+                <button class="btn-card" onclick="generateRecipe('almuerzo')">
+                    <span>🥗</span>
+                    <h3>Almuerzo</h3>
                 </button>
-                <button onclick="generateRecipe('cena')" class="btn-card p-8 flex flex-col items-center">
-                    <i data-lucide="moon" class="text-indigo-400 mb-3"></i>
-                    <span class="font-semibold text-sm">Cena</span>
+                <button class="btn-card" onclick="generateRecipe('cena')">
+                    <span>🌙</span>
+                    <h3>Cena</h3>
                 </button>
             </div>
-            <button onclick="generateRecipe('un menú completo de 3 comidas')" class="w-full btn-card p-6 bg-slate-900 text-white flex justify-between items-center px-10">
-                <span class="font-bold">Menú Diario Completo</span>
-                <i data-lucide="calendar" class="w-5 h-5 text-emerald-400"></i>
+            <button class="btn-full" onclick="generateRecipe('menú completo para hoy')">
+                📅 Generar Menú Completo
             </button>
         </div>
 
-        <div id="loading" class="hidden py-20 text-center">
+        <div id="loading" class="hidden">
             <div class="loader"></div>
-            <p class="serif text-xl mt-6 text-gray-500 italic">Consultando con la IA...</p>
+            <p style="text-align:center; color: #64748b;">Consultando a la IA gourmet...</p>
         </div>
 
-        <div id="recipeResult" class="hidden space-y-6">
-            <div id="printArea" class="bg-white border border-gray-100 p-8 md:p-12 rounded-3xl shadow-sm">
+        <div id="recipeResult" class="hidden">
+            <div class="recipe-box" id="printArea">
                 <div id="recipeContent"></div>
             </div>
-            <div class="flex flex-col md:flex-row justify-center gap-3">
-                <button onclick="exportToPDF()" class="bg-emerald-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-emerald-700 flex items-center justify-center gap-2">
-                    <i data-lucide="download" class="w-4 h-4"></i> Exportar PDF
-                </button>
-                <button onclick="resetUI()" class="bg-white border border-gray-200 px-8 py-3 rounded-full font-semibold text-gray-500 hover:bg-gray-50">
-                    Nueva receta
-                </button>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button onclick="exportToPDF()" style="flex:1; padding: 1rem; background: var(--primary); color:white; border:none; border-radius: 1rem; font-weight: bold; cursor: pointer;">Descargar PDF</button>
+                <button onclick="resetUI()" style="flex:1; padding: 1rem; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; cursor: pointer;">Volver</button>
             </div>
         </div>
     </div>
 
-    <div id="configModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-3xl p-8 max-w-[340px] w-full shadow-2xl">
-            <h2 class="serif text-xl mb-1">Configuración</h2>
-            <p class="text-[11px] text-gray-400 mb-6">API Keys (almacenadas localmente)</p>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase ml-1">Gemini Key</label>
-                    <input type="password" id="gemKey" placeholder="AIza..." class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase ml-1">Groq Key</label>
-                    <input type="password" id="groKey" placeholder="gsk_..." class="w-full mt-1 p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-1 focus:ring-emerald-500 outline-none text-sm">
-                </div>
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin: 0 0 1.5rem 0;">Ajustes de API</h3>
+            <div class="field">
+                <label>GEMINI API KEY</label>
+                <input type="password" id="gemKey" placeholder="AIzaSy...">
             </div>
-            
-            <button onclick="saveKeys()" class="w-full mt-8 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Guardar Cambios</button>
-            <button onclick="toggleModal('configModal')" class="w-full mt-2 text-gray-400 text-xs py-2">Cancelar</button>
+            <div class="field">
+                <label>GROQ API KEY</label>
+                <input type="password" id="groKey" placeholder="gsk_...">
+            </div>
+            <button onclick="saveKeys()" style="width:100%; padding: 12px; background: var(--dark); color:white; border:none; border-radius: 10px; font-weight: bold; cursor: pointer;">Guardar Configuración</button>
+            <button onclick="toggleModal(false)" style="width:100%; margin-top: 10px; background: none; border:none; color: #94a3b8; cursor: pointer;">Cerrar</button>
         </div>
     </div>
 
     <script>
-        lucide.createIcons();
-
-        // Firebase Config
+        // FIREBASE (Se mantiene igual pero verificado)
         const firebaseConfig = {
             apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
             authDomain: "lista-compra-9d6f5.firebaseapp.com",
@@ -126,46 +156,50 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Cargar Keys
-        document.getElementById('gemKey').value = localStorage.getItem('K_GEMINI') || '';
-        document.getElementById('groKey').value = localStorage.getItem('K_GROQ') || '';
+        // PERSISTENCIA
+        document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
+        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
 
-        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
-        
+        function toggleModal(show) {
+            document.getElementById('configModal').style.display = show ? 'flex' : 'none';
+        }
+
         function saveKeys() {
-            localStorage.setItem('K_GEMINI', document.getElementById('gemKey').value);
-            localStorage.setItem('K_GROQ', document.getElementById('groKey').value);
-            toggleModal('configModal');
+            localStorage.setItem('G_KEY', document.getElementById('gemKey').value);
+            localStorage.setItem('Q_KEY', document.getElementById('groKey').value);
+            toggleModal(false);
         }
 
         function resetUI() {
             document.getElementById('selectionArea').classList.remove('hidden');
             document.getElementById('recipeResult').classList.add('hidden');
+            document.getElementById('loading').classList.add('hidden');
         }
 
         async function generateRecipe(tipo) {
-            const gemKey = localStorage.getItem('K_GEMINI');
-            const groKey = localStorage.getItem('K_GROQ');
-            if(!gemKey && !groKey) return toggleModal('configModal');
+            const gKey = localStorage.getItem('G_KEY');
+            const qKey = localStorage.getItem('Q_KEY');
+
+            if (!gKey && !qKey) return toggleModal(true);
 
             document.getElementById('selectionArea').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
 
-            let historial = "";
+            let historyText = "";
             try {
-                const snap = await db.ref('keto_recetas').limitToLast(10).once('value');
-                if(snap.val()) historial = `No repitas: ${Object.values(snap.val()).map(x=>x.titulo).join(', ')}.`;
-            } catch(e){}
+                const snapshot = await db.ref('keto_recetas').limitToLast(10).once('value');
+                if (snapshot.val()) {
+                    historyText = "No repitas estas recetas: " + Object.values(snapshot.val()).map(v => v.titulo).join(', ');
+                }
+            } catch (e) {}
 
-            const prompt = `Actúa como Chef Keto Gourmet. Crea una receta HTML original para: ${tipo}. ${historial} 
-            REGLAS: Solo devuelve el HTML (h2 para título, h3 secciones, table para macros). Evita explicaciones previas.`;
+            const prompt = `Chef Keto Profesional. Crea una receta para ${tipo}. ${historyText}. REGLAS: Solo devuelve código HTML (h2 para titulo, h3 secciones, table para macros). Sin comentarios adicionales.`;
 
             try {
                 let html = "";
-                // Intento Gemini
-                if (gemKey) {
+                if (gKey) {
                     try {
-                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gemKey}`, {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -174,12 +208,11 @@
                         if(data.error) throw new Error(data.error.message);
                         html = data.candidates[0].content.parts[0].text;
                     } catch (e) {
-                        console.warn("Gemini falló, intentando Groq...");
-                        if (groKey) html = await callGroq(prompt, groKey);
+                        if (qKey) html = await callGroq(prompt, qKey);
                         else throw e;
                     }
                 } else {
-                    html = await callGroq(prompt, groKey);
+                    html = await callGroq(prompt, qKey);
                 }
 
                 const cleanHtml = html.replace(/```html|```/g, '').trim();
@@ -187,14 +220,12 @@
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('recipeResult').classList.remove('hidden');
 
-                const title = document.querySelector('#recipeContent h2')?.innerText || `Receta ${tipo}`;
+                const title = document.querySelector('#recipeContent h2')?.innerText || "Receta Keto";
                 await db.ref('keto_recetas').push({ titulo: title, timestamp: Date.now() });
-                lucide.createIcons();
 
             } catch (err) {
                 alert("Error de API: " + err.message);
                 resetUI();
-                document.getElementById('loading').classList.add('hidden');
             }
         }
 
@@ -205,7 +236,6 @@
                 body: JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: prompt}] })
             });
             const d = await res.json();
-            if(d.error) throw new Error(d.error.message);
             return d.choices[0].message.content;
         }
 
@@ -213,12 +243,11 @@
             const { jsPDF } = window.jspdf;
             const element = document.getElementById('printArea');
             const canvas = await html2canvas(element, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
             const width = pdf.internal.pageSize.getWidth();
             const height = (canvas.height * width) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-            pdf.save('KetoGen-Receta.pdf');
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, width, height);
+            pdf.save('KetoGen_Recipe.pdf');
         }
     </script>
 </body>
