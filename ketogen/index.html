@@ -12,110 +12,55 @@
 
     <style>
         :root { --primary: #10b981; --dark: #0f172a; --bg: #f8fafc; }
-
-        body { 
-            font-family: -apple-system, system-ui, sans-serif; 
-            background: var(--bg); margin: 0; color: #334155; 
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Navbar Responsiva */
-        .navbar {
-            background: #fff; padding: 0.8rem 1.2rem;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100;
-        }
-
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); margin: 0; color: #334155; }
+        
+        .navbar { background: #fff; padding: 0.8rem 1.2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
         .container { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
 
-        /* Grid de Botones Optimizada para Móvil */
-        .menu-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 0.8rem; 
-        }
-        
-        .btn-card {
-            background: white; border: 1px solid #e2e8f0; border-radius: 1rem;
-            padding: 1.5rem 0.5rem; cursor: pointer; transition: 0.2s; text-align: center;
-        }
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+        .btn-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem 0.5rem; cursor: pointer; text-align: center; }
         .btn-card span { display: block; font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .btn-card h3 { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-card h3 { margin: 0; font-size: 0.7rem; text-transform: uppercase; }
 
-        .btn-full {
-            width: 100%; margin-top: 1rem; padding: 1.1rem; background: var(--dark);
-            color: white; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer;
-            font-size: 0.9rem;
-        }
+        .btn-full { width: 100%; margin-top: 1rem; padding: 1.1rem; background: var(--dark); color: white; border-radius: 1rem; border: none; font-weight: bold; cursor: pointer; }
 
-        /* --- VISUALIZACIÓN DE RECETA (MÓVIL) --- */
-        .recipe-box { 
-            background: white; padding: 1.5rem; border-radius: 1.5rem; 
-            border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            overflow-x: hidden; /* Evita que la tarjeta se ensanche */
-        }
+        .recipe-box { background: white; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #recipeContent { all: revert; line-height: 1.6; }
+        #recipeContent table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1rem 0; }
+        #recipeContent th { background: #f8fafc; padding: 10px; text-align: left; }
+        #recipeContent td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
 
-        #recipeContent { all: revert; line-height: 1.6; font-size: 0.95rem; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 15px; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 1.5rem; width: 100%; max-width: 350px; max-height: 80vh; display: flex; flex-direction: column; }
         
-        #recipeContent h2 { 
-            color: #064e3b; font-size: 1.6rem; text-align: center; 
-            border-bottom: 2px solid #ecfdf5; padding-bottom: 10px; 
-        }
-
-        /* Tablas Responsivas: Importante para móvil */
-        #recipeContent table { 
-            display: block; width: 100%; overflow-x: auto; /* Scroll lateral si es ancha */
-            border-collapse: collapse; margin: 1.5rem 0; 
-            -webkit-overflow-scrolling: touch;
-        }
-
-        #recipeContent th { background: #f8fafc; padding: 10px; font-size: 0.75rem; text-align: left; }
-        #recipeContent td { padding: 10px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
-
-        /* Modal Ajustado */
-        .modal-content { background: white; padding: 1.5rem; border-radius: 1.5rem; width: 85%; max-width: 320px; }
-
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 2rem auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .item-receta { padding: 12px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 8px; cursor: pointer; background: #fff; }
+        .item-receta:hover { border-color: var(--primary); background: #f0fdf4; }
 
         .hidden { display: none !important; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 2rem auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <h2 style="margin:0; font-size: 1.2rem;">KetoGen 🥗</h2>
-        <button onclick="toggleModal(true)" style="background:none; border:1px solid #eee; border-radius:10px; padding:8px 12px; cursor:pointer;">⚙️</button>
+        <h2 style="margin:0; font-size: 1.1rem;">KetoGen 🥗</h2>
+        <div style="display:flex; gap:8px;">
+            <button onclick="openRecientes()" style="background:#f1f5f9; border:none; border-radius:10px; padding:8px 12px; cursor:pointer; font-size:12px;">🕒</button>
+            <button onclick="toggleModal(true)" style="background:none; border:1px solid #eee; border-radius:10px; padding:8px 12px; cursor:pointer;">⚙️</button>
+        </div>
     </nav>
 
     <div class="container">
         <div id="selectionArea">
             <div class="menu-grid">
-                <button class="btn-card" onclick="generateRecipe('desayuno')"><span>🍳</span><h3>Desayuno</h3></button>
-                <button class="btn-card" onclick="generateRecipe('almuerzo')"><span>🥗</span><h3>Almuerzo</h3></button>
+                <button class="btn-card" onclick="generateRecipe('desayuno')"><span>🍳</span><h3>Día</h3></button>
+                <button class="btn-card" onclick="generateRecipe('almuerzo')"><span>🥗</span><h3>Alm</h3></button>
                 <button class="btn-card" onclick="generateRecipe('cena')"><span>🌙</span><h3>Cena</h3></button>
             </div>
-            <button class="btn-full" onclick="generateRecipe('menú completo del día')">📅 MENÚ COMPLETO</button>
+            <button class="btn-full" onclick="generateRecipe('menú completo del día')">📅 GENERAR MENÚ DIARIO</button>
         </div>
 
-<button onclick="openRecientes()" style="background:var(--primary); color:white; border:none; border-radius:10px; padding:8px 15px; cursor:pointer; font-weight:bold; font-size:12px;">🕒 Recientes</button>
-
-<div id="recientesModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:2000; padding:15px;">
-    <div style="background:white; width:100%; max-width:400px; border-radius:20px; padding:20px; max-height:80vh; display:flex; flex-direction:column;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="margin:0">Recetas Guardadas</h3>
-            <button onclick="closeRecientes()" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
-        </div>
-        
-        <input type="text" id="searchRecetas" placeholder="Buscar receta..." oninput="filtrarRecetas()" 
-               style="width:100%; padding:12px; border:1px solid #eee; border-radius:10px; margin-bottom:15px; box-sizing:border-box;">
-
-        <div id="listaRecientes" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:10px;">
-            </div>
-    </div>
-</div>
-
-        
         <div id="loading" class="hidden"><div class="loader"></div></div>
 
         <div id="recipeResult" class="hidden">
@@ -129,7 +74,18 @@
         </div>
     </div>
 
-    <div id="configModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+    <div id="recientesModal" class="modal hidden">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3 style="margin:0">Recientes</h3>
+                <button onclick="closeRecientes()" style="border:none; background:none; font-size:20px;">&times;</button>
+            </div>
+            <input type="text" id="searchRecetas" placeholder="Filtrar..." oninput="filtrarRecetas()" style="width:100%; padding:10px; border-radius:10px; border:1px solid #eee; margin-bottom:15px; box-sizing:border-box;">
+            <div id="listaRecientes" style="overflow-y:auto; flex:1;"></div>
+        </div>
+    </div>
+
+    <div id="configModal" class="modal hidden">
         <div class="modal-content">
             <h3 style="margin:0 0 1rem 0">Ajustes API</h3>
             <input type="password" id="gemKey" placeholder="Gemini Key" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box;">
@@ -140,13 +96,7 @@
     </div>
 
     <script>
-
-        let todasLasRecetas = []; // Variable global para el filtro rápido
-
-
-
-        
-        // Configuración Firebase (Reutiliza la tuya)
+        // Inicialización de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
             authDomain: "lista-compra-9d6f5.firebaseapp.com",
@@ -159,191 +109,131 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
-        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
+        let todasLasRecetas = [];
 
-        function toggleModal(show) { document.getElementById('configModal').classList.toggle('hidden', !show); }
-        function saveKeys() {
-            localStorage.setItem('G_KEY', document.getElementById('gemKey').value);
-            localStorage.setItem('Q_KEY', document.getElementById('groKey').value);
-            toggleModal(false);
-        }
-        function resetUI() {
+        // Funciones de UI básicas
+        window.toggleModal = function(show) { document.getElementById('configModal').classList.toggle('hidden', !show); }
+        window.closeRecientes = function() { document.getElementById('recientesModal').classList.add('hidden'); }
+        window.resetUI = function() {
             document.getElementById('selectionArea').classList.remove('hidden');
             document.getElementById('recipeResult').classList.add('hidden');
             document.getElementById('loading').classList.add('hidden');
         }
 
-      async function generateRecipe(tipo) {
-    const gKey = localStorage.getItem('G_KEY');
-    const qKey = localStorage.getItem('Q_KEY');
-    if (!gKey && !qKey) return toggleModal(true);
+        window.saveKeys = function() {
+            localStorage.setItem('G_KEY', document.getElementById('gemKey').value);
+            localStorage.setItem('Q_KEY', document.getElementById('groKey').value);
+            toggleModal(false);
+        }
 
-    document.getElementById('selectionArea').classList.add('hidden');
-    document.getElementById('loading').classList.remove('hidden');
+        // --- LÓGICA DE RECIENTES ---
+        window.openRecientes = async function() {
+            document.getElementById('recientesModal').classList.remove('hidden');
+            const container = document.getElementById('listaRecientes');
+            container.innerHTML = "Cargando...";
 
-    const prompt = `Actúa como Chef Keto. Genera una receta para ${tipo}. REGLAS: Devuelve solo HTML limpio (h2, h3, table). Sin bloques de código markdown ni texto extra.`;
+            try {
+                const snapshot = await db.ref('keto_recetas').orderByChild('timestamp').limitToLast(50).once('value');
+                todasLasRecetas = [];
+                snapshot.forEach(child => {
+                    todasLasRecetas.unshift({ id: child.key, ...child.val() });
+                });
+                renderizarLista(todasLasRecetas);
+            } catch (e) { container.innerHTML = "Error al conectar."; }
+        }
 
-    let html = "";
-    let exito = false;
-
-    // --- INTENTO GEMINI (URL CORREGIDA) ---
-    if (gKey) {
-        try {
-            // URL actualizada y más robusta
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
-            
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+        function renderizarLista(recetas) {
+            const container = document.getElementById('listaRecientes');
+            container.innerHTML = "";
+            recetas.forEach(r => {
+                const div = document.createElement('div');
+                div.className = "item-receta";
+                div.innerHTML = `<strong>${r.titulo}</strong><br><small>${new Date(r.timestamp).toLocaleDateString()}</small>`;
+                div.onclick = () => {
+                    document.getElementById('recipeContent').innerHTML = r.contenido;
+                    document.getElementById('selectionArea').classList.add('hidden');
+                    document.getElementById('recipeResult').classList.remove('hidden');
+                    closeRecientes();
+                };
+                container.appendChild(div);
             });
+        }
 
-            const data = await res.json();
-            
-            if (data && data.candidates && data.candidates[0].content) {
-                html = data.candidates[0].content.parts[0].text;
-                exito = true;
-                console.log("Conectado con Gemini");
+        window.filtrarRecetas = function() {
+            const term = document.getElementById('searchRecetas').value.toLowerCase();
+            const filtradas = todasLasRecetas.filter(r => r.titulo.toLowerCase().includes(term));
+            renderizarLista(filtradas);
+        }
+
+        // --- GENERACIÓN DE RECETAS ---
+        window.generateRecipe = async function(tipo) {
+            const gKey = localStorage.getItem('G_KEY');
+            const qKey = localStorage.getItem('Q_KEY');
+            if (!gKey && !qKey) return toggleModal(true);
+
+            document.getElementById('selectionArea').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            const prompt = `Actúa como Chef Keto. Receta para ${tipo}. Devuelve solo HTML (h2, h3, table).`;
+            let html = "";
+            let exito = false;
+
+            // Gemini
+            if (gKey) {
+                try {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const data = await res.json();
+                    if (data?.candidates?.[0]?.content) {
+                        html = data.candidates[0].content.parts[0].text;
+                        exito = true;
+                    }
+                } catch (e) { console.warn("Gemini falló"); }
+            }
+
+            // Groq Fallback
+            if (!exito && qKey) {
+                try {
+                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${qKey}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ model: "mixtral-8x7b-32768", messages: [{role: "user", content: prompt}] })
+                    });
+                    const data = await res.json();
+                    html = data.choices[0].message.content;
+                    exito = true;
+                } catch (e) { console.error("Groq falló"); }
+            }
+
+            if (exito) {
+                const cleanHtml = html.replace(/```html|```/g, '').trim();
+                document.getElementById('recipeContent').innerHTML = cleanHtml;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('recipeResult').classList.remove('hidden');
+                
+                const title = document.querySelector('#recipeContent h2')?.innerText || "Receta";
+                db.ref('keto_recetas').push({ titulo: title, contenido: cleanHtml, timestamp: Date.now() });
             } else {
-                console.warn("Gemini respondió pero sin contenido", data);
+                alert("Error en APIs");
+                resetUI();
             }
-        } catch (e) {
-            console.error("Error físico en Gemini:", e);
         }
-    }
 
-    // --- INTENTO GROQ (HEADERS CORREGIDOS) ---
-    if (!exito && qKey) {
-        try {
-            const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${qKey}`,
-                    'Content-Type': 'application/json' // Obligatorio para evitar Error 400
-                },
-                body: JSON.stringify({
-                    model: "mixtral-8x7b-32768",
-                    messages: [{ role: "user", content: prompt }],
-                    temperature: 0.7
-                })
-            });
-
-            const data = await res.json();
-            
-            if (data && data.choices && data.choices[0]) {
-                html = data.choices[0].message.content;
-                exito = true;
-                console.log("Conectado con Groq");
-            }
-        } catch (e) {
-            console.error("Error físico en Groq:", e);
-        }
-    }
-
-    // --- FINALIZACIÓN ---
-    if (exito) {
-        // Limpiamos etiquetas de bloque de código si la IA las pone por error
-        const cleanHtml = html.replace(/```html|```/g, '').trim();
-        document.getElementById('recipeContent').innerHTML = cleanHtml;
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('recipeResult').classList.remove('hidden');
-        
-        // Registro en Firebase
-        // Dentro de generateRecipe, donde guardas en Firebase:
-try {
-    const title = document.querySelector('#recipeContent h2')?.innerText || "Receta Keto";
-    // Guardamos también el contenido HTML para poder recuperarlo luego
-    db.ref('keto_recetas').push({ 
-        titulo: title, 
-        contenido: cleanHtml, // Guardamos el HTML generado
-        timestamp: Date.now() 
-    });
-} catch(err) { console.error("Error guardando:", err); }
-}
-
-        // --- PDF OPTIMIZADO PARA MÓVIL ---
-        async function exportToPDF() {
+        window.exportToPDF = async function() {
             const { jsPDF } = window.jspdf;
             const element = document.getElementById('printArea');
-            
-            // Forzamos un ancho de renderizado "virtual" para que el PDF no salga estrecho
-            const canvas = await html2canvas(element, { 
-                scale: 2, 
-                useCORS: true,
-                width: 700, // Ancho simulado para que la tabla quepa bien
-                windowWidth: 700 
-            });
-
-            const imgData = canvas.toDataURL('image/png');
+            const canvas = await html2canvas(element, { scale: 2, windowWidth: 700 });
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgWidth = 190; 
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            
-            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-            pdf.save('receta.pdf');
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 190, (canvas.height * 190) / canvas.width);
+            pdf.save('receta-keto.pdf');
         }
-async function openRecientes() {
-    document.getElementById('recientesModal').classList.remove('hidden');
-    const container = document.getElementById('listaRecientes');
-    container.innerHTML = "<p style='text-align:center'>Cargando...</p>";
 
-    try {
-        const snapshot = await db.ref('keto_recetas').orderByChild('timestamp').once('value');
-        todasLasRecetas = [];
-        
-        snapshot.forEach(child => {
-            todasLasRecetas.unshift({ id: child.key, ...child.val() }); // Lo más nuevo primero
-        });
-        
-        renderizarLista(todasLasRecetas);
-    } catch (e) {
-        container.innerHTML = "Error al cargar.";
-    }
-}
-
-function renderizarLista(recetas) {
-    const container = document.getElementById('listaRecientes');
-    container.innerHTML = "";
-    
-    if (recetas.length === 0) {
-        container.innerHTML = "<p style='color:#999; text-align:center'>No hay recetas.</p>";
-        return;
-    }
-
-    recetas.forEach(r => {
-        const btn = document.createElement('div');
-        btn.style = "padding:12px; border:1px solid #f0f0f0; border-radius:12px; cursor:pointer; background:#f9f9f9; transition:0.2s;";
-        btn.innerHTML = `<div style="font-weight:bold; font-size:14px; color:#333;">${r.titulo}</div>
-                         <div style="font-size:10px; color:#999;">${new Date(r.timestamp).toLocaleDateString()}</div>`;
-        btn.onclick = () => cargarRecetaGuardada(r.contenido);
-        btn.onmouseover = () => btn.style.borderColor = "var(--primary)";
-        btn.onmouseout = () => btn.style.borderColor = "#f0f0f0";
-        container.appendChild(btn);
-    });
-}
-
-function filtrarRecetas() {
-    const term = document.getElementById('searchRecetas').value.toLowerCase();
-    const filtradas = todasLasRecetas.filter(r => 
-        r.titulo.toLowerCase().includes(term)
-    );
-    renderizarLista(filtradas);
-}
-
-function cargarRecetaGuardada(html) {
-    document.getElementById('recipeContent').innerHTML = html;
-    document.getElementById('selectionArea').classList.add('hidden');
-    document.getElementById('recipeResult').classList.remove('hidden');
-    closeRecientes();
-}
-
-function closeRecientes() {
-    document.getElementById('recientesModal').classList.add('hidden');
-}
-          
+        // Cargar keys guardadas
+        document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
+        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
     </script>
 </body>
 </html>
