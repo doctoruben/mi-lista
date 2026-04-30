@@ -28,8 +28,8 @@
       "url": "/mi-lista/ketogen/index.html?meal=desayuno",
       "icons": [
         {
-          "src": "icons/icon-96.png",
-          "sizes": "96x96"
+          "src": "icons/icon-512.png",
+          "sizes": "512x512"
         }
       ]
     },
