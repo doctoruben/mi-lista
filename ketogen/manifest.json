@@ -1,6 +1,6 @@
 {
-  "name": "KetoGen AI Gourmet",
-  "short_name": "KetoGen",
+  "name": "KetoChef AI Gourmet",
+  "short_name": "KetoChef",
   "description": "Generador inteligente de recetas keto con IA",
   "start_url": "/mi-lista/ketogen/index.html",
   "scope": "/mi-lista/ketogen/",
