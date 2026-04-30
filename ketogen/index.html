@@ -1215,7 +1215,7 @@ REGLAS ESTRICTAS:
                 // Cabecera principal del menú
                 drawMainHeader("Menú Keto del Día");
                 const sections = content.querySelectorAll('section[data-plato]');
-                const platoIconos = { Desayuno: '🍳 Desayuno', Almuerzo: '🥗 Almuerzo', Cena: '🌙 Cena' };
+                const platoIconos = { Desayuno: 'Desayuno', Almuerzo: 'Almuerzo', Cena: 'Cena' };
 
                 sections.forEach((sec, idx) => {
                     const plato = sec.getAttribute('data-plato') || `Plato ${idx + 1}`;
