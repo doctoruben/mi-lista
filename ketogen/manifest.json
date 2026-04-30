@@ -11,48 +11,7 @@
   "lang": "es",
   "categories": ["food", "health", "lifestyle"],
   "icons": [
-    {
-      "src": "icons/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
-    },
+   
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
@@ -60,23 +19,8 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/screen1.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Pantalla principal de KetoGen"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Desayuno rápido",
-      "short_name": "Desayuno",
-      "description": "Generar receta de desayuno keto",
-      "url": "/mi-lista/ketogen/index.html?meal=desayuno",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
-    },
+ 
+
     {
       "name": "Ver recientes",
       "short_name": "Recientes",
