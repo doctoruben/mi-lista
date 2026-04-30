@@ -507,7 +507,7 @@
             <span class="dot"></span>
         </div>
         <div class="nav-btns">
-            <button class="nav-btn" onclick="openRecientes()">🕒</button>
+            <button class="nav-btn" onclick="openRecientes()">🕒 Recientes</button>
             <button class="nav-btn" onclick="toggleDark()" id="darkBtn">🌙</button>
             <button class="nav-btn" onclick="toggleModal(true)">⚙️</button>
         </div>
@@ -517,7 +517,7 @@
 
         <!-- PASO 1: Selección de comida -->
         <div id="selectionArea">
-            <p class="section-label">¿Qué comida generas?</p>
+            <p class="section-label">¿Qué comida necesitas?</p>
             <div class="menu-grid">
                 <button class="btn-card" id="card-desayuno" onclick="selectMeal('desayuno', this)">
                     <span>🍳</span><h3>Desayuno</h3>
@@ -1056,9 +1056,7 @@ REGLAS ESTRICTAS:
                 doc.setTextColor(...WHITE);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(7);
-                doc.setCharSpace(1.5);
-                doc.text("KETOGEN · AI GOURMET", margin + 4, 8);
-                doc.setCharSpace(0);
+                doc.text("KETOGEN  AI GOURMET", margin + 4, 8);
                 cursorY = 22;
             };
 
@@ -1077,9 +1075,7 @@ REGLAS ESTRICTAS:
                 doc.setTextColor(...WHITE);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(8);
-                doc.setCharSpace(2);
-                doc.text("KETOGEN · AI GOURMET", margin + 4, 14);
-                doc.setCharSpace(0);
+                doc.text("KETOGEN  AI GOURMET", margin + 4, 14);
                 doc.setDrawColor(255, 255, 255);
                 doc.setLineWidth(0.3);
                 doc.line(margin + 4, 18, pageWidth - margin, 18);
@@ -1116,9 +1112,7 @@ REGLAS ESTRICTAS:
                 doc.setTextColor(...WHITE);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
-                doc.setCharSpace(1.2);
-                doc.text(label.toUpperCase(), margin + 8, cursorY + 3);
-                doc.setCharSpace(0);
+                doc.text(label, margin + 8, cursorY + 3);
                 cursorY += 16;
             };
 
@@ -1146,9 +1140,7 @@ REGLAS ESTRICTAS:
                 doc.setTextColor(...WHITE);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(9);
-                doc.setCharSpace(0.8);
-                doc.text(text.toUpperCase(), margin + 4, cursorY + 1.2);
-                doc.setCharSpace(0);
+                doc.text(text, margin + 4, cursorY + 1.2);
                 cursorY += 14;
             };
 
@@ -1223,7 +1215,7 @@ REGLAS ESTRICTAS:
                 // Cabecera principal del menú
                 drawMainHeader("Menú Keto del Día");
                 const sections = content.querySelectorAll('section[data-plato]');
-                const platoIconos = { Desayuno: 'Desayuno', Almuerzo: 'Almuerzo', Cena: 'Cena' };
+                const platoIconos = { Desayuno: '🍳 Desayuno', Almuerzo: '🥗 Almuerzo', Cena: '🌙 Cena' };
 
                 sections.forEach((sec, idx) => {
                     const plato = sec.getAttribute('data-plato') || `Plato ${idx + 1}`;
