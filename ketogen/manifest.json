@@ -13,7 +13,7 @@
   "icons": [
    
     {
-      "src": "icons/icon-512.png",
+      "src": "./icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -21,12 +21,5 @@
   ],
  
 
-    {
-      "name": "Ver recientes",
-      "short_name": "Recientes",
-      "description": "Ver recetas guardadas",
-      "url": "/mi-lista/ketogen/index.html?action=recientes",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
-    }
   ]
 }
