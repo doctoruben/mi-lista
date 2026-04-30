@@ -19,29 +19,21 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/screen1.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Pantalla principal de KetoGen"
-    }
-  ],
+  
   "shortcuts": [
     {
       "name": "Desayuno rápido",
       "short_name": "Desayuno",
       "description": "Generar receta de desayuno keto",
       "url": "/mi-lista/ketogen/index.html?meal=desayuno",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+      
     },
     {
       "name": "Ver recientes",
       "short_name": "Recientes",
       "description": "Ver recetas guardadas",
       "url": "/mi-lista/ketogen/index.html?action=recientes",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
+      
     }
   ]
 }
