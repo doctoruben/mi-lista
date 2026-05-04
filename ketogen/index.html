@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KetoGen | Smart Chef</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-light: #d1fae5;
+            --primary-dark: #059669;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+            --radius: 1.2rem;
+            --chip-bg: #f1f5f9;
+            --chip-selected: #d1fae5;
+            --chip-selected-border: #10b981;
+            --modal-bg: rgba(15,23,42,0.65);
+            --input-bg: #f8fafc;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --chip-bg: #334155;
+            --chip-selected: #064e3b;
+            --chip-selected-border: #10b981;
+            --modal-bg: rgba(0,0,0,0.8);
+            --input-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        /* ——— NAVBAR ——— */
+        .navbar {
+            background: var(--card);
+            padding: 0.9rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar-brand h2 {
+            margin: 0;
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.3rem;
+            color: var(--text);
+        }
+        .navbar-brand .dot {
+            width: 8px; height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .nav-btns { display: flex; gap: 8px; }
+        .nav-btn {
+            background: var(--chip-bg);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-btn:hover { background: var(--border); }
+
+        /* ——— CONTAINER ——— */
+        .container { max-width: 680px; margin: 1.5rem auto; padding: 0 1rem; }
+
+        /* ——— STEP 1: MEAL TYPE SELECTION ——— */
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+        }
+
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+        .btn-card {
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.4rem 0.5rem;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+        .btn-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .btn-card.selected { border-color: var(--primary); background: var(--chip-selected); }
+        .btn-card span { display: block; font-size: 2rem; margin-bottom: 0.4rem; }
+        .btn-card h3 { margin: 0; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+
+        .btn-full {
+            width: 100%; margin-top: 1rem; padding: 1rem 1.2rem;
+            background: var(--dark);
+            color: white;
+            border-radius: var(--radius);
+            border: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            letter-spacing: 0.02em;
+        }
+        [data-theme="dark"] .btn-full { background: var(--primary); }
+        .btn-full:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* ——— STEP 2: INGREDIENTS ——— */
+        #ingredientStep {
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ing-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .ing-card-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+        }
+        .chips-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip {
+            background: var(--chip-bg);
+            border: 1.5px solid transparent;
+            border-radius: 2rem;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.82rem;
+            cursor: pointer;
+            color: var(--text);
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .chip:hover { border-color: var(--primary); }
+        .chip.active {
+            background: var(--chip-selected);
+            border-color: var(--chip-selected-border);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .custom-ing-wrap {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+        .custom-ing-input {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: 2rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            background: var(--input-bg);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .custom-ing-input:focus { border-color: var(--primary); }
+        .custom-ing-btn {
+            padding: 0.6rem 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .custom-ing-btn:hover { opacity: 0.85; }
+
+        .selected-ings-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.6rem;
+            min-height: 28px;
+        }
+        .ing-tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-radius: 2rem;
+            padding: 0.25rem 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .ing-tag button {
+            background: none; border: none; cursor: pointer;
+            color: var(--primary-dark); font-size: 0.85rem; padding: 0; line-height: 1;
+        }
+
+        .step-nav {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        .btn-back {
+            flex: 0 0 auto;
+            padding: 1rem 1.2rem;
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .btn-back:hover { border-color: var(--text-muted); }
+        .btn-generate {
+            flex: 1;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+        .btn-generate:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        /* ——— LOADER ——— */
+        .loader-wrap {
+            text-align: center;
+            padding: 3rem 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .loader {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 36px; height: 36px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-text { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* ——— RECIPE RESULT ——— */
+        .recipe-box {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            animation: slideIn 0.4s ease;
+        }
+        .recipe-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .api-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.2rem 0.6rem;
+            border-radius: 2rem;
+            background: var(--chip-bg);
+            color: var(--text-muted);
+        }
+        .api-badge.gemini { background: #fef3c7; color: #92400e; }
+        .api-badge.groq { background: #ede9fe; color: #5b21b6; }
+
+        #recipeContent { all: revert; line-height: 1.7; font-family: 'DM Sans', sans-serif; color: var(--text); }
+        #recipeContent h2 { font-family: 'DM Serif Display', serif; color: var(--text); margin-top: 0; }
+        #recipeContent h3 { color: var(--primary); margin-top: 1.5rem; }
+        #recipeContent table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1rem 0; }
+        #recipeContent th { background: var(--chip-bg); padding: 10px; text-align: left; font-size: 0.85rem; }
+        #recipeContent td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+
+        .result-actions {
+            margin-top: 1.2rem;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.7rem;
+        }
+        .btn-pdf {
+            padding: 0.9rem 1.2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-pdf:hover { background: var(--primary-dark); }
+        .btn-icon {
+            padding: 0.9rem 1rem;
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { border-color: var(--text-muted); }
+
+        /* ——— MODAL ——— */
+        .modal {
+            position: fixed; inset: 0;
+            background: var(--modal-bg);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; padding: 15px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: var(--card);
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+            width: 100%; max-width: 360px;
+            max-height: 85vh;
+            display: flex; flex-direction: column;
+            border: 1px solid var(--border);
+            animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-header h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+        .modal-close {
+            background: none; border: none;
+            font-size: 1.3rem; cursor: pointer;
+            color: var(--text-muted); padding: 0; line-height: 1;
+        }
+
+        .item-receta {
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background: var(--card);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s;
+        }
+        .item-receta:hover { border-color: var(--primary); background: var(--chip-selected); }
+        .item-receta .receta-info { flex: 1; min-width: 0; }
+        .item-receta strong { display: block; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+        .item-receta small { color: var(--text-muted); font-size: 0.75rem; }
+        .btn-delete-receta {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); font-size: 1rem; padding: 4px 6px;
+            border-radius: 8px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .btn-delete-receta:hover { background: #fee2e2; color: #ef4444; }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            background: var(--input-bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--primary); }
+
+        .config-input {
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            box-sizing: border-box;
+            background: var(--input-bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .config-input:focus { border-color: var(--primary); }
+        .btn-save {
+            width: 100%; padding: 12px;
+            background: var(--dark); color: white;
+            border: none; border-radius: 10px;
+            font-weight: 700; cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: opacity 0.2s;
+        }
+        [data-theme="dark"] .btn-save { background: var(--primary); }
+        .btn-save:hover { opacity: 0.85; }
+        .btn-cancel {
+            width: 100%; margin-top: 8px;
+            background: none; border: none;
+            color: var(--text-muted); cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            padding: 8px;
+        }
+        .btn-cancel:hover { color: var(--text); }
+
+        .menu-separator {
+            border: none;
+            border-top: 2px dashed var(--border);
+            margin: 2rem 0;
+        }
+        .menu-plato-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin: 0 0 0.3rem 0;
+            padding: 0.3rem 0.8rem;
+            background: var(--primary-light);
+            border-radius: 2rem;
+            display: inline-block;
+        }
+
+        .hidden { display: none !important; }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .empty-state .emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <h2>KetoGen</h2>
+            <span class="dot"></span>
+        </div>
+        <div class="nav-btns">
+            <button class="nav-btn" onclick="openRecientes()">🕒 Recientes</button>
+            <button class="nav-btn" onclick="toggleDark()" id="darkBtn">🌙</button>
+            <button class="nav-btn" onclick="toggleModal(true)">⚙️</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- PASO 1: Selección de comida -->
+        <div id="selectionArea">
+            <p class="section-label">¿Qué comida generas?</p>
+            <div class="menu-grid">
+                <button class="btn-card" id="card-desayuno" onclick="selectMeal('desayuno', this)">
+                    <span>🍳</span><h3>Desayuno</h3>
+                </button>
+                <button class="btn-card" id="card-almuerzo" onclick="selectMeal('almuerzo', this)">
+                    <span>🥗</span><h3>Almuerzo</h3>
+                </button>
+                <button class="btn-card" id="card-cena" onclick="selectMeal('cena', this)">
+                    <span>🌙</span><h3>Cena</h3>
+                </button>
+            </div>
+            <button class="btn-full" onclick="selectMeal('menú completo del día', null)">📅 Menú Diario Completo</button>
+        </div>
+
+        <!-- PASO 2: Ingredientes -->
+        <div id="ingredientStep" class="hidden">
+            <p class="section-label">Personaliza tu receta</p>
+
+            <div class="ing-card">
+                <p class="ing-card-title">🥩 Proteínas</p>
+                <div class="chips-wrap" id="chips-proteinas"></div>
+            </div>
+
+            <div class="ing-card">
+                <p class="ing-card-title">🥦 Verduras</p>
+                <div class="chips-wrap" id="chips-verduras"></div>
+            </div>
+
+            <div class="ing-card">
+                <p class="ing-card-title">🧀 Lácteos & Grasas</p>
+                <div class="chips-wrap" id="chips-lacteos"></div>
+            </div>
+
+            <div class="ing-card">
+                <p class="ing-card-title">➕ Añadir ingrediente libre</p>
+                <div class="custom-ing-wrap">
+                    <input class="custom-ing-input" type="text" id="customIngInput" placeholder="ej. jengibre, aceite de coco..." onkeydown="if(event.key==='Enter') addCustomIng()">
+                    <button class="custom-ing-btn" onclick="addCustomIng()">+</button>
+                </div>
+                <div class="selected-ings-wrap" id="customIngTags"></div>
+            </div>
+
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBackToSelection()">← Volver</button>
+                <button class="btn-generate" onclick="generateRecipe()">✨ Generar Receta</button>
+            </div>
+        </div>
+
+        <!-- LOADER -->
+        <div id="loading" class="hidden">
+            <div class="loader-wrap">
+                <div class="loader"></div>
+                <p class="loader-text">Cocinando tu receta keto...</p>
+            </div>
+        </div>
+
+        <!-- RESULTADO -->
+        <div id="recipeResult" class="hidden">
+            <div class="recipe-box" id="printArea">
+                <div class="recipe-meta">
+                    <span id="apiBadge" class="api-badge"></span>
+                    <span style="color: var(--text-muted); font-size: 0.75rem;" id="mealLabel"></span>
+                </div>
+                <div id="recipeContent"></div>
+            </div>
+            <div class="result-actions">
+                <button class="btn-pdf" onclick="exportToPDF()">⬇ Exportar PDF</button>
+                <button class="btn-icon" onclick="copyRecipe()" title="Copiar texto">📋</button>
+                <button class="btn-icon" onclick="resetUI()" title="Nueva receta">↩</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Recientes -->
+    <div id="recientesModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Recetas recientes</h3>
+                <button class="modal-close" onclick="closeRecientes()">×</button>
+            </div>
+            <input type="text" id="searchRecetas" class="search-input" placeholder="Filtrar recetas..." oninput="filtrarRecetas()">
+            <div id="listaRecientes" style="overflow-y:auto; flex:1;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: Configuración -->
+    <div id="configModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ajustes de API</h3>
+                <button class="modal-close" onclick="toggleModal(false)">×</button>
+            </div>
+            <p style="font-size:0.8rem; color: var(--text-muted); margin: 0 0 1rem 0;">Se usará Gemini primero, Groq como fallback.</p>
+            <input type="password" id="gemKey" class="config-input" placeholder="Gemini API Key">
+            <input type="password" id="groKey" class="config-input" placeholder="Groq API Key">
+            <button class="btn-save" onclick="saveKeys()">Guardar</button>
+            <button class="btn-cancel" onclick="toggleModal(false)">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // ——— FIREBASE ———
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+            authDomain: "lista-compra-9d6f5.firebaseapp.com",
+            databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lista-compra-9d6f5",
+            storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+            messagingSenderId: "241322134457",
+            appId: "1:241322134457:web:1b765857911f94d69cc468"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ——— STATE ———
+        let todasLasRecetas = [];
+        let selectedMeal = null;
+        let selectedChips = new Set();
+        let customIngredients = [];
+
+        // ——— INGREDIENTES POR CATEGORÍA ———
+        const INGREDIENTS = {
+            proteinas: ['Pollo','Salmón','Atún','Huevos','Ternera','Cerdo','Gambas','Sardinas','Pavo','Bacon'],
+            verduras: ['Espinacas','Brócoli','Aguacate','Coliflor','Pepino','Calabacín','Espárragos','Col','Pimiento','Champiñones'],
+            lacteos: ['Queso brie','Mozzarella','Mantequilla','Nata','Queso crema','Parmesano','Ghee','Aceite oliva']
+        };
+
+        // ——— DARK MODE ———
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateDarkBtn(savedTheme);
+
+        function toggleDark() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            updateDarkBtn(next);
+        }
+        function updateDarkBtn(theme) {
+            document.getElementById('darkBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // ——— UI HELPERS ———
+        window.toggleModal = function(show) { document.getElementById('configModal').classList.toggle('hidden', !show); }
+        window.closeRecientes = function() { document.getElementById('recientesModal').classList.add('hidden'); }
+
+        window.resetUI = function() {
+            document.getElementById('selectionArea').classList.remove('hidden');
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('recipeResult').classList.add('hidden');
+            document.getElementById('loading').classList.add('hidden');
+            selectedMeal = null;
+            selectedChips.clear();
+            customIngredients = [];
+            document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('selected'));
+        }
+
+        function goBackToSelection() {
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('selectionArea').classList.remove('hidden');
+        }
+
+        window.saveKeys = function() {
+            localStorage.setItem('G_KEY', document.getElementById('gemKey').value.trim());
+            localStorage.setItem('Q_KEY', document.getElementById('groKey').value.trim());
+            toggleModal(false);
+        }
+
+        // ——— CHIPS RENDER ———
+        function renderChips() {
+            Object.entries(INGREDIENTS).forEach(([cat, items]) => {
+                const wrap = document.getElementById(`chips-${cat}`);
+                wrap.innerHTML = '';
+                items.forEach(item => {
+                    const chip = document.createElement('button');
+                    chip.className = 'chip' + (selectedChips.has(item) ? ' active' : '');
+                    chip.textContent = item;
+                    chip.onclick = () => toggleChip(item, chip);
+                    wrap.appendChild(chip);
+                });
+            });
+            renderCustomTags();
+        }
+
+        function toggleChip(item, el) {
+            if (selectedChips.has(item)) {
+                selectedChips.delete(item);
+                el.classList.remove('active');
+            } else {
+                selectedChips.add(item);
+                el.classList.add('active');
+            }
+        }
+
+        function addCustomIng() {
+            const input = document.getElementById('customIngInput');
+            const val = input.value.trim();
+            if (!val) return;
+            customIngredients.push(val);
+            input.value = '';
+            renderCustomTags();
+        }
+
+        function removeCustomIng(idx) {
+            customIngredients.splice(idx, 1);
+            renderCustomTags();
+        }
+
+        function renderCustomTags() {
+            const wrap = document.getElementById('customIngTags');
+            wrap.innerHTML = '';
+            customIngredients.forEach((ing, i) => {
+                const tag = document.createElement('span');
+                tag.className = 'ing-tag';
+                tag.innerHTML = `${ing} <button onclick="removeCustomIng(${i})">×</button>`;
+                wrap.appendChild(tag);
+            });
+        }
+
+        // ——— MEAL SELECTION ———
+        window.selectMeal = function(tipo, card) {
+            const gKey = localStorage.getItem('G_KEY');
+            const qKey = localStorage.getItem('Q_KEY');
+            if (!gKey && !qKey) return toggleModal(true);
+
+            selectedMeal = tipo;
+
+            // Highlight card
+            document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('selected'));
+            if (card) card.classList.add('selected');
+
+            // Show ingredients step
+            document.getElementById('selectionArea').classList.add('hidden');
+            selectedChips.clear();
+            customIngredients = [];
+            renderChips();
+            document.getElementById('ingredientStep').classList.remove('hidden');
+        }
+
+        // ——— GENERATE RECIPE ———
+        window.generateRecipe = async function() {
+            const gKey = localStorage.getItem('G_KEY');
+            const qKey = localStorage.getItem('Q_KEY');
+            if (!gKey && !qKey) return toggleModal(true);
+
+            // Build ingredients string
+            const allIngs = [...selectedChips, ...customIngredients];
+            const ingsText = allIngs.length > 0
+                ? `Los ingredientes disponibles que DEBES usar (al menos algunos): ${allIngs.join(', ')}.`
+                : '';
+
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            const esMenu = selectedMeal === 'menú completo del día';
+
+            // ── VARIEDAD: cocinas y técnicas rotativas ──────────────────────
+            const COCINAS = [
+                'mediterránea', 'mexicana', 'italiana', 'asiática', 'griega',
+                'marroquí', 'francesa', 'española', 'americana del sur', 'japonesa',
+                'peruana', 'libanesa', 'india', 'turca', 'tailandesa'
+            ];
+            const TECNICAS = [
+                'al horno', 'a la plancha', 'salteado en wok', 'al vapor',
+                'estofado', 'a la parrilla', 'crudo / carpaccio', 'en freidora de aire',
+                'marinado en frío', 'pochado', 'en sartén de hierro', 'gratinado'
+            ];
+            const ESTILOS = [
+                'reconfortante y caliente', 'fresco y ligero', 'rápido (menos de 20 min)',
+                'con mucho umami', 'picante', 'cremoso', 'crujiente', 'ahumado',
+                'con hierbas aromáticas frescas', 'agridulce', 'muy proteico'
+            ];
+            const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+            const variedad = `Inspiración del día: cocina ${pick(COCINAS)}, técnica principal "${pick(TECNICAS)}", perfil de sabor: ${pick(ESTILOS)}.`;
+
+            // ── HISTORIAL RECIENTE: últimos títulos para evitar repetición ──
+            const titlesRecientes = todasLasRecetas.slice(0, 20).map(r => r.titulo).filter(Boolean);
+            const evitarText = titlesRecientes.length > 0
+                ? `PROHIBIDO repetir o parecerse a estos platos ya generados recientemente: ${titlesRecientes.join(', ')}.`
+                : '';
+
+            const prompt = esMenu
+            ? `Actúa como Chef Keto Profesional y Nutricionista.
+Crea un menú keto completo para el día con TRES recetas distintas: desayuno, almuerzo y cena.
+${ingsText}
+${variedad}
+${evitarText}
+REGLAS ESTRICTAS — sigue esta estructura HTML exacta, sin variaciones:
+<h1>Menú Keto del Día</h1>
+<section data-plato="Desayuno">
+  <h2>Nombre del desayuno</h2>
+  <h3>Ingredientes</h3>...<h3>Instrucciones</h3>...<h3>Información Nutricional</h3><table>...</table>
+</section>
+<section data-plato="Almuerzo">
+  <h2>Nombre del almuerzo</h2>
+  ...igual...
+</section>
+<section data-plato="Cena">
+  <h2>Nombre de la cena</h2>
+  ...igual...
+</section>
+Cada sección debe contener: <h2>nombre del plato</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3>, <h3>Información Nutricional</h3> y una <table> con columnas "Nutriente" y "Cantidad por ración" (Calorías, Grasas totales, Proteínas, Carbohidratos Netos).
+Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`
+            : `Actúa como Chef Keto Profesional y Nutricionista.
+Crea una receta detallada y ORIGINAL para ${selectedMeal}.
+${ingsText}
+${variedad}
+${evitarText}
+REGLAS ESTRICTAS:
+1. Estructura: <h2>Nombre del plato</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3> y <h3>Información Nutricional</h3>.
+2. La sección de Información Nutricional DEBE ser una <table> con dos columnas: "Nutriente" y "Cantidad por ración".
+3. Incluye obligatoriamente en la tabla: Calorías, Grasas totales, Proteínas y Carbohidratos Netos.
+4. Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`;
+
+            let html = "";
+            let exito = false;
+            let apiUsed = "";
+
+            // 1. GEMINI
+            if (gKey) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const data = await res.json();
+                    if (data?.candidates?.[0]?.content) {
+                        html = data.candidates[0].content.parts[0].text;
+                        exito = true;
+                        apiUsed = "gemini";
+                    }
+                } catch (e) { console.error("Gemini falló:", e); }
+            }
+
+            // 2. GROQ (fallback)
+            if (!exito && qKey) {
+                try {
+                    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${qKey}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: "llama-3.3-70b-versatile",
+                            messages: [{ role: "user", content: prompt }]
+                        })
+                    });
+                    const data = await res.json();
+                    if (data?.choices?.[0]) {
+                        html = data.choices[0].message.content;
+                        exito = true;
+                        apiUsed = "groq";
+                    }
+                } catch (e) { console.error("Groq falló:", e); }
+            }
+
+            if (exito) {
+                let cleanHtml = html.replace(/```html|```/g, '').trim();
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = cleanHtml;
+
+                if (esMenu) {
+                    // ── MENÚ DIARIO: procesar 3 secciones independientes ──
+                    const sections = tempDiv.querySelectorAll('section[data-plato]');
+
+                    // Si la IA no generó <section>, intentar dividir por <h2>
+                    if (sections.length === 0) {
+                        // Fallback: envolver cada bloque h2+siblings en section
+                        const h2s = tempDiv.querySelectorAll('h2');
+                        h2s.forEach(h2 => {
+                            const sec = document.createElement('section');
+                            const plato = h2.innerText.trim();
+                            sec.setAttribute('data-plato', plato);
+                            let node = h2;
+                            const nodes = [];
+                            while (node) {
+                                nodes.push(node);
+                                node = node.nextElementSibling;
+                                if (node && node.tagName === 'H2') break;
+                            }
+                            nodes.forEach(n => sec.appendChild(n.cloneNode(true)));
+                            tempDiv.appendChild(sec);
+                        });
+                        h2s.forEach(h2 => {
+                            let node = h2;
+                            while (node && node.tagName !== 'H2') node = node.nextElementSibling;
+                        });
+                    }
+
+                    const finalSections = tempDiv.querySelectorAll('section[data-plato]');
+                    const now = Date.now();
+
+                    // Marcar el contenedor como menú para el PDF
+                    const menuContainer = document.getElementById('recipeContent');
+                    menuContainer.innerHTML = '';
+                    menuContainer.setAttribute('data-tipo', 'menu');
+
+                    const platoIconos = { Desayuno: '🍳', Almuerzo: '🥗', Cena: '🌙' };
+
+                    finalSections.forEach((sec, idx) => {
+                        const plato = sec.getAttribute('data-plato') || `Plato ${idx + 1}`;
+                        const h2 = sec.querySelector('h2');
+                        const platoNombre = h2 ? h2.innerText.trim() : plato;
+
+                        // Limpiar título
+                        if (h2) h2.innerText = h2.innerText.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Campeón|Chef)/gi, '').trim();
+
+                        // Añadir etiqueta de tipo de comida encima del h2
+                        const label = document.createElement('p');
+                        label.className = 'menu-plato-label';
+                        label.textContent = (platoIconos[plato] || '🍽️') + ' ' + plato.toUpperCase();
+                        sec.insertBefore(label, sec.firstChild);
+
+                        // Separador visual entre platos (excepto el primero)
+                        if (idx > 0) {
+                            const sep = document.createElement('hr');
+                            sep.className = 'menu-separator';
+                            menuContainer.appendChild(sep);
+                        }
+
+                        menuContainer.appendChild(sec);
+
+                        // Guardar cada plato como receta individual en Firebase
+                        db.ref('keto_recetas').push({
+                            titulo: `[${plato}] ${platoNombre}`,
+                            contenido: sec.outerHTML,
+                            timestamp: now + idx,
+                            esMenu: true,
+                            menuFecha: now
+                        });
+                    });
+
+                } else {
+                    // ── RECETA INDIVIDUAL ──
+                    const h2 = tempDiv.querySelector('h2');
+                    if (h2) h2.innerText = h2.innerText.replace(/(¡|!|Aquí tienes|Tu receta|Directo de|Campeón|Chef)/gi, '').trim();
+                    cleanHtml = tempDiv.innerHTML;
+
+                    const recipeContent = document.getElementById('recipeContent');
+                    recipeContent.innerHTML = cleanHtml;
+                    recipeContent.setAttribute('data-tipo', 'receta');
+
+                    const finalTitle = h2 ? h2.innerText : "Receta Keto";
+                    db.ref('keto_recetas').push({ titulo: finalTitle, contenido: cleanHtml, timestamp: Date.now() });
+                }
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('recipeResult').classList.remove('hidden');
+
+                // API badge
+                const badge = document.getElementById('apiBadge');
+                badge.textContent = apiUsed === 'gemini' ? '✦ Gemini' : '⚡ Groq';
+                badge.className = 'api-badge ' + apiUsed;
+
+                // Meal label
+                const mealIcons = { desayuno: '🍳', almuerzo: '🥗', cena: '🌙', 'menú completo del día': '📅' };
+                document.getElementById('mealLabel').textContent = (mealIcons[selectedMeal] || '') + ' ' + selectedMeal;
+
+            } else {
+                alert("No se pudo generar la receta. Revisa tus API keys.");
+                resetUI();
+            }
+        }
+
+        // ——— RECIENTES ———
+        window.openRecientes = async function() {
+            document.getElementById('recientesModal').classList.remove('hidden');
+            const container = document.getElementById('listaRecientes');
+            container.innerHTML = '<div class="empty-state"><div class="emoji">⏳</div>Cargando...</div>';
+
+            try {
+                const snapshot = await db.ref('keto_recetas').orderByChild('timestamp').limitToLast(50).once('value');
+                todasLasRecetas = [];
+                snapshot.forEach(child => { todasLasRecetas.unshift({ id: child.key, ...child.val() }); });
+                renderizarLista(todasLasRecetas);
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state"><div class="emoji">❌</div>Error al conectar.</div>';
+            }
+        }
+
+        function renderizarLista(recetas) {
+            const container = document.getElementById('listaRecientes');
+            if (!recetas.length) {
+                container.innerHTML = '<div class="empty-state"><div class="emoji">🍽️</div>No hay recetas guardadas aún.</div>';
+                return;
+            }
+            container.innerHTML = '';
+            recetas.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'item-receta';
+                div.innerHTML = `
+                    <div class="receta-info">
+                        <strong>${r.titulo}</strong>
+                        <small>${new Date(r.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</small>
+                    </div>
+                    <button class="btn-delete-receta" onclick="deleteReceta('${r.id}', event)" title="Eliminar">🗑</button>
+                `;
+                div.querySelector('.receta-info').onclick = () => {
+                    document.getElementById('recipeContent').innerHTML = r.contenido;
+                    document.getElementById('apiBadge').textContent = '';
+                    document.getElementById('apiBadge').className = 'api-badge';
+                    document.getElementById('mealLabel').textContent = '🕒 Del historial';
+                    document.getElementById('selectionArea').classList.add('hidden');
+                    document.getElementById('ingredientStep').classList.add('hidden');
+                    document.getElementById('recipeResult').classList.remove('hidden');
+                    closeRecientes();
+                };
+                container.appendChild(div);
+            });
+        }
+
+        window.deleteReceta = async function(id, e) {
+            e.stopPropagation();
+            if (!confirm('¿Eliminar esta receta?')) return;
+            await db.ref(`keto_recetas/${id}`).remove();
+            todasLasRecetas = todasLasRecetas.filter(r => r.id !== id);
+            renderizarLista(todasLasRecetas);
+        }
+
+        window.filtrarRecetas = function() {
+            const term = document.getElementById('searchRecetas').value.toLowerCase();
+            renderizarLista(todasLasRecetas.filter(r => r.titulo.toLowerCase().includes(term)));
+        }
+
+        // ——— COPY ———
+        window.copyRecipe = function() {
+            const text = document.getElementById('recipeContent').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                btn.textContent = '✅';
+                setTimeout(() => btn.textContent = '📋', 1500);
+            });
+        }
+
+        // ——— EXPORT PDF ———
+        window.exportToPDF = async function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const content = document.getElementById('recipeContent');
+            if (!content || !content.innerText.trim()) return alert("Genera una receta primero");
+
+            const pageWidth  = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 18;
+            const colW   = pageWidth - margin * 2;
+            const GREEN  = [16, 185, 129];
+            const GREEN2 = [5, 150, 105];
+            const DARK   = [15, 23, 42];
+            const SLATE  = [71, 85, 105];
+            const LIGHT  = [248, 250, 252];
+            const WHITE  = [255, 255, 255];
+            const dateStr = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            const esMenu = content.getAttribute('data-tipo') === 'menu';
+
+            // ── HELPERS ──────────────────────────────────────────────────────
+            let cursorY = 0;
+
+            const miniHeader = () => {
+                doc.setFillColor(...GREEN);
+                doc.rect(0, 0, pageWidth, 12, 'F');
+                doc.setFillColor(...GREEN2);
+                doc.rect(0, 0, 6, 12, 'F');
+                doc.setTextColor(...WHITE);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(7);
+                doc.text("KETOGEN  AI GOURMET", margin + 4, 8);
+                cursorY = 22;
+            };
+
+            const checkPage = (needed = 10) => {
+                if (cursorY + needed > pageHeight - 18) {
+                    doc.addPage();
+                    miniHeader();
+                }
+            };
+
+            const drawMainHeader = (titleText) => {
+                doc.setFillColor(...GREEN);
+                doc.rect(0, 0, pageWidth, 58, 'F');
+                doc.setFillColor(...GREEN2);
+                doc.rect(0, 0, 6, 58, 'F');
+                doc.setTextColor(...WHITE);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(8);
+                doc.text("KETOGEN  AI GOURMET", margin + 4, 14);
+                doc.setDrawColor(255, 255, 255);
+                doc.setLineWidth(0.3);
+                doc.line(margin + 4, 18, pageWidth - margin, 18);
+                // Título con wrapping adaptativo
+                let titleSize = 22;
+                let titleLines;
+                do {
+                    doc.setFontSize(titleSize);
+                    titleLines = doc.splitTextToSize(titleText.toUpperCase(), colW - 4);
+                    titleSize -= 2;
+                } while (titleLines.length > 3 && titleSize > 10);
+                titleSize += 2;
+                doc.setFontSize(titleSize);
+                doc.setTextColor(...WHITE);
+                const lh = titleSize * 0.45;
+                const blockH = titleLines.length * lh;
+                const ty = 18 + (58 - 18 - blockH) / 2 + lh;
+                titleLines.forEach((line, i) => doc.text(line, margin + 4, ty + i * lh));
+                // Fecha
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(7.5);
+                doc.setTextColor(209, 250, 229);
+                doc.text(dateStr, pageWidth - margin, 14, { align: 'right' });
+                cursorY = 72;
+            };
+
+            const drawSectionBanner = (label) => {
+                // Banner de plato (desayuno / almuerzo / cena) — oscuro con acento verde
+                checkPage(18);
+                doc.setFillColor(...DARK);
+                doc.roundedRect(margin, cursorY - 5, colW, 12, 2, 2, 'F');
+                doc.setFillColor(...GREEN);
+                doc.roundedRect(margin, cursorY - 5, 4, 12, 1, 1, 'F');
+                doc.setTextColor(...WHITE);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(label, margin + 8, cursorY + 3);
+                cursorY += 16;
+            };
+
+            const drawH2 = (text) => {
+                checkPage(14);
+                let sz = 16;
+                let lines;
+                do {
+                    doc.setFontSize(sz);
+                    lines = doc.splitTextToSize(text, colW);
+                    sz -= 1;
+                } while (lines.length > 2 && sz > 10);
+                sz += 1;
+                doc.setFontSize(sz);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(...DARK);
+                lines.forEach((line, i) => doc.text(line, margin, cursorY + i * sz * 0.42));
+                cursorY += lines.length * sz * 0.42 + 6;
+            };
+
+            const drawH3 = (text) => {
+                checkPage(14);
+                doc.setFillColor(...GREEN);
+                doc.roundedRect(margin, cursorY - 5, colW, 9, 2, 2, 'F');
+                doc.setTextColor(...WHITE);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9);
+                doc.text(text, margin + 4, cursorY + 1.2);
+                cursorY += 14;
+            };
+
+            const drawTable = (el) => {
+                const rows = [], headers = [];
+                el.querySelectorAll('th').forEach(th => headers.push(th.innerText));
+                el.querySelectorAll('tr').forEach((tr, idx) => {
+                    if (idx === 0 && headers.length > 0) return;
+                    const row = [];
+                    tr.querySelectorAll('td').forEach(td => row.push(td.innerText));
+                    if (row.length) rows.push(row);
+                });
+                checkPage(20);
+                doc.autoTable({
+                    startY: cursorY,
+                    head: [headers.length ? headers : ["Nutriente", "Cantidad por ración"]],
+                    body: rows,
+                    margin: { left: margin, right: margin },
+                    theme: 'grid',
+                    headStyles: { fillColor: DARK, textColor: WHITE, fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
+                    bodyStyles: { fontSize: 9, textColor: SLATE, cellPadding: 3.5 },
+                    alternateRowStyles: { fillColor: LIGHT },
+                    columnStyles: { 1: { halign: 'right', fontStyle: 'bold' } },
+                    tableLineColor: [226, 232, 240],
+                    tableLineWidth: 0.3
+                });
+                cursorY = doc.lastAutoTable.finalY + 10;
+            };
+
+            const drawList = (el) => {
+                el.querySelectorAll('li').forEach(li => {
+                    const lines = doc.splitTextToSize(li.innerText.trim(), colW - 8);
+                    checkPage(lines.length * 5.5 + 2);
+                    doc.setFillColor(...GREEN);
+                    doc.circle(margin + 2, cursorY - 1.5, 1.2, 'F');
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(10);
+                    doc.setTextColor(...SLATE);
+                    doc.text(lines, margin + 6, cursorY);
+                    cursorY += lines.length * 5.5 + 1.5;
+                });
+                cursorY += 3;
+            };
+
+            const drawText = (el) => {
+                const txt = el.innerText.trim();
+                if (!txt) return;
+                const lines = doc.splitTextToSize(txt, colW);
+                checkPage(lines.length * 5.5 + 3);
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(...SLATE);
+                doc.text(lines, margin, cursorY);
+                cursorY += lines.length * 5.5 + 4;
+            };
+
+            const drawElements = (elements) => {
+                for (const el of elements) {
+                    if (el.tagName === 'H1') continue;
+                    if (el.classList?.contains('menu-plato-label')) continue;
+                    if (el.classList?.contains('menu-separator')) continue;
+                    if (el.tagName === 'H2') { drawH2(el.innerText.trim()); continue; }
+                    if (el.tagName === 'H3') { drawH3(el.innerText.trim()); continue; }
+                    if (el.tagName === 'TABLE') { drawTable(el); continue; }
+                    if (el.tagName === 'UL' || el.tagName === 'OL') { drawList(el); continue; }
+                    drawText(el);
+                }
+            };
+
+            // ── RENDER ───────────────────────────────────────────────────────
+            if (esMenu) {
+                // Cabecera principal del menú
+                drawMainHeader("Menú Keto del Día");
+                const sections = content.querySelectorAll('section[data-plato]');
+                const platoIconos = { Desayuno: '🍳 Desayuno', Almuerzo: '🥗 Almuerzo', Cena: '🌙 Cena' };
+
+                sections.forEach((sec, idx) => {
+                    const plato = sec.getAttribute('data-plato') || `Plato ${idx + 1}`;
+                    const label = platoIconos[plato] || plato;
+
+                    // Salto de página entre platos (no antes del primero)
+                    if (idx > 0) {
+                        doc.addPage();
+                        miniHeader();
+                    }
+
+                    drawSectionBanner(label);
+                    drawElements(Array.from(sec.children));
+                });
+
+            } else {
+                // Cabecera con el título de la receta
+                const titleText = content.querySelector('h2')?.innerText?.trim() || "Receta Keto";
+                drawMainHeader(titleText);
+                const elements = Array.from(content.children).filter(el => el.tagName !== 'H2');
+                drawElements(elements);
+            }
+
+            // ── PIE DE PÁGINA ────────────────────────────────────────────────
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setDrawColor(226, 232, 240);
+                doc.setLineWidth(0.4);
+                doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+                doc.setFontSize(7.5);
+                doc.setTextColor(148, 163, 184);
+                doc.setFont("helvetica", "normal");
+                doc.text("KetoGen AI Gourmet", margin, pageHeight - 7);
+                doc.text(`${i} / ${pageCount}`, pageWidth - margin, pageHeight - 7, { align: 'right' });
+                doc.setFillColor(...GREEN);
+                doc.circle(pageWidth / 2, pageHeight - 7.5, 1, 'F');
+            }
+
+            const fileTitle = esMenu ? "Menu_Keto_Dia" : (content.querySelector('h2')?.innerText?.trim() || "Receta_Keto");
+            doc.save(`${fileTitle.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]/g, '_')}.pdf`);
+        };
+
+        // ——— INIT ———
+        document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
+        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
+
+        // Precarga silenciosa del historial para alimentar el anti-repetición
+        (async () => {
+            try {
+                const snap = await db.ref('keto_recetas').orderByChild('timestamp').limitToLast(20).once('value');
+                todasLasRecetas = [];
+                snap.forEach(child => todasLasRecetas.unshift({ id: child.key, ...child.val() }));
+            } catch(e) { /* sin conexión, no pasa nada */ }
+        })();
+    </script>
+</body>
+</html>
