@@ -1664,7 +1664,7 @@ async function analizarFoto(input) {
                         body: JSON.stringify({
                             contents: [{
                                 parts: [
-                                    { text: "Actúa como nutricionista keto experto. Analiza la imagen y estima: 1. Título descriptivo. 2. Kcal totales. 3. Carbohidratos NETOS descontando fibra. Responde EXCLUSIVAMENTE con un JSON puro: {\"n\": \"Nombre\", \"c\": 0, \"k\": 0}" },
+                                    { text: "Actúa como nutricionista keto experto. Analiza la imagen y estima: 1. Título descriptivo. 2. Carbohidratos NETOS descontando fibra. 3. Kcal totales. Responde EXCLUSIVAMENTE con un JSON puro: {\"n\": \"Nombre\", \"c\": 0, \"k\": 0}" },
                                     { inline_data: { mime_type: "image/jpeg", data: base64Content } }
                                 ]
                             }]
