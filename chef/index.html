@@ -1,183 +1,144 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chef AI | Smart Cooking</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chef AI Dual</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <style>
-        :root{
-            --primary:#10b981;
-            --bg:#f8fafc;
-            --card:#fff;
-            --text:#1e293b;
-            --muted:#64748b;
-            --border:#e2e8f0;
-            --radius:16px;
-        }
-        body{
-            margin:0;
-            font-family:DM Sans,sans-serif;
-            background:var(--bg);
-            color:var(--text);
-        }
-        .container{max-width:720px;margin:20px auto;padding:16px;}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-        .top{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        .badge{
-            padding:6px 12px;
-            border-radius:999px;
-            background:var(--card);
-            border:1px solid var(--border);
-            cursor:pointer;
-            font-size:12px;
-        }
-        .badge.active{
-            background:var(--primary);
-            color:#fff;
-            border:none;
-        }
-
-        .card{
-            background:var(--card);
-            border:1px solid var(--border);
-            border-radius:var(--radius);
-            padding:16px;
-            margin-top:16px;
-        }
-
-        .grid{
-            display:grid;
-            grid-template-columns:repeat(3,1fr);
-            gap:10px;
-        }
-
-        .chip{
-            padding:6px 10px;
-            border-radius:999px;
-            border:1px solid var(--border);
-            cursor:pointer;
-            font-size:13px;
-            background:#fff;
-        }
-        .chip.active{
-            background:var(--primary);
-            color:#fff;
-            border:none;
-        }
-
-        button{
-            width:100%;
-            padding:12px;
-            border:none;
-            border-radius:12px;
-            background:var(--primary);
-            color:#fff;
-            font-weight:600;
-            cursor:pointer;
-            margin-top:10px;
-        }
-
-        .mode-switch{
-            display:flex;
-            gap:8px;
-        }
-
-        .result{
-            white-space:pre-wrap;
-        }
-    </style>
+<style>
+:root{
+  --primary:#10b981;
+  --dark:#0f172a;
+  --bg:#f8fafc;
+  --card:#fff;
+  --text:#1e293b;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --radius:16px;
+}
+body{margin:0;font-family:DM Sans,sans-serif;background:var(--bg);color:var(--text)}
+.container{max-width:760px;margin:0 auto;padding:16px}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
+.btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer}
+.btn.active{background:var(--primary);color:#fff;border:none}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.chip{padding:8px;border:1px solid var(--border);border-radius:999px;cursor:pointer;text-align:center}
+.chip.active{background:var(--primary);color:#fff;border:none}
+button.primary{width:100%;padding:12px;border:none;border-radius:12px;background:var(--primary);color:#fff;margin-top:10px;cursor:pointer}
+.result{white-space:pre-wrap}
+</style>
 </head>
 <body>
 
 <div class="container">
 
-    <div class="top">
-        <h2>🍳 Chef AI</h2>
-        <div class="mode-switch">
-            <div id="normalBtn" class="badge active" onclick="setMode('normal')">Normal</div>
-            <div id="ketoBtn" class="badge" onclick="setMode('keto')">Keto</div>
-        </div>
-    </div>
+<div class="navbar">
+  <h2>🍳 Chef AI</h2>
+  <div>
+    <button id="modeNormal" class="btn active" onclick="setMode('normal')">Normal</button>
+    <button id="modeKeto" class="btn" onclick="setMode('keto')">Keto</button>
+  </div>
+</div>
 
-    <div class="card">
-        <h3>Tipo de comida</h3>
-        <div class="grid">
-            <div class="chip" onclick="setMeal('desayuno')">🍳 Desayuno</div>
-            <div class="chip" onclick="setMeal('almuerzo')">🥗 Almuerzo</div>
-            <div class="chip" onclick="setMeal('cena')">🌙 Cena</div>
-        </div>
+<div class="card">
+  <h3>Comida</h3>
+  <div class="grid">
+    <div class="chip" onclick="setMeal('desayuno')">🍳 Desayuno</div>
+    <div class="chip" onclick="setMeal('almuerzo')">🥗 Almuerzo</div>
+    <div class="chip" onclick="setMeal('cena')">🌙 Cena</div>
+  </div>
 
-        <h3 style="margin-top:16px">Ingredientes</h3>
-        <div id="chips" class="grid"></div>
+  <h3 style="margin-top:12px">Ingredientes</h3>
+  <div id="ingredients" class="grid"></div>
 
-        <button onclick="generate()">Generar receta</button>
-    </div>
+  <button class="primary" onclick="generate()">Generar receta</button>
+</div>
 
-    <div class="card result" id="result"></div>
+<div class="card result" id="result"></div>
 
 </div>
 
 <script>
 
+// 🔥 FIREBASE INDEPENDIENTE (BASE NUEVA)
+const firebaseConfig = {
+  apiKey: "NEW_API_KEY_HERE",
+  authDomain: "chef-ai-dual.firebaseapp.com",
+  databaseURL: "https://chef-ai-dual-default-rtdb.firebaseio.com",
+  projectId: "chef-ai-dual",
+  storageBucket: "chef-ai-dual.appspot.com",
+  messagingSenderId: "000000000",
+  appId: "1:000:web:dual"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// STATE
 let mode = 'normal';
 let meal = 'desayuno';
 let selected = new Set();
 
+// INGREDIENTES AMPLIADOS (NO KETO RESTRICTIVO)
 const INGREDIENTS = {
-  proteinas:['Pollo','Ternera','Pescado','Huevos'],
-  verduras:['Tomate','Lechuga','Cebolla','Zanahoria'],
-  carbs:['Arroz','Pasta','Patata','Pan'],
-  extras:['Aceite oliva','Ajo','Queso','Especias']
+  proteinas:['Pollo','Ternera','Pescado','Huevos','Cerdo','Pavo'],
+  verduras:['Tomate','Cebolla','Zanahoria','Lechuga','Brócoli','Pimiento'],
+  carbs:['Arroz','Pasta','Pan','Patata','Quinoa','Lentejas'],
+  extras:['Aceite de oliva','Ajo','Queso','Especias','Mantequilla']
 };
 
 function render(){
-    const c=document.getElementById('chips');
-    c.innerHTML='';
-    Object.values(INGREDIENTS).flat().forEach(i=>{
-        const el=document.createElement('div');
-        el.className='chip'+(selected.has(i)?' active':'');
-        el.textContent=i;
-        el.onclick=()=>{
-            selected.has(i)?selected.delete(i):selected.add(i);
-            render();
-        };
-        c.appendChild(el);
-    });
+  const el=document.getElementById('ingredients');
+  el.innerHTML='';
+  Object.values(INGREDIENTS).flat().forEach(i=>{
+    const d=document.createElement('div');
+    d.className='chip'+(selected.has(i)?' active':'');
+    d.textContent=i;
+    d.onclick=()=>{
+      selected.has(i)?selected.delete(i):selected.add(i);
+      render();
+    };
+    el.appendChild(d);
+  });
 }
 
 function setMode(m){
-    mode=m;
-    document.getElementById('normalBtn').classList.toggle('active',m==='normal');
-    document.getElementById('ketoBtn').classList.toggle('active',m==='keto');
+  mode=m;
+  document.getElementById('modeNormal').classList.toggle('active',m==='normal');
+  document.getElementById('modeKeto').classList.toggle('active',m==='keto');
 }
 
 function setMeal(m){meal=m;}
 
 function generate(){
 
-    const ing=[...selected].join(', ');
+  const ing=[...selected].join(', ');
 
-    const prompt = mode==='keto'
-    ? `Actúa como chef keto.
-Crea receta keto para ${meal}.
+  const prompt = mode==='keto'
+  ? `Actúa como chef keto.
+Receta para ${meal}.
 Ingredientes: ${ing}.
-Sin exceder carbohidratos.
+Bajo en carbohidratos.
 Formato HTML.`
-    : `Actúa como chef profesional.
-Crea receta para ${meal}.
+  : `Actúa como chef profesional.
+Receta para ${meal}.
 Ingredientes: ${ing}.
-Puede incluir arroz, pasta, pan, etc.
+Puede incluir arroz, pasta, pan, legumbres.
 Formato HTML.`;
 
-    document.getElementById('result').innerText = prompt;
+  document.getElementById('result').innerText = prompt;
+
+  db.ref('recipes/' + Date.now()).set({
+    mode, meal, ingredients: ing, prompt
+  });
 }
 
 render();
