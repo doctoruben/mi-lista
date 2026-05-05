@@ -1,149 +1,427 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chef AI Dual</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>MyChef | AI Cooking Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-light: #d1fae5;
+            --primary-dark: #059669;
+            --dark: #0f172a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+            --radius: 1.2rem;
+            --chip-bg: #f1f5f9;
+            --chip-selected: #d1fae5;
+            --chip-selected-border: #10b981;
+            --modal-bg: rgba(15,23,42,0.65);
+            --input-bg: #f8fafc;
+        }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --chip-bg: #334155;
+            --chip-selected: #064e3b;
+            --chip-selected-border: #10b981;
+            --modal-bg: rgba(0,0,0,0.8);
+            --input-bg: #1e293b;
+        }
 
-<style>
-:root{
-  --primary:#10b981;
-  --dark:#0f172a;
-  --bg:#f8fafc;
-  --card:#fff;
-  --text:#1e293b;
-  --muted:#64748b;
-  --border:#e2e8f0;
-  --radius:16px;
-}
-body{margin:0;font-family:DM Sans,sans-serif;background:var(--bg);color:var(--text)}
-.container{max-width:760px;margin:0 auto;padding:16px}
-.navbar{display:flex;justify-content:space-between;align-items:center;padding:12px 0}
-.btn{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer}
-.btn.active{background:var(--primary);color:#fff;border:none}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:12px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.chip{padding:8px;border:1px solid var(--border);border-radius:999px;cursor:pointer;text-align:center}
-.chip.active{background:var(--primary);color:#fff;border:none}
-button.primary{width:100%;padding:12px;border:none;border-radius:12px;background:var(--primary);color:#fff;margin-top:10px;cursor:pointer}
-.result{white-space:pre-wrap}
-</style>
+        * { box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); margin: 0; color: var(--text); transition: background 0.3s, color 0.3s; min-height: 100vh; }
+
+        /* ——— NAVBAR ——— */
+        .navbar {
+            background: var(--card); padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px);
+        }
+        .navbar-brand h2 { margin: 0; font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); }
+        .nav-btns { display: flex; gap: 8px; align-items: center; }
+        
+        /* ——— KETO TOGGLE ——— */
+        .mode-toggle {
+            display: flex; align-items: center; background: var(--chip-bg); padding: 4px; border-radius: 50px; cursor: pointer;
+            border: 1px solid var(--border); margin-right: 8px;
+        }
+        .mode-btn {
+            padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;
+        }
+        .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
+        .mode-btn:not(.active) { color: var(--text-muted); }
+
+        .container { max-width: 680px; margin: 1.5rem auto; padding: 0 1rem; }
+
+        /* ——— RESTO DE ESTILOS (IGUALES A TU FUENTE) ——— */
+        .section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.8rem; }
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+        .btn-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.4rem 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s; box-shadow: var(--shadow); }
+        .btn-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .btn-card.selected { border-color: var(--primary); background: var(--chip-selected); }
+        .btn-card span { display: block; font-size: 2rem; margin-bottom: 0.4rem; }
+        .btn-card h3 { margin: 0; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+        .btn-full { width: 100%; margin-top: 1rem; padding: 1rem 1.2rem; background: var(--dark); color: white; border-radius: var(--radius); border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+        [data-theme="dark"] .btn-full { background: var(--primary); }
+        .ing-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+        .chips-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip { background: var(--chip-bg); border: 1.5px solid transparent; border-radius: 2rem; padding: 0.35rem 0.85rem; font-size: 0.82rem; cursor: pointer; color: var(--text); }
+        .chip.active { background: var(--chip-selected); border-color: var(--chip-selected-border); color: var(--primary-dark); font-weight: 600; }
+        .custom-ing-wrap { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+        .custom-ing-input { flex: 1; padding: 0.6rem 1rem; border: 1.5px solid var(--border); border-radius: 2rem; font-family: 'DM Sans', sans-serif; background: var(--input-bg); color: var(--text); outline: none; }
+        .custom-ing-btn { padding: 0.6rem 1rem; background: var(--primary); color: white; border: none; border-radius: 2rem; cursor: pointer; }
+        .step-nav { display: flex; gap: 0.8rem; margin-top: 1rem; }
+        .btn-back { flex: 0 0 auto; padding: 1rem 1.2rem; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; color: var(--text-muted); }
+        .btn-generate { flex: 1; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; }
+        .loader-wrap { text-align: center; padding: 3rem 1rem; }
+        .loader { border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .recipe-box { background: var(--card); padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        #recipeContent h2 { font-family: 'DM Serif Display', serif; }
+        #recipeContent table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        #recipeContent th { background: var(--chip-bg); padding: 10px; text-align: left; }
+        #recipeContent td { padding: 10px; border-bottom: 1px solid var(--border); }
+        .result-actions { margin-top: 1.2rem; display: grid; grid-template-columns: 1fr auto auto; gap: 0.7rem; }
+        .btn-pdf { padding: 0.9rem 1.2rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; }
+        .btn-icon { padding: 0.9rem 1rem; background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+        .modal { position: fixed; inset: 0; background: var(--modal-bg); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 15px; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card); padding: 1.5rem; border-radius: 1.5rem; width: 100%; max-width: 360px; max-height: 85vh; overflow-y: auto; }
+        .hidden { display: none !important; }
+        .nav-btn { background: var(--chip-bg); border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+        .ing-tag { display: flex; align-items: center; gap: 4px; background: var(--primary-light); color: var(--primary-dark); border-radius: 2rem; padding: 0.25rem 0.7rem; font-size: 0.8rem; margin-top: 5px; }
+        .menu-plato-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 0.3rem; padding: 0.3rem 0.8rem; background: var(--primary-light); border-radius: 2rem; display: inline-block; }
+    </style>
 </head>
 <body>
 
-<div class="container">
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <h2>MyChef 👨‍🍳</h2>
+        </div>
+        <div class="nav-btns">
+            <!-- TOGGLE MODO KETO/CONVENCIONAL -->
+            <div class="mode-toggle" onclick="toggleKetoMode()">
+                <div id="modeKeto" class="mode-btn active">Keto</div>
+                <div id="modeConv" class="mode-btn">Conv.</div>
+            </div>
+            <button class="nav-btn" onclick="openRecientes()">🕒</button>
+            <button class="nav-btn" onclick="toggleDark()" id="darkBtn">🌙</button>
+            <button class="nav-btn" onclick="toggleModal(true)">⚙️</button>
+        </div>
+    </nav>
 
-<div class="navbar">
-  <h2>🍳 Chef AI</h2>
-  <div>
-    <button id="modeNormal" class="btn active" onclick="setMode('normal')">Normal</button>
-    <button id="modeKeto" class="btn" onclick="setMode('keto')">Keto</button>
-  </div>
-</div>
+    <div class="container">
 
-<div class="card">
-  <h3>Comida</h3>
-  <div class="grid">
-    <div class="chip" onclick="setMeal('desayuno')">🍳 Desayuno</div>
-    <div class="chip" onclick="setMeal('almuerzo')">🥗 Almuerzo</div>
-    <div class="chip" onclick="setMeal('cena')">🌙 Cena</div>
-  </div>
+        <!-- PASO 1: Selección de comida -->
+        <div id="selectionArea">
+            <p class="section-label">¿Qué comida necesitas?</p>
+            <div class="menu-grid">
+                <button class="btn-card" onclick="selectMeal('desayuno', this)">
+                    <span>🍳</span><h3>Desayuno</h3>
+                </button>
+                <button class="btn-card" onclick="selectMeal('almuerzo', this)">
+                    <span>🥗</span><h3>Almuerzo</h3>
+                </button>
+                <button class="btn-card" onclick="selectMeal('cena', this)">
+                    <span>🌙</span><h3>Cena</h3>
+                </button>
+            </div>
+            <button class="btn-full" onclick="selectMeal('menú completo del día', null)">📅 Menú Diario Completo</button>
+        </div>
 
-  <h3 style="margin-top:12px">Ingredientes</h3>
-  <div id="ingredients" class="grid"></div>
+        <!-- PASO 2: Ingredientes -->
+        <div id="ingredientStep" class="hidden">
+            <p class="section-label" id="stepTitle">Personaliza tu receta</p>
 
-  <button class="primary" onclick="generate()">Generar receta</button>
-</div>
+            <div class="ing-card">
+                <p class="ing-card-title">🥩 Proteínas</p>
+                <div class="chips-wrap" id="chips-proteinas"></div>
+            </div>
 
-<div class="card result" id="result"></div>
+            <div class="ing-card" id="card-carbohidratos">
+                <p class="ing-card-title">🍚 Carbohidratos</p>
+                <div class="chips-wrap" id="chips-carbohidratos"></div>
+            </div>
 
-</div>
+            <div class="ing-card">
+                <p class="ing-card-title">🥦 Verduras</p>
+                <div class="chips-wrap" id="chips-verduras"></div>
+            </div>
 
-<script>
+            <div class="ing-card">
+                <p class="ing-card-title">➕ Añadir ingrediente libre</p>
+                <div class="custom-ing-wrap">
+                    <input class="custom-ing-input" type="text" id="customIngInput" placeholder="ej. jengibre, pasta..." onkeydown="if(event.key==='Enter') addCustomIng()">
+                    <button class="custom-ing-btn" onclick="addCustomIng()">+</button>
+                </div>
+                <div class="selected-ings-wrap" id="customIngTags"></div>
+            </div>
 
-// 🔥 FIREBASE INDEPENDIENTE (BASE NUEVA)
-const firebaseConfig = {
-  apiKey: "NEW_API_KEY_HERE",
-  authDomain: "chef-ai-dual.firebaseapp.com",
-  databaseURL: "https://chef-ai-dual-default-rtdb.firebaseio.com",
-  projectId: "chef-ai-dual",
-  storageBucket: "chef-ai-dual.appspot.com",
-  messagingSenderId: "000000000",
-  appId: "1:000:web:dual"
-};
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBackToSelection()">← Volver</button>
+                <button class="btn-generate" onclick="generateRecipe()">✨ Generar Receta</button>
+            </div>
+        </div>
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+        <!-- LOADER -->
+        <div id="loading" class="hidden">
+            <div class="loader-wrap">
+                <div class="loader"></div>
+                <p class="loader-text" id="loaderText">Cocinando tu receta...</p>
+            </div>
+        </div>
 
-// STATE
-let mode = 'normal';
-let meal = 'desayuno';
-let selected = new Set();
+        <!-- RESULTADO -->
+        <div id="recipeResult" class="hidden">
+            <div class="recipe-box" id="printArea">
+                <div id="recipeContent"></div>
+            </div>
+            <div class="result-actions">
+                <button class="btn-pdf" onclick="exportToPDF()">⬇ Exportar PDF</button>
+                <button class="btn-icon" onclick="copyRecipe()">📋</button>
+                <button class="btn-icon" onclick="resetUI()">↩</button>
+            </div>
+        </div>
+    </div>
 
-// INGREDIENTES AMPLIADOS (NO KETO RESTRICTIVO)
-const INGREDIENTS = {
-  proteinas:['Pollo','Ternera','Pescado','Huevos','Cerdo','Pavo'],
-  verduras:['Tomate','Cebolla','Zanahoria','Lechuga','Brócoli','Pimiento'],
-  carbs:['Arroz','Pasta','Pan','Patata','Quinoa','Lentejas'],
-  extras:['Aceite de oliva','Ajo','Queso','Especias','Mantequilla']
-};
+    <!-- MODALES (CONFIGURACION Y RECIENTES) -->
+    <div id="configModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Ajustes de API</h3>
+            <input type="password" id="gemKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:10px;">
+            <input type="password" id="groKey" placeholder="Groq API Key" style="width:100%; margin-bottom:10px; padding:10px;">
+            <button class="btn-generate" style="width:100%" onclick="saveKeys()">Guardar</button>
+            <button class="btn-back" style="width:100%; margin-top:10px;" onclick="toggleModal(false)">Cerrar</button>
+        </div>
+    </div>
 
-function render(){
-  const el=document.getElementById('ingredients');
-  el.innerHTML='';
-  Object.values(INGREDIENTS).flat().forEach(i=>{
-    const d=document.createElement('div');
-    d.className='chip'+(selected.has(i)?' active':'');
-    d.textContent=i;
-    d.onclick=()=>{
-      selected.has(i)?selected.delete(i):selected.add(i);
-      render();
-    };
-    el.appendChild(d);
-  });
-}
+    <div id="recientesModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Recetas Recientes</h3>
+            <div id="listaRecientes"></div>
+            <button class="btn-back" style="width:100%; margin-top:10px;" onclick="closeRecientes()">Cerrar</button>
+        </div>
+    </div>
 
-function setMode(m){
-  mode=m;
-  document.getElementById('modeNormal').classList.toggle('active',m==='normal');
-  document.getElementById('modeKeto').classList.toggle('active',m==='keto');
-}
+    <script>
+        // ——— FIREBASE ———
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+            authDomain: "lista-compra-9d6f5.firebaseapp.com",
+            databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lista-compra-9d6f5",
+            storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+            messagingSenderId: "241322134457",
+            appId: "1:241322134457:web:1b765857911f94d69cc468"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-function setMeal(m){meal=m;}
+        // ——— STATE ———
+        let ketoMode = true; // Por defecto modo Keto activado
+        let selectedMeal = null;
+        let selectedChips = new Set();
+        let customIngredients = [];
+        let todasLasRecetas = [];
 
-function generate(){
+        const INGREDIENTS = {
+            proteinas: ['Pollo','Salmón','Ternera','Cerdo','Huevos','Gambas','Pavo','Bacon','Tofu'],
+            verduras: ['Espinacas','Brócoli','Aguacate','Calabacín','Pimiento','Espárragos','Champiñones','Tomate'],
+            carbohidratos: ['Arroz','Pasta','Patatas','Legumbres','Pan','Quinoa','Cuscús','Tortilla trigo']
+        };
 
-  const ing=[...selected].join(', ');
+        // ——— MODO KETO / CONVENCIONAL ———
+        function toggleKetoMode() {
+            ketoMode = !ketoMode;
+            document.getElementById('modeKeto').classList.toggle('active', ketoMode);
+            document.getElementById('modeConv').classList.toggle('active', !ketoMode);
+            
+            // Si estamos en el paso de ingredientes, refrescamos la vista
+            if(!document.getElementById('ingredientStep').classList.contains('hidden')) {
+                renderChips();
+            }
+        }
 
-  const prompt = mode==='keto'
-  ? `Actúa como chef keto.
-Receta para ${meal}.
-Ingredientes: ${ing}.
-Bajo en carbohidratos.
-Formato HTML.`
-  : `Actúa como chef profesional.
-Receta para ${meal}.
-Ingredientes: ${ing}.
-Puede incluir arroz, pasta, pan, legumbres.
-Formato HTML.`;
+        function renderChips() {
+            // Render Proteinas
+            renderCat('proteinas', INGREDIENTS.proteinas);
+            // Render Verduras
+            renderCat('verduras', INGREDIENTS.verduras);
+            // Mostrar/Ocultar Carbohidratos según modo
+            const carbCard = document.getElementById('card-carbohidratos');
+            if (ketoMode) {
+                carbCard.classList.add('hidden');
+            } else {
+                carbCard.classList.remove('hidden');
+                renderCat('carbohidratos', INGREDIENTS.carbohidratos);
+            }
+        }
 
-  document.getElementById('result').innerText = prompt;
+        function renderCat(id, items) {
+            const wrap = document.getElementById(`chips-${id}`);
+            wrap.innerHTML = '';
+            items.forEach(item => {
+                const chip = document.createElement('button');
+                chip.className = 'chip' + (selectedChips.has(item) ? ' active' : '');
+                chip.textContent = item;
+                chip.onclick = () => {
+                    if(selectedChips.has(item)) selectedChips.delete(item);
+                    else selectedChips.add(item);
+                    chip.classList.toggle('active');
+                };
+                wrap.appendChild(chip);
+            });
+        }
 
-  db.ref('recipes/' + Date.now()).set({
-    mode, meal, ingredients: ing, prompt
-  });
-}
+        // ——— LÓGICA DE NAVEGACIÓN ———
+        window.selectMeal = (tipo, card) => {
+            selectedMeal = tipo;
+            document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('selected'));
+            if(card) card.classList.add('selected');
+            document.getElementById('selectionArea').classList.add('hidden');
+            document.getElementById('ingredientStep').classList.remove('hidden');
+            renderChips();
+        };
 
-render();
+        window.goBackToSelection = () => {
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('selectionArea').classList.remove('hidden');
+        };
 
-</script>
+        window.resetUI = () => {
+            location.reload();
+        };
 
+        // ——— GENERACIÓN CON IA ———
+        window.generateRecipe = async function() {
+            const gKey = localStorage.getItem('G_KEY');
+            const qKey = localStorage.getItem('Q_KEY');
+            if (!gKey && !qKey) return toggleModal(true);
+
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loaderText').textContent = ketoMode ? "Cocinando receta Keto..." : "Cocinando receta convencional...";
+
+            const allIngs = [...selectedChips, ...customIngredients].join(', ');
+            const esMenu = selectedMeal === 'menú completo del día';
+
+            // PROMPT DINÁMICO
+            let systemRole = ketoMode 
+                ? "Eres un Chef Profesional experto en Dieta Cetogénica (Keto)." 
+                : "Eres un Chef de cocina internacional experto en gastronomía convencional.";
+            
+            let dietConstraint = ketoMode
+                ? "REGLA CRÍTICA: La receta debe ser estrictamente KETO (muy baja en carbohidratos, nada de azúcar, harinas de cereal, legumbres o tubérculos)."
+                : "REGLA: No tienes restricciones de dieta. Puedes usar harinas, arroces, pastas y azúcares si lo deseas para hacer un plato delicioso y completo.";
+
+            let prompt = `${systemRole} ${dietConstraint}
+                Crea ${esMenu ? 'un menú completo de 3 platos (desayuno, almuerzo, cena)' : 'una receta de ' + selectedMeal} 
+                usando preferiblemente estos ingredientes: ${allIngs}.
+                Si no hay ingredientes, elige tú unos deliciosos ${ketoMode ? 'keto' : 'variados'}.
+                Devuelve SOLO HTML limpio. Estructura: <h2>Nombre</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3> y una <table> con la Información Nutricional (Calorías, Grasas, Proteínas, Carbohidratos).`;
+
+            // LLAMADA A API (Similitud con tu código original)
+            let htmlResult = "";
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await res.json();
+                htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+            } catch (e) {
+                htmlResult = "<h2>Error al generar</h2><p>Revisa tu conexión o API Key.</p>";
+            }
+
+            // GUARDAR EN FIREBASE (Nueva Regla "chef")
+            db.ref('chef/recetas').push({
+                titulo: "Receta " + (ketoMode ? "Keto" : "Convencional"),
+                contenido: htmlResult,
+                timestamp: Date.now(),
+                modo: ketoMode ? "Keto" : "Convencional"
+            });
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('recipeResult').classList.remove('hidden');
+            document.getElementById('recipeContent').innerHTML = htmlResult;
+        };
+
+        // ——— UTILS ———
+        window.toggleModal = (s) => document.getElementById('configModal').classList.toggle('hidden', !s);
+        window.saveKeys = () => {
+            localStorage.setItem('G_KEY', document.getElementById('gemKey').value);
+            localStorage.setItem('Q_KEY', document.getElementById('groKey').value);
+            toggleModal(false);
+        };
+        window.addCustomIng = () => {
+            const val = document.getElementById('customIngInput').value;
+            if(val) {
+                customIngredients.push(val);
+                renderCustomTags();
+                document.getElementById('customIngInput').value = '';
+            }
+        };
+        function renderCustomTags() {
+            const wrap = document.getElementById('customIngTags');
+            wrap.innerHTML = '';
+            customIngredients.forEach(i => {
+                const t = document.createElement('span');
+                t.className = 'ing-tag';
+                t.textContent = i;
+                wrap.appendChild(t);
+            });
+        }
+        function toggleDark() {
+            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+
+        // ——— HISTORIAL ———
+        window.openRecientes = async () => {
+            document.getElementById('recientesModal').classList.remove('hidden');
+            const list = document.getElementById('listaRecientes');
+            list.innerHTML = 'Cargando...';
+            const snap = await db.ref('chef/recetas').limitToLast(10).once('value');
+            list.innerHTML = '';
+            snap.forEach(child => {
+                const r = child.val();
+                const d = document.createElement('div');
+                d.style.padding = "10px; border-bottom: 1px solid var(--border); cursor:pointer;";
+                d.innerHTML = `<strong>${r.modo}:</strong> Receta del ${new Date(r.timestamp).toLocaleDateString()}`;
+                d.onclick = () => {
+                    document.getElementById('recipeContent').innerHTML = r.contenido;
+                    document.getElementById('selectionArea').classList.add('hidden');
+                    document.getElementById('recipeResult').classList.remove('hidden');
+                    document.getElementById('recientesModal').classList.add('hidden');
+                };
+                list.appendChild(d);
+            });
+        };
+        window.closeRecientes = () => document.getElementById('recientesModal').classList.add('hidden');
+
+        // Precarga de llaves
+        document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
+        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
+    </script>
 </body>
 </html>
