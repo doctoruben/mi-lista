@@ -179,13 +179,15 @@
     </div>
 
     <!-- Modales -->
-    <div id="configModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Ajustes de API</h3>
-            <input type="password" id="gemKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:10px;">
-            <button class="btn-generate" style="width:100%" onclick="saveKeys()">Guardar</button>
-            <button class="btn-back" style="width:100%; margin-top:10px;" onclick="toggleModal(false)">Cerrar</button>
-        </div>
+<div id="configModal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Ajustes de API</h3>
+        <input type="password" id="gemKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:10px;">
+        <input type="password" id="groqKey" placeholder="Groq API Key (Respaldo)" style="width:100%; margin-bottom:10px; padding:10px;">
+        <button class="btn-generate" style="width:100%" onclick="saveKeys()">Guardar</button>
+        <button class="btn-back" style="width:100%; margin-top:10px;" onclick="toggleModal(false)">Cerrar</button>
+    </div>
+</div>
     </div>
 
     <div id="recientesModal" class="modal hidden">
@@ -395,10 +397,15 @@ function mostrarYGuardar(html) {
         window.resetUI = () => location.reload();
         window.goBackToSelection = () => { document.getElementById('ingredientStep').classList.add('hidden'); document.getElementById('selectionArea').classList.remove('hidden'); };
         window.toggleModal = (s) => document.getElementById('configModal').classList.toggle('hidden', !s);
-        window.saveKeys = () => { localStorage.setItem('G_KEY', document.getElementById('gemKey').value); toggleModal(false); };
+       window.saveKeys = () => { 
+    localStorage.setItem('G_KEY', document.getElementById('gemKey').value); 
+    localStorage.setItem('GROQ_KEY', document.getElementById('groqKey').value); 
+    toggleModal(false); 
+};
         window.closeRecientes = () => document.getElementById('recientesModal').classList.add('hidden');
         function toggleDark() { const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); }
         document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
+document.getElementById('groqKey').value = localStorage.getItem('GROQ_KEY') || '';
     </script>
 </body>
 </html>
