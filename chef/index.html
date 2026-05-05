@@ -110,7 +110,6 @@
             <h2>MyChef 👨‍🍳</h2>
         </div>
         <div class="nav-btns">
-            <!-- Selector de modo -->
             <div class="mode-toggle" onclick="toggleKetoMode()">
                 <div id="modeKeto" class="mode-btn active">Keto</div>
                 <div id="modeConv" class="mode-btn">Conv.</div>
@@ -138,7 +137,6 @@
                 <p class="ing-card-title">🥩 Proteínas</p>
                 <div class="chips-wrap" id="chips-proteinas"></div>
             </div>
-            <!-- Carbohidratos: Solo visibles en modo Convencional -->
             <div class="ing-card" id="card-carbohidratos">
                 <p class="ing-card-title">🍚 Carbohidratos</p>
                 <div class="chips-wrap" id="chips-carbohidratos"></div>
@@ -190,18 +188,16 @@
         </div>
     </div>
 
-<div id="recientesModal" class="modal hidden">
-    <div class="modal-content" style="max-width: 450px;">
-        <h3>Historial MyChef</h3>
-        <!-- Buscador añadido -->
-        <input type="text" id="searchRecipe" placeholder="Buscar receta..." 
-               style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--border); background:var(--input-bg); color:var(--text);"
-               oninput="filterRecipes()">
-        
-        <div id="listaRecientes" style="max-height: 400px; overflow-y: auto;"></div>
-        <button class="btn-back" style="width:100%; margin-top:10px;" onclick="closeRecientes()">Cerrar</button>
+    <div id="recientesModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Historial MyChef</h3>
+            <input type="text" id="searchRecipe" placeholder="Buscar receta..." 
+                   style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--border); background:var(--input-bg); color:var(--text);"
+                   oninput="filterRecipes()">
+            <div id="listaRecientes" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="btn-back" style="width:100%; margin-top:10px;" onclick="closeRecientes()">Cerrar</button>
+        </div>
     </div>
-</div>
 
     <script>
         const firebaseConfig = {
@@ -220,6 +216,7 @@
         let selectedMeal = null;
         let selectedChips = new Set();
         let customIngredients = [];
+        let localRecipes = [];
 
         const INGREDIENTS = {
             proteinas: ['Pollo','Salmón','Ternera','Cerdo','Huevos','Gambas','Pavo','Lomo'],
@@ -275,29 +272,20 @@
             document.getElementById('loading').classList.remove('hidden');
 
             const allIngs = [...selectedChips, ...customIngredients].join(', ');
-            
-            // Prompt mejorado para versión 2.5
-            const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. 
-            Genera una receta de ${selectedMeal} que sea ${ketoMode ? 'estrictamente Keto (sin carbos)' : 'convencional (amplía ingredientes y técnica)'}.
-            Ingredientes disponibles: ${allIngs}.
-            Responde ÚNICAMENTE con formato HTML válido (h2 para título, h3 para secciones, ul para lista, table para macros).`;
+            const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. Receta de ${selectedMeal}. Ingredientes: ${allIngs}. Responde SOLO en HTML.`;
 
             try {
-                // LLAMADA ESPECÍFICA A VERSIÓN 2.5
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-                
                 const data = await res.json();
                 if(data.error) throw new Error(data.error.message);
 
-                let htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|
-```/g, '').trim();
+                let htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
 
-                // Guardado en árbol "chef"
                 db.ref('chef/recetas').push({
                     titulo: (ketoMode ? "[KETO] " : "[CONV] ") + selectedMeal,
                     contenido: htmlResult,
@@ -308,10 +296,50 @@
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('recipeResult').classList.remove('hidden');
             } catch (e) {
-                alert("Error de API 2.5: " + e.message);
+                alert("Error: " + e.message);
                 goBackToSelection();
                 document.getElementById('loading').classList.add('hidden');
             }
+        };
+
+        window.openRecientes = async () => {
+            document.getElementById('recientesModal').classList.remove('hidden');
+            const list = document.getElementById('listaRecientes');
+            list.innerHTML = '<p style="text-align:center">Cargando...</p>';
+            try {
+                const snap = await db.ref('chef/recetas').limitToLast(30).once('value');
+                localRecipes = [];
+                snap.forEach(child => {
+                    const data = child.val();
+                    localRecipes.push({ id: child.key, titulo: data.titulo || "Sin título", contenido: data.contenido, timestamp: data.timestamp });
+                });
+                localRecipes.reverse();
+                renderFilteredList(localRecipes);
+            } catch (e) { list.innerHTML = "Error: " + e.message; }
+        };
+
+        function renderFilteredList(recipes) {
+            const list = document.getElementById('listaRecientes');
+            list.innerHTML = '';
+            recipes.forEach(r => {
+                const d = document.createElement('div');
+                d.style = "padding: 15px; border-bottom: 1px solid var(--border); cursor:pointer;";
+                d.innerHTML = `<div style="font-weight:600;">${r.titulo}</div><div style="font-size:0.7rem; color:var(--text-muted);">${new Date(r.timestamp).toLocaleString()}</div>`;
+                d.onclick = () => {
+                    document.getElementById('recipeContent').innerHTML = r.contenido;
+                    document.getElementById('selectionArea').classList.add('hidden');
+                    document.getElementById('ingredientStep').classList.add('hidden');
+                    document.getElementById('recipeResult').classList.remove('hidden');
+                    closeRecientes();
+                };
+                list.appendChild(d);
+            });
+        }
+
+        window.filterRecipes = () => {
+            const term = document.getElementById('searchRecipe').value.toLowerCase();
+            const filtered = localRecipes.filter(r => r.titulo.toLowerCase().includes(term));
+            renderFilteredList(filtered);
         };
 
         window.addCustomIng = () => {
@@ -328,89 +356,12 @@
             });
         }
 
-   let localRecipes = []; // Variable global para guardar temporalmente lo que baje de Firebase
-
-window.openRecientes = async () => {
-    document.getElementById('recientesModal').classList.remove('hidden');
-    const list = document.getElementById('listaRecientes');
-    list.innerHTML = '<p style="text-align:center">Cargando recetario...</p>';
-    
-    try {
-        // Lectura del árbol "chef/recetas"
-        const snap = await db.ref('chef/recetas').limitToLast(30).once('value');
-        localRecipes = [];
-        
-        snap.forEach(child => {
-            const data = child.val();
-            localRecipes.push({
-                id: child.key,
-                titulo: data.titulo || "Receta sin título", // Validación del título
-                contenido: data.contenido,
-                timestamp: data.timestamp
-            });
-        });
-
-function renderFilteredList(recipes) {
-    const list = document.getElementById('listaRecientes');
-    list.innerHTML = '';
-    
-    if(recipes.length === 0) {
-        list.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No se encontraron recetas.</p>';
-        return;
-    }
-
-    recipes.forEach(r => {
-        const d = document.createElement('div');
-        d.className = 'recipe-item';
-        d.style = "padding: 15px; border-bottom: 1px solid var(--border); cursor:pointer; transition: background 0.2s;";
-        
-        // Estructura clara con Título y Fecha
-        d.innerHTML = `
-            <div style="font-weight: 600; color: var(--text);">${r.titulo}</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(r.timestamp).toLocaleString()}</div>
-        `;
-        
-        d.onclick = () => {
-            document.getElementById('recipeContent').innerHTML = r.contenido;
-            document.getElementById('selectionArea').classList.add('hidden');
-            document.getElementById('ingredientStep').classList.add('hidden');
-            document.getElementById('recipeResult').classList.remove('hidden');
-            closeRecientes();
-        };
-        
-        // Efecto hover simple
-        d.onmouseover = () => d.style.background = "var(--chip-bg)";
-        d.onmouseout = () => d.style.background = "transparent";
-        
-        list.appendChild(d);
-    });
-}
-
-// Función del textbox para filtrar
-window.filterRecipes = () => {
-    const term = document.getElementById('searchRecipe').value.toLowerCase();
-    const filtered = localRecipes.filter(r => 
-        r.titulo.toLowerCase().includes(term)
-    );
-    renderFilteredList(filtered);
-};
-
-        // Invertir para que las más nuevas salgan arriba
-        localRecipes.reverse();
-        renderFilteredList(localRecipes);
-
-    } catch (e) {
-        list.innerHTML = "Error al cargar: " + e.message;
-    }
-};    
-
         window.resetUI = () => location.reload();
         window.goBackToSelection = () => { document.getElementById('ingredientStep').classList.add('hidden'); document.getElementById('selectionArea').classList.remove('hidden'); };
         window.toggleModal = (s) => document.getElementById('configModal').classList.toggle('hidden', !s);
         window.saveKeys = () => { localStorage.setItem('G_KEY', document.getElementById('gemKey').value); toggleModal(false); };
         window.closeRecientes = () => document.getElementById('recientesModal').classList.add('hidden');
         function toggleDark() { const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); }
-        
         document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
     </script>
 </body>
