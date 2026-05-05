@@ -190,13 +190,18 @@
         </div>
     </div>
 
-    <div id="recientesModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Historial MyChef</h3>
-            <div id="listaRecientes"></div>
-            <button class="btn-back" style="width:100%; margin-top:10px;" onclick="closeRecientes()">Cerrar</button>
-        </div>
+<div id="recientesModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>Historial MyChef</h3>
+        <!-- Buscador añadido -->
+        <input type="text" id="searchRecipe" placeholder="Buscar receta..." 
+               style="width:100%; padding:10px; margin-bottom:15px; border-radius:10px; border:1px solid var(--border); background:var(--input-bg); color:var(--text);"
+               oninput="filterRecipes()">
+        
+        <div id="listaRecientes" style="max-height: 400px; overflow-y: auto;"></div>
+        <button class="btn-back" style="width:100%; margin-top:10px;" onclick="closeRecientes()">Cerrar</button>
     </div>
+</div>
 
     <script>
         const firebaseConfig = {
@@ -323,27 +328,81 @@
             });
         }
 
-        window.openRecientes = async () => {
-            document.getElementById('recientesModal').classList.remove('hidden');
-            const list = document.getElementById('listaRecientes');
-            list.innerHTML = 'Buscando recetas...';
-            // Lectura desde árbol "chef"
-            const snap = await db.ref('chef/recetas').limitToLast(15).once('value');
-            list.innerHTML = '';
-            snap.forEach(child => {
-                const r = child.val();
-                const d = document.createElement('div');
-                d.style = "padding: 12px; border-bottom: 1px solid var(--border); cursor:pointer;";
-                d.innerHTML = `<strong>${r.titulo}</strong> <br> <small>${new Date(r.timestamp).toLocaleDateString()}</small>`;
-                d.onclick = () => {
-                    document.getElementById('recipeContent').innerHTML = r.contenido;
-                    document.getElementById('selectionArea').classList.add('hidden');
-                    document.getElementById('recipeResult').classList.remove('hidden');
-                    document.getElementById('recientesModal').classList.add('hidden');
-                };
-                list.appendChild(d);
+   let localRecipes = []; // Variable global para guardar temporalmente lo que baje de Firebase
+
+window.openRecientes = async () => {
+    document.getElementById('recientesModal').classList.remove('hidden');
+    const list = document.getElementById('listaRecientes');
+    list.innerHTML = '<p style="text-align:center">Cargando recetario...</p>';
+    
+    try {
+        // Lectura del árbol "chef/recetas"
+        const snap = await db.ref('chef/recetas').limitToLast(30).once('value');
+        localRecipes = [];
+        
+        snap.forEach(child => {
+            const data = child.val();
+            localRecipes.push({
+                id: child.key,
+                titulo: data.titulo || "Receta sin título", // Validación del título
+                contenido: data.contenido,
+                timestamp: data.timestamp
             });
+        });
+
+function renderFilteredList(recipes) {
+    const list = document.getElementById('listaRecientes');
+    list.innerHTML = '';
+    
+    if(recipes.length === 0) {
+        list.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No se encontraron recetas.</p>';
+        return;
+    }
+
+    recipes.forEach(r => {
+        const d = document.createElement('div');
+        d.className = 'recipe-item';
+        d.style = "padding: 15px; border-bottom: 1px solid var(--border); cursor:pointer; transition: background 0.2s;";
+        
+        // Estructura clara con Título y Fecha
+        d.innerHTML = `
+            <div style="font-weight: 600; color: var(--text);">${r.titulo}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${new Date(r.timestamp).toLocaleString()}</div>
+        `;
+        
+        d.onclick = () => {
+            document.getElementById('recipeContent').innerHTML = r.contenido;
+            document.getElementById('selectionArea').classList.add('hidden');
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('recipeResult').classList.remove('hidden');
+            closeRecientes();
         };
+        
+        // Efecto hover simple
+        d.onmouseover = () => d.style.background = "var(--chip-bg)";
+        d.onmouseout = () => d.style.background = "transparent";
+        
+        list.appendChild(d);
+    });
+}
+
+// Función del textbox para filtrar
+window.filterRecipes = () => {
+    const term = document.getElementById('searchRecipe').value.toLowerCase();
+    const filtered = localRecipes.filter(r => 
+        r.titulo.toLowerCase().includes(term)
+    );
+    renderFilteredList(filtered);
+};
+
+        // Invertir para que las más nuevas salgan arriba
+        localRecipes.reverse();
+        renderFilteredList(localRecipes);
+
+    } catch (e) {
+        list.innerHTML = "Error al cargar: " + e.message;
+    }
+};    
 
         window.resetUI = () => location.reload();
         window.goBackToSelection = () => { document.getElementById('ingredientStep').classList.add('hidden'); document.getElementById('selectionArea').classList.remove('hidden'); };
