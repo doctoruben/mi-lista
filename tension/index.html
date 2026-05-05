@@ -1075,17 +1075,17 @@ function generarInforme() {
   doc.rect(0, 0, 210, 28, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-  doc.text('MiTensión — Informe de mediciones', 14, 12);
+  doc.text('MiTension - Informe de mediciones', 14, 12);
   doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-  doc.text(`Período: ${formatFecha(inicio)} a ${formatFecha(fin)}`, 14, 20);
+  doc.text(`Periodo: ${formatFecha(inicio)} a ${formatFecha(fin)}`, 14, 20);
   doc.text(`Generado: ${formatFecha(todayStr())}`, 14, 25);
 
   // Ref
   doc.setTextColor(40, 40, 40);
   doc.setFontSize(9);
-  doc.text(`Valores de referencia: Sistólica ≤ ${config.sis} mmHg | Diastólica ≤ ${config.dia} mmHg`, 14, 34);
+  doc.text(`Valores de referencia: Sistolica <= ${config.sis} mmHg | Diastolica <= ${config.dia} mmHg`, 14, 34);
 
-  const moments = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche' };
+  const moments = { manana: 'Manana', tarde: 'Tarde', noche: 'Noche' };
   const rows = filtradas.map(d => {
     const sisAlto = d.sis > config.sis;
     const diaAlto = d.dia > config.dia;
@@ -1094,12 +1094,12 @@ function generarInforme() {
       moments[d.momento] || d.momento,
       { content: `${d.sis} mmHg`, styles: { textColor: sisAlto ? [220,38,38] : [0,0,0], fontStyle: sisAlto ? 'bold' : 'normal' } },
       { content: `${d.dia} mmHg`, styles: { textColor: diaAlto ? [220,38,38] : [0,0,0], fontStyle: diaAlto ? 'bold' : 'normal' } },
-      (sisAlto || diaAlto) ? { content: '⚠ ALTO', styles: { textColor: [220,38,38], fontStyle: 'bold' } } : { content: '✓ OK', styles: { textColor: [34,197,94], fontStyle: 'bold' } }
+      (sisAlto || diaAlto) ? { content: 'ALTO', styles: { textColor: [220,38,38], fontStyle: 'bold' } } : { content: 'OK', styles: { textColor: [34,197,94], fontStyle: 'bold' } }
     ];
   });
 
   doc.autoTable({
-    head: [['Fecha', 'Momento', 'Sistólica (↑)', 'Diastólica (↓)', 'Estado']],
+    head: [['Fecha', 'Momento', 'Sistolica', 'Diastolica', 'Estado']],
     body: rows,
     startY: 40,
     styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
@@ -1107,10 +1107,10 @@ function generarInforme() {
     alternateRowStyles: { fillColor: [245, 248, 252] },
     columnStyles: {
       0: { cellWidth: 32 },
-      1: { cellWidth: 24 },
+      1: { cellWidth: 28 },
       2: { cellWidth: 36 },
       3: { cellWidth: 36 },
-      4: { cellWidth: 28 }
+      4: { cellWidth: 24 }
     }
   });
 
@@ -1121,9 +1121,9 @@ function generarInforme() {
   const finalY = doc.lastAutoTable.finalY + 8;
 
   doc.setFontSize(10); doc.setFont('helvetica', 'bold');
-  doc.text('Resumen estadístico:', 14, finalY);
+  doc.text('Resumen estadistico:', 14, finalY);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  doc.text(`Total mediciones: ${filtradas.length}   |   Media sistólica: ${avgSis} mmHg   |   Media diastólica: ${avgDia} mmHg   |   Lecturas altas: ${totalAltas}`, 14, finalY+6);
+  doc.text(`Total mediciones: ${filtradas.length}   |   Media sistolica: ${avgSis} mmHg   |   Media diastolica: ${avgDia} mmHg   |   Lecturas altas: ${totalAltas}`, 14, finalY+6);
 
   doc.save(`mitension_${inicio}_${fin}.pdf`);
   closeModal('modalInforme');
