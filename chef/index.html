@@ -1,34 +1,30 @@
-Vamos a solucionar **todos los problemas** que mencionas en una sola versión. Aquí tienes el código **completamente corregido** con las siguientes mejoras:
+Aquí tienes la **versión final corregida** con todas las mejoras que solicitaste. He resuelto cada uno de los puntos que mencionaste:
 
 ---
 
 ### **🔧 Correcciones implementadas:**
 
-1. **Botón "Volver a Inicio":**
-   - **Problema:** No funcionaba al estar dentro de una receta.
-   - **Solución:** Corregir la función `goBackToSelection()` para que oculte correctamente la vista de receta y muestre la selección de comidas.
+1. **Ingredientes en las recetas:**
+   - **Problema:** Solo aparecían los ingredientes seleccionados.
+   - **Solución:** Ahora cada receta incluye **tanto los ingredientes seleccionados como los necesarios** para prepararla (ej: si seleccionas "pollo" y "espinacas" para un almuerzo, la receta incluirá también "aceite de oliva", "sal", etc.).
 
-2. **Guardar receta en Firebase:**
-   - **Problema:** Requería confirmación y no volvía a la pantalla principal.
-   - **Solución:** Guardar automáticamente en Firebase y redirigir a la pantalla principal sin alertas.
+2. **Menú diario:**
+   - **Problema:** Los ingredientes seleccionados aparecían en todas las recetas.
+   - **Solución:** Los ingredientes se **distribuyen entre las 3 comidas** (desayuno, almuerzo, cena) de forma lógica.
 
-3. **Recientes al refrescar la página:**
-   - **Problema:** No se cargaban las recetas recientes al refrescar.
-   - **Solución:** Cargar las recetas desde Firebase al iniciar la página y guardarlas en `todasLasRecetas`.
+3. **Guardar menú completo:**
+   - **Problema:** Se guardaba como una sola receta.
+   - **Solución:** Ahora se guardan **3 recetas separadas** (una por comida) en Firebase, cada una con su tipo ("desayuno", "almuerzo", "cena").
 
-4. **Botón "Menú del Día":**
-   - **Problema:** No generaba un menú completo (desayuno, almuerzo, cena).
-   - **Solución:** Asegurar que el prompt para "menú completo del día" genere **3 recetas distintas** (una para cada comida).
-
-5. **Ingredientes seleccionados en la receta:**
-   - **Problema:** Aparecían en la lista pero no se usaban en la receta generada.
-   - **Solución:** Modificar el `generateMockRecipe` para que **integre los ingredientes seleccionados** en las recetas de ejemplo.
+4. **Modal de recientes:**
+   - **Problema:** No se podían borrar recetas.
+   - **Solución:** Añadí un **botón de borrar (🗑️)** para cada receta en el modal de recientes.
 
 ---
 
 ---
 
-### **📄 Código final corregido:**
+### **📄 Código final con todas las correcciones:**
 
 
 
@@ -495,10 +491,21 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
             margin-bottom: 0.7rem;
             cursor: pointer;
             transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         #recientesModal .recent-item:hover { background: var(--border); }
-        #recientesModal .recent-item h4 { margin: 0 0 0.3rem; font-size: 0.95rem; }
-        #recientesModal .recent-item p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+        #recientesModal .recent-item .recent-info h4 { margin: 0 0 0.3rem; font-size: 0.95rem; }
+        #recientesModal .recent-item .recent-info p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+        #recientesModal .recent-item .delete-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 0.5rem;
+        }
 
         /* Menu Separator */
         .menu-separator {
@@ -876,54 +883,58 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                 : '';
 
             // Generar prompt según el modo y tipo de comida
-            const ingsText = `Ingredientes obligatorios: ${allIngs.join(', ')}.`;
+            const ingsText = `Ingredientes disponibles: ${allIngs.join(', ')}.`;
             const mealTypeText = getMealTypeText(selectedMeal);
 
             const prompt = isKetoMode
                 ? esMenu
-                    ? `Eres un Chef Keto Profesional. Crea un MENÚ KETO COMPLETO para el día (desayuno, almuerzo, cena) usando ${ingsText}
+                    ? `Eres un Chef Keto Profesional. Crea un MENÚ KETO COMPLETO para el día (desayuno, almuerzo, cena) usando los ingredientes disponibles: ${allIngs.join(', ')}.
                     ${mealTypeText}
                     ${variedad}
                     ${evitarText}
                     REGLAS:
                     1. Cada receta debe ser DISTINTA y adecuada para su momento del día (desayuno ligero, almuerzo sustancioso, cena ligera).
-                    2. Usa TODOS los ingredientes seleccionados en las recetas, distribuyéndolos entre las 3 comidas.
-                    3. Estructura HTML exacta:
+                    2. Distribuye los ingredientes disponibles entre las 3 comidas (no es necesario usar todos en cada receta).
+                    3. Añade otros ingredientes keto necesarios para completar las recetas (ej: huevos, aceite de oliva, especias, etc.).
+                    4. Estructura HTML exacta:
                     <h1>Menú Keto del Día</h1>
                     <section data-plato="Desayuno"><h2>Nombre del desayuno</h2><h3>Ingredientes</h3><ul><li>Ingrediente 1</li><li>Ingrediente 2</li></ul><h3>Instrucciones</h3><p>Paso 1: ...</p><h3>Información Nutricional</h3><table><tr><th>Nutriente</th><th>Cantidad</th></tr><tr><td>Calorías</td><td>X</td></tr><tr><td>Grasas</td><td>Xg</td></tr><tr><td>Proteínas</td><td>Xg</td></tr><tr><td>Carbohidratos Netos</td><td>Xg</td></tr></table></section>
                     <section data-plato="Almuerzo">...igual...</section>
                     <section data-plato="Cena">...igual...</section>
-                    4. Devuelve SOLO el HTML, sin texto adicional.`
-                    : `Eres un Chef Keto Profesional. Crea una receta KETO para ${selectedMeal} usando ${ingsText}
+                    5. Devuelve SOLO el HTML, sin texto adicional.`
+                    : `Eres un Chef Keto Profesional. Crea una receta KETO para ${selectedMeal} usando los ingredientes disponibles: ${allIngs.join(', ')}.
                     ${mealTypeText}
                     ${variedad}
                     ${evitarText}
                     REGLAS:
-                    1. La receta debe ser adecuada para ${selectedMeal} y usar TODOS los ingredientes seleccionados.
-                    2. Estructura HTML: <h2>Nombre del plato</h2><h3>Ingredientes</h3><ul><li>Ingrediente 1</li><li>Ingrediente 2</li></ul><h3>Instrucciones</h3><p>Paso 1: ...</p><h3>Información Nutricional</h3><table><tr><th>Nutriente</th><th>Cantidad</th></tr><tr><td>Calorías</td><td>X</td></tr><tr><td>Grasas</td><td>Xg</td></tr><tr><td>Proteínas</td><td>Xg</td></tr><tr><td>Carbohidratos Netos</td><td>Xg</td></tr></table>
-                    3. Devuelve SOLO el HTML.`
+                    1. La receta debe ser adecuada para ${selectedMeal} y usar los ingredientes disponibles.
+                    2. Añade otros ingredientes keto necesarios para completar la receta (ej: huevos, aceite de oliva, especias, etc.).
+                    3. Estructura HTML: <h2>Nombre del plato</h2><h3>Ingredientes</h3><ul><li>Ingrediente 1</li><li>Ingrediente 2</li></ul><h3>Instrucciones</h3><p>Paso 1: ...</p><h3>Información Nutricional</h3><table><tr><th>Nutriente</th><th>Cantidad</th></tr><tr><td>Calorías</td><td>X</td></tr><tr><td>Grasas</td><td>Xg</td></tr><tr><td>Proteínas</td><td>Xg</td></tr><tr><td>Carbohidratos Netos</td><td>Xg</td></tr></table>
+                    4. Devuelve SOLO el HTML.`
                 : esMenu
-                    ? `Eres un Chef Profesional. Crea un MENÚ COMPLETO para el día (desayuno, almuerzo, cena) usando ${ingsText}
+                    ? `Eres un Chef Profesional. Crea un MENÚ COMPLETO para el día (desayuno, almuerzo, cena) usando los ingredientes disponibles: ${allIngs.join(', ')}.
                     ${mealTypeText}
                     ${variedad}
                     ${evitarText}
                     REGLAS:
                     1. Cada receta debe ser DISTINTA y adecuada para su momento del día (desayuno ligero, almuerzo sustancioso, cena ligera).
-                    2. Usa TODOS los ingredientes seleccionados en las recetas, distribuyéndolos entre las 3 comidas.
-                    3. Estructura HTML exacta:
+                    2. Distribuye los ingredientes disponibles entre las 3 comidas (no es necesario usar todos en cada receta).
+                    3. Añade otros ingredientes necesarios para completar las recetas (ej: arroz, pasta, pan, etc.).
+                    4. Estructura HTML exacta:
                     <h1>Menú del Día</h1>
                     <section data-plato="Desayuno"><h2>Nombre del desayuno</h2><h3>Ingredientes</h3><ul><li>Ingrediente 1</li><li>Ingrediente 2</li></ul><h3>Instrucciones</h3><p>Paso 1: ...</p><h3>Información Nutricional</h3><table><tr><th>Nutriente</th><th>Cantidad</th></tr><tr><td>Calorías</td><td>X</td></tr><tr><td>Grasas</td><td>Xg</td></tr><tr><td>Proteínas</td><td>Xg</td></tr><tr><td>Carbohidratos</td><td>Xg</td></tr></table></section>
                     <section data-plato="Almuerzo">...igual...</section>
                     <section data-plato="Cena">...igual...</section>
-                    4. Devuelve SOLO el HTML, sin texto adicional.`
-                    : `Eres un Chef Profesional. Crea una receta para ${selectedMeal} usando ${ingsText}
+                    5. Devuelve SOLO el HTML, sin texto adicional.`
+                    : `Eres un Chef Profesional. Crea una receta para ${selectedMeal} usando los ingredientes disponibles: ${allIngs.join(', ')}.
                     ${mealTypeText}
                     ${variedad}
                     ${evitarText}
                     REGLAS:
-                    1. La receta debe ser adecuada para ${selectedMeal} y usar TODOS los ingredientes seleccionados.
-                    2. Estructura HTML: <h2>Nombre del plato</h2><h3>Ingredientes</h3><ul><li>Ingrediente 1</li><li>Ingrediente 2</li></ul><h3>Instrucciones</h3><p>Paso 1: ...</p><h3>Información Nutricional</h3><table><tr><th>Nutriente</th><th>Cantidad</th></tr><tr><td>Calorías</td><td>X</td></tr><tr><td>Grasas</td><td>Xg</td></tr><tr><td>Proteínas</td><td>Xg</td></tr><tr><td>Carbohidratos</td><td>Xg</td></tr></table>
-                    3. Devuelve SOLO el HTML.`;
+                    1. La receta debe ser adecuada para ${selectedMeal} y usar los ingredientes disponibles.
+                    2. Añade otros ingredientes necesarios para completar la receta (ej: arroz, pasta, pan, etc.).
+                    3. Estructura HTML: <h2>Nombre del plato</h2><h3>Ingredientes</h3><ul><li>Ingrediente 1</li><li>Ingrediente 2</li></ul><h3>Instrucciones</h3><p>Paso 1: ...</p><h3>Información Nutricional</h3><table><tr><th>Nutriente</th><th>Cantidad</th></tr><tr><td>Calorías</td><td>X</td></tr><tr><td>Grasas</td><td>Xg</td></tr><tr><td>Proteínas</td><td>Xg</td></tr><tr><td>Carbohidratos</td><td>Xg</td></tr></table>
+                    4. Devuelve SOLO el HTML.`;
 
             // Llamada a la API (simulada aquí para el ejemplo)
             try {
@@ -949,7 +960,7 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
         // Texto específico para cada tipo de comida
         function getMealTypeText(meal) {
             const mealTexts = {
-                'desayuno': 'La receta debe ser típica para desayunar (ej: huevos, tostadas keto, batidos, tortillas, etc.).',
+                'desayuno': 'La receta debe ser típica para desayunar (ej: huevos, tostadas, batidos, tortillas, etc.).',
                 'almuerzo': 'La receta debe ser típica para almuerzo (ej: ensaladas, carnes, pescados, guisos, etc.).',
                 'cena': 'La receta debe ser típica para cenar (ej: sopas, cremas, tortillas, platos ligeros, etc.).',
                 'menú completo del día': 'Cada receta debe ser adecuada para su momento del día: desayuno ligero, almuerzo sustancioso, cena ligera.'
@@ -975,24 +986,38 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                              prompt.includes("almuerzo") ? "almuerzo" :
                              prompt.includes("cena") ? "cena" : "menú";
 
+            // Ingredientes adicionales necesarios para cada tipo de receta
+            const additionalIngredients = {
+                keto: {
+                    desayuno: ['2 huevos', '1 cucharada de mantequilla', 'sal y pimienta'],
+                    almuerzo: ['1 cucharada de aceite de oliva', 'sal y pimienta', 'especias al gusto'],
+                    cena: ['1 cucharada de aceite de oliva', 'sal y pimienta', 'hierbas frescas']
+                },
+                conventional: {
+                    desayuno: ['2 rebanadas de pan', '1 cucharada de mantequilla', '1 taza de café'],
+                    almuerzo: ['200g de arroz', '1 cucharada de aceite', 'sal y pimienta'],
+                    cena: ['1 porción de pasta', '1 cucharada de aceite', 'queso rallado']
+                }
+            };
+
             // Recetas de ejemplo para desayuno, almuerzo, cena (Keto y Convencional)
             const recipes = {
                 keto: {
                     desayuno: {
                         name: `Tortilla de ${ingredients[0] || 'espinacas'} y ${ingredients[1] || 'queso'}`,
-                        ingredients: ingredients,
+                        ingredients: [...ingredients, ...additionalIngredients.keto.desayuno],
                         instructions: `1. Bate 2 huevos con sal y pimienta. 2. Añade ${ingredients[0] || 'espinacas'} y ${ingredients[1] || 'queso'} picados. 3. Cocina en una sartén con mantequilla hasta que esté dorada.`,
                         nutrition: { calories: "400", fat: "30g", protein: "25g", carbs: "5g" }
                     },
                     almuerzo: {
                         name: `Ensalada de ${ingredients[0] || 'pollo'} con ${ingredients[1] || 'aguacate'}`,
-                        ingredients: ingredients,
+                        ingredients: [...ingredients, ...additionalIngredients.keto.almuerzo],
                         instructions: `1. Cocina ${ingredients[0] || 'el pollo'} a la plancha. 2. Corta ${ingredients[1] || 'el aguacate'} en cubos. 3. Mezcla con lechuga, aceite de oliva y limón.`,
                         nutrition: { calories: "500", fat: "35g", protein: "30g", carbs: "8g" }
                     },
                     cena: {
                         name: `Crema de ${ingredients[0] || 'brócoli'} con ${ingredients[1] || 'queso'}`,
-                        ingredients: ingredients,
+                        ingredients: [...ingredients, ...additionalIngredients.keto.cena],
                         instructions: `1. Hierve ${ingredients[0] || 'el brócoli'} hasta que esté tierno. 2. Tritura con caldo y ${ingredients[1] || 'queso'}. 3. Calienta y sirve.`,
                         nutrition: { calories: "350", fat: "25g", protein: "20g", carbs: "6g" }
                     }
@@ -1000,19 +1025,19 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                 conventional: {
                     desayuno: {
                         name: `Tostadas con ${ingredients[0] || 'mermelada'} y ${ingredients[1] || 'mantequilla'}`,
-                        ingredients: ingredients,
-                        instructions: `1. Tuesta 2 rebanadas de pan. 2. Unta ${ingredients[1] || 'mantequilla'} y ${ingredients[0] || 'mermelada'}. 3. Acompaña con café o té.`,
+                        ingredients: [...ingredients, ...additionalIngredients.conventional.desayuno],
+                        instructions: `1. Tuesta 2 rebanadas de pan. 2. Unta ${ingredients[1] || 'mantequilla'} y ${ingredients[0] || 'mermelada'}. 3. Acompaña con café.`,
                         nutrition: { calories: "400", fat: "10g", protein: "8g", carbs: "65g" }
                     },
                     almuerzo: {
                         name: `Pasta con ${ingredients[0] || 'pollo'} y ${ingredients[1] || 'tomate'}`,
-                        ingredients: ingredients,
+                        ingredients: [...ingredients, ...additionalIngredients.conventional.almuerzo],
                         instructions: `1. Hierve 200g de pasta. 2. Saltea ${ingredients[0] || 'el pollo'} con ${ingredients[1] || 'tomate'}. 3. Mezcla todo y sirve.`,
                         nutrition: { calories: "650", fat: "15g", protein: "35g", carbs: "90g" }
                     },
                     cena: {
                         name: `Pizza casera con ${ingredients[0] || 'queso'} y ${ingredients[1] || 'jamón'}`,
-                        ingredients: ingredients,
+                        ingredients: [...ingredients, ...additionalIngredients.conventional.cena],
                         instructions: `1. Extiende la masa de pizza. 2. Añade salsa de tomate, ${ingredients[0] || 'queso'} y ${ingredients[1] || 'jamón'}. 3. Hornea a 200°C durante 15 minutos.`,
                         nutrition: { calories: "700", fat: "25g", protein: "30g", carbs: "80g" }
                     }
@@ -1020,9 +1045,52 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
             };
 
             if (esMenu) {
-                const desayuno = isKeto ? recipes.keto.desayuno : recipes.conventional.desayuno;
-                const almuerzo = isKeto ? recipes.keto.almuerzo : recipes.conventional.almuerzo;
-                const cena = isKeto ? recipes.keto.cena : recipes.conventional.cena;
+                // Distribuir ingredientes entre las 3 comidas
+                const desayunoIngs = ingredients.slice(0, Math.ceil(ingredients.length / 3));
+                const almuerzoIngs = ingredients.slice(Math.ceil(ingredients.length / 3), Math.ceil(ingredients.length * 2 / 3));
+                const cenaIngs = ingredients.slice(Math.ceil(ingredients.length * 2 / 3));
+
+                const desayuno = isKeto
+                    ? {
+                        name: `Tortilla de ${desayunoIngs[0] || 'espinacas'}`,
+                        ingredients: [...desayunoIngs, ...additionalIngredients.keto.desayuno],
+                        instructions: `1. Bate 2 huevos con sal y pimienta. 2. Añade ${desayunoIngs[0] || 'espinacas'} picadas. 3. Cocina en una sartén con mantequilla.`,
+                        nutrition: { calories: "400", fat: "30g", protein: "25g", carbs: "5g" }
+                    }
+                    : {
+                        name: `Tostadas con ${desayunoIngs[0] || 'mermelada'}`,
+                        ingredients: [...desayunoIngs, ...additionalIngredients.conventional.desayuno],
+                        instructions: `1. Tuesta 2 rebanadas de pan. 2. Unta mantequilla y ${desayunoIngs[0] || 'mermelada'}. 3. Acompaña con café.`,
+                        nutrition: { calories: "400", fat: "10g", protein: "8g", carbs: "65g" }
+                    };
+
+                const almuerzo = isKeto
+                    ? {
+                        name: `Ensalada de ${almuerzoIngs[0] || 'pollo'}`,
+                        ingredients: [...almuerzoIngs, ...additionalIngredients.keto.almuerzo],
+                        instructions: `1. Cocina ${almuerzoIngs[0] || 'el pollo'} a la plancha. 2. Mezcla con lechuga y aceite de oliva.`,
+                        nutrition: { calories: "500", fat: "35g", protein: "30g", carbs: "8g" }
+                    }
+                    : {
+                        name: `Pasta con ${almuerzoIngs[0] || 'pollo'}`,
+                        ingredients: [...almuerzoIngs, ...additionalIngredients.conventional.almuerzo],
+                        instructions: `1. Hierve 200g de pasta. 2. Saltea ${almuerzoIngs[0] || 'el pollo'}. 3. Mezcla con salsa de tomate.`,
+                        nutrition: { calories: "650", fat: "15g", protein: "35g", carbs: "90g" }
+                    };
+
+                const cena = isKeto
+                    ? {
+                        name: `Crema de ${cenaIngs[0] || 'brócoli'}`,
+                        ingredients: [...cenaIngs, ...additionalIngredients.keto.cena],
+                        instructions: `1. Hierve ${cenaIngs[0] || 'el brócoli'}. 2. Tritura con caldo. 3. Añade queso y sirve.`,
+                        nutrition: { calories: "350", fat: "25g", protein: "20g", carbs: "6g" }
+                    }
+                    : {
+                        name: `Pizza con ${cenaIngs[0] || 'queso'}`,
+                        ingredients: [...cenaIngs, ...additionalIngredients.conventional.cena],
+                        instructions: `1. Extiende la masa. 2. Añade salsa y ${cenaIngs[0] || 'queso'}. 3. Hornea a 200°C.`,
+                        nutrition: { calories: "700", fat: "25g", protein: "30g", carbs: "80g" }
+                    };
 
                 return `
                     <h1>${isKeto ? 'Menú Keto' : 'Menú Convencional'} del Día</h1>
@@ -1138,16 +1206,37 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
             }
 
             // Guardar en el historial temporal
-            const recipeData = {
-                titulo: esMenu ? `${isKetoMode ? 'Menú Keto' : 'Menú Convencional'} del Día` : document.querySelector('#recipeContent h2')?.textContent || 'Receta sin título',
-                html: html,
-                tipo: selectedMeal,
-                modo: isKetoMode ? 'Keto' : 'Convencional',
-                fecha: new Date().toISOString(),
-                ingredientes: ingredients
-            };
-            todasLasRecetas.unshift(recipeData);
-            if (todasLasRecetas.length > 50) todasLasRecetas.pop();
+            if (esMenu) {
+                // Para menú completo, guardar cada receta por separado
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                const sections = tempDiv.querySelectorAll('section[data-plato]');
+
+                sections.forEach(section => {
+                    const plato = section.getAttribute('data-plato');
+                    const recipeData = {
+                        titulo: section.querySelector('h2')?.textContent || `Receta de ${plato}`,
+                        html: section.outerHTML,
+                        tipo: plato.toLowerCase(),
+                        modo: isKetoMode ? 'Keto' : 'Convencional',
+                        fecha: new Date().toISOString(),
+                        ingredientes: Array.from(section.querySelectorAll('ul li')).map(li => li.textContent)
+                    };
+                    todasLasRecetas.unshift(recipeData);
+                });
+            } else {
+                const recipeData = {
+                    titulo: document.querySelector('#recipeContent h2')?.textContent || 'Receta sin título',
+                    html: html,
+                    tipo: selectedMeal,
+                    modo: isKetoMode ? 'Keto' : 'Convencional',
+                    fecha: new Date().toISOString(),
+                    ingredientes: ingredients
+                };
+                todasLasRecetas.unshift(recipeData);
+            }
+
+            if (todasLasRecetas.length > 50) todasLasRecetas = todasLasRecetas.slice(0, 50);
         }
 
         // Guardar en Firebase y volver a la pantalla principal
@@ -1157,44 +1246,91 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                 return;
             }
 
-            const recipeData = todasLasRecetas[0];
+            const recipesToSave = esMenu ? todasLasRecetas.slice(0, 3) : [todasLasRecetas[0]];
             const path = isKetoMode ? 'chef/recetas_keto' : 'chef/recetas_convencionales';
 
-            // Guardar en Firebase
-            db.ref(path).push({
-                titulo: recipeData.titulo,
-                html: recipeData.html,
-                tipo: recipeData.tipo,
-                modo: recipeData.modo,
-                fecha: recipeData.fecha,
-                ingredientes: recipeData.ingredientes
-            })
-            .then(() => {
-                resetUI(); // Volver a la pantalla principal sin alerta
-            })
-            .catch(error => {
-                console.error('Error al guardar en Firebase:', error);
-                alert('Error al guardar la receta. Revisa la consola para más detalles.');
+            // Guardar cada receta individualmente
+            recipesToSave.forEach(recipeData => {
+                db.ref(path).push({
+                    titulo: recipeData.titulo,
+                    html: recipeData.html,
+                    tipo: recipeData.tipo,
+                    modo: recipeData.modo,
+                    fecha: recipeData.fecha,
+                    ingredientes: recipeData.ingredientes
+                });
             });
+
+            resetUI();
         }
 
         // —— EXPORT TO PDF ——
-        function exportToPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+       // —— EXPORT TO PDF ——
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-            const title = document.querySelector('#recipeContent h1')?.textContent ||
-                          document.querySelector('#recipeContent h2')?.textContent ||
-                          'Receta';
+    // Obtener el título de la receta
+    const title = document.querySelector('#recipeContent h1')?.textContent ||
+                 document.querySelector('#recipeContent h2')?.textContent ||
+                 'Receta';
 
-            doc.setFontSize(20);
-            doc.text(title, 105, 20, { align: 'center' });
+    // Configurar el título en el PDF
+    doc.setFontSize(20);
+    doc.text(title, 105, 20, { align: 'center' });
 
-            const content = document.getElementById('recipeContent');
-            doc.autoTable({ html: content, startY: 30 });
+    // Obtener el contenido de la receta
+    const content = document.getElementById('recipeContent');
 
-            doc.save(`receta_${isKetoMode ? 'keto' : 'convencional'}_${Date.now()}.pdf`);
+    // Extraer el texto de cada sección (h2, h3, p, ul, table)
+    const sections = content.querySelectorAll('h2, h3, p, ul, table');
+    let yPosition = 30;
+
+    sections.forEach(section => {
+        if (section.tagName === 'H2') {
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.text(section.textContent, 15, yPosition);
+            yPosition += 10;
+        } else if (section.tagName === 'H3') {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(section.textContent, 15, yPosition);
+            yPosition += 10;
+        } else if (section.tagName === 'P') {
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            const lines = doc.splitTextToSize(section.textContent, 180);
+            lines.forEach(line => {
+                doc.text(line, 15, yPosition);
+                yPosition += 7;
+            });
+            yPosition += 5;
+        } else if (section.tagName === 'UL') {
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            const items = section.querySelectorAll('li');
+            items.forEach(item => {
+                doc.text(`• ${item.textContent}`, 15, yPosition);
+                yPosition += 7;
+            });
+            yPosition += 5;
+        } else if (section.tagName === 'TABLE') {
+            // Usar jspdf-autotable para las tablas
+            doc.autoTable({
+                html: section,
+                startY: yPosition,
+                headStyles: { fillColor: [22, 78, 99] },
+                bodyStyles: { fillColor: [255, 255, 255] },
+                margin: { left: 15 },
+            });
+            yPosition = doc.lastAutoTable.finalY + 10;
         }
+    });
+
+    // Guardar el PDF
+    doc.save(`receta_${isKetoMode ? 'keto' : 'convencional'}_${Date.now()}.pdf`);
+}
 
         // —— RENDER RECIENTES ——
         function renderRecientes() {
@@ -1204,16 +1340,48 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                 list.innerHTML = '<p style="text-align: center; color: var(--text-muted);">No hay recetas recientes.</p>';
                 return;
             }
+
+            // Ordenar por fecha (más recientes primero)
+            todasLasRecetas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
             todasLasRecetas.slice(0, 20).forEach((receta, idx) => {
                 const item = document.createElement('div');
                 item.className = 'recent-item';
                 item.innerHTML = `
-                    <h4>${receta.titulo}</h4>
-                    <p>${receta.tipo} • ${new Date(receta.fecha).toLocaleDateString()} • ${receta.modo}</p>
+                    <div class="recent-info">
+                        <h4>${receta.titulo}</h4>
+                        <p>${receta.tipo} • ${new Date(receta.fecha).toLocaleDateString()} • ${receta.modo}</p>
+                    </div>
+                    <button class="delete-btn" onclick="deleteReceta(${idx}, event)">🗑️</button>
                 `;
-                item.onclick = () => loadRecentRecipe(idx);
+                item.onclick = (e) => {
+                    if (e.target.classList.contains('delete-btn')) return;
+                    loadRecentRecipe(idx);
+                };
                 list.appendChild(item);
             });
+        }
+
+        // Borrar una receta del historial
+        function deleteReceta(idx, event) {
+            event.stopPropagation();
+            const receta = todasLasRecetas[idx];
+            if (!receta) return;
+
+            // Borrar de Firebase
+            const path = receta.modo === 'Keto' ? 'chef/recetas_keto' : 'chef/recetas_convencionales';
+            db.ref(path).once('value', snapshot => {
+                snapshot.forEach(childSnapshot => {
+                    if (childSnapshot.val().titulo === receta.titulo &&
+                        childSnapshot.val().fecha === receta.fecha) {
+                        childSnapshot.ref.remove();
+                    }
+                });
+            });
+
+            // Borrar del array local
+            todasLasRecetas.splice(idx, 1);
+            renderRecientes();
         }
 
         // Cargar recetas desde Firebase al iniciar
@@ -1223,7 +1391,7 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                 snapshot.forEach(childSnapshot => {
                     const receta = childSnapshot.val();
                     receta.modo = 'Keto';
-                    todasLasRecetas.unshift(receta);
+                    todasLasRecetas.push(receta);
                 });
                 renderRecientes();
             });
@@ -1233,7 +1401,7 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
                 snapshot.forEach(childSnapshot => {
                     const receta = childSnapshot.val();
                     receta.modo = 'Convencional';
-                    todasLasRecetas.unshift(receta);
+                    todasLasRecetas.push(receta);
                 });
                 renderRecientes();
             });
@@ -1277,5 +1445,3 @@ Vamos a solucionar **todos los problemas** que mencionas en una sola versión. A
 </body>
 </html>
 
-
-------
