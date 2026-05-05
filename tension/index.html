@@ -221,69 +221,81 @@
   .lectura-card {
     background: var(--card);
     border-radius: var(--radius-sm);
-    padding: 14px 16px;
+    padding: 10px 10px 10px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 6px;
     box-shadow: 0 2px 8px rgba(15,37,71,0.06);
     border-left: 4px solid var(--border);
     transition: all 0.2s;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .lectura-card.ok { border-left-color: var(--green); }
   .lectura-card.alto { border-left-color: var(--red); }
 
-  .lectura-left { display: flex; align-items: center; gap: 12px; }
-  .lectura-momento { font-size: 20px; }
+  .lectura-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+  .lectura-momento { font-size: 18px; flex-shrink: 0; }
 
+  .lectura-info { min-width: 0; }
   .lectura-info .fecha {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     font-weight: 500;
+    white-space: nowrap;
   }
 
   .lectura-info .momento-name {
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text);
+    white-space: nowrap;
   }
 
   .lectura-vals {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
+    flex-shrink: 0;
   }
 
   .val-badge {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.05rem;
+    font-size: 0.85rem;
     font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 3px;
-    padding: 4px 10px;
+    gap: 2px;
+    padding: 4px 6px;
     border-radius: 8px;
     background: var(--bg);
+    white-space: nowrap;
   }
 
-  .val-badge .arrow { font-size: 0.75rem; }
+  .val-badge .arrow { font-size: 0.65rem; }
   .val-badge.sis { color: var(--navy); }
   .val-badge.dia { color: var(--blue); }
   .val-badge.sis.alto { color: var(--red); background: var(--red-light); }
   .val-badge.dia.alto { color: var(--red); background: var(--red-light); }
 
-  .val-sep { color: var(--text-muted); font-size: 1.2rem; }
+  .val-sep { color: var(--text-muted); font-size: 0.9rem; }
 
   .btn-delete-lectura {
     background: none;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
+    font-size: 15px;
+    padding: 5px;
     border-radius: 6px;
     transition: all 0.2s;
-    margin-left: 6px;
+    flex-shrink: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .btn-delete-lectura:hover { color: var(--red); background: var(--red-light); }
 
@@ -1085,7 +1097,7 @@ function generarInforme() {
   doc.setFontSize(9);
   doc.text(`Valores de referencia: Sistolica <= ${config.sis} mmHg | Diastolica <= ${config.dia} mmHg`, 14, 34);
 
-  const moments = { manana: 'Manana', tarde: 'Tarde', noche: 'Noche' };
+  const moments = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche' };
   const rows = filtradas.map(d => {
     const sisAlto = d.sis > config.sis;
     const diaAlto = d.dia > config.dia;
