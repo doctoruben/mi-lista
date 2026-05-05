@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiTensión PRO</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+
+<!-- Librerías -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+
+<style>
+body{font-family:Arial;margin:0;background:#eef2f7}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px;background:white}
+h1{margin:0}
+button{padding:10px;border:none;border-radius:10px;background:#4f46e5;color:white;cursor:pointer}
+.card{background:white;margin:10px;padding:10px;border-radius:12px}
+.row{display:flex;gap:10px}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center}
+.modal-content{background:white;padding:20px;border-radius:12px;width:90%;max-width:400px}
+input{width:100%;padding:8px;margin:5px 0}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{padding:10px;background:white;border-radius:8px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="top">
+<h1>MiTensión</h1>
+<button onclick="openModal('config')">⚙️</button>
+</div>
+
+<div class="card row">
+<button onclick="openInput('mañana')">⏰</button>
+<button onclick="openInput('tarde')">☀️</button>
+<button onclick="openInput('noche')">🌙</button>
+</div>
+
+<div class="row" style="padding:10px">
+<button onclick="openCalendar()">📅</button>
+<button onclick="generateReport()">📄</button>
+<button onclick="openCharts()">📊</button>
+</div>
+
+<!-- CONFIG -->
+<div id="config" class="modal"><div class="modal-content">
+<h3>Configuración</h3>
+⬆️ <input id="refSys" type="number">
+⬇️ <input id="refDia" type="number">
+<button onclick="saveConfig()">Guardar</button>
+</div></div>
+
+<!-- INPUT -->
+<div id="input" class="modal"><div class="modal-content">
+<h3 id="inputTitle"></h3>
+⬆️ <input id="sys">
+⬇️ <input id="dia">
+📅 <input id="date" type="date">
+<button onclick="saveData()">Guardar</button>
+</div></div>
+
+<!-- CALENDARIO -->
+<div id="calendarModal" class="modal"><div class="modal-content">
+<h3>Calendario</h3>
+<div class="row">
+<button onclick="changeMonth(-1)">⬅️</button>
+<button onclick="changeMonth(1)">➡️</button>
+</div>
+<div id="calendar" class="calendar"></div>
+</div></div>
+
+<!-- CHARTS -->
+<div id="chartsModal" class="modal"><div class="modal-content">
+<h3>Gráficas</h3>
+<div id="chartsContainer">
+<canvas id="mSys"></canvas>
+<canvas id="mDia"></canvas>
+<canvas id="tSys"></canvas>
+<canvas id="tDia"></canvas>
+<canvas id="nSys"></canvas>
+<canvas id="nDia"></canvas>
+</div>
+<button onclick="exportCharts()">Exportar PDF</button>
+</div></div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",databaseURL:"https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+let data=[];
+let refs={sys:130,dia:80};
+let currentType=null;
+let currentMonth=new Date();
+
+function openModal(id){document.getElementById(id).style.display='flex'}
+window.onclick=e=>{if(e.target.classList.contains('modal'))e.target.style.display='none'}
+
+function openInput(type){currentType=type;inputTitle.innerText=type;date.value=new Date().toISOString().split('T')[0];openModal('input')}
+
+function saveData(){db.ref('tension').push({sys:+sys.value,dia:+dia.value,date:date.value,type:currentType})}
+
+function saveConfig(){refs.sys=+refSys.value;refs.dia=+refDia.value;db.ref('config').set(refs)}
+
+// LOAD
+db.ref('tension').on('value',s=>{data=s.val()?Object.values(s.val()):[];drawCharts();drawCalendar()})
+db.ref('config').on('value',s=>{if(s.val()){refs=s.val();refSys.value=refs.sys;refDia.value=refs.dia}})
+
+// CALENDARIO
+function openCalendar(){openModal('calendarModal');drawCalendar()}
+function changeMonth(n){currentMonth.setMonth(currentMonth.getMonth()+n);drawCalendar()}
+
+function drawCalendar(){
+const cal=document.getElementById('calendar'); if(!cal) return;
+cal.innerHTML='';
+let y=currentMonth.getFullYear(); let m=currentMonth.getMonth();
+let days=new Date(y,m+1,0).getDate();
+for(let d=1;d<=days;d++){
+let dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+let dayData=data.filter(x=>x.date===dateStr);
+let avgSys=dayData.length?dayData.reduce((a,b)=>a+b.sys,0)/dayData.length:0;
+let avgDia=dayData.length?dayData.reduce((a,b)=>a+b.dia,0)/dayData.length:0;
+let ok=(avgSys<=refs.sys && avgDia<=refs.dia);
+let div=document.createElement('div');
+div.className='day';
+div.innerHTML=`${d}<br>${Math.round(avgSys)||''}/${Math.round(avgDia)||''}<br>${dayData.length?(ok?'✅':'❌'):''}`;
+cal.appendChild(div);
+}
+}
+
+// PDF
+function generateReport(){
+const doc=new jspdf.jsPDF();
+const rows=data.map(d=>[d.date,d.type,d.sys,d.dia]);
+doc.autoTable({head:[['Fecha','Tipo','Sys','Dia']],body:rows});
+doc.save('informe.pdf')}
+
+// CHARTS
+function openCharts(){openModal('chartsModal');drawCharts()}
+
+function makeChart(id,filter,key,limit){
+const ctx=document.getElementById(id);
+if(!ctx) return;
+const d=data.filter(x=>x.type===filter);
+new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.date),datasets:[{data:d.map(x=>x[key]),backgroundColor:d.map(x=>x[key]>limit?'red':'green')}]}})
+}
+
+function drawCharts(){
+makeChart('mSys','mañana','sys',refs.sys);
+makeChart('mDia','mañana','dia',refs.dia);
+makeChart('tSys','tarde','sys',refs.sys);
+makeChart('tDia','tarde','dia',refs.dia);
+makeChart('nSys','noche','sys',refs.sys);
+makeChart('nDia','noche','dia',refs.dia);
+}
+
+async function exportCharts(){
+const canvas=await html2canvas(document.getElementById('chartsContainer'));
+const img=canvas.toDataURL('image/png');
+const doc=new jspdf.jsPDF();
+doc.addImage(img,'PNG',10,10);
+doc.save('graficas.pdf')}
+</script>
+
+</body>
+</html>
