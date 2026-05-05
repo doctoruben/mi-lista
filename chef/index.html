@@ -50,7 +50,6 @@
         * { box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; background: var(--bg); margin: 0; color: var(--text); transition: background 0.3s, color 0.3s; min-height: 100vh; }
 
-        /* ——— NAVBAR ——— */
         .navbar {
             background: var(--card); padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(8px);
@@ -58,20 +57,15 @@
         .navbar-brand h2 { margin: 0; font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); }
         .nav-btns { display: flex; gap: 8px; align-items: center; }
         
-        /* ——— KETO TOGGLE ——— */
         .mode-toggle {
             display: flex; align-items: center; background: var(--chip-bg); padding: 4px; border-radius: 50px; cursor: pointer;
             border: 1px solid var(--border); margin-right: 8px;
         }
-        .mode-btn {
-            padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; transition: all 0.2s;
-        }
+        .mode-btn { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; transition: all 0.2s; }
         .mode-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(16,185,129,0.3); }
         .mode-btn:not(.active) { color: var(--text-muted); }
 
         .container { max-width: 680px; margin: 1.5rem auto; padding: 0 1rem; }
-
-        /* ——— RESTO DE ESTILOS (IGUALES A TU FUENTE) ——— */
         .section-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.8rem; }
         .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
         .btn-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.4rem 0.5rem; cursor: pointer; text-align: center; transition: all 0.2s; box-shadow: var(--shadow); }
@@ -107,7 +101,6 @@
         .hidden { display: none !important; }
         .nav-btn { background: var(--chip-bg); border: none; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
         .ing-tag { display: flex; align-items: center; gap: 4px; background: var(--primary-light); color: var(--primary-dark); border-radius: 2rem; padding: 0.25rem 0.7rem; font-size: 0.8rem; margin-top: 5px; }
-        .menu-plato-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 0.3rem; padding: 0.3rem 0.8rem; background: var(--primary-light); border-radius: 2rem; display: inline-block; }
     </style>
 </head>
 <body>
@@ -117,7 +110,7 @@
             <h2>MyChef 👨‍🍳</h2>
         </div>
         <div class="nav-btns">
-            <!-- TOGGLE MODO KETO/CONVENCIONAL -->
+            <!-- Selector de modo -->
             <div class="mode-toggle" onclick="toggleKetoMode()">
                 <div id="modeKeto" class="mode-btn active">Keto</div>
                 <div id="modeConv" class="mode-btn">Conv.</div>
@@ -129,85 +122,69 @@
     </nav>
 
     <div class="container">
-
-        <!-- PASO 1: Selección de comida -->
         <div id="selectionArea">
             <p class="section-label">¿Qué comida necesitas?</p>
             <div class="menu-grid">
-                <button class="btn-card" onclick="selectMeal('desayuno', this)">
-                    <span>🍳</span><h3>Desayuno</h3>
-                </button>
-                <button class="btn-card" onclick="selectMeal('almuerzo', this)">
-                    <span>🥗</span><h3>Almuerzo</h3>
-                </button>
-                <button class="btn-card" onclick="selectMeal('cena', this)">
-                    <span>🌙</span><h3>Cena</h3>
-                </button>
+                <button class="btn-card" onclick="selectMeal('desayuno', this)"><span>🍳</span><h3>Desayuno</h3></button>
+                <button class="btn-card" onclick="selectMeal('almuerzo', this)"><span>🥗</span><h3>Almuerzo</h3></button>
+                <button class="btn-card" onclick="selectMeal('cena', this)"><span>🌙</span><h3>Cena</h3></button>
             </div>
             <button class="btn-full" onclick="selectMeal('menú completo del día', null)">📅 Menú Diario Completo</button>
         </div>
 
-        <!-- PASO 2: Ingredientes -->
         <div id="ingredientStep" class="hidden">
-            <p class="section-label" id="stepTitle">Personaliza tu receta</p>
-
+            <p class="section-label">Personaliza tu receta</p>
             <div class="ing-card">
                 <p class="ing-card-title">🥩 Proteínas</p>
                 <div class="chips-wrap" id="chips-proteinas"></div>
             </div>
-
+            <!-- Carbohidratos: Solo visibles en modo Convencional -->
             <div class="ing-card" id="card-carbohidratos">
                 <p class="ing-card-title">🍚 Carbohidratos</p>
                 <div class="chips-wrap" id="chips-carbohidratos"></div>
             </div>
-
             <div class="ing-card">
                 <p class="ing-card-title">🥦 Verduras</p>
                 <div class="chips-wrap" id="chips-verduras"></div>
             </div>
-
             <div class="ing-card">
                 <p class="ing-card-title">➕ Añadir ingrediente libre</p>
                 <div class="custom-ing-wrap">
-                    <input class="custom-ing-input" type="text" id="customIngInput" placeholder="ej. jengibre, pasta..." onkeydown="if(event.key==='Enter') addCustomIng()">
+                    <input class="custom-ing-input" type="text" id="customIngInput" placeholder="ej. jengibre..." onkeydown="if(event.key==='Enter') addCustomIng()">
                     <button class="custom-ing-btn" onclick="addCustomIng()">+</button>
                 </div>
                 <div class="selected-ings-wrap" id="customIngTags"></div>
             </div>
-
             <div class="step-nav">
                 <button class="btn-back" onclick="goBackToSelection()">← Volver</button>
                 <button class="btn-generate" onclick="generateRecipe()">✨ Generar Receta</button>
             </div>
         </div>
 
-        <!-- LOADER -->
         <div id="loading" class="hidden">
             <div class="loader-wrap">
                 <div class="loader"></div>
-                <p class="loader-text" id="loaderText">Cocinando tu receta...</p>
+                <p class="loader-text" id="loaderText">Cocinando...</p>
             </div>
         </div>
 
-        <!-- RESULTADO -->
         <div id="recipeResult" class="hidden">
             <div class="recipe-box" id="printArea">
                 <div id="recipeContent"></div>
             </div>
             <div class="result-actions">
-                <button class="btn-pdf" onclick="exportToPDF()">⬇ Exportar PDF</button>
+                <button class="btn-pdf" onclick="exportToPDF()">⬇ PDF</button>
                 <button class="btn-icon" onclick="copyRecipe()">📋</button>
                 <button class="btn-icon" onclick="resetUI()">↩</button>
             </div>
         </div>
     </div>
 
-    <!-- MODALES (CONFIGURACION Y RECIENTES) -->
+    <!-- Modales -->
     <div id="configModal" class="modal hidden">
         <div class="modal-content">
             <h3>Ajustes de API</h3>
             <input type="password" id="gemKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:10px;">
-            <input type="password" id="groKey" placeholder="Groq API Key" style="width:100%; margin-bottom:10px; padding:10px;">
             <button class="btn-generate" style="width:100%" onclick="saveKeys()">Guardar</button>
             <button class="btn-back" style="width:100%; margin-top:10px;" onclick="toggleModal(false)">Cerrar</button>
         </div>
@@ -215,14 +192,13 @@
 
     <div id="recientesModal" class="modal hidden">
         <div class="modal-content">
-            <h3>Recetas Recientes</h3>
+            <h3>Historial MyChef</h3>
             <div id="listaRecientes"></div>
             <button class="btn-back" style="width:100%; margin-top:10px;" onclick="closeRecientes()">Cerrar</button>
         </div>
     </div>
 
     <script>
-        // ——— FIREBASE ———
         const firebaseConfig = {
             apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
             authDomain: "lista-compra-9d6f5.firebaseapp.com",
@@ -235,44 +211,30 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ——— STATE ———
-        let ketoMode = true; // Por defecto modo Keto activado
+        let ketoMode = true;
         let selectedMeal = null;
         let selectedChips = new Set();
         let customIngredients = [];
-        let todasLasRecetas = [];
 
         const INGREDIENTS = {
-            proteinas: ['Pollo','Salmón','Ternera','Cerdo','Huevos','Gambas','Pavo','Bacon','Tofu'],
-            verduras: ['Espinacas','Brócoli','Aguacate','Calabacín','Pimiento','Espárragos','Champiñones','Tomate'],
-            carbohidratos: ['Arroz','Pasta','Patatas','Legumbres','Pan','Quinoa','Cuscús','Tortilla trigo']
+            proteinas: ['Pollo','Salmón','Ternera','Cerdo','Huevos','Gambas','Pavo','Lomo'],
+            verduras: ['Espinacas','Brócoli','Aguacate','Calabacín','Pimiento','Espárragos','Setas'],
+            carbohidratos: ['Arroz','Pasta','Patatas','Legumbres','Pan','Cuscús','Quinoa']
         };
 
-        // ——— MODO KETO / CONVENCIONAL ———
         function toggleKetoMode() {
             ketoMode = !ketoMode;
             document.getElementById('modeKeto').classList.toggle('active', ketoMode);
             document.getElementById('modeConv').classList.toggle('active', !ketoMode);
-            
-            // Si estamos en el paso de ingredientes, refrescamos la vista
-            if(!document.getElementById('ingredientStep').classList.contains('hidden')) {
-                renderChips();
-            }
+            if(!document.getElementById('ingredientStep').classList.contains('hidden')) renderChips();
         }
 
         function renderChips() {
-            // Render Proteinas
             renderCat('proteinas', INGREDIENTS.proteinas);
-            // Render Verduras
             renderCat('verduras', INGREDIENTS.verduras);
-            // Mostrar/Ocultar Carbohidratos según modo
             const carbCard = document.getElementById('card-carbohidratos');
-            if (ketoMode) {
-                carbCard.classList.add('hidden');
-            } else {
-                carbCard.classList.remove('hidden');
-                renderCat('carbohidratos', INGREDIENTS.carbohidratos);
-            }
+            if (ketoMode) carbCard.classList.add('hidden');
+            else { carbCard.classList.remove('hidden'); renderCat('carbohidratos', INGREDIENTS.carbohidratos); }
         }
 
         function renderCat(id, items) {
@@ -291,7 +253,6 @@
             });
         }
 
-        // ——— LÓGICA DE NAVEGACIÓN ———
         window.selectMeal = (tipo, card) => {
             selectedMeal = tipo;
             document.querySelectorAll('.btn-card').forEach(c => c.classList.remove('selected'));
@@ -301,113 +262,79 @@
             renderChips();
         };
 
-        window.goBackToSelection = () => {
-            document.getElementById('ingredientStep').classList.add('hidden');
-            document.getElementById('selectionArea').classList.remove('hidden');
-        };
-
-        window.resetUI = () => {
-            location.reload();
-        };
-
-        // ——— GENERACIÓN CON IA ———
         window.generateRecipe = async function() {
             const gKey = localStorage.getItem('G_KEY');
-            const qKey = localStorage.getItem('Q_KEY');
-            if (!gKey && !qKey) return toggleModal(true);
+            if (!gKey) return toggleModal(true);
 
             document.getElementById('ingredientStep').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('loaderText').textContent = ketoMode ? "Cocinando receta Keto..." : "Cocinando receta convencional...";
 
             const allIngs = [...selectedChips, ...customIngredients].join(', ');
-            const esMenu = selectedMeal === 'menú completo del día';
-
-            // PROMPT DINÁMICO
-            let systemRole = ketoMode 
-                ? "Eres un Chef Profesional experto en Dieta Cetogénica (Keto)." 
-                : "Eres un Chef de cocina internacional experto en gastronomía convencional.";
             
-            let dietConstraint = ketoMode
-                ? "REGLA CRÍTICA: La receta debe ser estrictamente KETO (muy baja en carbohidratos, nada de azúcar, harinas de cereal, legumbres o tubérculos)."
-                : "REGLA: No tienes restricciones de dieta. Puedes usar harinas, arroces, pastas y azúcares si lo deseas para hacer un plato delicioso y completo.";
+            // Prompt mejorado para versión 2.5
+            const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. 
+            Genera una receta de ${selectedMeal} que sea ${ketoMode ? 'estrictamente Keto (sin carbos)' : 'convencional (amplía ingredientes y técnica)'}.
+            Ingredientes disponibles: ${allIngs}.
+            Responde ÚNICAMENTE con formato HTML válido (h2 para título, h3 para secciones, ul para lista, table para macros).`;
 
-            let prompt = `${systemRole} ${dietConstraint}
-                Crea ${esMenu ? 'un menú completo de 3 platos (desayuno, almuerzo, cena)' : 'una receta de ' + selectedMeal} 
-                usando preferiblemente estos ingredientes: ${allIngs}.
-                Si no hay ingredientes, elige tú unos deliciosos ${ketoMode ? 'keto' : 'variados'}.
-                Devuelve SOLO HTML limpio. Estructura: <h2>Nombre</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3> y una <table> con la Información Nutricional (Calorías, Grasas, Proteínas, Carbohidratos).`;
-
-            // LLAMADA A API (Similitud con tu código original)
-            let htmlResult = "";
             try {
+                // LLAMADA ESPECÍFICA A VERSIÓN 2.5
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
                 const res = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
+                
                 const data = await res.json();
-                htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+                if(data.error) throw new Error(data.error.message);
+
+                let htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|
+```/g, '').trim();
+
+                // Guardado en árbol "chef"
+                db.ref('chef/recetas').push({
+                    titulo: (ketoMode ? "[KETO] " : "[CONV] ") + selectedMeal,
+                    contenido: htmlResult,
+                    timestamp: Date.now()
+                });
+
+                document.getElementById('recipeContent').innerHTML = htmlResult;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('recipeResult').classList.remove('hidden');
             } catch (e) {
-                htmlResult = "<h2>Error al generar</h2><p>Revisa tu conexión o API Key.</p>";
+                alert("Error de API 2.5: " + e.message);
+                goBackToSelection();
+                document.getElementById('loading').classList.add('hidden');
             }
-
-            // GUARDAR EN FIREBASE (Nueva Regla "chef")
-            db.ref('chef/recetas').push({
-                titulo: "Receta " + (ketoMode ? "Keto" : "Convencional"),
-                contenido: htmlResult,
-                timestamp: Date.now(),
-                modo: ketoMode ? "Keto" : "Convencional"
-            });
-
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('recipeResult').classList.remove('hidden');
-            document.getElementById('recipeContent').innerHTML = htmlResult;
         };
 
-        // ——— UTILS ———
-        window.toggleModal = (s) => document.getElementById('configModal').classList.toggle('hidden', !s);
-        window.saveKeys = () => {
-            localStorage.setItem('G_KEY', document.getElementById('gemKey').value);
-            localStorage.setItem('Q_KEY', document.getElementById('groKey').value);
-            toggleModal(false);
-        };
         window.addCustomIng = () => {
-            const val = document.getElementById('customIngInput').value;
-            if(val) {
-                customIngredients.push(val);
-                renderCustomTags();
-                document.getElementById('customIngInput').value = '';
-            }
+            const i = document.getElementById('customIngInput');
+            if(i.value) { customIngredients.push(i.value); renderCustomTags(); i.value = ''; }
         };
+
         function renderCustomTags() {
-            const wrap = document.getElementById('customIngTags');
-            wrap.innerHTML = '';
+            const w = document.getElementById('customIngTags');
+            w.innerHTML = '';
             customIngredients.forEach(i => {
-                const t = document.createElement('span');
-                t.className = 'ing-tag';
-                t.textContent = i;
-                wrap.appendChild(t);
+                const s = document.createElement('span');
+                s.className = 'ing-tag'; s.textContent = i; w.appendChild(s);
             });
         }
-        function toggleDark() {
-            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', theme);
-        }
 
-        // ——— HISTORIAL ———
         window.openRecientes = async () => {
             document.getElementById('recientesModal').classList.remove('hidden');
             const list = document.getElementById('listaRecientes');
-            list.innerHTML = 'Cargando...';
-            const snap = await db.ref('chef/recetas').limitToLast(10).once('value');
+            list.innerHTML = 'Buscando recetas...';
+            // Lectura desde árbol "chef"
+            const snap = await db.ref('chef/recetas').limitToLast(15).once('value');
             list.innerHTML = '';
             snap.forEach(child => {
                 const r = child.val();
                 const d = document.createElement('div');
-                d.style.padding = "10px; border-bottom: 1px solid var(--border); cursor:pointer;";
-                d.innerHTML = `<strong>${r.modo}:</strong> Receta del ${new Date(r.timestamp).toLocaleDateString()}`;
+                d.style = "padding: 12px; border-bottom: 1px solid var(--border); cursor:pointer;";
+                d.innerHTML = `<strong>${r.titulo}</strong> <br> <small>${new Date(r.timestamp).toLocaleDateString()}</small>`;
                 d.onclick = () => {
                     document.getElementById('recipeContent').innerHTML = r.contenido;
                     document.getElementById('selectionArea').classList.add('hidden');
@@ -417,11 +344,15 @@
                 list.appendChild(d);
             });
         };
-        window.closeRecientes = () => document.getElementById('recientesModal').classList.add('hidden');
 
-        // Precarga de llaves
+        window.resetUI = () => location.reload();
+        window.goBackToSelection = () => { document.getElementById('ingredientStep').classList.add('hidden'); document.getElementById('selectionArea').classList.remove('hidden'); };
+        window.toggleModal = (s) => document.getElementById('configModal').classList.toggle('hidden', !s);
+        window.saveKeys = () => { localStorage.setItem('G_KEY', document.getElementById('gemKey').value); toggleModal(false); };
+        window.closeRecientes = () => document.getElementById('recientesModal').classList.add('hidden');
+        function toggleDark() { const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); }
+        
         document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
-        document.getElementById('groKey').value = localStorage.getItem('Q_KEY') || '';
     </script>
 </body>
 </html>
