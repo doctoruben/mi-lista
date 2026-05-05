@@ -279,7 +279,7 @@
             const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. Genera una receta de ${selectedMeal} que sea ${ketoMode ? 'estrictamente Keto' : 'convencional'}. Ingredientes: ${allIngs}. Responde ÚNICAMENTE con formato HTML (h2, h3, ul, table para macros).`;
 
             try {
-                const urlG = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
+                const urlG = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${gKey}`;
                 const res = await fetch(urlG, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
