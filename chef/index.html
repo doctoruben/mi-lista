@@ -179,15 +179,14 @@
     </div>
 
     <!-- Modales -->
-<div id="configModal" class="modal hidden">
-    <div class="modal-content">
-        <h3>Ajustes de API</h3>
-        <input type="password" id="gemKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:10px;">
-        <input type="password" id="groqKey" placeholder="Groq API Key (Respaldo)" style="width:100%; margin-bottom:10px; padding:10px;">
-        <button class="btn-generate" style="width:100%" onclick="saveKeys()">Guardar</button>
-        <button class="btn-back" style="width:100%; margin-top:10px;" onclick="toggleModal(false)">Cerrar</button>
-    </div>
-</div>
+    <div id="configModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Ajustes de API</h3>
+            <input type="password" id="gemKey" placeholder="Gemini API Key" style="width:100%; margin-bottom:10px; padding:10px;">
+            <input type="password" id="groqKey" placeholder="Groq API Key (Respaldo)" style="width:100%; margin-bottom:10px; padding:10px;">
+            <button class="btn-generate" style="width:100%" onclick="saveKeys()">Guardar</button>
+            <button class="btn-back" style="width:100%; margin-top:10px;" onclick="toggleModal(false)">Cerrar</button>
+        </div>
     </div>
 
     <div id="recientesModal" class="modal hidden">
@@ -266,80 +265,78 @@
             renderChips();
         };
 
-       window.generateRecipe = async function() {
-    const gKey = localStorage.getItem('G_KEY');
-    const groqKey = localStorage.getItem('GROQ_KEY'); // Necesitas guardar esta clave también
-    
-    if (!gKey) return toggleModal(true);
-
-    document.getElementById('ingredientStep').classList.add('hidden');
-    document.getElementById('loading').classList.remove('hidden');
-    document.getElementById('loaderText').innerText = "Cocinando con Gemini...";
-
-    const allIngs = [...selectedChips, ...customIngredients].join(', ');
-    const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. Genera una receta de ${selectedMeal} que sea ${ketoMode ? 'estrictamente Keto' : 'convencional'}. Ingredientes: ${allIngs}. Responde ÚNICAMENTE con formato HTML (h2, h3, ul, table para macros).`;
-
-    try {
-        // INTENTO 1: GEMINI
-        const urlG = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
-        const res = await fetch(urlG, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-        
-        const data = await res.json();
-        if (data.error) throw new Error("Gemini Error");
-
-        const htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
-        mostrarYGuardar(htmlResult);
-
-    } catch (e) {
-        console.log("Gemini falló, intentando Groq...");
-        if (!groqKey) {
-            alert("Gemini falló y no tienes configurada la clave de Groq.");
-            resetUI();
-            return;
-        }
-        
-        // INTENTO 2: GROQ (FALLBACK)
-        try {
-            document.getElementById('loaderText').innerText = "Gemini ocupado... Usando Groq 🚀";
-            const resGroq = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${groqKey}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: "llama3-70b-8192",
-                    messages: [{ role: "user", content: prompt }]
-                })
-            });
+        window.generateRecipe = async function() {
+            const gKey = localStorage.getItem('G_KEY');
+            const groqKey = localStorage.getItem('GROQ_KEY');
             
-            const dataGroq = await resGroq.json();
-            const htmlResult = dataGroq.choices[0].message.content.replace(/```html|
+            if (!gKey) return toggleModal(true);
+
+            document.getElementById('ingredientStep').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loaderText').innerText = "Cocinando con Gemini...";
+
+            const allIngs = [...selectedChips, ...customIngredients].join(', ');
+            const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. Genera una receta de ${selectedMeal} que sea ${ketoMode ? 'estrictamente Keto' : 'convencional'}. Ingredientes: ${allIngs}. Responde ÚNICAMENTE con formato HTML (h2, h3, ul, table para macros).`;
+
+            try {
+                const urlG = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
+                const res = await fetch(urlG, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                
+                const data = await res.json();
+                if (data.error) throw new Error("Gemini Error");
+
+                const htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|
 ```/g, '').trim();
-            mostrarYGuardar(htmlResult);
+                mostrarYGuardar(htmlResult);
 
-        } catch (errorGroq) {
-            alert("Ambos servicios fallaron. Revisa tu conexión o las API Keys.");
-            resetUI();
+            } catch (e) {
+                console.log("Gemini falló, intentando Groq...");
+                if (!groqKey) {
+                    alert("Gemini falló y no tienes clave de Groq.");
+                    resetUI();
+                    return;
+                }
+                
+                try {
+                    document.getElementById('loaderText').innerText = "Gemini ocupado... Usando Groq 🚀";
+                    const resGroq = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${groqKey}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            model: "llama3-70b-8192",
+                            messages: [{ role: "user", content: prompt }]
+                        })
+                    });
+                    
+                    const dataGroq = await resGroq.json();
+                    const htmlResult = dataGroq.choices[0].message.content.replace(/```html|```/g, '').trim();
+                    mostrarYGuardar(htmlResult);
+
+                } catch (errorGroq) {
+                    alert("Ambos servicios fallaron.");
+                    resetUI();
+                }
+            }
+        };
+
+        function mostrarYGuardar(html) {
+            db.ref('chef/recetas').push({
+                titulo: (ketoMode ? "[KETO] " : "[CONV] ") + selectedMeal,
+                contenido: html,
+                timestamp: Date.now()
+            });
+            document.getElementById('recipeContent').innerHTML = html;
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('recipeResult').classList.remove('hidden');
         }
-    }
-};
 
-// Función auxiliar para no repetir código de guardado
-function mostrarYGuardar(html) {
-    db.ref('chef/recetas').push({
-        titulo: (ketoMode ? "[KETO] " : "[CONV] ") + selectedMeal,
-        contenido: html,
-        timestamp: Date.now()
-    });
-    document.getElementById('recipeContent').innerHTML = html;
-    document.getElementById('loading').classList.add('hidden');
-    document.getElementById('recipeResult').classList.remove('hidden');
-}
         window.openRecientes = async () => {
             document.getElementById('recientesModal').classList.remove('hidden');
             const list = document.getElementById('listaRecientes');
@@ -397,15 +394,15 @@ function mostrarYGuardar(html) {
         window.resetUI = () => location.reload();
         window.goBackToSelection = () => { document.getElementById('ingredientStep').classList.add('hidden'); document.getElementById('selectionArea').classList.remove('hidden'); };
         window.toggleModal = (s) => document.getElementById('configModal').classList.toggle('hidden', !s);
-       window.saveKeys = () => { 
-    localStorage.setItem('G_KEY', document.getElementById('gemKey').value); 
-    localStorage.setItem('GROQ_KEY', document.getElementById('groqKey').value); 
-    toggleModal(false); 
-};
+        window.saveKeys = () => { 
+            localStorage.setItem('G_KEY', document.getElementById('gemKey').value); 
+            localStorage.setItem('GROQ_KEY', document.getElementById('groqKey').value); 
+            toggleModal(false); 
+        };
         window.closeRecientes = () => document.getElementById('recientesModal').classList.add('hidden');
         function toggleDark() { const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); }
         document.getElementById('gemKey').value = localStorage.getItem('G_KEY') || '';
-document.getElementById('groqKey').value = localStorage.getItem('GROQ_KEY') || '';
+        document.getElementById('groqKey').value = localStorage.getItem('GROQ_KEY') || '';
     </script>
 </body>
 </html>
