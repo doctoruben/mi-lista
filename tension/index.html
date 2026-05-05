@@ -3,170 +3,1278 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MiTensión PRO</title>
+<title>MiTensión</title>
+<meta name="theme-color" content="#0f2547">
+<link rel="manifest" href="data:application/json,{}">
 
 <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Librerías -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<!-- html2canvas for chart export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
-body{font-family:Arial;margin:0;background:#eef2f7}
-.top{display:flex;justify-content:space-between;align-items:center;padding:10px;background:white}
-h1{margin:0}
-button{padding:10px;border:none;border-radius:10px;background:#4f46e5;color:white;cursor:pointer}
-.card{background:white;margin:10px;padding:10px;border-radius:12px}
-.row{display:flex;gap:10px}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;justify-content:center;align-items:center}
-.modal-content{background:white;padding:20px;border-radius:12px;width:90%;max-width:400px}
-input{width:100%;padding:8px;margin:5px 0}
-.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.day{padding:10px;background:white;border-radius:8px;text-align:center}
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --navy: #0f2547;
+    --navy-light: #1a3a6e;
+    --blue: #2563eb;
+    --blue-light: #3b82f6;
+    --cyan: #06b6d4;
+    --red: #ef4444;
+    --red-light: #fee2e2;
+    --green: #22c55e;
+    --green-light: #dcfce7;
+    --yellow: #f59e0b;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 4px 24px rgba(15,37,71,0.10);
+    --shadow-lg: 0 8px 40px rgba(15,37,71,0.18);
+    --radius: 18px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.25);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo h1 {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.5px;
+  }
+
+  .logo h1 span { color: var(--cyan); }
+
+  .btn-gear {
+    background: rgba(255,255,255,0.1);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    color: white;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-gear:hover { background: rgba(255,255,255,0.2); transform: rotate(30deg); }
+
+  /* ── MAIN ── */
+  main { max-width: 600px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ── SECTION TITLES ── */
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  /* ── REGISTRO BUTTONS ── */
+  .registro-container {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .registro-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .registro-title::before {
+    content: '';
+    width: 4px; height: 20px;
+    background: linear-gradient(to bottom, var(--blue), var(--cyan));
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  .btn-moment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-moment {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .btn-moment:hover {
+    border-color: var(--blue);
+    background: #eff6ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37,99,235,0.15);
+  }
+
+  .btn-moment .moment-icon { font-size: 28px; }
+  .btn-moment .moment-label { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+
+  .btn-moment.manana:hover { border-color: #f59e0b; background: #fffbeb; }
+  .btn-moment.tarde:hover { border-color: #f97316; background: #fff7ed; }
+  .btn-moment.noche:hover { border-color: #8b5cf6; background: #f5f3ff; }
+
+  /* ── ACCIONES BUTTONS ── */
+  .acciones-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .btn-accion {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 18px 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .btn-accion:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn-accion .accion-icon { font-size: 26px; }
+  .btn-accion .accion-label { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
+
+  .btn-accion.cal:hover { border-color: var(--cyan); }
+  .btn-accion.inf:hover { border-color: var(--blue); }
+  .btn-accion.graf:hover { border-color: var(--green); }
+
+  /* ── ÚLTIMAS LECTURAS ── */
+  .lecturas-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .lectura-card {
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(15,37,71,0.06);
+    border-left: 4px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .lectura-card.ok { border-left-color: var(--green); }
+  .lectura-card.alto { border-left-color: var(--red); }
+
+  .lectura-left { display: flex; align-items: center; gap: 12px; }
+  .lectura-momento { font-size: 20px; }
+
+  .lectura-info .fecha {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .lectura-info .momento-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .lectura-vals {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .val-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--bg);
+  }
+
+  .val-badge .arrow { font-size: 0.75rem; }
+  .val-badge.sis { color: var(--navy); }
+  .val-badge.dia { color: var(--blue); }
+  .val-badge.sis.alto { color: var(--red); background: var(--red-light); }
+  .val-badge.dia.alto { color: var(--red); background: var(--red-light); }
+
+  .val-sep { color: var(--text-muted); font-size: 1.2rem; }
+
+  .btn-delete-lectura {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-left: 6px;
+  }
+  .btn-delete-lectura:hover { color: var(--red); background: var(--red-light); }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,37,71,0.55);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease;
+  }
+
+  .modal.wide { max-width: 700px; }
+
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    padding: 20px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-close {
+    background: var(--bg);
+    border: none;
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .btn-close:hover { background: var(--red-light); color: var(--red); }
+
+  .modal-body { padding: 20px 24px 24px; }
+
+  /* ── FORM ELEMENTS ── */
+  .form-group { margin-bottom: 18px; }
+
+  .form-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .form-input:focus { border-color: var(--blue); background: white; }
+
+  .form-input.big {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ── BOTONES PRIMARIOS ── */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    padding: 12px 20px;
+    background: var(--bg);
+    color: var(--text);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--blue); background: #eff6ff; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--navy);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    z-index: 9999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── CALENDAR ── */
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .cal-nav h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: capitalize;
+  }
+
+  .btn-cal-nav {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    width: 36px; height: 36px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-cal-nav:hover { border-color: var(--blue); background: #eff6ff; }
+
+  .cal-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+
+  .cal-day-label {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 4px 0;
+    text-transform: uppercase;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .cal-cell {
+    border-radius: 8px;
+    padding: 6px 4px;
+    min-height: 64px;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    position: relative;
+  }
+
+  .cal-cell.empty { background: transparent; }
+  .cal-cell.today { background: #eff6ff; border: 2px solid var(--blue-light); }
+
+  .cal-day-num {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--navy);
+  }
+
+  .cal-vals {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+  }
+
+  .cal-ok { color: var(--green); font-size: 16px; }
+  .cal-ko { color: var(--red); font-size: 16px; }
+  .cal-sis { color: var(--navy); }
+  .cal-dia { color: var(--blue); }
+
+  /* ── CHARTS ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-card {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+
+  .chart-card h4 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .chart-card canvas { width: 100% !important; }
+
+  /* ── INFORME ── */
+  .informe-info {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+  }
+  .empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.9rem; }
+
+  /* Loader */
+  .loader {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 480px) {
+    .btn-moment-grid { gap: 8px; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<div class="top">
-<h1>MiTensión</h1>
-<button onclick="openModal('config')">⚙️</button>
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">❤️</div>
+    <h1>Mi<span>Tensión</span></h1>
+  </div>
+  <button class="btn-gear" onclick="openModal('modalConfig')" title="Configuración">⚙️</button>
+</header>
+
+<!-- MAIN -->
+<main>
+  <!-- REGISTRO -->
+  <p class="section-title">Registrar medición</p>
+  <div class="registro-container">
+    <div class="registro-title">¿Cuándo has tomado la tensión?</div>
+    <div class="btn-moment-grid">
+      <button class="btn-moment manana" onclick="openRegistro('manana')">
+        <span class="moment-icon">⏰</span>
+        <span class="moment-label">Mañana</span>
+      </button>
+      <button class="btn-moment tarde" onclick="openRegistro('tarde')">
+        <span class="moment-icon">☀️</span>
+        <span class="moment-label">Tarde</span>
+      </button>
+      <button class="btn-moment noche" onclick="openRegistro('noche')">
+        <span class="moment-icon">🌙</span>
+        <span class="moment-label">Noche</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ACCIONES -->
+  <p class="section-title">Herramientas</p>
+  <div class="acciones-grid">
+    <button class="btn-accion cal" onclick="openCalendario()">
+      <span class="accion-icon">📅</span>
+      <span class="accion-label">Calendario</span>
+    </button>
+    <button class="btn-accion inf" onclick="openModal('modalInforme')">
+      <span class="accion-icon">📄</span>
+      <span class="accion-label">Informe PDF</span>
+    </button>
+    <button class="btn-accion graf" onclick="openGraficas()">
+      <span class="accion-icon">📊</span>
+      <span class="accion-label">Gráficas</span>
+    </button>
+  </div>
+
+  <!-- ÚLTIMAS LECTURAS -->
+  <p class="section-title">Últimas mediciones</p>
+  <div class="lecturas-list" id="lecturasList">
+    <div class="empty-state">
+      <div class="empty-icon">💊</div>
+      <p>Sin mediciones registradas todavía.</p>
+    </div>
+  </div>
+</main>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     MODAL CONFIG
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalConfig">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙️ Valores de Referencia</h2>
+      <button class="btn-close" onclick="closeModal('modalConfig')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">⬆️ Sistólica máx.</label>
+          <input type="number" id="refSis" class="form-input big" value="130" min="80" max="250">
+        </div>
+        <div class="form-group">
+          <label class="form-label">⬇️ Diastólica máx.</label>
+          <input type="number" id="refDia" class="form-input big" value="80" min="40" max="150">
+        </div>
+      </div>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:16px;">
+        Las mediciones que superen estos valores se marcarán en rojo.
+      </p>
+      <button class="btn-primary" onclick="saveConfig()">💾 Guardar configuración</button>
+    </div>
+  </div>
 </div>
 
-<div class="card row">
-<button onclick="openInput('mañana')">⏰</button>
-<button onclick="openInput('tarde')">☀️</button>
-<button onclick="openInput('noche')">🌙</button>
+<!-- ══════════════════════════════════════════
+     MODAL REGISTRO
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalRegistro">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="registroTitle">Registrar medición</h2>
+      <button class="btn-close" onclick="closeModal('modalRegistro')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">📅 Fecha de la toma</label>
+        <input type="date" id="registroFecha" class="form-input">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">⬆️ Sistólica (mmHg)</label>
+          <input type="number" id="registroSis" class="form-input big" placeholder="120" min="60" max="300">
+        </div>
+        <div class="form-group">
+          <label class="form-label">⬇️ Diastólica (mmHg)</label>
+          <input type="number" id="registroDia" class="form-input big" placeholder="80" min="40" max="180">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="guardarRegistro()">✅ Guardar medición</button>
+    </div>
+  </div>
 </div>
 
-<div class="row" style="padding:10px">
-<button onclick="openCalendar()">📅</button>
-<button onclick="generateReport()">📄</button>
-<button onclick="openCharts()">📊</button>
+<!-- ══════════════════════════════════════════
+     MODAL CALENDARIO
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalCalendario">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>📅 Calendario</h2>
+      <button class="btn-close" onclick="closeModal('modalCalendario')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="cal-nav">
+        <button class="btn-cal-nav" onclick="calNavMes(-1)">◀</button>
+        <h3 id="calTitle">...</h3>
+        <button class="btn-cal-nav" onclick="calNavMes(1)">▶</button>
+      </div>
+      <div class="cal-grid-header">
+        <div class="cal-day-label">Lu</div>
+        <div class="cal-day-label">Ma</div>
+        <div class="cal-day-label">Mi</div>
+        <div class="cal-day-label">Ju</div>
+        <div class="cal-day-label">Vi</div>
+        <div class="cal-day-label">Sá</div>
+        <div class="cal-day-label">Do</div>
+      </div>
+      <div class="cal-grid" id="calGrid"><!-- JS --></div>
+    </div>
+  </div>
 </div>
 
-<!-- CONFIG -->
-<div id="config" class="modal"><div class="modal-content">
-<h3>Configuración</h3>
-⬆️ <input id="refSys" type="number">
-⬇️ <input id="refDia" type="number">
-<button onclick="saveConfig()">Guardar</button>
-</div></div>
-
-<!-- INPUT -->
-<div id="input" class="modal"><div class="modal-content">
-<h3 id="inputTitle"></h3>
-⬆️ <input id="sys">
-⬇️ <input id="dia">
-📅 <input id="date" type="date">
-<button onclick="saveData()">Guardar</button>
-</div></div>
-
-<!-- CALENDARIO -->
-<div id="calendarModal" class="modal"><div class="modal-content">
-<h3>Calendario</h3>
-<div class="row">
-<button onclick="changeMonth(-1)">⬅️</button>
-<button onclick="changeMonth(1)">➡️</button>
+<!-- ══════════════════════════════════════════
+     MODAL INFORME
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalInforme">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📄 Generar Informe PDF</h2>
+      <button class="btn-close" onclick="closeModal('modalInforme')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="informe-info">
+        Selecciona el rango de fechas para generar el informe PDF con todas las mediciones registradas en ese período.
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">📅 Fecha inicio</label>
+          <input type="date" id="informeInicio" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">📅 Fecha fin</label>
+          <input type="date" id="informeFin" class="form-input">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="generarInforme()">📥 Generar y descargar PDF</button>
+    </div>
+  </div>
 </div>
-<div id="calendar" class="calendar"></div>
-</div></div>
 
-<!-- CHARTS -->
-<div id="chartsModal" class="modal"><div class="modal-content">
-<h3>Gráficas</h3>
-<div id="chartsContainer">
-<canvas id="mSys"></canvas>
-<canvas id="mDia"></canvas>
-<canvas id="tSys"></canvas>
-<canvas id="tDia"></canvas>
-<canvas id="nSys"></canvas>
-<canvas id="nDia"></canvas>
+<!-- ══════════════════════════════════════════
+     MODAL GRÁFICAS
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalGraficas">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>📊 Gráficas del mes</h2>
+      <button class="btn-close" onclick="closeModal('modalGraficas')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="grafMesTitle" style="font-size:0.9rem;color:var(--text-muted);margin-bottom:16px;text-transform:capitalize;"></p>
+      <div class="charts-grid" id="chartsGrid">
+        <!-- 6 charts -->
+        <div class="chart-card"><h4>🌅 Mañana — Sistólica</h4><canvas id="chartManSis"></canvas></div>
+        <div class="chart-card"><h4>🌅 Mañana — Diastólica</h4><canvas id="chartManDia"></canvas></div>
+        <div class="chart-card"><h4>☀️ Tarde — Sistólica</h4><canvas id="chartTarSis"></canvas></div>
+        <div class="chart-card"><h4>☀️ Tarde — Diastólica</h4><canvas id="chartTarDia"></canvas></div>
+        <div class="chart-card"><h4>🌙 Noche — Sistólica</h4><canvas id="chartNocSis"></canvas></div>
+        <div class="chart-card"><h4>🌙 Noche — Diastólica</h4><canvas id="chartNocDia"></canvas></div>
+      </div>
+      <button class="btn-primary" onclick="exportarGraficasPDF()" style="margin-top:4px;">📥 Exportar gráficas a PDF</button>
+    </div>
+  </div>
 </div>
-<button onclick="exportCharts()">Exportar PDF</button>
-</div></div>
 
+<!-- ══════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════ -->
 <script>
-const firebaseConfig={apiKey:"AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",databaseURL:"https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app"};
+// ── FIREBASE ──────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+  authDomain: "lista-compra-9d6f5.firebaseapp.com",
+  databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "lista-compra-9d6f5",
+  storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+  messagingSenderId: "241322134457",
+  appId: "1:241322134457:web:1b765857911f94d69cc468"
+};
+
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+const db = firebase.database();
+const tensionRef = db.ref('tension');
 
-let data=[];
-let refs={sys:130,dia:80};
-let currentType=null;
-let currentMonth=new Date();
+// ── STATE ─────────────────────────────────────────────────────────────
+let config = { sis: 130, dia: 80 };
+// allData: array plano de objetos { fecha, momento, sis, dia, ts }
+let allData = [];
+let currentMomento = null;
+let calYear, calMonth;
+let charts = {};
 
-function openModal(id){document.getElementById(id).style.display='flex'}
-window.onclick=e=>{if(e.target.classList.contains('modal'))e.target.style.display='none'}
+// ── INIT ──────────────────────────────────────────────────────────────
+function init() {
+  loadConfig();
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
 
-function openInput(type){currentType=type;inputTitle.innerText=type;date.value=new Date().toISOString().split('T')[0];openModal('input')}
+  // Escuchar datos en tiempo real
+  // Estructura en Firebase: tension/<fecha>/<momento> = { sis, dia, ts }
+  // Ej: tension/2025-05-05/manana = { sis: 120, dia: 80, ts: ... }
+  tensionRef.on('value', snap => {
+    const raw = snap.val() || {};
+    // Convertir el objeto anidado fecha->momento->datos en array plano
+    allData = [];
+    Object.entries(raw).forEach(([fecha, momentos]) => {
+      if (typeof momentos !== 'object') return;
+      Object.entries(momentos).forEach(([momento, datos]) => {
+        if (datos && datos.sis !== undefined) {
+          allData.push({ fecha, momento, sis: datos.sis, dia: datos.dia, ts: datos.ts || 0 });
+        }
+      });
+    });
+    renderLecturas();
+  });
 
-function saveData(){db.ref('tension').push({sys:+sys.value,dia:+dia.value,date:date.value,type:currentType})}
-
-function saveConfig(){refs.sys=+refSys.value;refs.dia=+refDia.value;db.ref('config').set(refs)}
-
-// LOAD
-db.ref('tension').on('value',s=>{data=s.val()?Object.values(s.val()):[];drawCharts();drawCalendar()})
-db.ref('config').on('value',s=>{if(s.val()){refs=s.val();refSys.value=refs.sys;refDia.value=refs.dia}})
-
-// CALENDARIO
-function openCalendar(){openModal('calendarModal');drawCalendar()}
-function changeMonth(n){currentMonth.setMonth(currentMonth.getMonth()+n);drawCalendar()}
-
-function drawCalendar(){
-const cal=document.getElementById('calendar'); if(!cal) return;
-cal.innerHTML='';
-let y=currentMonth.getFullYear(); let m=currentMonth.getMonth();
-let days=new Date(y,m+1,0).getDate();
-for(let d=1;d<=days;d++){
-let dateStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-let dayData=data.filter(x=>x.date===dateStr);
-let avgSys=dayData.length?dayData.reduce((a,b)=>a+b.sys,0)/dayData.length:0;
-let avgDia=dayData.length?dayData.reduce((a,b)=>a+b.dia,0)/dayData.length:0;
-let ok=(avgSys<=refs.sys && avgDia<=refs.dia);
-let div=document.createElement('div');
-div.className='day';
-div.innerHTML=`${d}<br>${Math.round(avgSys)||''}/${Math.round(avgDia)||''}<br>${dayData.length?(ok?'✅':'❌'):''}`;
-cal.appendChild(div);
-}
-}
-
-// PDF
-function generateReport(){
-const doc=new jspdf.jsPDF();
-const rows=data.map(d=>[d.date,d.type,d.sys,d.dia]);
-doc.autoTable({head:[['Fecha','Tipo','Sys','Dia']],body:rows});
-doc.save('informe.pdf')}
-
-// CHARTS
-function openCharts(){openModal('chartsModal');drawCharts()}
-
-function makeChart(id,filter,key,limit){
-const ctx=document.getElementById(id);
-if(!ctx) return;
-const d=data.filter(x=>x.type===filter);
-new Chart(ctx,{type:'bar',data:{labels:d.map(x=>x.date),datasets:[{data:d.map(x=>x[key]),backgroundColor:d.map(x=>x[key]>limit?'red':'green')}]}})
+  // Fecha por defecto en informe
+  const hoy = todayStr();
+  document.getElementById('informeFin').value = hoy;
+  const hace30 = new Date(); hace30.setDate(hace30.getDate() - 30);
+  document.getElementById('informeInicio').value = dateToStr(hace30);
 }
 
-function drawCharts(){
-makeChart('mSys','mañana','sys',refs.sys);
-makeChart('mDia','mañana','dia',refs.dia);
-makeChart('tSys','tarde','sys',refs.sys);
-makeChart('tDia','tarde','dia',refs.dia);
-makeChart('nSys','noche','sys',refs.sys);
-makeChart('nDia','noche','dia',refs.dia);
+// ── CONFIG ────────────────────────────────────────────────────────────
+function loadConfig() {
+  const saved = localStorage.getItem('mitension_config');
+  if (saved) config = JSON.parse(saved);
+  document.getElementById('refSis').value = config.sis;
+  document.getElementById('refDia').value = config.dia;
 }
 
-async function exportCharts(){
-const canvas=await html2canvas(document.getElementById('chartsContainer'));
-const img=canvas.toDataURL('image/png');
-const doc=new jspdf.jsPDF();
-doc.addImage(img,'PNG',10,10);
-doc.save('graficas.pdf')}
+function saveConfig() {
+  config.sis = parseInt(document.getElementById('refSis').value) || 130;
+  config.dia = parseInt(document.getElementById('refDia').value) || 80;
+  localStorage.setItem('mitension_config', JSON.stringify(config));
+  closeModal('modalConfig');
+  showToast('✅ Configuración guardada');
+  renderLecturas();
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Click fuera cierra
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeModal(overlay.id);
+  });
+});
+
+// ── REGISTRO ──────────────────────────────────────────────────────────
+const momentoLabels = { manana: '⏰ Mañana', tarde: '☀️ Tarde', noche: '🌙 Noche' };
+
+function openRegistro(momento) {
+  currentMomento = momento;
+  document.getElementById('registroTitle').textContent = momentoLabels[momento];
+  document.getElementById('registroFecha').value = todayStr();
+  document.getElementById('registroSis').value = '';
+  document.getElementById('registroDia').value = '';
+  openModal('modalRegistro');
+  setTimeout(() => document.getElementById('registroSis').focus(), 300);
+}
+
+function guardarRegistro() {
+  const sis = parseInt(document.getElementById('registroSis').value);
+  const dia = parseInt(document.getElementById('registroDia').value);
+  const fecha = document.getElementById('registroFecha').value;
+
+  if (!fecha) { showToast('⚠️ Selecciona una fecha'); return; }
+  if (!sis || sis < 60 || sis > 300) { showToast('⚠️ Sistólica inválida (60-300)'); return; }
+  if (!dia || dia < 40 || dia > 180) { showToast('⚠️ Diastólica inválida (40-180)'); return; }
+
+  // Clave determinista: tension/<fecha>/<momento>
+  // Si ya existe ese registro lo sobreescribe automáticamente
+  const entry = { sis, dia, ts: Date.now() };
+
+  tensionRef.child(fecha).child(currentMomento).set(entry)
+    .then(() => {
+      closeModal('modalRegistro');
+      showToast('✅ Medición guardada');
+    })
+    .catch(err => showToast('❌ Error: ' + err.message));
+}
+
+// ── LECTURAS LIST ─────────────────────────────────────────────────────
+function renderLecturas() {
+  const list = document.getElementById('lecturasList');
+  const entries = [...allData]
+    .sort((a, b) => b.ts - a.ts || b.fecha.localeCompare(a.fecha))
+    .slice(0, 20);
+
+  if (!entries.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">💊</div><p>Sin mediciones registradas todavía.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map(d => {
+    const sisAlto = d.sis > config.sis;
+    const diaAlto = d.dia > config.dia;
+    const alto = sisAlto || diaAlto;
+    const icons = { manana: '⏰', tarde: '☀️', noche: '🌙' };
+    const labels = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche' };
+    const fechaFmt = formatFecha(d.fecha);
+    // Clave para borrar: fecha/momento
+    const deleteKey = `${d.fecha}/${d.momento}`;
+
+    return `
+      <div class="lectura-card ${alto ? 'alto' : 'ok'}">
+        <div class="lectura-left">
+          <span class="lectura-momento">${icons[d.momento] || '❤️'}</span>
+          <div class="lectura-info">
+            <div class="momento-name">${labels[d.momento] || d.momento}</div>
+            <div class="fecha">${fechaFmt}</div>
+          </div>
+        </div>
+        <div class="lectura-vals">
+          <span class="val-badge sis ${sisAlto ? 'alto' : ''}">
+            <span class="arrow">⬆</span>${d.sis}
+          </span>
+          <span class="val-sep">/</span>
+          <span class="val-badge dia ${diaAlto ? 'alto' : ''}">
+            <span class="arrow">⬇</span>${d.dia}
+          </span>
+          <button class="btn-delete-lectura" onclick="deleteLectura('${deleteKey}')" title="Eliminar">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function deleteLectura(key) {
+  if (!confirm('¿Eliminar esta medición?')) return;
+  tensionRef.child(key).remove()
+    .then(() => showToast('🗑️ Medición eliminada'))
+    .catch(err => showToast('❌ Error: ' + err.message));
+}
+
+// ── CALENDARIO ────────────────────────────────────────────────────────
+function openCalendario() {
+  renderCalendario();
+  openModal('modalCalendario');
+}
+
+function calNavMes(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendario();
+}
+
+function renderCalendario() {
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  document.getElementById('calTitle').textContent = `${meses[calMonth]} ${calYear}`;
+
+  // Primer día del mes (lunes=0)
+  const firstDay = new Date(calYear, calMonth, 1);
+  let startDow = firstDay.getDay(); // 0=domingo
+  startDow = (startDow === 0) ? 6 : startDow - 1; // convertir a lu=0
+
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const today = new Date();
+  const todayDay = today.getDate();
+  const isCurrentMonth = today.getFullYear() === calYear && today.getMonth() === calMonth;
+
+  // Agrupar datos por fecha del mes
+  const prefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  const dayStats = {};
+
+  allData.forEach(d => {
+    if (!d.fecha || !d.fecha.startsWith(prefix)) return;
+    const day = parseInt(d.fecha.split('-')[2]);
+    if (!dayStats[day]) dayStats[day] = { sisSum: 0, diaSum: 0, count: 0 };
+    dayStats[day].sisSum += d.sis;
+    dayStats[day].diaSum += d.dia;
+    dayStats[day].count++;
+  });
+
+  const grid = document.getElementById('calGrid');
+  let html = '';
+
+  // Celdas vacías iniciales
+  for (let i = 0; i < startDow; i++) {
+    html += `<div class="cal-cell empty"></div>`;
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const isToday = isCurrentMonth && day === todayDay;
+    const stats = dayStats[day];
+    let content = '';
+
+    if (stats && stats.count > 0) {
+      const avgSis = Math.round(stats.sisSum / stats.count);
+      const avgDia = Math.round(stats.diaSum / stats.count);
+      const ok = avgSis <= config.sis && avgDia <= config.dia;
+      content = `
+        <div class="cal-vals">
+          <span class="cal-sis">${avgSis}</span>
+          <span class="cal-dia">${avgDia}</span>
+        </div>
+        <span class="${ok ? 'cal-ok' : 'cal-ko'}">${ok ? '✅' : '❌'}</span>`;
+    }
+
+    html += `
+      <div class="cal-cell ${isToday ? 'today' : ''}">
+        <span class="cal-day-num">${day}</span>
+        ${content}
+      </div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+// ── INFORME PDF ───────────────────────────────────────────────────────
+function generarInforme() {
+  const inicio = document.getElementById('informeInicio').value;
+  const fin = document.getElementById('informeFin').value;
+
+  if (!inicio || !fin) { showToast('⚠️ Selecciona ambas fechas'); return; }
+  if (inicio > fin) { showToast('⚠️ La fecha inicio debe ser anterior al fin'); return; }
+
+  const filtradas = allData
+    .filter(d => d.fecha >= inicio && d.fecha <= fin)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.ts - b.ts);
+
+  if (!filtradas.length) { showToast('⚠️ Sin datos en ese período'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  // Cabecera
+  doc.setFillColor(15, 37, 71);
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+  doc.text('MiTensión — Informe de mediciones', 14, 12);
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+  doc.text(`Período: ${formatFecha(inicio)} a ${formatFecha(fin)}`, 14, 20);
+  doc.text(`Generado: ${formatFecha(todayStr())}`, 14, 25);
+
+  // Ref
+  doc.setTextColor(40, 40, 40);
+  doc.setFontSize(9);
+  doc.text(`Valores de referencia: Sistólica ≤ ${config.sis} mmHg | Diastólica ≤ ${config.dia} mmHg`, 14, 34);
+
+  const moments = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche' };
+  const rows = filtradas.map(d => {
+    const sisAlto = d.sis > config.sis;
+    const diaAlto = d.dia > config.dia;
+    return [
+      formatFecha(d.fecha),
+      moments[d.momento] || d.momento,
+      { content: `${d.sis} mmHg`, styles: { textColor: sisAlto ? [220,38,38] : [0,0,0], fontStyle: sisAlto ? 'bold' : 'normal' } },
+      { content: `${d.dia} mmHg`, styles: { textColor: diaAlto ? [220,38,38] : [0,0,0], fontStyle: diaAlto ? 'bold' : 'normal' } },
+      (sisAlto || diaAlto) ? { content: '⚠ ALTO', styles: { textColor: [220,38,38], fontStyle: 'bold' } } : { content: '✓ OK', styles: { textColor: [34,197,94], fontStyle: 'bold' } }
+    ];
+  });
+
+  doc.autoTable({
+    head: [['Fecha', 'Momento', 'Sistólica (↑)', 'Diastólica (↓)', 'Estado']],
+    body: rows,
+    startY: 40,
+    styles: { font: 'helvetica', fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [15,37,71], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 248, 252] },
+    columnStyles: {
+      0: { cellWidth: 32 },
+      1: { cellWidth: 24 },
+      2: { cellWidth: 36 },
+      3: { cellWidth: 36 },
+      4: { cellWidth: 28 }
+    }
+  });
+
+  // Resumen
+  const totalAltas = filtradas.filter(d => d.sis > config.sis || d.dia > config.dia).length;
+  const avgSis = Math.round(filtradas.reduce((s,d)=>s+d.sis,0)/filtradas.length);
+  const avgDia = Math.round(filtradas.reduce((s,d)=>s+d.dia,0)/filtradas.length);
+  const finalY = doc.lastAutoTable.finalY + 8;
+
+  doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+  doc.text('Resumen estadístico:', 14, finalY);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text(`Total mediciones: ${filtradas.length}   |   Media sistólica: ${avgSis} mmHg   |   Media diastólica: ${avgDia} mmHg   |   Lecturas altas: ${totalAltas}`, 14, finalY+6);
+
+  doc.save(`mitension_${inicio}_${fin}.pdf`);
+  closeModal('modalInforme');
+  showToast('📥 PDF generado correctamente');
+}
+
+// ── GRÁFICAS ──────────────────────────────────────────────────────────
+function openGraficas() {
+  renderGraficas();
+  openModal('modalGraficas');
+}
+
+function renderGraficas() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  document.getElementById('grafMesTitle').textContent =
+    `Datos de ${meses[month]} ${year} · Referencia: ${config.sis}/${config.dia} mmHg`;
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const labels = Array.from({length: daysInMonth}, (_,i) => i+1);
+
+  const prefix = `${year}-${String(month+1).padStart(2,'0')}`;
+
+  // Organizar datos por momento y día
+  const grouped = { manana: {}, tarde: {}, noche: {} };
+
+  allData.forEach(d => {
+    if (!d.fecha || !d.fecha.startsWith(prefix)) return;
+    const day = parseInt(d.fecha.split('-')[2]);
+    const m = d.momento;
+    if (!grouped[m]) return;
+    if (!grouped[m][day]) grouped[m][day] = { sis: [], dia: [] };
+    grouped[m][day].sis.push(d.sis);
+    grouped[m][day].dia.push(d.dia);
+  });
+
+  // Promediar por día
+  function getDayData(momento, tipo, refVal) {
+    return labels.map(day => {
+      const g = grouped[momento][day];
+      if (!g || !g[tipo].length) return null;
+      return Math.round(g[tipo].reduce((a,b)=>a+b,0)/g[tipo].length);
+    });
+  }
+
+  function getColors(data, refVal) {
+    return data.map(v => v !== null && v > refVal ? 'rgba(239,68,68,0.8)' : 'rgba(37,99,235,0.75)');
+  }
+
+  const chartDefs = [
+    { id: 'chartManSis', momento: 'manana', tipo: 'sis', ref: config.sis },
+    { id: 'chartManDia', momento: 'manana', tipo: 'dia', ref: config.dia },
+    { id: 'chartTarSis', momento: 'tarde',  tipo: 'sis', ref: config.sis },
+    { id: 'chartTarDia', momento: 'tarde',  tipo: 'dia', ref: config.dia },
+    { id: 'chartNocSis', momento: 'noche',  tipo: 'sis', ref: config.sis },
+    { id: 'chartNocDia', momento: 'noche',  tipo: 'dia', ref: config.dia },
+  ];
+
+  chartDefs.forEach(({ id, momento, tipo, ref }) => {
+    if (charts[id]) charts[id].destroy();
+    const data = getDayData(momento, tipo, ref);
+    const colors = getColors(data, ref);
+
+    charts[id] = new Chart(document.getElementById(id), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors,
+          borderRadius: 4,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          annotation: {},
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.raw !== null ? `${ctx.raw} mmHg` : 'Sin dato'
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxTicksLimit: 10 } },
+          y: {
+            beginAtZero: false,
+            suggestedMin: Math.max(40, ref - 40),
+            suggestedMax: ref + 40,
+            ticks: { font: { size: 9 } }
+          }
+        }
+      }
+    });
+  });
+}
+
+async function exportarGraficasPDF() {
+  showToast('⏳ Generando PDF...');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  doc.setFillColor(15, 37, 71);
+  doc.rect(0, 0, 297, 20, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+  const now = new Date();
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  doc.text(`MiTensión — Gráficas de ${meses[now.getMonth()]} ${now.getFullYear()}`, 14, 13);
+
+  const grid = document.getElementById('chartsGrid');
+  const canvas = await html2canvas(grid, { scale: 1.5, backgroundColor: '#f0f4f8' });
+  const imgData = canvas.toDataURL('image/png');
+  doc.addImage(imgData, 'PNG', 5, 24, 287, 180);
+
+  doc.save(`mitension_graficas_${meses[now.getMonth()]}_${now.getFullYear()}.pdf`);
+  showToast('📥 Gráficas exportadas a PDF');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function todayStr() {
+  return dateToStr(new Date());
+}
+
+function dateToStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function formatFecha(str) {
+  if (!str) return '';
+  const [y,m,d] = str.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── START ─────────────────────────────────────────────────────────────
+init();
 </script>
-
 </body>
 </html>
