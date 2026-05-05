@@ -6,14 +6,12 @@
     <title>MyChef | AI Cooking Assistant</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Scripts base -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
         :root {
             --primary: #10b981;
-            --primary-dark: #059669;
             --bg: #f8fafc;
             --card: #ffffff;
             --text: #1e293b;
@@ -21,76 +19,44 @@
             --border: #e2e8f0;
             --radius: 1.2rem;
         }
-
         [data-theme="dark"] {
             --bg: #0f172a;
             --card: #1e293b;
             --text: #f1f5f9;
-            --text-muted: #94a3b8;
             --border: #334155;
         }
-
-        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; min-height: 100vh; }
-
-        /* Navbar */
-        .navbar {
-            background: var(--card); padding: 0.8rem 1.2rem; display: flex; justify-content: space-between; 
-            align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
-        }
-        .nav-btns { display: flex; gap: 10px; align-items: center; }
-
-        /* Selector Keto/Conv */
-        .mode-toggle {
-            display: flex; background: #f1f5f9; padding: 4px; border-radius: 50px; cursor: pointer; border: 1px solid var(--border);
-        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
+        .navbar { background: var(--card); padding: 0.8rem 1.2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); sticky: top; }
+        .mode-toggle { display: flex; background: #f1f5f9; padding: 4px; border-radius: 50px; cursor: pointer; }
         [data-theme="dark"] .mode-toggle { background: #334155; }
-        .mode-btn { padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; transition: 0.2s; color: var(--text-muted); }
+        .mode-btn { padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
         .mode-btn.active { background: var(--primary); color: white; }
-
         .container { max-width: 600px; margin: 1.5rem auto; padding: 0 1rem; }
-        
-        /* Grid de Selección */
-        .section-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; letter-spacing: 1px; }
-        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
-        .btn-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem 0.5rem; cursor: pointer; text-align: center; transition: 0.2s; }
-        .btn-card:hover { border-color: var(--primary); }
-        .btn-card span { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
-        .btn-card h3 { margin: 0; font-size: 0.75rem; }
-        
-        .btn-full { width: 100%; margin-top: 1rem; padding: 1rem; background: #1e293b; color: white; border-radius: var(--radius); border: none; font-weight: 600; cursor: pointer; }
+        .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin-top: 10px; }
+        .btn-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 1.5rem 0.5rem; cursor: pointer; text-align: center; color: var(--text); }
+        .btn-card span { font-size: 2rem; display: block; margin-bottom: 5px; }
+        .btn-full { width: 100%; margin-top: 10px; padding: 1rem; background: #1e293b; color: white; border-radius: var(--radius); border: none; font-weight: 600; cursor: pointer; }
         [data-theme="dark"] .btn-full { background: var(--primary); }
-
-        /* Ingredientes */
         .ing-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; }
-        .chips-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+        .chips-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 10px; }
         .chip { background: #f1f5f9; border: 1px solid transparent; border-radius: 2rem; padding: 0.4rem 0.9rem; font-size: 0.85rem; cursor: pointer; color: var(--text); }
         [data-theme="dark"] .chip { background: #334155; }
         .chip.active { background: #d1fae5; border-color: var(--primary); color: #064e3b; font-weight: 600; }
-
-        /* Generar */
-        .btn-generate { width: 100%; padding: 1.1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
-        
-        /* Resultado */
-        #recipe-content { background: var(--card); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); line-height: 1.6; }
-        #recipe-content table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        #recipe-content th { background: #f8fafc; text-align: left; padding: 8px; }
-        #recipe-content td { padding: 8px; border-bottom: 1px solid var(--border); }
-
+        .btn-generate { width: 100%; padding: 1.1rem; background: var(--primary); color: white; border: none; border-radius: var(--radius); font-weight: 700; cursor: pointer; }
         .hidden { display: none !important; }
         .loader { border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 2rem auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Modal */
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal-content { background: var(--card); padding: 2rem; border-radius: 1.5rem; width: 100%; max-width: 400px; }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
+        #recipe-content { background: var(--card); padding: 1.5rem; border-radius: var(--radius); border: 1px solid var(--border); line-height: 1.6; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
         <h2 style="font-family:'DM Serif Display'; margin:0;">MyChef 👨‍🍳</h2>
-        <div class="nav-btns">
+        <div style="display:flex; gap:10px;">
             <div class="mode-toggle" onclick="toggleKeto()">
                 <div id="m-keto" class="mode-btn active">Keto</div>
                 <div id="m-conv" class="mode-btn">Conv.</div>
@@ -101,63 +67,57 @@
     </nav>
 
     <div class="container">
-        <!-- Paso 1 -->
+        <!-- PASO 1 -->
         <div id="step1">
-            <p class="section-label">¿Qué comida necesitas?</p>
+            <p style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">¿Qué cocinamos?</p>
             <div class="menu-grid">
-                <button class="btn-card" onclick="selectMeal('desayuno')"><span>🍳</span><h3>Desayuno</h3></button>
-                <button class="btn-card" onclick="selectMeal('almuerzo')"><span>🥗</span><h3>Almuerzo</h3></button>
-                <button class="btn-card" onclick="selectMeal('cena')"><span>🌙</span><h3>Cena</h3></button>
+                <button class="btn-card" onclick="selectMeal('desayuno')"><span>🍳</span><br>Desayuno</button>
+                <button class="btn-card" onclick="selectMeal('almuerzo')"><span>🥗</span><br>Almuerzo</button>
+                <button class="btn-card" onclick="selectMeal('cena')"><span>🌙</span><br>Cena</button>
             </div>
             <button class="btn-full" onclick="selectMeal('menú completo del día')">📅 Menú Diario Completo</button>
         </div>
 
-        <!-- Paso 2 -->
+        <!-- PASO 2 -->
         <div id="step2" class="hidden">
-            <p class="section-label">Selecciona ingredientes</p>
             <div class="ing-card">
-                <p style="margin:0; font-weight:600; font-size:0.9rem;">🥩 Proteínas</p>
-                <div class="chips-wrap" id="wrap-proteinas"></div>
+                <p style="margin:0; font-weight:600;">Proteínas</p>
+                <div class="chips-wrap" id="list-proteinas"></div>
             </div>
             <div class="ing-card" id="card-carbs">
-                <p style="margin:0; font-weight:600; font-size:0.9rem;">🍚 Carbohidratos</p>
-                <div class="chips-wrap" id="wrap-carbs"></div>
+                <p style="margin:0; font-weight:600;">Carbohidratos</p>
+                <div class="chips-wrap" id="list-carbs"></div>
             </div>
             <div class="ing-card">
-                <p style="margin:0; font-weight:600; font-size:0.9rem;">🥦 Verduras</p>
-                <div class="chips-wrap" id="wrap-verduras"></div>
+                <p style="margin:0; font-weight:600;">Verduras</p>
+                <div class="chips-wrap" id="list-verduras"></div>
             </div>
-
             <button class="btn-generate" onclick="generateRecipe()">✨ Generar Receta</button>
-            <button onclick="location.reload()" style="width:100%; background:none; border:none; color:var(--text-muted); margin-top:1rem; cursor:pointer;">← Volver</button>
+            <button onclick="location.reload()" style="width:100%; background:none; border:none; color:var(--text-muted); margin-top:10px; cursor:pointer;">← Volver</button>
         </div>
 
-        <!-- Loading -->
         <div id="loading" class="hidden">
             <div class="loader"></div>
-            <p style="text-align:center; font-weight:500;">Cocinando con IA...</p>
+            <p style="text-align:center;">Cocinando con IA...</p>
         </div>
 
-        <!-- Resultado -->
         <div id="result" class="hidden">
             <div id="recipe-content"></div>
-            <button class="btn-generate" onclick="location.reload()">↩ Nueva consulta</button>
+            <button class="btn-generate" onclick="location.reload()" style="margin-top:20px;">↩ Nueva consulta</button>
         </div>
     </div>
 
-    <!-- Modal Config -->
     <div id="modalConfig" class="modal hidden">
         <div class="modal-content">
-            <h3 style="margin:0 0 1rem 0;">Configuración</h3>
-            <label style="font-size:0.8rem; font-weight:600;">Gemini API Key</label>
-            <input type="password" id="inputKey" placeholder="Tu clave API...">
+            <h3 style="margin:0;">API Key</h3>
+            <input type="password" id="inputKey" placeholder="Pega tu Gemini Key aquí...">
             <button class="btn-generate" onclick="saveKey()">Guardar</button>
-            <button onclick="toggleModal(false)" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer; color:var(--text-muted);">Cerrar</button>
+            <button onclick="toggleModal(false)" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer;">Cerrar</button>
         </div>
     </div>
 
     <script>
-        // FIREBASE
+        // FIREBASE SIMPLE
         const firebaseConfig = {
             apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
             authDomain: "lista-compra-9d6f5.firebaseapp.com",
@@ -167,17 +127,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ESTADO
         let isKeto = true;
         let selectedMeal = '';
         let selectedIngs = new Set();
-        const INGREDIENTS = {
-            proteinas: ['Pollo','Ternera','Cerdo','Huevos','Salmón','Gambas','Pavo'],
-            carbs: ['Arroz','Pasta','Patatas','Legumbres','Cuscús','Quinoa'],
-            verduras: ['Espinacas','Brócoli','Aguacate','Calabacín','Pimiento','Setas']
+        const INGS = {
+            proteinas: ['Pollo','Ternera','Cerdo','Huevos','Salmón','Pavo'],
+            carbs: ['Arroz','Pasta','Patatas','Legumbres','Quinoa'],
+            verduras: ['Espinacas','Brócoli','Aguacate','Calabacín','Setas']
         };
 
-        // FUNCIONES
         function toggleKeto() {
             isKeto = !isKeto;
             document.getElementById('m-keto').classList.toggle('active', isKeto);
@@ -200,16 +158,17 @@
         function renderChips() {
             document.getElementById('card-carbs').classList.toggle('hidden', isKeto);
             ['proteinas', 'carbs', 'verduras'].forEach(cat => {
-                const wrap = document.getElementById('wrap-' + cat);
+                const wrap = document.getElementById('list-' + cat);
                 wrap.innerHTML = '';
-                INGREDIENTS[cat].forEach(ing => {
+                INGS[cat].forEach(ing => {
                     const btn = document.createElement('button');
                     btn.className = 'chip' + (selectedIngs.has(ing) ? ' active' : '');
                     btn.textContent = ing;
-                    btn.onclick = () => {
-                        btn.classList.toggle('active');
+                    btn.onclick = (e) => {
+                        e.preventDefault();
                         if(selectedIngs.has(ing)) selectedIngs.delete(ing);
                         else selectedIngs.add(ing);
+                        renderChips();
                     };
                     wrap.appendChild(btn);
                 });
@@ -223,8 +182,8 @@
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
 
-            const ings = Array.from(selectedIngs).join(', ');
-            const prompt = `Actúa como Chef ${isKeto ? 'Keto' : 'Profesional'}. Genera una receta de ${selectedMeal} usando principalmente: ${ings}. Responde SOLO en HTML con h2 para título, h3 para secciones, ul para lista y una table para macros por ración.`;
+            const ingsText = Array.from(selectedIngs).join(', ');
+            const prompt = `Chef ${isKeto ? 'Keto' : 'Normal'}: Receta de ${selectedMeal} con ${ingsText}. Responde solo HTML (h2, h3, ul, table macros).`;
 
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
@@ -234,25 +193,23 @@
                 });
 
                 const data = await res.json();
-                let html = data.candidates[0].content.parts[0].text;
+                let rawText = data.candidates[0].content.parts[0].text;
                 
-                // Limpieza de Markdown si la IA lo incluye
-                html = html.replace(/```html/g, '').replace(/
-```/g, '').trim();
+                // Limpieza manual segura
+                const cleanHTML = rawText.split('```html').pop().split('
+```')[0].trim();
 
-                // Guardar en Firebase (opcional, pero útil para historial)
                 db.ref('chef/recetas').push({
                     titulo: (isKeto ? '[KETO] ' : '[CONV] ') + selectedMeal,
-                    receta: html,
+                    receta: cleanHTML,
                     fecha: Date.now()
                 });
 
-                document.getElementById('recipe-content').innerHTML = html;
+                document.getElementById('recipe-content').innerHTML = cleanHTML;
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
-
             } catch (e) {
-                alert("Error de conexión. Verifica tu API Key.");
+                alert("Error de API.");
                 location.reload();
             }
         }
@@ -262,8 +219,6 @@
             localStorage.setItem('MYCHEF_API_KEY', document.getElementById('inputKey').value);
             toggleModal(false);
         }
-
-        // Cargar clave inicial
         document.getElementById('inputKey').value = localStorage.getItem('MYCHEF_API_KEY') || '';
     </script>
 </body>
