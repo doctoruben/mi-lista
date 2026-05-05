@@ -264,44 +264,80 @@
             renderChips();
         };
 
-        window.generateRecipe = async function() {
-            const gKey = localStorage.getItem('G_KEY');
-            if (!gKey) return toggleModal(true);
+       window.generateRecipe = async function() {
+    const gKey = localStorage.getItem('G_KEY');
+    const groqKey = localStorage.getItem('GROQ_KEY'); // Necesitas guardar esta clave también
+    
+    if (!gKey) return toggleModal(true);
 
-            document.getElementById('ingredientStep').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('ingredientStep').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('loaderText').innerText = "Cocinando con Gemini...";
 
-            const allIngs = [...selectedChips, ...customIngredients].join(', ');
-            const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. Receta de ${selectedMeal}. Ingredientes: ${allIngs}. Responde SOLO en HTML.`;
+    const allIngs = [...selectedChips, ...customIngredients].join(', ');
+    const prompt = `Actúa como Chef ${ketoMode ? 'Keto' : 'Profesional'}. Genera una receta de ${selectedMeal} que sea ${ketoMode ? 'estrictamente Keto' : 'convencional'}. Ingredientes: ${allIngs}. Responde ÚNICAMENTE con formato HTML (h2, h3, ul, table para macros).`;
 
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await res.json();
-                if(data.error) throw new Error(data.error.message);
+    try {
+        // INTENTO 1: GEMINI
+        const urlG = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gKey}`;
+        const res = await fetch(urlG, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        
+        const data = await res.json();
+        if (data.error) throw new Error("Gemini Error");
 
-                let htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+        const htmlResult = data.candidates[0].content.parts[0].text.replace(/```html|```/g, '').trim();
+        mostrarYGuardar(htmlResult);
 
-                db.ref('chef/recetas').push({
-                    titulo: (ketoMode ? "[KETO] " : "[CONV] ") + selectedMeal,
-                    contenido: htmlResult,
-                    timestamp: Date.now()
-                });
+    } catch (e) {
+        console.log("Gemini falló, intentando Groq...");
+        if (!groqKey) {
+            alert("Gemini falló y no tienes configurada la clave de Groq.");
+            resetUI();
+            return;
+        }
+        
+        // INTENTO 2: GROQ (FALLBACK)
+        try {
+            document.getElementById('loaderText').innerText = "Gemini ocupado... Usando Groq 🚀";
+            const resGroq = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${groqKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "llama3-70b-8192",
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+            
+            const dataGroq = await resGroq.json();
+            const htmlResult = dataGroq.choices[0].message.content.replace(/```html|
+```/g, '').trim();
+            mostrarYGuardar(htmlResult);
 
-                document.getElementById('recipeContent').innerHTML = htmlResult;
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('recipeResult').classList.remove('hidden');
-            } catch (e) {
-                alert("Error: " + e.message);
-                goBackToSelection();
-                document.getElementById('loading').classList.add('hidden');
-            }
-        };
+        } catch (errorGroq) {
+            alert("Ambos servicios fallaron. Revisa tu conexión o las API Keys.");
+            resetUI();
+        }
+    }
+};
 
+// Función auxiliar para no repetir código de guardado
+function mostrarYGuardar(html) {
+    db.ref('chef/recetas').push({
+        titulo: (ketoMode ? "[KETO] " : "[CONV] ") + selectedMeal,
+        contenido: html,
+        timestamp: Date.now()
+    });
+    document.getElementById('recipeContent').innerHTML = html;
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('recipeResult').classList.remove('hidden');
+}
         window.openRecientes = async () => {
             document.getElementById('recientesModal').classList.remove('hidden');
             const list = document.getElementById('listaRecientes');
