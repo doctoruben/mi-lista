@@ -374,10 +374,48 @@
 
         #recipeContent { all: revert; line-height: 1.7; font-family: 'DM Sans', sans-serif; color: var(--text); }
         #recipeContent h2 { font-family: 'DM Serif Display', serif; color: var(--text); margin-top: 0; }
-        #recipeContent h3 { color: var(--primary); margin-top: 1.5rem; }
+        #recipeContent h3 { color: var(--primary); margin-top: 1.5rem; margin-bottom: 0.6rem; }
         #recipeContent table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1rem 0; }
         #recipeContent th { background: var(--chip-bg); padding: 10px; text-align: left; font-size: 0.85rem; }
         #recipeContent td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        #recipeContent ul, #recipeContent ol { padding-left: 1.4rem; margin: 0.4rem 0; }
+        #recipeContent li { margin-bottom: 0.55rem; line-height: 1.55; }
+        #recipeContent p { margin: 0.4rem 0; }
+
+        /* ——— RECIENTES TABS ——— */
+        .recientes-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .rtab {
+            flex: 1;
+            padding: 7px 4px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            background: var(--chip-bg);
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .rtab.active {
+            background: var(--chip-selected);
+            border-color: var(--chip-selected-border);
+            color: var(--primary-dark);
+        }
+        .modo-badge {
+            font-size: 10px;
+            padding: 1px 7px;
+            border-radius: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+        .modo-badge.keto { background: #d1fae5; color: #065f46; }
+        .modo-badge.conv { background: #fef3c7; color: #92400e; }
 
         .result-actions {
             margin-top: 1.2rem;
@@ -662,8 +700,13 @@
     <div id="recientesModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Recetas recientes</h3>
+                <h3 id="recientesModalTitle">Recetas recientes</h3>
                 <button class="modal-close" onclick="closeRecientes()">×</button>
+            </div>
+            <div class="recientes-tabs">
+                <button class="rtab active" id="rtab-keto" onclick="setRecientesTab('keto')">🥑 Keto</button>
+                <button class="rtab" id="rtab-conv" onclick="setRecientesTab('conv')">🍽️ Clásico</button>
+                <button class="rtab" id="rtab-all" onclick="setRecientesTab('all')">📋 Todas</button>
             </div>
             <input type="text" id="searchRecetas" class="search-input" placeholder="Filtrar recetas..." oninput="filtrarRecetas()">
             <div id="listaRecientes" style="overflow-y:auto; flex:1;"></div>
@@ -878,17 +921,55 @@
             document.getElementById('ingredientStep').classList.remove('hidden');
         }
 
+        // ——— NORMALIZE: convierte <p> con saltos \n en <ul><li> ———
+        function normalizeTextLists(root) {
+            // Buscar <p> que contengan saltos de línea (múltiples ítems)
+            root.querySelectorAll('p').forEach(p => {
+                const raw = p.innerHTML.trim();
+                // Si el párrafo tiene varios renglones separados por <br> o \n
+                if (!raw.includes('<br') && !raw.includes('\n')) return;
+                const lines = raw.split(/<br\s*\/?>|\n/).map(l => l.trim()).filter(l => l.length > 0);
+                if (lines.length < 2) return;
+                const ul = document.createElement('ul');
+                lines.forEach(line => {
+                    const li = document.createElement('li');
+                    li.innerHTML = line;
+                    ul.appendChild(li);
+                });
+                p.replaceWith(ul);
+            });
+
+            // Buscar texto plano (texto corrido separado por •, -, *) dentro de <p>
+            root.querySelectorAll('p').forEach(p => {
+                const txt = p.innerText.trim();
+                // Detectar listas con bullet • - * al inicio de línea
+                if (!/^[•\-\*]/.test(txt) && !/\n[•\-\*]/.test(txt)) return;
+                const lines = txt.split('\n').map(l => l.replace(/^[•\-\*]\s*/, '').trim()).filter(l => l);
+                if (lines.length < 2) return;
+                const ul = document.createElement('ul');
+                lines.forEach(line => {
+                    const li = document.createElement('li');
+                    li.textContent = line;
+                    ul.appendChild(li);
+                });
+                p.replaceWith(ul);
+            });
+        }
+
         // ——— GENERATE RECIPE ———
         window.generateRecipe = async function() {
             const gKey = localStorage.getItem('G_KEY');
             const qKey = localStorage.getItem('Q_KEY');
             if (!gKey && !qKey) return toggleModal(true);
 
-            // Build ingredients string
+            // Build ingredients string — chips + ingredientes libres
             const allIngs = [...selectedChips, ...customIngredients];
-            const ingsText = allIngs.length > 0
-                ? `Los ingredientes disponibles que DEBES usar (al menos algunos): ${allIngs.join(', ')}.`
-                : '';
+            let ingsText = '';
+            if (allIngs.length > 0) {
+                const chipsStr  = selectedChips.size > 0    ? `Ingredientes seleccionados: ${[...selectedChips].join(', ')}.` : '';
+                const customStr = customIngredients.length > 0 ? `Ingredientes adicionales indicados por el usuario (OBLIGATORIO incorporarlos en la receta): ${customIngredients.join(', ')}.` : '';
+                ingsText = [chipsStr, customStr].filter(Boolean).join('\n');
+            }
 
             document.getElementById('ingredientStep').classList.add('hidden');
             document.getElementById('loading').classList.remove('hidden');
@@ -1098,6 +1179,7 @@ REGLAS ESTRICTAS:
                             menuContainer.appendChild(sep);
                         }
 
+                        normalizeTextLists(sec);
                         menuContainer.appendChild(sec);
 
                         // Guardar cada plato como receta individual en Firebase
@@ -1120,6 +1202,8 @@ REGLAS ESTRICTAS:
                     const recipeContent = document.getElementById('recipeContent');
                     recipeContent.innerHTML = cleanHtml;
                     recipeContent.setAttribute('data-tipo', 'receta');
+                    // Normalizar párrafos con saltos \n → <ul><li> para mejor renderizado
+                    normalizeTextLists(recipeContent);
 
                     const finalTitle = h2 ? h2.innerText : (isKeto ? "Receta Keto" : "Receta");
                     db.ref('chef').push({ titulo: finalTitle, contenido: cleanHtml, timestamp: Date.now(), modo: isKeto ? 'keto' : 'convencional' });
@@ -1146,43 +1230,77 @@ REGLAS ESTRICTAS:
         }
 
         // ——— RECIENTES ———
+        let recientesTab = 'all'; // 'keto' | 'conv' | 'all'
+
         window.openRecientes = async function() {
             document.getElementById('recientesModal').classList.remove('hidden');
+            // Activar la tab del modo actual por defecto
+            setRecientesTab(isKeto ? 'keto' : 'conv', false);
             const container = document.getElementById('listaRecientes');
             container.innerHTML = '<div class="empty-state"><div class="emoji">⏳</div>Cargando...</div>';
-
             try {
-                const snapshot = await db.ref('chef').orderByChild('timestamp').limitToLast(50).once('value');
+                const snapshot = await db.ref('chef').orderByChild('timestamp').limitToLast(100).once('value');
                 todasLasRecetas = [];
                 snapshot.forEach(child => { todasLasRecetas.unshift({ id: child.key, ...child.val() }); });
-                renderizarLista(todasLasRecetas);
+                renderizarLista();
             } catch (e) {
                 container.innerHTML = '<div class="empty-state"><div class="emoji">❌</div>Error al conectar.</div>';
             }
         }
 
-        function renderizarLista(recetas) {
+        window.setRecientesTab = function(tab, render = true) {
+            recientesTab = tab;
+            ['keto','conv','all'].forEach(t => {
+                document.getElementById('rtab-' + t)?.classList.toggle('active', t === tab);
+            });
+            if (render) renderizarLista();
+        }
+
+        function getRecetasFiltradas() {
+            const term = (document.getElementById('searchRecetas')?.value || '').toLowerCase();
+            return todasLasRecetas.filter(r => {
+                const matchMode = recientesTab === 'all'
+                    || (recientesTab === 'keto' && (r.modo === 'keto' || !r.modo))   // recetas antiguas sin campo modo → keto por defecto
+                    || (recientesTab === 'conv' && r.modo === 'convencional');
+                const matchTerm = !term || r.titulo.toLowerCase().includes(term);
+                return matchMode && matchTerm;
+            });
+        }
+
+        function renderizarLista() {
             const container = document.getElementById('listaRecientes');
+            const recetas = getRecetasFiltradas();
             if (!recetas.length) {
-                container.innerHTML = '<div class="empty-state"><div class="emoji">🍽️</div>No hay recetas guardadas aún.</div>';
+                const mensajes = {
+                    keto: '🥑 Aún no hay recetas Keto guardadas.',
+                    conv: '🍽️ Aún no hay recetas Clásicas guardadas.',
+                    all:  '📋 No hay recetas guardadas aún.'
+                };
+                container.innerHTML = `<div class="empty-state"><div class="emoji" style="font-size:2rem">🍳</div>${mensajes[recientesTab] || 'Sin recetas.'}</div>`;
                 return;
             }
             container.innerHTML = '';
             recetas.forEach(r => {
+                const modo = r.modo || 'keto';
+                const badgeLabel = modo === 'keto' ? '🥑 Keto' : '🍽️ Clásico';
+                const badgeClass = modo === 'keto' ? 'keto' : 'conv';
                 const div = document.createElement('div');
                 div.className = 'item-receta';
                 div.innerHTML = `
                     <div class="receta-info">
-                        <strong>${r.titulo}</strong>
+                        <strong>${r.titulo} <span class="modo-badge ${badgeClass}">${badgeLabel}</span></strong>
                         <small>${new Date(r.timestamp).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</small>
                     </div>
                     <button class="btn-delete-receta" onclick="deleteReceta('${r.id}', event)" title="Eliminar">🗑</button>
                 `;
                 div.querySelector('.receta-info').onclick = () => {
-                    document.getElementById('recipeContent').innerHTML = r.contenido;
+                    const rc = document.getElementById('recipeContent');
+                    rc.innerHTML = r.contenido;
+                    rc.setAttribute('data-tipo', r.esMenu ? 'menu' : 'receta');
+                    normalizeTextLists(rc);
                     document.getElementById('apiBadge').textContent = '';
                     document.getElementById('apiBadge').className = 'api-badge';
-                    document.getElementById('mealLabel').textContent = '🕒 Del historial';
+                    document.getElementById('mealLabel').textContent = '🕒 Del historial · ' + badgeLabel;
                     document.getElementById('selectionArea').classList.add('hidden');
                     document.getElementById('ingredientStep').classList.add('hidden');
                     document.getElementById('recipeResult').classList.remove('hidden');
@@ -1197,13 +1315,10 @@ REGLAS ESTRICTAS:
             if (!confirm('¿Eliminar esta receta?')) return;
             await db.ref(`chef/${id}`).remove();
             todasLasRecetas = todasLasRecetas.filter(r => r.id !== id);
-            renderizarLista(todasLasRecetas);
+            renderizarLista();
         }
 
-        window.filtrarRecetas = function() {
-            const term = document.getElementById('searchRecetas').value.toLowerCase();
-            renderizarLista(todasLasRecetas.filter(r => r.titulo.toLowerCase().includes(term)));
-        }
+        window.filtrarRecetas = function() { renderizarLista(); }
 
         // ——— COPY ———
         window.copyRecipe = function() {
@@ -1361,24 +1476,37 @@ REGLAS ESTRICTAS:
                 cursorY = doc.lastAutoTable.finalY + 10;
             };
 
+            const drawListItem = (text) => {
+                const lines = doc.splitTextToSize(text, colW - 8);
+                checkPage(lines.length * 5.5 + 3);
+                doc.setFillColor(...GREEN);
+                doc.circle(margin + 2, cursorY - 1.5, 1.2, 'F');
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(...SLATE);
+                doc.text(lines, margin + 6, cursorY);
+                cursorY += lines.length * 5.5 + 2;
+            };
+
             const drawList = (el) => {
-                el.querySelectorAll('li').forEach(li => {
-                    const lines = doc.splitTextToSize(li.innerText.trim(), colW - 8);
-                    checkPage(lines.length * 5.5 + 2);
-                    doc.setFillColor(...GREEN);
-                    doc.circle(margin + 2, cursorY - 1.5, 1.2, 'F');
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(10);
-                    doc.setTextColor(...SLATE);
-                    doc.text(lines, margin + 6, cursorY);
-                    cursorY += lines.length * 5.5 + 1.5;
-                });
+                el.querySelectorAll('li').forEach(li => drawListItem(li.innerText.trim()));
                 cursorY += 3;
             };
 
             const drawText = (el) => {
                 const txt = el.innerText.trim();
                 if (!txt) return;
+                // Si el texto tiene saltos de línea, renderizar como lista de ítems
+                const rawLines = txt.split(/\n|<br\s*\/?>/).map(l => l.trim()).filter(l => l);
+                if (rawLines.length > 1) {
+                    rawLines.forEach(line => {
+                        // Detectar si parece bullet (empieza con •, -, *, número.)
+                        const clean = line.replace(/^[•\-\*\d]+[.)\s]+/, '').trim();
+                        if (clean) drawListItem(clean);
+                    });
+                    cursorY += 3;
+                    return;
+                }
                 const lines = doc.splitTextToSize(txt, colW);
                 checkPage(lines.length * 5.5 + 3);
                 doc.setFont("helvetica", "normal");
@@ -1388,15 +1516,23 @@ REGLAS ESTRICTAS:
                 cursorY += lines.length * 5.5 + 4;
             };
 
+            // drawElements recorre recursivamente — maneja cualquier estructura que devuelva la IA
             const drawElements = (elements) => {
                 for (const el of elements) {
-                    if (el.tagName === 'H1') continue;
+                    const tag = el.tagName;
+                    if (!tag) continue; // nodos de texto sueltos
+                    if (tag === 'H1') continue;
                     if (el.classList?.contains('menu-plato-label')) continue;
                     if (el.classList?.contains('menu-separator')) continue;
-                    if (el.tagName === 'H2') { drawH2(el.innerText.trim()); continue; }
-                    if (el.tagName === 'H3') { drawH3(el.innerText.trim()); continue; }
-                    if (el.tagName === 'TABLE') { drawTable(el); continue; }
-                    if (el.tagName === 'UL' || el.tagName === 'OL') { drawList(el); continue; }
+                    if (tag === 'H2') { drawH2(el.innerText.trim()); continue; }
+                    if (tag === 'H3') { drawH3(el.innerText.trim()); continue; }
+                    if (tag === 'TABLE') { drawTable(el); continue; }
+                    if (tag === 'UL' || tag === 'OL') { drawList(el); continue; }
+                    // DIV o SECTION anidados — bajar un nivel
+                    if (tag === 'DIV' || tag === 'SECTION' || tag === 'ARTICLE') {
+                        drawElements(Array.from(el.children));
+                        continue;
+                    }
                     drawText(el);
                 }
             };
