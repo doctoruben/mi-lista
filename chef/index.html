@@ -61,10 +61,11 @@
         /* ——— NAVBAR ——— */
         .navbar {
             background: var(--card);
-            padding: 0.9rem 1.2rem;
+            padding: 0.75rem 1.2rem 0.65rem;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+            gap: 0.55rem;
             border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
@@ -76,6 +77,8 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            justify-content: center;
+            width: 100%;
         }
         .navbar-brand h2 {
             margin: 0;
@@ -89,7 +92,7 @@
             border-radius: 50%;
             display: inline-block;
         }
-        .nav-btns { display: flex; gap: 8px; }
+        .nav-btns { display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%; }
         .nav-btn {
             background: var(--chip-bg);
             border: none;
