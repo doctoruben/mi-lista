@@ -1,0 +1,49 @@
+{
+  "name": "KetoChef AI Gourmet",
+  "short_name": "SmartChef",
+  "description": "Generador inteligente de recetas con IA",
+  "start_url": "/mi-lista/chef/index.html",
+  "scope": "/mi-lista/chef/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "es",
+  "categories": ["food", "health", "lifestyle"],
+  "icons": [
+   
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  
+  "shortcuts": [
+    {
+      "name": "Desayuno rápido",
+      "short_name": "Desayuno",
+      "description": "Generar receta de desayuno keto",
+      "url": "/mi-lista/chef/index.html?meal=desayuno",
+      "icons": [
+        {
+          "src": "icon-512.png",
+          "sizes": "512x512"
+        }
+      ]
+    },
+    {
+      "name": "Ver recientes",
+      "short_name": "Recientes",
+      "description": "Ver recetas guardadas",
+      "url": "/mi-lista/chef/index.html?action=recientes",
+      "icons": [
+        {
+          "src": "icon-512.png",
+          "sizes": "512x512"
+        }
+      ]
+    }
+  ]
+}
