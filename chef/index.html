@@ -921,38 +921,42 @@
             document.getElementById('ingredientStep').classList.remove('hidden');
         }
 
-        // ——— NORMALIZE: convierte <p> con saltos \n en <ul><li> ———
+        // ——— NORMALIZE: convierte cualquier estructura no-lista en <ul>/<ol> ———
         function normalizeTextLists(root) {
-            // Buscar <p> que contengan saltos de línea (múltiples ítems)
+            // Paso 1: <p> con <br> → <ul><li>
             root.querySelectorAll('p').forEach(p => {
-                const raw = p.innerHTML.trim();
-                // Si el párrafo tiene varios renglones separados por <br> o \n
-                if (!raw.includes('<br') && !raw.includes('\n')) return;
-                const lines = raw.split(/<br\s*\/?>|\n/).map(l => l.trim()).filter(l => l.length > 0);
+                if (!p.innerHTML.includes('<br')) return;
+                const lines = p.innerHTML.split(/<br\s*\/?>/i).map(l => l.trim()).filter(l => l);
                 if (lines.length < 2) return;
+                const ul = document.createElement('ul');
+                lines.forEach(line => { const li = document.createElement('li'); li.innerHTML = line; ul.appendChild(li); });
+                p.replaceWith(ul);
+            });
+
+            // Paso 2: <p> con saltos \n o bullets en innerText → <ul><li>
+            root.querySelectorAll('p').forEach(p => {
+                const txt = p.innerText.trim();
+                const lines = txt.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length < 2 && !/^[•\-\*\d]/.test(txt)) return;
                 const ul = document.createElement('ul');
                 lines.forEach(line => {
                     const li = document.createElement('li');
-                    li.innerHTML = line;
+                    li.textContent = line.replace(/^[•\-\*\d]+[.)\s]+/, '').trim();
                     ul.appendChild(li);
                 });
                 p.replaceWith(ul);
             });
 
-            // Buscar texto plano (texto corrido separado por •, -, *) dentro de <p>
-            root.querySelectorAll('p').forEach(p => {
-                const txt = p.innerText.trim();
-                // Detectar listas con bullet • - * al inicio de línea
-                if (!/^[•\-\*]/.test(txt) && !/\n[•\-\*]/.test(txt)) return;
-                const lines = txt.split('\n').map(l => l.replace(/^[•\-\*]\s*/, '').trim()).filter(l => l);
-                if (lines.length < 2) return;
-                const ul = document.createElement('ul');
+            // Paso 3: si tras un <h3> sigue otro <h3> o nada (sin lista ni tabla), la IA omitió el contenido — ignorar
+            // Paso 4: <ol> con estilo numérico pero sin <li> → reconstruir desde innerText
+            root.querySelectorAll('ol, ul').forEach(list => {
+                if (list.querySelectorAll('li').length > 0) return; // ya tiene li
+                const lines = list.innerText.split('\n').map(l => l.trim()).filter(l => l);
                 lines.forEach(line => {
                     const li = document.createElement('li');
-                    li.textContent = line;
-                    ul.appendChild(li);
+                    li.textContent = line.replace(/^[•\-\*\d]+[.)\s]+/, '').trim();
+                    list.appendChild(li);
                 });
-                p.replaceWith(ul);
             });
         }
 
@@ -1012,32 +1016,39 @@ Crea un menú keto completo para el día con TRES recetas distintas: desayuno, a
 ${ingsText}
 ${variedad}
 ${evitarText}
-REGLAS ESTRICTAS — sigue esta estructura HTML exacta, sin variaciones:
+REGLAS ESTRICTAS — usa EXACTAMENTE esta estructura HTML, sin variaciones:
 <h1>Menú Keto del Día</h1>
 <section data-plato="Desayuno">
   <h2>Nombre del desayuno</h2>
-  <h3>Ingredientes</h3>...<h3>Instrucciones</h3>...<h3>Información Nutricional</h3><table>...</table>
+  <h3>Ingredientes</h3><ul><li>ingrediente 1</li><li>ingrediente 2</li></ul>
+  <h3>Instrucciones</h3><ol><li>Paso 1.</li><li>Paso 2.</li></ol>
+  <h3>Información Nutricional</h3><table><thead><tr><th>Nutriente</th><th>Cantidad por ración</th></tr></thead><tbody><tr><td>Calorías</td><td>XXX kcal</td></tr><tr><td>Grasas totales</td><td>XXg</td></tr><tr><td>Proteínas</td><td>XXg</td></tr><tr><td>Carbohidratos Netos</td><td>XXg</td></tr></tbody></table>
 </section>
-<section data-plato="Almuerzo">
-  <h2>Nombre del almuerzo</h2>
-  ...igual...
-</section>
-<section data-plato="Cena">
-  <h2>Nombre de la cena</h2>
-  ...igual...
-</section>
-Cada sección debe contener: <h2>nombre del plato</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3>, <h3>Información Nutricional</h3> y una <table> con columnas "Nutriente" y "Cantidad por ración" (Calorías, Grasas totales, Proteínas, Carbohidratos Netos).
+<section data-plato="Almuerzo">...igual...</section>
+<section data-plato="Cena">...igual...</section>
+IMPORTANTE: usa SIEMPRE <ul><li> para ingredientes y <ol><li> para instrucciones. NUNCA uses <p> para listar cosas.
 Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`
                 : `Actúa como Chef Keto Profesional y Nutricionista.
 Crea una receta detallada y ORIGINAL para ${selectedMeal}.
 ${ingsText}
 ${variedad}
 ${evitarText}
-REGLAS ESTRICTAS:
-1. Estructura: <h2>Nombre del plato</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3> y <h3>Información Nutricional</h3>.
-2. La sección de Información Nutricional DEBE ser una <table> con dos columnas: "Nutriente" y "Cantidad por ración".
-3. Incluye obligatoriamente en la tabla: Calorías, Grasas totales, Proteínas y Carbohidratos Netos.
-4. Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`)
+REGLAS ESTRICTAS — respeta la estructura HTML exacta:
+<h2>Nombre del plato</h2>
+<h3>Ingredientes</h3>
+<ul>
+  <li>cantidad + ingrediente 1</li>
+  <li>cantidad + ingrediente 2</li>
+</ul>
+<h3>Instrucciones</h3>
+<ol>
+  <li>Paso 1 detallado.</li>
+  <li>Paso 2 detallado.</li>
+</ol>
+<h3>Información Nutricional</h3>
+<table><thead><tr><th>Nutriente</th><th>Cantidad por ración</th></tr></thead><tbody><tr><td>Calorías</td><td>XXX kcal</td></tr><tr><td>Grasas totales</td><td>XXg</td></tr><tr><td>Proteínas</td><td>XXg</td></tr><tr><td>Carbohidratos Netos</td><td>XXg</td></tr></tbody></table>
+IMPORTANTE: usa SIEMPRE <ul><li> para ingredientes y <ol><li> para instrucciones. NUNCA uses <p> para listar cosas.
+Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`)
             : (esMenu
                 ? `Actúa como Chef Profesional y Nutricionista.
 Crea un menú equilibrado y variado para el día con TRES recetas distintas: desayuno, almuerzo y cena.
@@ -1045,21 +1056,17 @@ No hay restricciones dietéticas: puedes usar todo tipo de ingredientes incluyen
 ${ingsText}
 ${variedad}
 ${evitarText}
-REGLAS ESTRICTAS — sigue esta estructura HTML exacta, sin variaciones:
+REGLAS ESTRICTAS — usa EXACTAMENTE esta estructura HTML, sin variaciones:
 <h1>Menú del Día</h1>
 <section data-plato="Desayuno">
   <h2>Nombre del desayuno</h2>
-  <h3>Ingredientes</h3>...<h3>Instrucciones</h3>...<h3>Información Nutricional</h3><table>...</table>
+  <h3>Ingredientes</h3><ul><li>ingrediente 1</li><li>ingrediente 2</li></ul>
+  <h3>Instrucciones</h3><ol><li>Paso 1.</li><li>Paso 2.</li></ol>
+  <h3>Información Nutricional</h3><table><thead><tr><th>Nutriente</th><th>Cantidad por ración</th></tr></thead><tbody><tr><td>Calorías</td><td>XXX kcal</td></tr><tr><td>Grasas totales</td><td>XXg</td></tr><tr><td>Proteínas</td><td>XXg</td></tr><tr><td>Carbohidratos totales</td><td>XXg</td></tr><tr><td>Fibra</td><td>XXg</td></tr></tbody></table>
 </section>
-<section data-plato="Almuerzo">
-  <h2>Nombre del almuerzo</h2>
-  ...igual...
-</section>
-<section data-plato="Cena">
-  <h2>Nombre de la cena</h2>
-  ...igual...
-</section>
-Cada sección debe contener: <h2>nombre del plato</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3>, <h3>Información Nutricional</h3> y una <table> con columnas "Nutriente" y "Cantidad por ración" (Calorías, Grasas totales, Proteínas, Carbohidratos totales, Fibra).
+<section data-plato="Almuerzo">...igual...</section>
+<section data-plato="Cena">...igual...</section>
+IMPORTANTE: usa SIEMPRE <ul><li> para ingredientes y <ol><li> para instrucciones. NUNCA uses <p> para listar cosas.
 Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`
                 : `Actúa como Chef Profesional y Nutricionista.
 Crea una receta detallada, ORIGINAL y apetecible para ${selectedMeal}.
@@ -1067,11 +1074,22 @@ No hay restricciones dietéticas: puedes usar todo tipo de ingredientes incluyen
 ${ingsText}
 ${variedad}
 ${evitarText}
-REGLAS ESTRICTAS:
-1. Estructura: <h2>Nombre del plato</h2>, <h3>Ingredientes</h3>, <h3>Instrucciones</h3> y <h3>Información Nutricional</h3>.
-2. La sección de Información Nutricional DEBE ser una <table> con dos columnas: "Nutriente" y "Cantidad por ración".
-3. Incluye obligatoriamente en la tabla: Calorías, Grasas totales, Proteínas, Carbohidratos totales y Fibra.
-4. Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`);
+REGLAS ESTRICTAS — respeta la estructura HTML exacta:
+<h2>Nombre del plato</h2>
+<h3>Ingredientes</h3>
+<ul>
+  <li>cantidad + ingrediente 1</li>
+  <li>cantidad + ingrediente 2</li>
+</ul>
+<h3>Instrucciones</h3>
+<ol>
+  <li>Paso 1 detallado.</li>
+  <li>Paso 2 detallado.</li>
+</ol>
+<h3>Información Nutricional</h3>
+<table><thead><tr><th>Nutriente</th><th>Cantidad por ración</th></tr></thead><tbody><tr><td>Calorías</td><td>XXX kcal</td></tr><tr><td>Grasas totales</td><td>XXg</td></tr><tr><td>Proteínas</td><td>XXg</td></tr><tr><td>Carbohidratos totales</td><td>XXg</td></tr><tr><td>Fibra</td><td>XXg</td></tr></tbody></table>
+IMPORTANTE: usa SIEMPRE <ul><li> para ingredientes y <ol><li> para instrucciones. NUNCA uses <p> para listar cosas.
+Devuelve SOLO HTML limpio. Sin bloques de código markdown ni texto extra.`);
 
             let html = "";
             let exito = false;
@@ -1496,24 +1514,23 @@ REGLAS ESTRICTAS:
             const drawText = (el) => {
                 const txt = el.innerText.trim();
                 if (!txt) return;
-                // Si el texto tiene saltos de línea, renderizar como lista de ítems
-                const rawLines = txt.split(/\n|<br\s*\/?>/).map(l => l.trim()).filter(l => l);
+                // innerText ya convierte <br> en \n reales — split directo
+                const rawLines = txt.split('\n').map(l => l.trim()).filter(l => l);
                 if (rawLines.length > 1) {
                     rawLines.forEach(line => {
-                        // Detectar si parece bullet (empieza con •, -, *, número.)
                         const clean = line.replace(/^[•\-\*\d]+[.)\s]+/, '').trim();
                         if (clean) drawListItem(clean);
                     });
                     cursorY += 3;
                     return;
                 }
-                const lines = doc.splitTextToSize(txt, colW);
-                checkPage(lines.length * 5.5 + 3);
+                const pdfLines = doc.splitTextToSize(txt, colW);
+                checkPage(pdfLines.length * 5.5 + 3);
                 doc.setFont("helvetica", "normal");
                 doc.setFontSize(10);
                 doc.setTextColor(...SLATE);
-                doc.text(lines, margin, cursorY);
-                cursorY += lines.length * 5.5 + 4;
+                doc.text(pdfLines, margin, cursorY);
+                cursorY += pdfLines.length * 5.5 + 4;
             };
 
             // drawElements recorre recursivamente — maneja cualquier estructura que devuelva la IA
