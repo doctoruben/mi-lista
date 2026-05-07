@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>⚙️ Administración — Lista NET</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); font-family: 'Nunito', sans-serif; color: #f1f5f9; min-height: 100vh; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-family: 'Abril Fatface', serif; font-size: 28px; color: #f8fafc; margin-bottom: 4px; }
+    .subtitle { color: #475569; font-size: 13px; margin-bottom: 28px; }
+
+    /* LOGIN */
+    .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { background: #1e293b; border-radius: 20px; padding: 24px; border: 1px solid #334155; margin-bottom: 20px; }
+    .card h2 { font-family: 'Abril Fatface', serif; font-size: 20px; color: #f8fafc; margin-bottom: 16px; }
+    label { display: block; font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px; margin-bottom: 5px; margin-top: 10px; }
+    input, select { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px 14px; color: #f1f5f9; font-size: 15px; font-family: inherit; outline: none; }
+    input:focus, select:focus { border-color: #818cf8; }
+    .btn { display: block; width: 100%; margin-top: 14px; background: linear-gradient(90deg,#fbbf24,#f59e0b); color: #78350f; border: none; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: 900; font-family: inherit; cursor: pointer; }
+    .btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-danger { background: #450a0a; color: #fca5a5; border: none; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .error { color: #f87171; font-size: 13px; font-weight: 700; margin-top: 8px; display: none; }
+
+    /* SECTIONS */
+    .section-title { font-size: 11px; font-weight: 900; color: #64748b; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    .user-row { display: flex; align-items: center; gap: 10px; background: #0f172a; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid #334155; }
+    .user-info { flex: 1; }
+    .user-name { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+    .user-meta { font-size: 11px; color: #475569; margin-top: 2px; }
+    .lista-row { display: flex; align-items: center; gap: 10px; background: #0f172a; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid #334155; }
+    .badge { background: #1e1b4b; color: #818cf8; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 800; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #334155; background: #0f172a; color: #64748b; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; text-align: center; }
+    .tab.active { background: #1e1b4b; color: #818cf8; border-color: #818cf8; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .divider { border: none; border-top: 1px solid #1e293b; margin: 16px 0; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap" class="login-wrap">
+  <div style="width:100%; max-width:380px;">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:48px;">⚙️</div>
+      <h1 style="font-family:'Abril Fatface',serif; font-size:26px; margin-top:8px;">Administración</h1>
+      <p style="color:#475569; font-size:13px; margin-top:4px;">Lista NET</p>
+    </div>
+    <div class="card">
+      <label>CONTRASEÑA DE ADMINISTRADOR</label>
+      <input id="a_user" style="display:none" />
+      <input id="a_pass" type="password" placeholder="••••••••" />
+      <p id="loginErr" class="error">Contraseña incorrecta</p>
+      <button class="btn" onclick="adminLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel" style="display:none">
+  <div class="wrap">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+      <h1>⚙️ Administración</h1>
+      <a href="index.html" style="background:#0f172a; border:1px solid #334155; border-radius:10px; color:#94a3b8; font-size:13px; font-weight:700; padding:8px 14px; text-decoration:none;">← Volver</a>
+    </div>
+    <p class="subtitle">Gestión de usuarios y listas</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('usuarios')">👤 Usuarios</button>
+      <button class="tab" onclick="showTab('listas')">📋 Listas</button>
+    </div>
+
+    <!-- USUARIOS TAB -->
+    <div id="tab-usuarios" class="tab-content active">
+      <div class="card">
+        <h2>Crear usuario</h2>
+        <label>NOMBRE DE USUARIO</label>
+        <input id="nu_user" placeholder="nombre..." autocapitalize="none" />
+        <label>CONTRASEÑA</label>
+        <input id="nu_pass" type="password" placeholder="••••••••" />
+        <label>ASIGNAR A LISTAS</label>
+        <div id="nu_listas" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+        <button class="btn" onclick="createUser()">+ Crear usuario</button>
+        <p id="createErr" class="error"></p>
+      </div>
+
+      <div class="section-title">Usuarios existentes</div>
+      <div id="usersList"></div>
+    </div>
+
+    <!-- LISTAS TAB -->
+    <div id="tab-listas" class="tab-content">
+      <div class="card">
+        <h2>Crear lista</h2>
+        <label>NOMBRE DE LA LISTA</label>
+        <input id="nl_name" placeholder="mi_lista..." autocapitalize="none" />
+        <button class="btn" onclick="createLista()">+ Crear lista</button>
+        <p id="listaErr" class="error"></p>
+      </div>
+
+      <div class="section-title">Listas existentes</div>
+      <div id="listasList"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+           updatePassword, deleteUser as fbDeleteUser, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const FB_CONFIG = {
+    apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
+    projectId:   'lista-compra-9d6f5',
+    appId:       '1:241322134457:web:1b765857911f94d69cc468',
+    authDomain:  'lista-compra-9d6f5.firebaseapp.com',
+    databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
+  };
+
+  const ADMIN_EMAIL = 'admin@milista.app';
+
+  const app  = initializeApp(FB_CONFIG);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
+
+  let usuarios    = {};
+  let listas      = {};
+  let listasConfig = {};
+
+  // ── LISTENER CLEANUP ─────────────────────────────────────
+  const _activeListeners = [];
+  function _registerListener(unsub) {
+    _activeListeners.push(unsub);
+    return unsub;
+  }
+  function _cleanupAllListeners() {
+    while (_activeListeners.length > 0) {
+      try { _activeListeners.pop()(); } catch(e) {}
+    }
+  }
+
+  // ── LOGIN ────────────────────────────────────────────────
+  window.adminLogin = async function() {
+    const pass = document.getElementById('a_pass').value.trim();
+    const err  = document.getElementById('loginErr');
+    err.style.display = 'none';
+    if (!pass) return;
+    try {
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, pass);
+      document.getElementById('loginWrap').style.display  = 'none';
+      document.getElementById('adminPanel').style.display = 'block';
+      _cleanupAllListeners(); // limpiar por si se llama más de una vez
+      initAdmin();
+    } catch(e) {
+      err.style.display = 'block';
+    }
+  };
+
+  document.getElementById('a_pass').addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+  document.getElementById('a_user').style.display = 'none'; // solo necesitamos contraseña
+  document.querySelector('label[for="a_user"]') && (document.querySelector('label').style.display = 'none');
+
+  function initAdmin() {
+    _registerListener(onValue(ref(db, 'usuarios_config'), snap => {
+      usuarios = snap.val() || {};
+      renderUsers();
+      refreshListaSelect();
+    }));
+    _registerListener(onValue(ref(db, 'listas'), snap => {
+      const data = snap.val() || {};
+      listas = Object.keys(data);
+      // Cargar config de cada lista (_config)
+      listasConfig = {};
+      listas.forEach(l => {
+        if (data[l] && data[l]._config) listasConfig[l] = data[l]._config;
+      });
+      renderListas();
+      refreshListaSelect();
+      renderUsers();
+    }));
+  }
+
+  function refreshListaSelect() {
+    const container = document.getElementById('nu_listas');
+    if (!container) return;
+    container.innerHTML = Array.isArray(listas) && listas.length > 0
+      ? listas.map(l => `
+        <label style="display:flex; align-items:center; gap:8px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; cursor:pointer;">
+          <input type="checkbox" value="${l}" style="width:16px; height:16px; accent-color:#818cf8; cursor:pointer;" />
+          <span style="font-size:14px; font-weight:600; color:#f1f5f9;">📋 ${l}</span>
+        </label>`).join('')
+      : '<p style="color:#475569; font-size:13px;">No hay listas creadas aún</p>';
+  }
+
+  function renderUsers() {
+    const el = document.getElementById('usersList');
+    const entries = Object.entries(usuarios);
+    if (entries.length === 0) {
+      el.innerHTML = '<p style="color:#475569; font-size:13px; text-align:center; padding:20px 0;">No hay usuarios creados</p>';
+      return;
+    }
+    el.innerHTML = entries.map(([key, u]) => {
+      const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+      const listasText = userListas.length > 0
+        ? userListas.map(l => `<span class="badge">${l}</span>`).join(' ')
+        : '—';
+      const checkboxes = Array.isArray(listas) ? listas.map(l => `
+        <label style="display:flex; align-items:center; gap:8px; background:#0f172a; border:1px solid #334155; border-radius:8px; padding:8px 12px; cursor:pointer;">
+          <input type="checkbox" value="${l}" ${userListas.includes(l) ? 'checked' : ''} style="width:16px; height:16px; accent-color:#818cf8; cursor:pointer;" />
+          <span style="font-size:14px; font-weight:600; color:#f1f5f9;">📋 ${l}</span>
+        </label>`).join('') : '';
+      const avatarHtml = u.avatar
+        ? `<img src="${u.avatar}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:2px solid #334155; flex-shrink:0;" />`
+        : `<div style="width:38px; height:38px; border-radius:50%; background:#1e293b; border:2px solid #334155; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">👤</div>`;
+      return `
+      <div style="background:#0f172a; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+        <!-- Vista normal -->
+        <div id="uview-${key}" style="display:flex; align-items:center; gap:10px;">
+          ${avatarHtml}
+          <div class="user-info">
+            <div class="user-name">${key.charAt(0).toUpperCase() + key.slice(1)}</div>
+            <div class="user-meta" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">Listas: ${listasText}</div>
+          </div>
+          <button class="btn-secondary" onclick="toggleEditUser('${key}')">✏️</button>
+          <button class="btn-secondary" onclick="changePass('${key}')">🔑</button>
+          <button class="btn-danger" onclick="deleteUser('${key}')">×</button>
+        </div>
+        <!-- Modo edición -->
+        <div id="uedit-${key}" style="display:none; margin-top:10px;">
+          <!-- Avatar -->
+          <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">AVATAR</div>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div id="uedit-avatar-preview-${key}" style="width:56px; height:56px; border-radius:50%; overflow:hidden; border:2px solid #334155; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:#1e293b; font-size:24px;">
+              ${u.avatar ? `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover;" />` : '👤'}
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:9px 14px; text-align:center; cursor:pointer; font-size:13px; font-weight:700; color:#94a3b8;">
+                📷 Cambiar foto
+                <input type="file" accept="image/*" style="display:none;" onchange="previewAvatar('${key}', this)" />
+              </label>
+              ${u.avatar ? `<button onclick="removeAvatar('${key}')" style="margin-top:6px; width:100%; background:#450a0a; border:none; color:#fca5a5; border-radius:10px; padding:7px; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer;">🗑 Quitar foto</button>` : ''}
+            </div>
+          </div>
+          <!-- Listas -->
+          <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">LISTAS ASIGNADAS</div>
+          <div id="uedit-listas-${key}" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;">${checkboxes}</div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="saveUserListas('${key}')" style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+            <button onclick="toggleEditUser('${key}')" style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.toggleEditUser = function(key) {
+    const view = document.getElementById(`uview-${key}`);
+    const edit = document.getElementById(`uedit-${key}`);
+    const isEditing = edit.style.display !== 'none';
+    view.style.display = isEditing ? 'flex' : 'none';
+    edit.style.display = isEditing ? 'none' : 'block';
+  };
+
+  // Avatar temporal mientras se edita
+  const _pendingAvatars = {};
+
+  window.previewAvatar = function(key, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      // Redimensionar a 80x80 antes de guardar
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 80; canvas.height = 80;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 80, 80);
+        const b64 = canvas.toDataURL('image/jpeg', 0.8);
+        _pendingAvatars[key] = b64;
+        const preview = document.getElementById(`uedit-avatar-preview-${key}`);
+        preview.innerHTML = `<img src="${b64}" style="width:100%; height:100%; object-fit:cover;" />`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.removeAvatar = function(key) {
+    _pendingAvatars[key] = null;
+    const preview = document.getElementById(`uedit-avatar-preview-${key}`);
+    preview.innerHTML = '👤';
+  };
+
+  window.saveUserListas = async function(key) {
+    const checked = [...document.querySelectorAll(`#uedit-listas-${key} input[type=checkbox]:checked`)];
+    const newListas = checked.map(c => c.value);
+    if (newListas.length === 0) { alert('Selecciona al menos una lista'); return; }
+    const existing = usuarios[key] || {};
+    const updated = { uid: existing.uid, listas: newListas };
+    // Gestionar avatar
+    if (key in _pendingAvatars) {
+      if (_pendingAvatars[key] === null) delete updated.avatar;
+      else updated.avatar = _pendingAvatars[key];
+      delete _pendingAvatars[key];
+    } else if (existing.avatar) {
+      updated.avatar = existing.avatar;
+    }
+    try {
+      await set(ref(db, `usuarios_config/${key}`), updated);
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
+    }
+  };
+
+  function renderListas() {
+    const el = document.getElementById('listasList');
+    if (!Array.isArray(listas) || listas.length === 0) {
+      el.innerHTML = '<p style="color:#475569; font-size:13px; text-align:center; padding:20px 0;">No hay listas creadas</p>';
+      return;
+    }
+    el.innerHTML = listas.map(l => {
+      const cfg = listasConfig[l] || {};
+      const merca = cfg.mercadona !== false;
+      const hiper  = cfg.hiperdino !== false;
+      return `
+      <div style="background:#0f172a; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+        <!-- Vista normal -->
+        <div id="lview-${l}" style="display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; font-size:15px; font-weight:700; color:#f1f5f9;">📋 ${l}</div>
+          <button class="btn-secondary" onclick="toggleEditLista('${l}')">✏️</button>
+          <button class="btn-danger" onclick="deleteLista('${l}')">×</button>
+        </div>
+        <!-- Modo edición -->
+        <div id="ledit-${l}" style="display:none; margin-top:10px;">
+          <input id="ledit-input-${l}" value="${l}"
+            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:10px;" />
+          <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:8px;">BOTONES DE SUPERMERCADO</div>
+          <label style="display:flex; align-items:center; gap:8px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:8px 12px; margin-bottom:6px; cursor:pointer;">
+            <input type="checkbox" id="ledit-merca-${l}" ${merca ? 'checked' : ''} style="width:16px; height:16px; accent-color:#4ade80; cursor:pointer;" />
+            <span style="font-size:14px; font-weight:600; color:#f1f5f9;">🟢 Mostrar botón Mercadona</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:8px 12px; margin-bottom:10px; cursor:pointer;">
+            <input type="checkbox" id="ledit-hiper-${l}" ${hiper ? 'checked' : ''} style="width:16px; height:16px; accent-color:#fb923c; cursor:pointer;" />
+            <span style="font-size:14px; font-weight:600; color:#f1f5f9;">🟠 Mostrar botón Hiperdino</span>
+          </label>
+          <div style="display:flex; gap:8px;">
+            <button onclick="saveListaConfig('${l}')" style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+            <button onclick="toggleEditLista('${l}')" style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.toggleEditLista = function(l) {
+    const view = document.getElementById(`lview-${l}`);
+    const edit = document.getElementById(`ledit-${l}`);
+    const isEditing = edit.style.display !== 'none';
+    view.style.display = isEditing ? 'flex' : 'none';
+    edit.style.display = isEditing ? 'none' : 'block';
+    if (!isEditing) document.getElementById(`ledit-input-${l}`).focus();
+  };
+
+  window.saveListaConfig = async function(oldName) {
+    const newName  = document.getElementById(`ledit-input-${oldName}`).value.trim().replace(/\s+/g, '_');
+    const mercadona = document.getElementById(`ledit-merca-${oldName}`).checked;
+    const hiperdino = document.getElementById(`ledit-hiper-${oldName}`).checked;
+    if (!newName) { alert('Escribe un nombre válido'); return; }
+    try {
+      // Guardar config de supermercados
+      await set(ref(db, `listas/${oldName}/_config`), { mercadona, hiperdino });
+      // Renombrar si cambió el nombre
+      if (newName !== oldName) {
+        const snap = await new Promise(res => onValue(ref(db, `listas/${oldName}`), res, { onlyOnce: true }));
+        const data = snap.val();
+        await set(ref(db, `listas/${newName}`), data);
+        await remove(ref(db, `listas/${oldName}`));
+        const updates = {};
+        Object.entries(usuarios).forEach(([uKey, u]) => {
+          const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+          if (userListas.includes(oldName)) {
+            updates[`usuarios_config/${uKey}/listas`] = userListas.map(l => l === oldName ? newName : l);
+          }
+        });
+        if (Object.keys(updates).length > 0) await update(ref(db, '/'), updates);
+      }
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
+    }
+  };
+
+  window.renameLista = async function(oldName) {
+    const newName = document.getElementById(`ledit-input-${oldName}`).value.trim().replace(/\s+/g, '_');
+    if (!newName) { alert('Escribe un nombre válido'); return; }
+    if (newName === oldName) { toggleEditLista(oldName); return; }
+    if (listas.includes(newName)) { alert('Ya existe una lista con ese nombre'); return; }
+    try {
+      // Copiar datos de la lista antigua a la nueva
+      const snap = await new Promise(res => onValue(ref(db, `listas/${oldName}`), res, { onlyOnce: true }));
+      const data = snap.val();
+      await set(ref(db, `listas/${newName}`), data);
+      await remove(ref(db, `listas/${oldName}`));
+      // Actualizar usuarios que tenían la lista antigua
+      const updates = {};
+      Object.entries(usuarios).forEach(([uKey, u]) => {
+        const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+        if (userListas.includes(oldName)) {
+          const newListas = userListas.map(l => l === oldName ? newName : l);
+          updates[`usuarios_config/${uKey}/listas`] = newListas;
+        }
+      });
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db, '/'), updates);
+      }
+    } catch(e) {
+      alert('Error al renombrar: ' + e.message);
+    }
+  };
+
+  // ── CREAR USUARIO ────────────────────────────────────────
+  window.createUser = async function() {
+    const user  = document.getElementById('nu_user').value.trim().toLowerCase();
+    const pass  = document.getElementById('nu_pass').value.trim();
+    const err   = document.getElementById('createErr');
+    // Recoger listas seleccionadas
+    const checked = [...document.querySelectorAll('#nu_listas input[type=checkbox]:checked')];
+    const listas_sel = checked.map(c => c.value);
+    if (!user || !pass) { err.textContent = 'Rellena nombre y contraseña'; err.style.display = 'block'; return; }
+    if (listas_sel.length === 0) { err.textContent = 'Selecciona al menos una lista'; err.style.display = 'block'; return; }
+    if (usuarios[user]) { err.textContent = 'Ese usuario ya existe'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    try {
+      const email = `${user}@milista.app`;
+      const cred  = await createUserWithEmailAndPassword(auth, email, pass);
+      const uid   = cred.user.uid;
+      await set(ref(db, `usuarios_config/${user}`), { uid, listas: listas_sel });
+      document.getElementById('nu_user').value = '';
+      document.getElementById('nu_pass').value = '';
+      document.querySelectorAll('#nu_listas input[type=checkbox]').forEach(c => c.checked = false);
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass);
+    } catch(e) {
+      err.textContent = e.code === 'auth/email-already-in-use'
+        ? 'Ese usuario ya existe en el sistema'
+        : `Error: ${e.message}`;
+      err.style.display = 'block';
+    }
+  };
+
+  // ── CAMBIAR CONTRASEÑA ───────────────────────────────────
+  window.changePass = async function(key) {
+    const newPass = prompt(`Nueva contraseña para ${key}:`);
+    if (!newPass) return;
+    const userData = usuarios[key];
+    if (!userData || !userData.uid) { alert('No se encontró el UID del usuario'); return; }
+    try {
+      // Necesitamos re-autenticar al usuario para cambiar su contraseña
+      // Como admin, usamos la API REST de Firebase Admin no disponible en cliente
+      // Alternativa: guardar email y usar updatePassword via sign-in temporal
+      const email = `${key}@milista.app`;
+      alert(`Para cambiar la contraseña de ${key}, ve a Firebase Console → Authentication → Users → busca ${email} → editar.`);
+    } catch(e) {
+      alert('Error al cambiar contraseña: ' + e.message);
+    }
+  };
+
+  // ── ELIMINAR USUARIO ─────────────────────────────────────
+  window.deleteUser = async function(key) {
+    const pass = prompt(`Para eliminar "${key}" introduce su contraseña actual:`);
+    if (!pass) return;
+    if (!confirm(`¿Eliminar usuario "${key}"? Esta acción no se puede deshacer.`)) return;
+    try {
+      const email = `${key}@milista.app`;
+      // Sign in como el usuario a borrar para poder eliminarlo de Auth
+      const tempCred = await signInWithEmailAndPassword(auth, email, pass);
+      await tempCred.user.delete();
+      // Volver a loguear como admin
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass);
+      // Borrar de la base de datos
+      await remove(ref(db, `usuarios_config/${key}`));
+    } catch(e) {
+      // Intentar reconectar como admin por si acaso
+      try { await signInWithEmailAndPassword(auth, ADMIN_EMAIL, _adminPass); } catch {}
+      alert(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'
+        ? 'Contraseña incorrecta'
+        : `Error al eliminar: ${e.message}`);
+    }
+  };
+
+  // ── LISTAS ───────────────────────────────────────────────
+  window.createLista = function() {
+    const name = document.getElementById('nl_name').value.trim().replace(/\s+/g, '_');
+    const err  = document.getElementById('listaErr');
+    if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    // Nueva lista solo con categoría "Otros" por defecto
+    set(ref(db, `listas/${name}`), {
+      _created: Date.now(),
+      categories: { '%F0%9F%9B%92%20Otros': ["#94a3b8","#1e293b"] }
+    });
+    document.getElementById('nl_name').value = '';
+  };
+
+  window.deleteLista = async function(name) {
+    if (!confirm(`¿Eliminar lista "${name}" y todos sus datos?`)) return;
+    try {
+      await remove(ref(db, `listas/${name}`));
+      // Quitar la lista de todos los usuarios que la tenían
+      const updates = {};
+      Object.entries(usuarios).forEach(([uKey, u]) => {
+        const userListas = Array.isArray(u.listas) ? u.listas : (u.lista ? [u.lista] : []);
+        if (userListas.includes(name)) {
+          const newListas = userListas.filter(l => l !== name);
+          updates[`usuarios_config/${uKey}/listas`] = newListas;
+        }
+      });
+      if (Object.keys(updates).length > 0) await update(ref(db, '/'), updates);
+    } catch(e) {
+      alert('Error al eliminar lista: ' + e.message);
+    }
+  };
+
+  window.showTab = function(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['usuarios','listas'][i] === tab));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+  };
+
+  // Guardar pass admin en memoria para re-login tras crear usuario
+  let _adminPass = '';
+  document.getElementById('a_pass').addEventListener('input', e => { _adminPass = e.target.value; });
+</script>
+</body>
+</html>
