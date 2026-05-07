@@ -2,7 +2,7 @@ const CACHE_NAME = 'mitension-v1';
 
 const ASSETS = [
   '/mi-lista/tension/',
-  '/mi-lista/tension/index.html',
+  '/mi-lista/tension/tension.html',
   '/mi-lista/tension/manifest.json',
   '/mi-lista/tension/icon-192.png',
   '/mi-lista/tension/icon-512.png',
