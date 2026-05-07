@@ -2,7 +2,7 @@
   "name": "MiTensión",
   "short_name": "MiTensión",
   "description": "Control de tensión arterial personal",
-  "start_url": "/mi-lista/tension/",
+  "start_url": "/mi-lista/tension/tension.html",
   "scope": "/mi-lista/tension/",
   "display": "standalone",
   "orientation": "portrait",
