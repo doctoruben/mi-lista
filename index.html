@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lista NET" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <title>Lista NET</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1e293b" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Abril+Fatface&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      background: #1e293b;
+      font-family: 'Nunito', sans-serif;
+      color: #f1f5f9;
+      overscroll-behavior: none;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+    .app { max-width: 480px; margin: 0 auto; padding: 0 16px 120px; }
+
+    /* LOGIN SCREEN */
+    .setup-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .setup-card {
+      background: #1e293b;
+      border-radius: 24px;
+      padding: 28px 24px;
+      border: 1px solid #334155;
+      max-width: 440px;
+      width: 100%;
+    }
+    .setup-card h2 { font-family: 'Abril Fatface', serif; font-size: 26px; margin-bottom: 6px; color: #f8fafc; }
+    .setup-card p { color: #64748b; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+    .setup-field { margin-bottom: 12px; text-align: left; }
+    .setup-field label { display: block; font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 5px; letter-spacing: 0.5px; }
+    .setup-field input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #f1f5f9;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+    }
+    .setup-field input:focus { border-color: #fbbf24; }
+    .setup-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      color: #78350f;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .setup-btn:active { opacity: 0.85; }
+
+    /* SYNC STATUS */
+    .sync-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 0 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .sync-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #475569;
+      transition: background 0.3s;
+    }
+    .sync-dot.online { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
+    .sync-dot.syncing { background: #fbbf24; animation: pulse 0.8s infinite; }
+    .sync-dot.error { background: #f87171; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .header { padding: 28px 0 16px; text-align: center; }
+    .header-top { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 6px; }
+    .header .emoji { font-size: 38px; flex-shrink: 0; }
+    .header h1 { font-family: 'Abril Fatface', serif; font-size: 28px; color: #f8fafc; line-height: 1; }
+    .stats { color: #64748b; font-size: 14px; text-align: center; }
+    .stats .pending { color: #fbbf24; font-weight: 800; }
+    .stats .done { color: #4ade80; font-weight: 800; }
+
+    .add-card {
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      margin-bottom: 14px;
+    }
+    .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .main-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #f1f5f9;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+    }
+    .main-input::placeholder { color: #475569; }
+    .autocomplete-wrap { position: relative; flex: 1; }
+    .autocomplete-wrap .main-input { width: 100%; }
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0; right: 0;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .suggestion-item {
+      padding: 11px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #cbd5e1;
+      cursor: pointer;
+      border-bottom: 1px solid #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.1s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:active, .suggestion-item.highlighted { background: #334155; color: #f1f5f9; }
+    .suggestion-match { color: #fbbf24; font-weight: 800; }
+    .main-input:focus { border-color: #fbbf24; }
+    .qty-box {
+      display: flex; align-items: center; gap: 4px;
+      background: #0f172a; border: 1px solid #334155; border-radius: 12px; padding: 0 10px;
+    }
+    .qty-btn {
+      background: none; border: none; color: #94a3b8; font-size: 22px;
+      cursor: pointer; width: 28px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; font-family: inherit;
+    }
+    .qty-btn:active { background: #334155; }
+    .qty-num { color: #f1f5f9; font-weight: 800; min-width: 22px; text-align: center; font-size: 15px; }
+
+    .cat-select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 11px 14px;
+      color: #f1f5f9;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+    .cat-select:focus { border-color: #fbbf24; }
+    .cat-select option { background: #1e293b; color: #f1f5f9; font-weight: 600; }
+
+    .qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 4px 12px 4px 14px;
+    }
+    .qty-label { color: #64748b; font-size: 13px; font-weight: 700; }
+    .qty-box { border: none; background: none; padding: 0; }
+    .add-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      color: #78350f; border: none; border-radius: 14px;
+      padding: 14px; font-size: 16px; font-weight: 900;
+      font-family: inherit; cursor: pointer; transition: transform 0.1s;
+    }
+    .add-btn:active { transform: scale(0.97); }
+    .freq-btn {
+      width: 100%; margin-top: 8px;
+      background: #0f172a; color: #818cf8;
+      border: 1px solid #312e81; border-radius: 14px;
+      padding: 11px; font-size: 14px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .freq-btn:active { background: #1e1b4b; }
+    .super-row { display: flex; gap: 8px; margin-top: 8px; }
+    .super-btn {
+      flex: 1; background: #0f172a; border-radius: 14px;
+      padding: 11px 8px; font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .merca-btn { color: #4ade80; border: 1px solid #14532d; }
+    .merca-btn:active { background: #052e16; }
+    .hiper-btn { color: #fb923c; border: 1px solid #7c2d12; }
+    .hiper-btn:active { background: #431407; }
+    .freq-item {
+      display: flex; align-items: center; gap: 12px;
+      background: #1e293b; border-radius: 14px; padding: 12px 14px;
+      margin-bottom: 8px; border: 2px solid transparent;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .freq-item.selected { border-color: #818cf8; background: #1e1b4b; }
+    .freq-check {
+      width: 24px; height: 24px; border-radius: 7px;
+      border: 2px solid #475569; background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.15s; font-size: 14px;
+    }
+    .freq-item.selected .freq-check { background: #818cf8; border-color: #818cf8; color: #fff; }
+    .freq-info { flex: 1; min-width: 0; }
+    .freq-name { font-size: 15px; font-weight: 700; color: #f1f5f9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .freq-meta { font-size: 11px; color:#475569; margin-top: 2px; }
+    .freq-count { font-size: 12px; font-weight: 800; color: #475569; background: #0f172a; border-radius: 20px; padding: 2px 8px; flex-shrink: 0; }
+
+    .filters { display: flex; gap: 8px; margin-bottom: 14px; }
+    .filter-btn {
+      flex: 1; padding: 10px 0; border-radius: 12px;
+      font-size: 12px; font-weight: 800; font-family: inherit;
+      background: #1e293b; color: #64748b; border: 1px solid #334155;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .filter-btn.active { background: #f1f5f9; color: #0f172a; border-color: #f1f5f9; }
+
+    .group-header { display: flex; align-items: center; gap: 8px; padding: 14px 4px 8px; }
+    .group-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .group-title { font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #94a3b8; white-space: nowrap; }
+    .group-line { flex: 1; height: 1px; background: #1e293b; }
+    .group-count { font-size: 11px; font-weight: 800; color: #475569; background: #1e293b; border-radius: 20px; padding: 2px 8px; }
+
+    .items { display: flex; flex-direction: column; gap: 8px; }
+    .empty { text-align: center; color: #475569; padding: 40px 0; font-size: 15px; }
+
+    .item {
+      display: flex; align-items: center; gap: 12px;
+      background: #1e293b; border-radius: 16px; padding: 14px;
+      border: 1px solid #334155; transition: all 0.25s;
+      animation: slideIn 0.25s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+    .item.checked { background: #0f172a; border-color: #1e293b; opacity: 0.5; }
+
+    .check-btn {
+      width: 30px; height: 30px; border-radius: 9px;
+      border: 2px solid #475569; background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s; font-size: 16px;
+    }
+    .check-btn.checked { border-color: var(--accent); background: var(--accent); }
+
+    .item-info { flex: 1; min-width: 0; }
+    .item-name {
+      font-weight: 700; font-size: 16px; color: #f1f5f9;
+      white-space: normal; overflow: visible; text-overflow: unset; word-break: break-word; transition: all 0.2s;
+    }
+    .item-name.checked { text-decoration: line-through; color: #475569; }
+    .qty-badge {
+      margin-left: 7px; background: #334155; color: #94a3b8;
+      border-radius: 6px; padding: 1px 7px; font-size: 11px; font-weight: 800;
+    }
+
+    .del-btn {
+      background: #450a0a; border: none; color: #fca5a5;
+      border-radius: 10px; width: 34px; height: 34px; cursor: pointer;
+      font-size: 20px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s;
+    }
+    .del-btn:active { background: #7f1d1d; }
+
+    .clear-btn {
+      width: 100%; margin-top: 10px; background: none;
+      border: 1px dashed #334155; border-radius: 12px; color: #475569;
+      padding: 12px; font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .clear-btn:active { border-color: #f87171; color: #f87171; }
+
+    .manage-btn {
+      width: 100%; margin-top: 10px;
+      background: #0f172a; color: #94a3b8;
+      border: 1px solid #334155; border-radius: 12px;
+      padding: 12px; font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: all 0.15s;
+    }
+    .manage-btn:active { border-color: #94a3b8; }
+    .reset-btn {
+      display: block; margin: 16px auto 0; background: none; border: none;
+      color: #334155; font-size: 11px; font-family: inherit; cursor: pointer;
+      text-decoration: underline;
+    }
+
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .app { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="setup-screen" style="display:none">
+  <div class="setup-card">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAB4AHgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD4fooor3bnmBRR/nmvon9nX9h3x/8AtApb6osK+GfCchB/tnUYzmZeOYIuDJx34X3qZTjDdlJN7HztngnsO9a2g+Etc8UyBNF0XUdXf0sLSSf/ANABr9T9L/Zj/Zr/AGTtJg1LxxdafqWpKu4XvimYTyynHJitV4/JTj1rD8Rf8FRPhV4MiNh4O8J6tq8MZwpt4I9Pg6dQD83/AI7XK67fwRNVTS3Z5N8Df+CekXxe/Z9e91y31PwL4+j1CcW09/buEngAXYJYWwduc4ZcH618p/Gf4AeN/gJ4gOl+L9HltEdytrqEOZLS7APWOQcHP904YZ5Ffrn+z3+1Tpfxk+D2pfELXbO18EaXY3s1pMbzUBJGqxhTuMhVRk7sYA+ma+Wf2j/29/DHxcuJPhz4XGm2PhfUGMGoeL/Eti1zBCn9+C1ClieuHb8AOtZQqVLu60LlGFlqfntqGm3ekuq31rPZM6hlFzE0e4YzkZAyPeq5469q/Yn9mPTfgZY/DSz8EaR4+034kxklzF4huY5pSzAArFby/wCqTj7ij86qfFv/AIJufCf4hpNc6HaXHgXVnyyz6Qc25Y93t3yuO3yla0WISdmtCfZdUz8gaK9++P37E3xH+AKT6heWA8QeGY+f7b0lS8ca/wDTWP78f1OV/wBqvAa6VJSV4mLi1uFFFFUSFFFFAXCk3DnJxj1pSRjivrP/AIJ7fswp8afH8nizxBa+b4O8OSqxhdcrfXmMpEfVVHzt/wABXuamo1CN2VGPM7Hqf7En7B1rqGnWfxH+Kdkg08qLrS9AvBtUoPmFxdA9F43LGe3LelaP7VH/AAUl/sm4uvCPwfeA+RmCfxOUDRqV4K2qHggdPMIx/dBGDW1+2L8X/GPx18d3fwB+D8DXtzbQtL4huIJ0hVguM2wkYgBF3KH9SdvQGvlTWf8Agn58dtB0u4vpvBX2iGBd7RWWoQTykD+6itljjsOa448snzVH8jok7K0UeD+IPEOqeLNZudX1vUbrVtUuW3TXl7KZZZD6ljz+HSs480+WGS3leKVGiljYo6OCGVgcEEHoQe1NHUV3pJbHN6mnP4o1e58OW2gS6lcvoltO91DpxkPkLK2N0mzoWOByeazM857+ppWII4ptNaA3cRgDyQCR0JFe7/B39tf4s/BlreDT/Ekut6NCQP7I1xmuYdv91WY70H+62B6V4TS5qXCMtGhptao/ZD9nP9u7wP8AH6AaVqlufC3iJsRPY3zB7a4LcYjl6HP9xwCeg3V5D+15/wAE6bLXLa+8YfCmyjsNXTdNd+G4iEguj1Y24PCSdfk+63bBr86PBni6+8D69b6rYCKVkO2W1uU3wXMZ+9FKvdSP8RggGv1R+CH7S9voHgrQfEt5qNxqfwm1aVbNdQvpDLeeE73IU2V5J1kt9xGydvmUMoYkYNefODovmhsdMZKatI/Jq7tZ7C7mtbqGS2uYXMUsMyFHRwcFWU8gjpg9Kir9QP8AgoD+x9B8QNDuvid4IsV/4SS0i87VbO2H/IStwuTMoHWVRz/tr3yBn8v855znNddOopo55RcWFFFFakWGhWY4Vd7HgL6nsK/YjTWtv2Kv2G1ukjRNYstLExVhgzalc4xn1Idx+CV+Wv7P3hVfHHx0+H+gyDMV9rlokmRkbFkDtn22oR+Nfff/AAVp8Wy2Xw68DeGonHkanqk17MmedsEeF/DdL+lclb3pRgdEPdi5H5yeH/H/AIm8J+KH8SaJr+oaTr7vI7alZztHM5c5fLDruJyQcivof9nD9tX4l6D8Z/Cv/CVeOdX17w1eXsVjqFrqkwlQRSHZ5g4+VkLBsg9ua+WcY4pVdo2DI2xgQQ3oexrolBPdGKk0fox+1D/wTn8Z/Er40674q8ETaFb6Pq2y5kgvLl4XS4IxKQFRhgkbs57mvKT/AMEsfjIOt34XH/cQk/8AjVe0/tLeKfEfxd/Yn+HnxP8ACmrarZatpvkDUo9KuZVeRWHkTBhGcttlVG6HGTXzR+yr8WPiDpP7RXw/fWNZ8UXelT6pHaXMN9LcvEyygx/MG4wGZTk9MVzQlU5dHsbyUW9UdeP+CWPxkP8Ay+eGP/BhL/8AGqX/AIdYfGT/AJ/fC4H/AGEJf/jVYP7Y2qfEfwJ+0r450/TNe8Uw6XNeLe2sdpc3JiSOZFfau3gAMW4HSuA+FviX4peLfiV4V0WTxF4vEV/qltA5kuboLtMg3ZJ46Z68VfNUtzXRNorSzPXB/wAEsfjGel74XP8A3EJf/jVI/wDwSx+MijP2zwuSO39oS8/+Qqv/APBQf4oeNR+0lqOk+HNU8Q2Wl6Rp1pabNMe4SN5Spkdjs4J/eKM+xr07/gnjrHiXRfBfxT+JXjXWNau9P0iz8mCPVrmZlAjjaaVlWQ8dEXNRzzUVJtFKMb2sfnr4s8Lah4I8Uar4f1aOOLU9MuZLS5SKQSIJEOG2sOoz3r6g/wCCdXxGs7P4lap8MPEkUd/4T8dWb2c1jc/NE9wqHbkH+8m5OOfu+lfLGva7deKNc1HWb12kvNRuZLuZm6lpGLH+dT+EPEt34K8WaJ4hsHKXuk3sF9C2cfNHIG/XGPxreSc4WZjFqMtD9b/2dfGF98Hfitq37Pfim7mvLa0tzqHg7Urxtz3WnHJ+ysx+88QyB6qregr4Y/b8/Z4j+B3xie+0i28jwr4lD31iqj5YJgR58I+hIYD+649K+qf+CkyT6P4W+F/xh8NStb6toeqxi3uouD5UyeamfbcmMf7ddh+1domn/tRfsWR+MNJhWW7trOLxFYhBlkKr+/jH/ATIv/ARXHCXK1LvudMkpKx+RdFIDuGR0or0bHGey/sYzRwftU/DJpSArawqDP8AeMbgfrX1T/wVytZRdfDC6IPk+XfxBu2/9y38ua+EPh14rl8CfEDwz4khZlk0jU7e+yvXEciswH1UMPxr9P8A/gpp4Li+IP7N2leMNNU3P9hX0OpLKnP+iTp5bsPb54j9Aa5KjtVi2dEdYNH5P0HkUd+mPb0orsvrcw6H6U/8Euvibeap8MfHvgK2uI49Z0xjqWliYb1CzKVPy9wsqrn/AK6CvELv/gpl8c9F1Ge2v38O77OdoriIaQVbKNh1/wBZweDW3/wTE+G/jCb4szeP7HybHwbp1tPp+p3N05Vbgum4RxjoWRlRiTwB35r0z4l/smfs9+KfiL4o8Y6z8bLLTrPVb6S9k03TtQssWztzIofLk5bccbf4sY4rglyKbTVzqV3FNG5+2v8Ati/En4HeKvB7eDLjRz4f8QaMmoRm9sPPbeW5w28cEMvFcz+yH+238Xvjt8etB8J61Nob6LNHcXF79l0wxSeXHGT8rbzg7inaur+J99+yV448D+B9C8U/Ep9XsfCNl9hsJbG9f7TLEEVB5pii+Y4RegWuW+GHxh/Y7/Zw12XxB4NufEWp6tPA9qZxHdXTxxMRuAEu0DO0c9ahcvJbl1C75tzzz4of8FLfitpPxF8T2Xh+bQItAtNSubeyFzpZdxDHIUBZvMGTgZ6V7T+1F8Z/E4/4J96JeeK5rZPFnjmO2glS1hMCrDI3nMFTJI/dIoP+9Xmk37Rn7Hvha9abSvgzqGuSTymeSe6skchy2Sf9ImJ684FeE/ta/tX3n7TOv6UtvpP/AAj3hfRUaPT9OMgeQlsBpJCMKCQqgKowAOpqowcrWjYTla+p4ETk/wCFRXRxaXH/AFyf/wBBNSAYGPStPwz4dufF3iTSdCsk8y71O7hsolPQtI4QZ9vmrvdkrnMkfqR+2REs3/BO/SmuuZ0sdAdS3XzMwc/Xk1W/4Ji+JU8d/s4+JPBt+TNHpN/PZ7Cc/wCj3Me8D6ZMgqr/AMFR9etvCH7PfhPwZatg32pwKsfrBaxEj/x/y/xFef8A/BIi9kGv/Ey03t5LW2nzbe27fMufyrzUv3Lfmdd/fSPgfX9KfRNe1TTZAVksbua1ZfQpIykf+O0V2P7QVsln8eviNDH/AKtPEN9j8ZmP8zRXpQd4pnLLdnnzDHUZ9vWv1q/YY+JOk/tF/sxX3w+8Qul1f6Ratol/AT88lo6kQSgH/Z+XPYpX5MNzXo/7Pfxy1n9nv4nab4t0kNPFHmC/sN2EvLVj88Z7A9GB7MAfWsKsOeOnQuE+V67GX8aPhTqvwU+JeueD9XjZZ9PmIhmI+W4gbmKVT3DLj8cjqDXFA+hx71+vX7QPwU8I/t3fB3SPF/gvULb/AISCKBpNJ1FgFDj+OzuMcr82Rz91uehOfye8Y+DNb+H3ia/8P+ItNn0nWLGQxz2twuGU9iOzA9QRkEUUqimrPcJw5XpsfdH7GfjzwP8AE79mLxR8Cte8UQ+Ddev5LgW9xNKsX2iKYqwMZYgOysNrJnJBGMg8XF/4JDkYdfifFggEFNF6j8Ja+Gfhdq2jaB8SvC2p+IrYXmg2ep2899Ay7g0KuC2R3AGTjviv1zvm8U3/AMdNJ+KGnfGDRYPghHpe+bR/tSiNsIQTjG05Yht5YMu3btrCpzQl7r3NIWmteh8tn/gmL4fidlb46aMrAkEG1iBBHBB/f0+D/gl/od5PHBB8cNInmkYKkUdnEzMT0AAnyTXx18eNY8NeM/jT4413w1YwRaDqOrz3NkBAqho2P3wMcBzl8ejCu3/Yo8TeEfAP7Sng/WfFcVpbaTHJLGt3NGojtp3jKxSsccAMcZ7bs9q0caijzcxF4c3LY+orn/gkl9kgkmn+KsUEMYLPJJpG1VA7kmXAFfHv7Q3wdtPgZ8RpfC9n4q0/xfEltHcfbtPwAhbP7twGYBxjOATwRX6bJNr/AMLfFPxU8b/FP4qaT4j+E2p2sg0rQDKsmUflYljxgHYSmFLb92TjFfj+yQeY32WH7PblyY4B/wAs0LEhfwHH4UqMpyer0CpGMVohpwDgkelfWP8AwTc+EEnxC+P9v4huLYtpPhSL+0JGYfK1y4KwLz/wJvotePfDr4N6jrei2/ivVNPmfRLi5FjpGnpkXGv3x+7bW46mMHBkl+6q8Zya+uvij8QrT9hv9n5fhroF/DP8XfFMbXuu39rj/iXmUYZhj7u1cRxL2AL8Z5urLmXJEILXmkeJ/wDBQj43xfF749XlhptwLjQfC6NpVu6HKyThs3EgPf5xtB/2K+gP+CR/h9otP+JPiGQFYXms7FGxwdiySv8AlvAr84SQuSc+p3Hn35r9Uvg/D/wyx/wTw1HX75fsusapZT6mEIKubi6Ajt1+oXy/yqKq5aagupVOXNJyZ+avxR14eJ/ib4u1hfuX+sXlyv8AutMxH6Yorl1BOMkse7HqTRXUlZGD3Y+mlcmlPTigE96Yj2X9mf8Aak8U/s0eKHutKY6j4fvHU6loczkRXAHG9D/BKBjDDqBg5Ffo3Pp/wR/4KJ+BIbhX2a7ZxkAoVg1fS2P8LDnfHn13IeoIPT8gCM1f0LxBqnhTVoNV0XUbrSdSgbdFd2UzRSRn2ZTn8KwnSUtY6M1jO2j1Ppn41f8ABOX4o/C5573QLVfHuhISVm0hcXaL2325OTx1KFvpXy5qWm3WjXL2uoWk1hcRkhoLuJonU9CCrAEc19ifCn/gqH8RvBsENj4t0yx8c2S4X7RI5tL0DIH30Uo/4oCf7wr6Eh/4KGfs+fFDTUTxv4Zu4JcANBrGjR36A5/hdN2QPXArPmqQ+ONyrQk7p2PywALHgE57jmmllHDEDORg96/UbUPGf7C2vO19d2XhczsMso0y4jP02qoGawrn9qf9kT4awD/hFfh7Brd3CxMItNAQYYdD5txjA9xmq9s3ooi9n5nwj8N/gZ4/+Lt9Ha+EfCWp6zuYA3UcBS2jz3eZ8Io/Gvp/S/2PfBf7Pq6be/Fy/PjnxnejOk/DbwyxeW8f0mfhjGP4nwqAZ5YDmj8Vv+CnXjvxTYyaT4G0ey8AaVtMaTREXN4F5xtbaI4zjH3VOD/FXy7qnxM8R6t9vabVLjz9R/4/7vzWa5vfUTTEl2X/AGMhfanapPfRBeEfM+o/Gv7S1t8M/EVx4lWTSfEfxbFs2nadDpYV9B8F2h4+zWoHyzTj+N1+XOeT0PyDreuah4l1e91bVr2bUNTvZWnubq4ctJK7HlifWqI46cADAA6Cuk+Hnw68Q/FbxfYeGPC+nSalrN6+2OJOFRR1d26Ii9Sx4ArRRUNTNty0PSv2Qf2f7r9ob4xabpDxP/wjmnst9rNyB8qQK3EQP9+RhtHtuPavof8A4KgfHS31TW9H+E2hSomnaLsvNTWDhfP27YYcDtGhJI9WHpXtGraj4T/4Jufs3JYWUkGr+P8AV1LRkD5r6924MrDqsEWeAfYdWNfljrWtX3iTWb7VdUunvdSvZnuLm5kOWlkY5Zj+P5VjH97PneyNZe5HlRTHSiiiuowA9KQZpaKACiiigAxRtGKO2asafpt1q0/kWkQmmPRAwBPsMkZPtRYCr06E0YzXT3Hws8aWkQlm8Ia8kZ5DjTJ2Uj/eVSKtaR8F/iBrzqmneCPEV4zYAEWlzdfxWlzRW7Hqcb1or6V8Cf8ABPD42+N5UM3huLwzak4a41y5WLA9dibnP5V7voX7H/wB/Z2RNT+M3xFs/EeqRDd/Y0L+VDu/u+TGWmk/4EVHqtZyrRW2pag3vofJXwE/Zn8cftEa6LPwzprR6ZEwF3rd2pSzth7vj539EXJPtX6AzXnwn/4JrfDp7W3I8SfEHU4tzIWUXl6w6FuvkW4Pbv8A7R5HjXxf/wCClKWGjf8ACLfBTw1D4W0iFfJj1W6gRHVe3k2yjYnrufJ9h1r4e17XtT8U6zd6vrOoXOqapduZJ7y7kMksrerMf8isuSVX49EXeMPh1Ok+Lnxb8S/G7xxfeKvFV79r1C4O2ONMiG2iH3Yol/hRfzJyTya4zABoorpSSVkYtt6sD1ooopiCiiigAooooBBTSgPWiincDpPDXxJ8YeDGQ6B4r1zRNjblGn6lNCoPrtVgP0rtR+1l8aVXA+KfingYGdQJP8qKKzcIvVopSa6nP+I/jp8SPGAI1vx94m1NSpUpPqs2wg9tqsAR9RXDsC7lmJZz1YnJP40UVSSWyFdvcAMUtFFMQUUUUAFFFFAH/9k=" style="width:64px; height:64px; object-fit:contain; margin-bottom:8px;" />
+    <h2>Lista NET</h2>
+    <p>Introduce tu usuario y contraseña para acceder.</p>
+    <div class="setup-field">
+      <label>USUARIO</label>
+      <input id="l_user" placeholder="Tu nombre..." autocomplete="username" autocapitalize="none" />
+    </div>
+    <div class="setup-field">
+      <label>CONTRASEÑA</label>
+      <input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <p id="loginError" style="color:#f87171; font-size:13px; font-weight:700; margin-bottom:12px; display:none;">Usuario o contraseña incorrectos</p>
+    <button class="setup-btn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- LISTA PICKER SCREEN -->
+<div id="listaPickerScreen" class="setup-screen" style="display:none">
+  <div class="setup-card">
+    <div style="font-size:48px;margin-bottom:12px">📋</div>
+    <h2>¿Qué lista abrimos?</h2>
+    <p>Selecciona la lista que quieres ver.</p>
+    <div id="listaPickerList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" style="display:none">
+  <div class="app">
+    <div class="header">
+      <div class="header-top" style="position:relative;">
+        <img src="data:image/jpeg;base64,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" style="width:48px; height:48px; object-fit:contain; flex-shrink:0;" />
+        <h1>Lista NET</h1>
+        <div id="userAvatar" style="width:40px; height:40px; border-radius:50%; overflow:hidden; border:2px solid #334155; background:#0f172a; display:none; align-items:center; justify-content:center; font-size:20px; cursor:default; flex-shrink:0;"></div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:4px;">
+        <div id="userBadge" style="font-size:13px; color:#64748b; font-weight:700;"></div>
+        <button id="cambiarListaBtn" onclick="cambiarLista()" style="display:none; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#94a3b8; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4;"></button>
+        <button id="logoutBtn" onclick="resetConfig()" style="display:none; background:none; border:1px solid #1e293b; border-radius:6px; color:#334155; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4;">salir</button>
+        <a id="adminBtn" href="admin.html" style="display:none; background:#1e1b4b; border:1px solid #312e81; border-radius:6px; color:#818cf8; font-size:10px; font-weight:700; font-family:inherit; padding:2px 7px; cursor:pointer; line-height:1.4; text-decoration:none;">⚙️ admin</a>
+      </div>
+      <p class="stats">
+        <span class="pending" id="pendingCount">0</span> pendientes ·
+        <span class="done" id="doneCount">0</span> comprados
+      </p>
+      <div class="sync-bar">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncText">Conectando...</span>
+      </div>
+    </div>
+
+    <div class="add-card">
+      <div class="input-row">
+        <div class="autocomplete-wrap">
+          <input class="main-input" id="itemInput" type="text" placeholder="Añadir artículo..." autocomplete="off" />
+          <div class="suggestions" id="suggestions" style="display:none"></div>
+        </div>
+        <button id="micBtn" onclick="toggleMic()" title="Añadir por voz"
+          style="background:#1e293b; border:1px solid #334155; border-radius:12px; width:44px; height:44px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.2s;">
+          <svg id="micIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="2" width="6" height="11" rx="3" fill="#94a3b8"/>
+            <path d="M5 11a7 7 0 0 0 14 0" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+            <line x1="9" y1="22" x2="15" y2="22" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <select class="cat-select" id="catSelect" onchange="selectedCat = this.value"></select>
+      <div class="qty-row">
+        <span class="qty-label">Cantidad</span>
+        <div class="qty-box">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <span class="qty-num" id="qtyNum">1</span>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addItem()">+ Añadir a la lista</button>
+      <button class="freq-btn" onclick="openFrequent()">⭐ Artículos frecuentes</button>
+      <div class="super-row" id="superRow">
+        <button id="mercaBtn" class="super-btn merca-btn" onclick="searchMercadona()">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Mercadona_logo.svg/200px-Mercadona_logo.svg.png" style="height:18px; object-fit:contain;" onerror="this.style.display='none'" />
+          Buscar en Mercadona
+        </button>
+        <button id="hiperBtn" class="super-btn hiper-btn" onclick="searchHiperdino()">
+          <img src="https://www.hiperdino.es/skin/frontend/rwd/hiperdino/images/logo.png" style="height:18px; object-fit:contain;" onerror="this.style.display='none'" />
+          Buscar en Hiperdino
+        </button>
+      </div>
+    </div>
+
+    <!-- FREQUENT ITEMS POPUP -->
+    <div id="freqPopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:85vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <!-- Handle -->
+        <div style="display:flex; justify-content:center; padding:12px 0 0; flex-shrink:0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <!-- Header -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0;">
+          <div>
+            <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc; line-height:1;">⭐ Frecuentes</h2>
+            <p style="color:#475569; font-size:12px; margin-top:3px;">Selecciona los que quieras añadir</p>
+          </div>
+          <button onclick="closeFrequent()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:10px; width:34px; height:34px; font-size:18px; cursor:pointer;">×</button>
+        </div>
+        <!-- List -->
+        <div id="freqList" style="overflow-y:auto; flex:1; padding:0 16px;"></div>
+        <!-- Footer -->
+        <div style="padding:14px 16px; flex-shrink:0; border-top:1px solid #1e293b;">
+          <button onclick="addFrequentItems()" id="freqAddBtn" style="width:100%; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:14px; padding:14px; font-size:16px; font-weight:900; font-family:inherit; cursor:pointer; opacity:0.4;" disabled>Añadir seleccionados</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('todos', this)">Todos</button>
+      <button class="filter-btn" onclick="setFilter('pendientes', this)">Pendientes</button>
+      <button class="filter-btn" onclick="setFilter('comprados', this)">Comprados</button>
+    </div>
+
+    <div class="items" id="itemList"></div>
+    <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearChecked()">🗑 Eliminar artículos comprados</button>
+    <button class="manage-btn" onclick="openManage()">📋 Gestión histórico artículos</button>
+    <button class="manage-btn" style="margin-top:8px;" onclick="openCategories()">🏷️ Gestionar categorías</button>
+
+    <!-- CATEGORIES POPUP -->
+    <div id="catPopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:90vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <div style="display:flex; justify-content:center; padding:12px 0 0; flex-shrink:0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0;">
+          <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc;">🏷️ Categorías</h2>
+          <button onclick="closeCategories()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:10px; width:34px; height:34px; font-size:18px; cursor:pointer;">×</button>
+        </div>
+        <!-- Nueva categoría -->
+        <div style="padding:0 16px 12px; flex-shrink:0; border-bottom:1px solid #1e293b;">
+          <div style="display:flex; gap:8px;">
+            <input id="newCatInput" placeholder="Nueva categoría... (ej: 🧃 Zumos)" autocomplete="off"
+              style="flex:1; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 14px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none;" />
+            <button onclick="addCategory()"
+              style="background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:12px; padding:10px 16px; font-size:15px; font-weight:900; font-family:inherit; cursor:pointer;">+</button>
+          </div>
+          <p id="catErr" style="color:#f87171; font-size:12px; font-weight:700; margin-top:6px; display:none;"></p>
+        </div>
+        <!-- Lista de categorías -->
+        <div id="catList" style="overflow-y:auto; flex:1; padding:12px 16px 16px;"></div>
+      </div>
+    </div>
+
+    <!-- IMAGE VIEWER -->
+    <div id="imgViewer" onclick="closeImgViewer()" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.92); align-items:center; justify-content:center; cursor:zoom-out;">
+      <img id="imgViewerImg" src="" style="max-width:90vw; max-height:85vh; border-radius:16px; object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,0.8);" />
+      <button onclick="closeImgViewer()" style="position:absolute; top:20px; right:20px; background:#1e293b; border:1px solid #334155; color:#f1f5f9; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;">×</button>
+    </div>
+
+    <!-- MANAGE ARTICLES POPUP -->
+    <div id="managePopup" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:flex-end; justify-content:center;">
+      <div style="width:100%; max-width:480px; background:#0f172a; border-radius:24px 24px 0 0; max-height:90vh; display:flex; flex-direction:column; padding-bottom:env(safe-area-inset-bottom,16px);">
+        <div style="display:flex; justify-content:center; padding:12px 0 0; flex-shrink:0;"><div style="width:40px; height:4px; background:#334155; border-radius:2px;"></div></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0;">
+          <div>
+            <h2 style="font-family:'Abril Fatface',serif; font-size:22px; color:#f8fafc; line-height:1;">📋 Mis artículos</h2>
+            <p id="manageCount" style="color:#475569; font-size:12px; margin-top:3px;"></p>
+          </div>
+          <button onclick="closeManage()" style="background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:10px; width:34px; height:34px; font-size:18px; cursor:pointer;">×</button>
+        </div>
+        <!-- Search -->
+        <div style="padding:0 16px 10px; flex-shrink:0;">
+          <input id="manageSearch" type="text" placeholder="Buscar artículo..." autocomplete="off"
+            style="width:100%; background:#1e293b; border:1px solid #334155; border-radius:12px; padding:10px 14px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none;"
+            oninput="filterManage()" />
+          <label onclick="filterManage(true)" style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer; user-select:none;">
+            <div id="noPhotoCheck" style="width:20px; height:20px; border-radius:6px; border:2px solid #475569; background:transparent; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; transition:all 0.15s;"></div>
+            <span style="font-size:13px; color:#94a3b8; font-weight:700;">Solo artículos sin foto</span>
+          </label>
+        </div>
+        <!-- List -->
+        <div id="manageList" style="overflow-y:auto; flex:1; padding:0 16px 16px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, push, remove, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+
+
+  // ── CATEGORIES ──────────────────────────────────────────
+  // Categoría fija que siempre existe
+  const CAT_OTROS = "🛒 Otros";
+  const CAT_OTROS_COLOR = ["#94a3b8", "#1e293b"];
+
+  // Categorías predeterminadas para migración automática de listas existentes
+  const DEFAULT_CATEGORIES = {
+    "🥦 Frutas/Verduras":       ["#4ade80", "#14532d"],
+    "🥩 Carnicería/Pescadería": ["#f87171", "#7f1d1d"],
+    "🍞 Panadería":             ["#fbbf24", "#78350f"],
+    "🥛 Lácteos":               ["#93c5fd", "#1e3a5f"],
+    "🧊 Congelados":            ["#67e8f9", "#164e63"],
+    "🥤 Bebidas":               ["#818cf8", "#1e1b4b"],
+    "🥫 Alimentación":          ["#fb923c", "#7c2d12"],
+    "🧴 Higiene":               ["#c084fc", "#4a044e"],
+    "🧹 Limpieza/Hogar":        ["#34d399", "#064e3b"],
+    "🐾 Mascotas":              ["#f9a8d4", "#831843"],
+  };
+
+  // Paleta de colores para categorías nuevas
+  const COLOR_PALETTE = [
+    ["#4ade80","#14532d"], ["#f87171","#7f1d1d"], ["#fbbf24","#78350f"],
+    ["#93c5fd","#1e3a5f"], ["#67e8f9","#164e63"], ["#818cf8","#1e1b4b"],
+    ["#fb923c","#7c2d12"], ["#c084fc","#4a044e"], ["#34d399","#064e3b"],
+    ["#f9a8d4","#831843"], ["#a3e635","#365314"], ["#38bdf8","#0c4a6e"],
+  ];
+
+  // CATEGORIES y CAT_NAMES son dinámicos, se llenan desde Firebase
+  let CATEGORIES = { [CAT_OTROS]: CAT_OTROS_COLOR };
+  let CAT_NAMES  = [CAT_OTROS];
+
+  function applyCategories(data) {
+    CATEGORIES = {};
+    if (data) {
+      Object.entries(data).forEach(([key, color]) => {
+        const name = decodeURIComponent(key);
+        if (name !== CAT_OTROS) CATEGORIES[name] = color;
+      });
+    }
+    // "Otros" siempre al final y no modificable
+    CATEGORIES[CAT_OTROS] = CAT_OTROS_COLOR;
+    CAT_NAMES = Object.keys(CATEGORIES);
+    rebuildCatSelect();
+  }
+
+  function rebuildCatSelect() {
+    const select = document.getElementById('catSelect');
+    if (!select) return;
+    const prev = select.value || selectedCat;
+    select.innerHTML = '';
+    CAT_NAMES.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      select.appendChild(opt);
+    });
+    select.value = CAT_NAMES.includes(prev) ? prev : CAT_OTROS;
+    selectedCat = select.value;
+  }
+
+  let db, auth, itemsRef, historyRef, categoriesRef;
+  let userHistory = {};
+  let items = {};
+  let qty = 1;
+  let selectedCat = "🛒 Otros";
+  let currentFilter = "todos";
+
+  // ── LISTENER CLEANUP ─────────────────────────────────────
+  // Almacena las funciones unsubscribe de todos los listeners activos
+  const _activeListeners = [];
+  function _registerListener(unsub) {
+    _activeListeners.push(unsub);
+    return unsub;
+  }
+  function _cleanupAllListeners() {
+    while (_activeListeners.length > 0) {
+      try { _activeListeners.pop()(); } catch(e) {}
+    }
+  }
+
+  // ── FIREBASE CONFIG ───────────────────────────────────────
+  const FB_CONFIG = {
+    apiKey:      'AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA',
+    projectId:   'lista-compra-9d6f5',
+    appId:       '1:241322134457:web:1b765857911f94d69cc468',
+    authDomain:  'lista-compra-9d6f5.firebaseapp.com',
+    databaseURL: 'https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app'
+  };
+
+  // ── LOGIN ─────────────────────────────────────────────────
+  let currentUser = null;
+
+  function loadSession() {
+    try { return JSON.parse(localStorage.getItem('mlSession') || 'null'); } catch { return null; }
+  }
+
+  let _fbApp;
+  try { _fbApp = initializeApp(FB_CONFIG); } catch(e) { _fbApp = getApp(); }
+  db   = getDatabase(_fbApp);
+  auth = getAuth(_fbApp);
+
+  window.doLogin = async function() {
+    const user = document.getElementById('l_user').value.trim().toLowerCase();
+    const pass = document.getElementById('l_pass').value.trim();
+    if (!user || !pass) return;
+    document.getElementById('loginError').style.display = 'none';
+    try {
+      const email = `${user}@milista.app`;
+      await signInWithEmailAndPassword(auth, email, pass);
+      const snap = await new Promise((res) => {
+        onValue(ref(db, `usuarios_config/${user}`), res, { onlyOnce: true });
+      });
+      const userData = snap.val();
+      if (!userData) {
+        document.getElementById('loginError').style.display = 'block';
+        await signOut(auth);
+        return;
+      }
+      // Soporte para array de listas o lista única (legacy)
+      const listas = Array.isArray(userData.listas)
+        ? userData.listas
+        : (userData.lista ? [userData.lista] : []);
+
+      if (listas.length === 0) {
+        document.getElementById('loginError').textContent = 'Tu usuario no tiene ninguna lista asignada. Contacta con el administrador.';
+        document.getElementById('loginError').style.display = 'block';
+        await signOut(auth);
+        return;
+      }
+
+      if (listas.length === 1) {
+        // Una sola lista — entrar directamente
+        localStorage.setItem('mlSession', JSON.stringify({ user, lista: listas[0] }));
+        window.location.reload();
+      } else {
+        // Varias listas — mostrar selector
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('listaPickerScreen').style.display = 'flex';
+        const container = document.getElementById('listaPickerList');
+        container.innerHTML = listas.map(l => `
+          <button onclick="selectLista('${user}', '${l}')"
+            style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:14px;
+                   padding:14px 16px; font-size:16px; font-weight:700; font-family:inherit;
+                   color:#f1f5f9; cursor:pointer; text-align:left; transition:all 0.15s;"
+            onmouseover="this.style.borderColor='#fbbf24'"
+            onmouseout="this.style.borderColor='#334155'">
+            📋 ${l}
+          </button>`).join('');
+      }
+    } catch(e) {
+      document.getElementById('loginError').style.display = 'block';
+    }
+  };
+
+  window.selectLista = function(user, lista) {
+    _cleanupAllListeners();
+    localStorage.setItem('mlSession', JSON.stringify({ user, lista }));
+    window.location.reload();
+  };
+
+  function resetConfig() {
+    if (confirm('¿Cerrar sesión?')) {
+      _cleanupAllListeners();
+      if (auth) signOut(auth);
+      localStorage.removeItem('mlSession');
+      window.location.reload();
+    }
+  }
+  window.resetConfig = resetConfig;
+
+  window.cambiarLista = function() {
+    const session = loadSession();
+    if (!session) return;
+    onValue(ref(db, `usuarios_config/${session.user}`), (snap) => {
+      const userData = snap.val();
+      const listas = Array.isArray(userData?.listas) ? userData.listas : (userData?.lista ? [userData.lista] : []);
+      // Ocultar app y mostrar selector
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('listaPickerScreen').style.display = 'flex';
+      const container = document.getElementById('listaPickerList');
+      container.innerHTML = listas.map(l => `
+        <button onclick="selectLista('${session.user}', '${l}')"
+          style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:14px;
+                 padding:14px 16px; font-size:16px; font-weight:700; font-family:inherit;
+                 color:#f1f5f9; cursor:pointer; text-align:left; transition:all 0.15s;"
+          onmouseover="this.style.borderColor='#fbbf24'"
+          onmouseout="this.style.borderColor='#334155'">
+          📋 ${l}
+        </button>`).join('');
+    }, { onlyOnce: true });
+  };
+
+  function setupLoginListeners() {
+    document.getElementById('l_pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('l_user').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('l_pass').focus(); });
+  }
+
+  // ── INIT ─────────────────────────────────────────────────
+  const session = loadSession();
+  if (!session) {
+    document.getElementById('loginScreen').style.display = 'flex';
+    setupLoginListeners();
+  } else {
+    currentUser = session.user;
+    document.getElementById('mainApp').style.display = 'block';
+    initApp(session);
+  }
+
+  function initApp(session) {
+    const lista = session.lista || 'mi_lista';
+    currentUser = session.user;
+    const badge = document.getElementById('userBadge');
+    if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.style.display = 'inline-block';
+    const adminBtn = document.getElementById('adminBtn');
+
+    // Cargar avatar del usuario — onlyOnce: no necesita escucha en tiempo real
+    _registerListener(onValue(ref(db, `usuarios_config/${session.user}/avatar`), (snap) => {
+      const avatarEl = document.getElementById('userAvatar');
+      if (!avatarEl) return;
+      const avatar = snap.val();
+      if (avatar) {
+        avatarEl.style.display = 'flex';
+        avatarEl.innerHTML = `<img src="${avatar}" style="width:100%; height:100%; object-fit:cover;" />`;
+        if (badge) badge.textContent = session.user.charAt(0).toUpperCase() + session.user.slice(1);
+      } else {
+        avatarEl.style.display = 'none';
+        if (badge) badge.textContent = `👤 ${session.user.charAt(0).toUpperCase() + session.user.slice(1)}`;
+      }
+    }, { onlyOnce: true }));
+    if (adminBtn && session.user === 'ruben') adminBtn.style.display = 'inline-block';
+
+    // Mostrar botón cambiar lista si el usuario tiene varias
+    onValue(ref(db, `usuarios_config/${session.user}`), (snap) => {
+      const userData = snap.val();
+      const listas = Array.isArray(userData?.listas) ? userData.listas : (userData?.lista ? [userData.lista] : []);
+      const cambiarBtn = document.getElementById('cambiarListaBtn');
+      if (cambiarBtn && listas.length > 1) {
+        cambiarBtn.style.display = 'inline-block';
+        cambiarBtn.textContent = `📋 ${lista}`;
+      }
+    }, { onlyOnce: true });
+
+    window._listaPath = `listas/${lista}`;
+    itemsRef      = ref(db, `listas/${lista}/items`);
+    historyRef    = ref(db, `listas/${lista}/history`);
+    categoriesRef = ref(db, `listas/${lista}/categories`);
+
+    // Cargar config de supermercados — onlyOnce: no cambia en tiempo real
+    onValue(ref(db, `listas/${lista}/_config`), (snap) => {
+      const cfg = snap.val() || {};
+      const showMerca = cfg.mercadona !== false;
+      const showHiper  = cfg.hiperdino !== false;
+      const mercaBtn = document.getElementById('mercaBtn');
+      const hiperBtn = document.getElementById('hiperBtn');
+      const superRow = document.getElementById('superRow');
+      if (mercaBtn) mercaBtn.style.display = showMerca ? '' : 'none';
+      if (hiperBtn) hiperBtn.style.display = showHiper ? '' : 'none';
+      if (superRow) superRow.style.display = (!showMerca && !showHiper) ? 'none' : '';
+    }, { onlyOnce: true });
+
+    // Cargar categorías de Firebase — migrar automáticamente solo si es la primera vez
+    // Este sí necesita tiempo real para reflejar cambios de otros usuarios
+    _registerListener(onValue(categoriesRef, (snap) => {
+      const data = snap.val();
+      if (!data) {
+        // Comprobar si ya fue migrada antes (bandera en Firebase)
+        onValue(ref(db, `${window._listaPath}/_migrated`), (mSnap) => {
+          if (!mSnap.val()) {
+            // Primera vez: escribir categorías predeterminadas y marcar como migrada
+            const toSave = {};
+            Object.entries(DEFAULT_CATEGORIES).forEach(([name, color]) => {
+              toSave[encodeURIComponent(name)] = color;
+            });
+            set(categoriesRef, toSave);
+            set(ref(db, `${window._listaPath}/_migrated`), true);
+          } else {
+            // Ya migrada, el usuario ha eliminado todas las categorías
+            applyCategories(null);
+            render();
+            if (document.getElementById('catPopup').style.display !== 'none') {
+              renderCatList();
+            }
+          }
+        }, { onlyOnce: true });
+      } else {
+        applyCategories(data);
+        render();
+        if (document.getElementById('catPopup').style.display !== 'none') {
+          renderCatList();
+        }
+      }
+    }));
+
+    setSyncStatus('syncing', 'Conectando...');
+
+    _registerListener(onValue(itemsRef, (snapshot) => {
+      items = snapshot.val() || {};
+      setSyncStatus('online', 'Sincronizado');
+      render();
+    }, (error) => {
+      setSyncStatus('error', 'Error de conexión');
+    }));
+
+    _registerListener(onValue(historyRef, (snapshot) => {
+      userHistory = snapshot.val() || {};
+      // Re-render list so thumbnails show up
+      render();
+      // Refresh manage panel if open
+      if (document.getElementById('managePopup').style.display !== 'none') {
+        const q = document.getElementById('manageSearch').value;
+        renderManage(q);
+      }
+    }));
+
+    buildCatButtons();
+    initAutocomplete();
+  }
+
+  // ── AUTOCOMPLETE ─────────────────────────────────────────
+  // [nombre, categoría]
+  const BASE_SUGGESTIONS = [
+    ["Aceite de oliva","🥫 Alimentación"],["Aceitunas","🥫 Alimentación"],["Agua mineral","🥤 Bebidas"],
+    ["Ajo","🥦 Frutas/Verduras"],["Albóndigas","🥩 Carnicería/Pescadería"],["Alcachofas","🥦 Frutas/Verduras"],
+    ["Almejas","🥩 Carnicería/Pescadería"],["Alubias","🥫 Alimentación"],["Anchoas","🥫 Alimentación"],
+    ["Arroz","🥫 Alimentación"],["Atún en lata","🥫 Alimentación"],["Azúcar","🥫 Alimentación"],
+    ["Bacon","🥩 Carnicería/Pescadería"],["Berenjena","🥦 Frutas/Verduras"],["Bizcochos","🥫 Alimentación"],
+    ["Brócoli","🥦 Frutas/Verduras"],["Café","🥤 Bebidas"],["Calabacín","🥦 Frutas/Verduras"],
+    ["Caldo de pollo","🥫 Alimentación"],["Carne picada","🥩 Carnicería/Pescadería"],
+    ["Cebolla","🥦 Frutas/Verduras"],["Cereales","🥫 Alimentación"],["Cerveza","🥤 Bebidas"],
+    ["Champiñones","🥦 Frutas/Verduras"],["Chocolate","🥫 Alimentación"],["Chorizo","🥩 Carnicería/Pescadería"],
+    ["Chuletas de cerdo","🥩 Carnicería/Pescadería"],["Cigalas","🥩 Carnicería/Pescadería"],
+    ["Coliflor","🥦 Frutas/Verduras"],["Conservas de tomate","🥫 Alimentación"],
+    ["Crema de cacao","🥫 Alimentación"],["Detergente","🧹 Limpieza/Hogar"],["Dorada","🥩 Carnicería/Pescadería"],
+    ["Espárragos","🥦 Frutas/Verduras"],["Espinacas","🥦 Frutas/Verduras"],["Fiambre de pavo","🥩 Carnicería/Pescadería"],
+    ["Filetes de ternera","🥩 Carnicería/Pescadería"],["Fresas","🥦 Frutas/Verduras"],["Galletas","🥫 Alimentación"],
+    ["Gambas","🥩 Carnicería/Pescadería"],["Garbanzos","🥫 Alimentación"],["Gel de ducha","🧴 Higiene"],
+    ["Guisantes","🥦 Frutas/Verduras"],["Harina","🥫 Alimentación"],["Huevos","🥛 Lácteos"],
+    ["Jamón cocido","🥩 Carnicería/Pescadería"],["Jamón serrano","🥩 Carnicería/Pescadería"],
+    ["Judías verdes","🥦 Frutas/Verduras"],["Ketchup","🥫 Alimentación"],
+    ["Leche entera","🥛 Lácteos"],["Leche desnatada","🥛 Lácteos"],["Lechuga","🥦 Frutas/Verduras"],
+    ["Lentejas","🥫 Alimentación"],["Limones","🥦 Frutas/Verduras"],["Lubina","🥩 Carnicería/Pescadería"],
+    ["Macarrones","🥫 Alimentación"],["Mantequilla","🥛 Lácteos"],["Manzanas","🥦 Frutas/Verduras"],
+    ["Margarina","🥛 Lácteos"],["Mayonesa","🥫 Alimentación"],["Mejillones","🥩 Carnicería/Pescadería"],
+    ["Merluza","🥩 Carnicería/Pescadería"],["Mermelada","🥫 Alimentación"],["Mozzarella","🥛 Lácteos"],
+    ["Muslos de pollo","🥩 Carnicería/Pescadería"],["Naranjas","🥦 Frutas/Verduras"],
+    ["Nata para cocinar","🥛 Lácteos"],["Palomitas","🥫 Alimentación"],
+    ["Pan de molde","🍞 Panadería"],["Pan integral","🍞 Panadería"],["Pasta","🥫 Alimentación"],
+    ["Patatas","🥦 Frutas/Verduras"],["Pechuga de pollo","🥩 Carnicería/Pescadería"],
+    ["Pepino","🥦 Frutas/Verduras"],["Pera","🥦 Frutas/Verduras"],["Perejil","🥦 Frutas/Verduras"],
+    ["Pescadilla","🥩 Carnicería/Pescadería"],["Pimientos","🥦 Frutas/Verduras"],
+    ["Plátanos","🥦 Frutas/Verduras"],["Pollo entero","🥩 Carnicería/Pescadería"],
+    ["Queso manchego","🥛 Lácteos"],["Queso en lonchas","🥛 Lácteos"],["Rape","🥩 Carnicería/Pescadería"],
+    ["Refresco","🥤 Bebidas"],["Sal","🥫 Alimentación"],["Salchichas","🥩 Carnicería/Pescadería"],
+    ["Salmón","🥩 Carnicería/Pescadería"],["Sardinas","🥫 Alimentación"],
+    ["Servilletas","🧹 Limpieza/Hogar"],["Sopa","🥫 Alimentación"],["Suavizante","🧹 Limpieza/Hogar"],
+    ["Ternera","🥩 Carnicería/Pescadería"],["Tomates","🥦 Frutas/Verduras"],
+    ["Tortillas de maíz","🥫 Alimentación"],["Uvas","🥦 Frutas/Verduras"],
+    ["Vinagre","🥫 Alimentación"],["Vino blanco","🥤 Bebidas"],["Vino tinto","🥤 Bebidas"],
+    ["Yogur","🥛 Lácteos"],["Zanahoria","🥦 Frutas/Verduras"],["Zumo de naranja","🥤 Bebidas"],
+    ["Zumo de piña","🥤 Bebidas"],["Papel higiénico","🧴 Higiene"],["Papel de cocina","🧹 Limpieza/Hogar"],
+    ["Lejía","🧹 Limpieza/Hogar"],["Lavavajillas","🧹 Limpieza/Hogar"],
+    ["Champú","🧴 Higiene"],["Acondicionador","🧴 Higiene"],["Pasta de dientes","🧴 Higiene"],
+    ["Jabón de manos","🧴 Higiene"],["Ambientador","🧹 Limpieza/Hogar"],["Bolsas de basura","🧹 Limpieza/Hogar"],
+    ["Film transparente","🧹 Limpieza/Hogar"],["Papel de aluminio","🧹 Limpieza/Hogar"],
+    ["Hielo","🧊 Congelados"],["Helado","🧊 Congelados"],["Pizza congelada","🧊 Congelados"],
+    ["Verduras congeladas","🧊 Congelados"],["Levadura","🍞 Panadería"],
+    ["Bicarbonato","🥫 Alimentación"],["Canela","🥫 Alimentación"],["Pimentón","🥫 Alimentación"],
+    ["Orégano","🥫 Alimentación"],["Tomillo","🥫 Alimentación"],["Laurel","🥫 Alimentación"],
+    ["Pienso perro","🐾 Mascotas"],["Pienso gato","🐾 Mascotas"],["Arena para gatos","🐾 Mascotas"],
+    ["Snacks mascotas","🐾 Mascotas"],["Croissant","🍞 Panadería"],["Baguette","🍞 Panadería"],
+    ["Bollería","🍞 Panadería"],["Tostadas","🍞 Panadería"]
+  ];
+
+  let highlightedIndex = -1;
+
+  function initAutocomplete() {
+    const input = document.getElementById('itemInput');
+    const box = document.getElementById('suggestions');
+
+    input.addEventListener('input', () => {
+      highlightedIndex = -1;
+      showSuggestions(input.value);
+    });
+
+    input.addEventListener('keydown', e => {
+      const visible = box.style.display !== 'none';
+      const suggs = box.querySelectorAll('.suggestion-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightedIndex = Math.min(highlightedIndex + 1, suggs.length - 1);
+        updateHighlight(suggs);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightedIndex = Math.max(highlightedIndex - 1, -1);
+        updateHighlight(suggs);
+      } else if (e.key === 'Enter') {
+        if (visible && highlightedIndex >= 0 && suggs[highlightedIndex]) {
+          selectSuggestion(suggs[highlightedIndex].dataset.value, suggs[highlightedIndex].dataset.cat);
+        } else {
+          hideSuggestions();
+          addItem();
+        }
+      } else if (e.key === 'Escape') {
+        hideSuggestions();
+      }
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.autocomplete-wrap')) hideSuggestions();
+    });
+  }
+
+  function updateHighlight(suggs) {
+    suggs.forEach((s, i) => s.classList.toggle('highlighted', i === highlightedIndex));
+  }
+
+  function getAllSuggestions() {
+    // History: all items ever added by the user
+    const fromHistory = Object.values(userHistory).map(i => ({ name: i.name, category: i.category })).filter(i => i.name);
+    // Merge with base suggestions (user history takes priority)
+    const seen = new Set(fromHistory.map(i => i.name.toLowerCase()));
+    const base = BASE_SUGGESTIONS.filter(([n]) => !seen.has(n.toLowerCase())).map(([n, c]) => ({ name: n, category: c }));
+    return [...fromHistory, ...base];
+  }
+
+  function showSuggestions(query) {
+    const box = document.getElementById('suggestions');
+    const q = query.trim().toLowerCase();
+    if (q.length < 1) { hideSuggestions(); return; }
+
+    const all = getAllSuggestions();
+    const matches = all.filter(s => s.name.toLowerCase().includes(q)).slice(0, 5);
+
+    if (matches.length === 0) { hideSuggestions(); return; }
+
+    box.innerHTML = matches.map(({ name: s, category: cat }) => {
+      const idx = s.toLowerCase().indexOf(q);
+      const before = escHtml(s.slice(0, idx));
+      const match  = escHtml(s.slice(idx, idx + q.length));
+      const after  = escHtml(s.slice(idx + q.length));
+      const safeS = escHtml(s);
+      const safeCat = escHtml(cat || '');
+      return `<div class="suggestion-item" data-value="${safeS}" data-cat="${safeCat}" ontouchstart="selectSuggestion('${safeS}','${safeCat}')" onclick="selectSuggestion('${safeS}','${safeCat}')">
+        <span>🔍</span>
+        <span>${before}<span class="suggestion-match">${match}</span>${after}</span>
+      </div>`;
+    }).join('');
+
+    box.style.display = 'block';
+  }
+
+  function hideSuggestions() {
+    const box = document.getElementById('suggestions');
+    if (box) box.style.display = 'none';
+    highlightedIndex = -1;
+  }
+
+  window.selectSuggestion = function(value, category) {
+    document.getElementById('itemInput').value = value;
+    if (category && CATEGORIES[category]) {
+      selectedCat = category;
+      const sel = document.getElementById('catSelect');
+      if (sel) sel.value = category;
+    }
+    hideSuggestions();
+    document.getElementById('itemInput').focus();
+  };
+
+  // ── SYNC STATUS ──────────────────────────────────────────
+  function setSyncStatus(state, text) {
+    const dot = document.getElementById('syncDot');
+    dot.className = 'sync-dot ' + state;
+    document.getElementById('syncText').textContent = text;
+  }
+
+  // ── CATEGORIES ──────────────────────────────────────────
+  function buildCatButtons() {
+    const select = document.getElementById('catSelect');
+    rebuildCatSelect();
+    select.addEventListener('change', () => { selectedCat = select.value; });
+  }
+
+  // ── ACTIONS ──────────────────────────────────────────────
+  window.changeQty = function(d) {
+    qty = Math.max(1, qty + d);
+    document.getElementById('qtyNum').textContent = qty;
+  };
+
+  window.addItem = function() {
+    const input = document.getElementById('itemInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    // Check for duplicate
+    const duplicate = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+      input.style.border = '2px solid #f87171';
+      input.placeholder = '⚠️ Ya está en la lista';
+      input.value = '';
+      setTimeout(() => { input.style.border = ''; input.placeholder = 'Añadir artículo...'; input.focus(); }, 2000);
+      return;
+    }
+    setSyncStatus('syncing', 'Guardando...');
+    const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    const existing = userHistory[nameKey];
+    const image = (existing && existing.image) ? existing.image : null;
+    const itemData = { name, category: selectedCat, checked: false, qty, ts: Date.now() };
+    if (image) itemData.image = image;
+    push(itemsRef, itemData);
+    const count = existing ? (existing.count || 1) + 1 : 1;
+    set(ref(db, `${window._listaPath}/history/${nameKey}`), { name, category: selectedCat, count, ...(image ? { image } : {}) });
+    input.value = '';
+    hideSuggestions();
+    qty = 1;
+    document.getElementById('qtyNum').textContent = '1';
+    input.focus();
+  };
+
+  window.toggleItem = function(id) {
+    setSyncStatus('syncing', 'Guardando...');
+    const item = items[id];
+    if (item) update(ref(db, `${window._listaPath}/items/${id}`), { checked: !item.checked });
+  };
+
+  window.removeItem = function(id) {
+    setSyncStatus('syncing', 'Guardando...');
+    remove(ref(db, `${window._listaPath}/items/${id}`));
+  };
+
+  window.clearChecked = function() {
+    setSyncStatus('syncing', 'Guardando...');
+    Object.entries(items).forEach(([id, item]) => {
+      if (item.checked) remove(ref(db, `${window._listaPath}/items/${id}`));
+    });
+  };
+
+  window.setFilter = function(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  };
+
+  // ── RENDER ───────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderItem(id, item) {
+    const [accent] = CATEGORIES[item.category] || ["#94a3b8"];
+    // Use image embedded in item, fallback to history lookup
+    const nameKey = item.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+    const histEntry = userHistory[nameKey];
+    const thumb = item.image || (histEntry && histEntry.image) || null;
+    return `
+      <div class="item${item.checked ? ' checked' : ''}">
+        <button class="check-btn${item.checked ? ' checked' : ''}" style="--accent:${accent}" onclick="toggleItem('${id}')">
+          ${item.checked ? '✓' : ''}
+        </button>
+        ${thumb ? `<img src="${thumb}" onclick="event.stopPropagation(); openImgViewer('${thumb.replace(/'/g, "&#39;")}')" style="width:36px; height:36px; border-radius:8px; object-fit:cover; flex-shrink:0; opacity:${item.checked ? '0.4' : '1'}; cursor:zoom-in;" />` : ''}
+        <div class="item-info">
+          <div class="item-name${item.checked ? ' checked' : ''}">
+            ${escHtml(item.name)}
+            ${item.qty > 1 ? `<span class="qty-badge">×${item.qty}</span>` : ''}
+          </div>
+        </div>
+        <button class="del-btn" onclick="removeItem('${id}')">×</button>
+      </div>`;
+  }
+
+  function groupHeader(label, color, count) {
+    return `
+      <div class="group-header">
+        <div class="group-dot" style="background:${color}"></div>
+        <span class="group-title">${label}</span>
+        <div class="group-line"></div>
+        <span class="group-count">${count}</span>
+      </div>`;
+  }
+
+  function renderGrouped(itemEntries) {
+    const groups = {};
+    CAT_NAMES.forEach(cat => { groups[cat] = []; });
+    itemEntries.forEach(([id, item]) => {
+      const cat = CATEGORIES[item.category] ? item.category : "🛒 Otros";
+      groups[cat].push([id, item]);
+    });
+    let html = '';
+    CAT_NAMES.forEach(cat => {
+      if (!groups[cat] || groups[cat].length === 0) return;
+      const [accent] = CATEGORIES[cat];
+      html += groupHeader(cat, accent, groups[cat].length);
+      groups[cat].sort((a, b) => a[1].name.localeCompare(b[1].name, 'es'));
+      html += groups[cat].map(([id, item]) => renderItem(id, item)).join('');
+    });
+    return html;
+  }
+
+  function render() {
+    const allEntries = Object.entries(items).sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+    const pendingEntries = allEntries.filter(([,i]) => !i.checked);
+    const doneEntries    = allEntries.filter(([,i]) => i.checked);
+
+    document.getElementById('pendingCount').textContent = pendingEntries.length;
+    document.getElementById('doneCount').textContent    = doneEntries.length;
+    const clearBtn = document.getElementById('clearBtn');
+    clearBtn.style.display = doneEntries.length > 0 ? 'block' : 'none';
+    clearBtn.textContent = `🗑 Eliminar ${doneEntries.length} artículo${doneEntries.length !== 1 ? 's' : ''} comprado${doneEntries.length !== 1 ? 's' : ''}`;
+
+    const list = document.getElementById('itemList');
+
+    if (currentFilter === 'pendientes') {
+      list.innerHTML = pendingEntries.length === 0
+        ? `<div class="empty">¡Todo comprado! 🎉</div>`
+        : renderGrouped(pendingEntries);
+      return;
+    }
+
+    if (currentFilter === 'comprados') {
+      list.innerHTML = doneEntries.length === 0
+        ? `<div class="empty">¡Nada comprado aún!</div>`
+        : doneEntries.map(([id,item]) => renderItem(id, item)).join('');
+      return;
+    }
+
+    // Todos
+    if (allEntries.length === 0) {
+      list.innerHTML = `<div class="empty">¡Lista vacía! Añade algo 🎉</div>`;
+      return;
+    }
+    let html = '';
+    if (pendingEntries.length > 0) html += renderGrouped(pendingEntries);
+    if (doneEntries.length > 0) {
+      html += groupHeader('Comprados', '#4ade80', doneEntries.length);
+      html += doneEntries.map(([id,item]) => renderItem(id, item)).join('');
+    }
+    list.innerHTML = html;
+  }
+
+  // ── FREQUENT ITEMS ───────────────────────────────────────
+  let freqSelected = new Set();
+
+  window.openFrequent = function() {
+    freqSelected.clear();
+    const popup = document.getElementById('freqPopup');
+    popup.style.display = 'flex';
+
+    // Get top 20 from userHistory sorted by count
+    const sorted = Object.values(userHistory)
+      .filter(i => i.name && i.count)
+      .sort((a, b) => (b.count || 0) - (a.count || 0))
+      .slice(0, 20);
+
+    const list = document.getElementById('freqList');
+    if (sorted.length === 0) {
+      list.innerHTML = '<div style="text-align:center; color:#475569; padding:40px 0; font-size:14px;">Aún no hay artículos frecuentes.<br>Añade artículos para que aparezcan aquí.</div>';
+      return;
+    }
+
+    list.innerHTML = sorted.map((item, i) => {
+      const [accent] = CATEGORIES[item.category] || ['#94a3b8'];
+      const times = item.count === 1 ? '1 vez' : `${item.count} veces`;
+      return `<div class="freq-item" id="freq-${i}" onclick="toggleFreq(${i}, '${escHtml(item.name)}', '${escHtml(item.category)}')">
+        <div class="freq-check" id="freq-check-${i}"></div>
+        <div class="freq-info">
+          <div class="freq-name">${escHtml(item.name)}</div>
+          <div class="freq-meta" style="color:${accent}">${item.category}</div>
+        </div>
+        <span class="freq-count">🔁 ${times}</span>
+      </div>`;
+    }).join('');
+  };
+
+  window.toggleFreq = function(i, name, category) {
+    const key = name;
+    const el = document.getElementById('freq-' + i);
+    const check = document.getElementById('freq-check-' + i);
+    if (freqSelected.has(key)) {
+      freqSelected.delete(key);
+      el.classList.remove('selected');
+      check.textContent = '';
+    } else {
+      freqSelected.add(key);
+      el.classList.add('selected');
+      check.textContent = '✓';
+    }
+    // Update add button
+    const addBtn = document.getElementById('freqAddBtn');
+    if (freqSelected.size > 0) {
+      addBtn.disabled = false;
+      addBtn.style.opacity = '1';
+      addBtn.textContent = `Añadir ${freqSelected.size} artículo${freqSelected.size > 1 ? 's' : ''}`;
+    } else {
+      addBtn.disabled = true;
+      addBtn.style.opacity = '0.4';
+      addBtn.textContent = 'Añadir seleccionados';
+    }
+  };
+
+  window.addFrequentItems = function() {
+    if (freqSelected.size === 0) return;
+    setSyncStatus('syncing', 'Guardando...');
+    // Find full item data from userHistory
+    const historyByName = {};
+    Object.values(userHistory).forEach(h => { if (h.name) historyByName[h.name] = h; });
+    freqSelected.forEach(name => {
+      // Skip duplicates
+      const duplicate = Object.values(items).find(i => !i.checked && i.name.toLowerCase() === name.toLowerCase());
+      if (duplicate) return;
+      const h = historyByName[name];
+      const cat = (h && h.category) ? h.category : '🛒 Otros';
+      const itemData = { name, category: cat, checked: false, qty: 1, ts: Date.now() };
+      if (h && h.image) itemData.image = h.image;
+      push(itemsRef, itemData);
+      // Increment count
+      const nameKey = name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+      const existing = userHistory[nameKey];
+      const count = existing ? (existing.count || 1) + 1 : 1;
+      set(ref(db, `${window._listaPath}/history/${nameKey}`), { name, category: cat, count });
+    });
+    closeFrequent();
+  };
+
+  window.closeFrequent = function() {
+    document.getElementById('freqPopup').style.display = 'none';
+    freqSelected.clear();
+  };
+
+  // ── BUSCAR EN SUPERMERCADOS ──────────────────────────────
+  function getSearchQuery() {
+    const input = document.getElementById('itemInput');
+    const query = input.value.trim();
+    if (!query) {
+      input.focus();
+      input.placeholder = 'Escribe un artículo primero...';
+      setTimeout(() => { input.placeholder = 'Añadir artículo...'; }, 2000);
+    }
+    return query;
+  }
+
+  window.searchMercadona = function() {
+    const q = getSearchQuery();
+    if (!q) return;
+    window.open(`https://tienda.mercadona.es/search-results?query=${encodeURIComponent(q)}`, '_blank');
+  };
+
+  window.searchHiperdino = function() {
+    const q = getSearchQuery();
+    if (!q) return;
+    window.open(`https://www.hiperdino.es/c9498/search/?q=${encodeURIComponent(q)}`, '_blank');
+  };
+
+  // ── WEB SHARE TARGET ─────────────────────────────────────
+  function handleSharedUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const sharedUrl = params.get('shared_url') || params.get('url') || params.get('text') || '';
+    if (!sharedUrl) return;
+
+    // Extract product name from Mercadona or Hiperdino URL
+    let productName = '';
+
+    // Mercadona: https://tienda.mercadona.es/product/8500/chocolate-valor-sin-gluten
+    const mercaMatch = sharedUrl.match(/mercadona\.es\/product\/[^/]+\/([^/?#]+)/);
+    if (mercaMatch) {
+      productName = mercaMatch[1]
+        .replace(/-/g, ' ')
+        .replace(/\w/g, l => l.toUpperCase());
+    }
+
+    // Hiperdino: https://www.hiperdino.es/producto/chocolate-valor/
+    const hiperMatch = sharedUrl.match(/hiperdino\.es\/(?:producto|product)\/([^/?#]+)/);
+    if (hiperMatch) {
+      productName = hiperMatch[1]
+        .replace(/-/g, ' ')
+        .replace(/\w/g, l => l.toUpperCase());
+    }
+
+    // If nothing matched but we have a URL, try extracting last path segment
+    if (!productName && sharedUrl.startsWith('http')) {
+      try {
+        const u = new URL(sharedUrl);
+        const segments = u.pathname.split('/').filter(Boolean);
+        const last = segments[segments.length - 1];
+        if (last && last.length > 2 && !/^\d+$/.test(last)) {
+          productName = last.replace(/-/g, ' ').replace(/\w/g, l => l.toUpperCase());
+        }
+      } catch(e) {}
+    }
+
+    if (!productName) return;
+
+    // Wait for app to be ready then fill input and show toast
+    const tryFill = setInterval(() => {
+      const input = document.getElementById('itemInput');
+      const mainApp = document.getElementById('mainApp');
+      if (!input || mainApp.style.display === 'none') return;
+      clearInterval(tryFill);
+
+      input.value = productName;
+      input.focus();
+
+      // Show toast notification
+      showShareToast(productName, sharedUrl);
+
+      // Clean URL without reload
+      window.history.replaceState({}, '', '/');
+    }, 300);
+  }
+
+  function showShareToast(name, url) {
+    // Remove existing toast
+    const existing = document.getElementById('shareToast');
+    if (existing) existing.remove();
+
+    const source = url.includes('mercadona') ? '🟢 Mercadona' : url.includes('hiperdino') ? '🟠 Hiperdino' : '🔗 Compartido';
+
+    const toast = document.createElement('div');
+    toast.id = 'shareToast';
+    toast.style.cssText = `
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      background: #1e293b; border: 1px solid #334155; border-radius: 16px;
+      padding: 14px 18px; z-index: 9999; max-width: 340px; width: calc(100% - 32px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); animation: slideUp 0.3s ease;
+    `;
+    toast.innerHTML = `
+      <div style="font-size:11px; color:#64748b; font-weight:800; letter-spacing:0.5px; margin-bottom:4px;">${source}</div>
+      <div style="font-size:15px; font-weight:700; color:#f1f5f9; margin-bottom:10px;">📦 ${escHtml(name)}</div>
+      <div style="display:flex; gap:8px;">
+        <button onclick="document.getElementById('shareToast').remove(); addItem();"
+          style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:10px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">
+          + Añadir a la lista
+        </button>
+        <button onclick="document.getElementById('shareToast').remove();"
+          style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">
+          ✕
+        </button>
+      </div>
+    `;
+    document.body.appendChild(toast);
+
+    // Auto-dismiss after 15 seconds
+    setTimeout(() => { if (document.getElementById('shareToast')) toast.remove(); }, 15000);
+  }
+
+  // Run on load
+  handleSharedUrl();
+  // ── GESTIONAR ARTÍCULOS ───────────────────────────────────
+  window.openManage = function() {
+    document.getElementById('managePopup').style.display = 'flex';
+    document.getElementById('manageSearch').value = '';
+    renderManage('');
+  };
+
+  window.closeManage = function() {
+    document.getElementById('managePopup').style.display = 'none';
+  };
+
+  let filterNoPhoto = false;
+
+  window.filterManage = function(togglePhoto) {
+    if (togglePhoto) {
+      filterNoPhoto = !filterNoPhoto;
+      const check = document.getElementById('noPhotoCheck');
+      if (filterNoPhoto) {
+        check.style.background = '#818cf8';
+        check.style.borderColor = '#818cf8';
+        check.textContent = '✓';
+      } else {
+        check.style.background = 'transparent';
+        check.style.borderColor = '#475569';
+        check.textContent = '';
+      }
+    }
+    const q = document.getElementById('manageSearch').value;
+    renderManage(q);
+  };
+
+  function renderManage(query) {
+    const q = query.trim().toLowerCase();
+    const all = Object.entries(userHistory)
+      .map(([key, h]) => ({ key, ...h }))
+      .filter(h => h.name)
+      .filter(h => !q || h.name.toLowerCase().includes(q))
+      .filter(h => !filterNoPhoto || !h.image)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+    document.getElementById('manageCount').textContent =
+      `${all.length} artículo${all.length !== 1 ? 's' : ''} en el historial`;
+
+    const list = document.getElementById('manageList');
+    if (all.length === 0) {
+      list.innerHTML = '<div style="text-align:center; color:#475569; padding:40px 0; font-size:14px;">No se encontraron artículos</div>';
+      return;
+    }
+
+    const catOptions = CAT_NAMES.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+
+    list.innerHTML = all.map(h => {
+      const [accent] = CATEGORIES[h.category] || ['#94a3b8'];
+      const times = h.count ? (h.count === 1 ? '1 vez' : `${h.count} veces`) : '1 vez';
+      return `
+        <div id="mitem-${h.key}" style="background:#1e293b; border-radius:14px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+          <!-- View mode -->
+          <div id="mview-${h.key}" style="display:flex; align-items:center; gap:10px;">
+            ${h.image ? `<img src="${h.image}" style="width:44px; height:44px; border-radius:10px; object-fit:cover; flex-shrink:0; border:1px solid #334155;" />` : `<div style="width:44px; height:44px; border-radius:10px; background:#0f172a; border:1px solid #334155; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px;">📦</div>`}
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:15px; font-weight:700; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escHtml(h.name)}</div>
+              <div style="font-size:11px; color:${accent}; margin-top:2px;">${escHtml(h.category)} · 🔁 ${times}</div>
+            </div>
+            <button onclick="startEdit('${h.key}')"
+              style="background:#1e3a5f; border:none; color:#93c5fd; border-radius:8px; width:30px; height:30px; font-size:14px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">✏️</button>
+            <button onclick="deleteHistoryItem('${h.key}')"
+              style="background:#450a0a; border:none; color:#fca5a5; border-radius:8px; width:30px; height:30px; font-size:16px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;">×</button>
+          </div>
+          <!-- Edit mode -->
+          <div id="medit-${h.key}" style="display:none;">
+            <input id="medit-name-${h.key}" value="${escHtml(h.name)}"
+              style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:8px;" />
+            <select id="medit-cat-${h.key}"
+              style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:14px; font-family:inherit; outline:none; margin-bottom:8px;">
+              ${catOptions}
+            </select>
+            <!-- Image picker -->
+            <div style="margin-bottom:10px;">
+              <div style="font-size:11px; font-weight:800; color:#64748b; letter-spacing:0.5px; margin-bottom:6px;">IMAGEN</div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div id="medit-imgpreview-${h.key}" style="width:52px; height:52px; border-radius:10px; background:#0f172a; border:1px solid #334155; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:22px;">
+                  ${h.image ? `<img src="${h.image}" style="width:100%; height:100%; object-fit:cover;" />` : '📦'}
+                </div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                  <label style="display:flex; align-items:center; justify-content:center; gap:6px; background:#1e3a5f; color:#93c5fd; border:none; border-radius:10px; padding:8px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer;">
+                    📷 Elegir foto
+                    <input type="file" accept="image/*" style="display:none;" onchange="previewImage('${h.key}', this)" />
+                  </label>
+                  ${h.image ? `<button onclick="removeImage('${h.key}')" style="background:#450a0a; border:none; color:#fca5a5; border-radius:10px; padding:7px; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer;">🗑 Quitar imagen</button>` : ''}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button onclick="saveEdit('${h.key}')"
+                style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+              <button onclick="cancelEdit('${h.key}')"
+                style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Set current category in selects
+    all.forEach(h => {
+      const sel = document.getElementById(`medit-cat-${h.key}`);
+      if (sel) sel.value = h.category;
+    });
+  }
+
+  window.startEdit = function(key) {
+    document.getElementById(`mview-${key}`).style.display = 'none';
+    document.getElementById(`medit-${key}`).style.display = 'block';
+    document.getElementById(`medit-name-${key}`).focus();
+  };
+
+  window.cancelEdit = function(key) {
+    document.getElementById(`mview-${key}`).style.display = 'flex';
+    document.getElementById(`medit-${key}`).style.display = 'none';
+  };
+
+  // Temp storage for pending image data per key
+  const pendingImages = {};
+
+  window.previewImage = function(key, input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      // Resize to max 200x200 thumbnail
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const maxSize = 120;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+        else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        pendingImages[key] = dataUrl;
+        // Update preview
+        const preview = document.getElementById(`medit-imgpreview-${key}`);
+        if (preview) preview.innerHTML = `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:cover;" />`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window.removeImage = function(key) {
+    pendingImages[key] = null;
+    const preview = document.getElementById(`medit-imgpreview-${key}`);
+    if (preview) preview.innerHTML = '📦';
+  };
+
+  window.saveEdit = function(key) {
+    const newName = document.getElementById(`medit-name-${key}`).value.trim();
+    const newCat  = document.getElementById(`medit-cat-${key}`).value;
+    if (!newName) return;
+    const existing = userHistory[key] || {};
+    const updated = { ...existing, name: newName, category: newCat };
+
+    // Handle image
+    if (key in pendingImages) {
+      if (pendingImages[key] === null) delete updated.image;
+      else updated.image = pendingImages[key];
+      delete pendingImages[key];
+    }
+
+    const newKey = newName.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+
+    // If name changed, delete old history key and create new one
+    if (newKey !== key) {
+      remove(ref(db, `${window._listaPath}/history/${key}`));
+    }
+    set(ref(db, `${window._listaPath}/history/${newKey}`), updated);
+
+    // Update ALL current list items that matched the OLD name (by key)
+    Object.entries(items).forEach(([itemId, item]) => {
+      const itemKey = item.name.toLowerCase().replace(/[^a-z0-9áéíóúüñ]/g, '_');
+      if (itemKey === key) {
+        const itemUpdate = { name: newName, category: newCat };
+        if (updated.image) itemUpdate.image = updated.image;
+        else if (item.image) itemUpdate.image = null;
+        update(ref(db, `${window._listaPath}/items/${itemId}`), itemUpdate);
+      }
+    });
+
+    cancelEdit(key);
+  };
+
+  window.deleteHistoryItem = function(key) {
+    if (!confirm('¿Eliminar este artículo del historial?')) return;
+    remove(ref(db, `${window._listaPath}/history/${key}`));
+    const q = document.getElementById('manageSearch').value;
+    renderManage(q);
+  };
+
+  // ── TOAST ─────────────────────────────────────────────────
+  function showToast(msg) {
+    const existing = document.getElementById('voiceToast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'voiceToast';
+    toast.style.cssText = `
+      position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+      background:#1e293b; border:1px solid #334155; border-radius:14px;
+      padding:12px 20px; z-index:9999; max-width:320px; width:calc(100% - 32px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.5); font-size:14px; font-weight:700;
+      color:#f1f5f9; text-align:center; animation:slideUp 0.3s ease;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { if (document.getElementById('voiceToast')) toast.remove(); }, 3000);
+  }
+
+  // ── VOZ ──────────────────────────────────────────────────
+  let _recognition = null;
+  let _micActive = false;
+
+  window.toggleMic = function() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
+      return;
+    }
+    if (_micActive) {
+      _recognition && _recognition.stop();
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    _recognition = new SpeechRecognition();
+    _recognition.lang = 'es-ES';
+    _recognition.interimResults = false;
+    _recognition.maxAlternatives = 1;
+
+    _micActive = true;
+    const btn = document.getElementById('micBtn');
+    btn.style.background = '#450a0a';
+    btn.style.borderColor = '#f87171';
+    btn.style.boxShadow = '0 0 12px rgba(248,113,113,0.4)';
+    btn.querySelectorAll('rect, path, line').forEach(el => {
+      el.setAttribute('fill', el.tagName === 'rect' ? '#f87171' : 'none');
+      el.setAttribute('stroke', '#f87171');
+    });
+
+    _recognition.onresult = function(event) {
+      const transcript = event.results[0][0].transcript.trim().toLowerCase();
+      // Eliminar palabras clave de comando
+      const prefijos = ['añadir ', 'agregar ', 'poner ', 'meter ', 'apuntar '];
+      let nombre = transcript;
+      for (const p of prefijos) {
+        if (transcript.startsWith(p)) {
+          nombre = transcript.slice(p.length).trim();
+          break;
+        }
+      }
+      // Capitalizar primera letra
+      nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+
+      // Si venía con prefijo "añadir/agregar..." → añadir directo
+      const teniaPrefijo = prefijos.some(p => transcript.startsWith(p));
+      const input = document.getElementById('itemInput');
+      input.value = nombre;
+
+      if (teniaPrefijo) {
+        addItem();
+        showToast(`✅ "${nombre}" añadido por voz`);
+      } else {
+        input.focus();
+        showToast(`🎤 "${nombre}" — pulsa Añadir para confirmar`);
+      }
+    };
+
+    _recognition.onerror = function(e) {
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        showToast('❌ Error de micrófono: ' + e.error);
+      }
+    };
+
+    _recognition.onend = function() {
+      _micActive = false;
+      const btn = document.getElementById('micBtn');
+      if (btn) {
+        btn.style.background = '#1e293b';
+        btn.style.borderColor = '#334155';
+        btn.style.boxShadow = '';
+        btn.querySelectorAll('rect, path, line').forEach(el => {
+          el.setAttribute('fill', el.tagName === 'rect' ? '#94a3b8' : 'none');
+          el.setAttribute('stroke', '#94a3b8');
+        });
+      }
+    };
+
+    _recognition.start();
+  };
+
+  // ── IMAGE VIEWER ─────────────────────────────────────────
+  window.openImgViewer = function(src) {
+    document.getElementById('imgViewerImg').src = src;
+    document.getElementById('imgViewer').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  };
+
+  window.closeImgViewer = function() {
+    document.getElementById('imgViewer').style.display = 'none';
+    document.body.style.overflow = '';
+  };
+
+  // ── CATEGORIES MANAGEMENT ────────────────────────────────
+  window.openCategories = function() {
+    document.getElementById('catPopup').style.display = 'flex';
+    renderCatList();
+  };
+
+  window.closeCategories = function() {
+    document.getElementById('catPopup').style.display = 'none';
+  };
+
+  function renderCatList() {
+    const list = document.getElementById('catList');
+    const cats = CAT_NAMES.filter(c => c !== CAT_OTROS);
+    if (cats.length === 0) {
+      list.innerHTML = `
+        <div style="text-align:center; color:#475569; padding:20px 0; font-size:14px;">No hay categorías personalizadas</div>
+        <div style="background:#1e293b; border-radius:12px; padding:12px 14px; border:1px solid #334155; display:flex; align-items:center; gap:10px;">
+          <div style="width:10px; height:10px; border-radius:50%; background:${CAT_OTROS_COLOR[0]}; flex-shrink:0;"></div>
+          <span style="flex:1; font-size:15px; font-weight:700; color:#64748b;">${CAT_OTROS} <span style="font-size:11px; color:#334155;">(fija)</span></span>
+        </div>`;
+      return;
+    }
+    list.innerHTML = cats.map(cat => {
+      const [color] = CATEGORIES[cat] || CAT_OTROS_COLOR;
+      return `
+        <div id="catrow-${escHtml(cat)}" style="background:#1e293b; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155;">
+          <!-- Vista -->
+          <div id="catview-${escHtml(cat)}" style="display:flex; align-items:center; gap:10px;">
+            <div style="width:10px; height:10px; border-radius:50%; background:${color}; flex-shrink:0;"></div>
+            <span style="flex:1; font-size:15px; font-weight:700; color:#f1f5f9;">${escHtml(cat)}</span>
+            <button onclick="toggleEditCat('${escHtml(cat)}')"
+              style="background:#1e3a5f; border:none; color:#93c5fd; border-radius:8px; width:30px; height:30px; font-size:14px; cursor:pointer;">✏️</button>
+            <button onclick="deleteCategory('${escHtml(cat)}')"
+              style="background:#450a0a; border:none; color:#fca5a5; border-radius:8px; width:30px; height:30px; font-size:16px; cursor:pointer;">×</button>
+          </div>
+          <!-- Edición -->
+          <div id="catedit-${escHtml(cat)}" style="display:none; margin-top:10px;">
+            <input id="catedit-input-${escHtml(cat)}" value="${escHtml(cat)}"
+              style="width:100%; background:#0f172a; border:1px solid #334155; border-radius:10px; padding:9px 12px; color:#f1f5f9; font-size:15px; font-family:inherit; outline:none; margin-bottom:8px;" />
+            <div style="display:flex; gap:8px;">
+              <button onclick="saveCatEdit('${escHtml(cat)}')"
+                style="flex:1; background:linear-gradient(90deg,#fbbf24,#f59e0b); color:#78350f; border:none; border-radius:10px; padding:9px; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer;">✓ Guardar</button>
+              <button onclick="toggleEditCat('${escHtml(cat)}')"
+                style="background:#334155; border:none; color:#94a3b8; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer;">Cancelar</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + `
+      <div style="background:#1e293b; border-radius:12px; padding:12px 14px; margin-bottom:8px; border:1px solid #334155; display:flex; align-items:center; gap:10px;">
+        <div style="width:10px; height:10px; border-radius:50%; background:${CAT_OTROS_COLOR[0]}; flex-shrink:0;"></div>
+        <span style="flex:1; font-size:15px; font-weight:700; color:#64748b;">${CAT_OTROS} <span style="font-size:11px; color:#334155;">(fija)</span></span>
+      </div>`;
+  }
+
+  window.toggleEditCat = function(cat) {
+    const view = document.getElementById(`catview-${cat}`);
+    const edit = document.getElementById(`catedit-${cat}`);
+    const isEditing = edit.style.display !== 'none';
+    view.style.display = isEditing ? 'flex' : 'none';
+    edit.style.display = isEditing ? 'none' : 'block';
+    if (!isEditing) document.getElementById(`catedit-input-${cat}`).focus();
+  };
+
+  window.addCategory = function() {
+    const input = document.getElementById('newCatInput');
+    const name  = input.value.trim();
+    const err   = document.getElementById('catErr');
+    if (!name) { err.textContent = 'Escribe un nombre'; err.style.display = 'block'; return; }
+    if (CAT_NAMES.includes(name)) { err.textContent = 'Esa categoría ya existe'; err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    // Asignar color de la paleta
+    const usedColors = Object.values(CATEGORIES).map(c => c[0]);
+    const color = COLOR_PALETTE.find(c => !usedColors.includes(c[0])) || COLOR_PALETTE[0];
+    set(ref(db, `${window._listaPath}/categories/${encodeURIComponent(name)}`), color);
+    input.value = '';
+  };
+
+  window.saveCatEdit = function(oldName) {
+    const newName = document.getElementById(`catedit-input-${oldName}`).value.trim();
+    if (!newName) return;
+    if (newName === oldName) { toggleEditCat(oldName); return; }
+    if (CAT_NAMES.includes(newName)) { alert('Esa categoría ya existe'); return; }
+    const color = CATEGORIES[oldName] || CAT_OTROS_COLOR;
+    // Guardar nueva, borrar vieja
+    set(ref(db, `${window._listaPath}/categories/${encodeURIComponent(newName)}`), color);
+    remove(ref(db, `${window._listaPath}/categories/${encodeURIComponent(oldName)}`));
+    // Actualizar artículos e historial con la categoría vieja
+    Object.entries(items).forEach(([id, item]) => {
+      if (item.category === oldName) update(ref(db, `${window._listaPath}/items/${id}`), { category: newName });
+    });
+    Object.entries(userHistory).forEach(([key, h]) => {
+      if (h.category === oldName) update(ref(db, `${window._listaPath}/history/${key}`), { category: newName });
+    });
+  };
+
+  window.deleteCategory = function(cat) {
+    const affectedItems = Object.values(items).filter(i => i.category === cat);
+    const msg = affectedItems.length > 0
+      ? `¿Eliminar la categoría "${cat}"?\n\n${affectedItems.length} artículo${affectedItems.length > 1 ? 's' : ''} pasará${affectedItems.length > 1 ? 'n' : ''} a "${CAT_OTROS}".`
+      : `¿Eliminar la categoría "${cat}"?`;
+    if (!confirm(msg)) return;
+    remove(ref(db, `${window._listaPath}/categories/${encodeURIComponent(cat)}`));
+    // Mover artículos a "Otros"
+    Object.entries(items).forEach(([id, item]) => {
+      if (item.category === cat) update(ref(db, `${window._listaPath}/items/${id}`), { category: CAT_OTROS });
+    });
+    Object.entries(userHistory).forEach(([key, h]) => {
+      if (h.category === cat) update(ref(db, `${window._listaPath}/history/${key}`), { category: CAT_OTROS });
+    });
+  };
+
+</script>
+
+</body>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/mi-lista/sw.js').catch(() => {});
+    });
+  }
+</script>
+</html>
