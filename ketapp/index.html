@@ -735,6 +735,10 @@
       btn.onclick = () => solicitarPin(uid, p.pin, name);
       listEl.appendChild(btn);
     });
+
+    // Desconectar Firebase ahora que la pantalla de login ya cargó
+    // Así no queda conexión abierta mientras el usuario elige con quién entrar
+    db.goOffline();
   }
 
   // ── PIN ──────────────────────────────────────────
@@ -806,9 +810,6 @@
         _metasListenerRef = null;
     }
     _metasListener = false;
-
-    // Desconectar Firebase para no dejar conexión WebSocket abierta en la pantalla de login
-    db.goOffline();
 
     localStorage.removeItem(SESSION_KEY);
     currentUser = null;
