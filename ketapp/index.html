@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head> 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keto Calendar Pro - Premium</title>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root { 
+    --keto: #27ae60; --dark: #1a1a1a; --danger: #e74c3c; --gray: #f4f4f9; --text: #333; --muted: #888;
+  }
+/* ── MODAL RECETA ─────────────────────────────── */
+.receta-modal-content {
+  background: white;
+  border-radius: 24px;
+  width: 95%;
+  max-width: 420px;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.receta-header {
+  background: linear-gradient(135deg, var(--dark) 0%, #2d4a3e 100%);
+  padding: 22px 20px 16px;
+  border-radius: 24px 24px 0 0;
+  color: white;
+}
+.receta-header h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.receta-header small { opacity: 0.7; font-size: 0.78rem; }
+.receta-tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 20px;
+}
+.receta-tipo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border: 2px solid #eee;
+  border-radius: 16px;
+  background: #fafafa;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #333;
+  transition: all 0.2s;
+}
+.receta-tipo-btn:hover, .receta-tipo-btn.active {
+  border-color: var(--keto);
+  background: #f0fff4;
+  color: var(--keto);
+  transform: translateY(-2px);
+}
+.receta-tipo-btn span { font-size: 1.8rem; }
+.receta-body { padding: 0 20px 20px; }
+.receta-resultado {
+  background: #f8fffe;
+  border: 1px solid #d4edda;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #2c3e50;
+  max-height: 260px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.receta-resultado h4 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  color: var(--dark);
+}
+.receta-macros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.macro-pill {
+  background: var(--dark);
+  color: white;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: bold;
+}
+.macro-pill.carbs { background: var(--keto); }
+.macro-pill.kcal  { background: #e67e22; }
+.btn-pdf {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-nueva-receta {
+  width: 100%;
+  padding: 11px;
+  background: #f0f0f0;
+  color: #333;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.loading-receta {
+  text-align: center;
+  padding: 30px 20px;
+  color: #888;
+}
+.loading-receta .spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(39,174,96,0.2);
+  border-top-color: var(--keto);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+  body { 
+    font-family: system-ui, -apple-system, sans-serif; background: var(--gray); 
+    display: flex; justify-content: center; padding: 10px; margin: 0; color: var(--text);
+  }
+  .container { 
+    background: white; padding: 20px; border-radius: 28px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08); width: 100%; max-width: 400px; min-height: 85vh; 
+  }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .btn-icon { background: #eee; border: none; padding: 6px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; }
+  
+  .dashboard { 
+    background: var(--dark); color: white; padding: 22px; border-radius: 24px; margin-bottom: 20px; 
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  }
+  .dash-main { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; }
+  .dash-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 4px; }
+  .dash-value { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+  .dash-value small { font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+
+  .dash-stats-row { 
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; 
+    padding-top: 15px; border-top: 1px solid #333; margin-top: 15px;
+  }
+  .stat-item { text-align: center; }
+  .stat-item div:first-child { font-size: 0.65rem; color: var(--muted); margin-bottom: 3px; }
+  .stat-item div:last-child { font-size: 0.95rem; font-weight: 600; }
+
+  .progress-bar { background: #333; border-radius: 10px; height: 6px; overflow: hidden; }
+  #barFill { background: var(--keto); height: 100%; width: 0%; transition: 1s ease; }
+  
+  .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 15px; }
+  .btn-sec { background: #eee; border: none; padding: 10px 4px; border-radius: 12px; font-weight: bold; cursor: pointer; color: var(--dark); font-size: 0.75rem; }
+.btn-medico { background: #eee; border: none; padding: 6px; border-radius: 12px; cursor: pointer; font-size: 1.1rem; }
+
+  textarea { 
+    width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 15px; 
+    box-sizing: border-box; font-size: 1rem; outline: none; resize: none; font-family: inherit;
+  }
+  .btn-main { background: var(--dark); color: white; border: none; padding: 14px; width: 100%; border-radius: 15px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+  
+  .result-card { display: none; margin-top: 15px; padding: 15px; border-radius: 15px; background: #f0fff4; border: 1px solid #c6f6d5; }
+  .food-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+
+  .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100; align-items:center; justify-content:center; backdrop-filter: blur(4px); }
+  .modal.open { display: flex; }
+  .modal-content { background:white; padding:20px; border-radius:24px; width:95%; max-width:380px; }
+
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; text-align: center; }
+  .calendar-day { aspect-ratio: 0.8; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; font-size: 0.65rem; border: 1px solid transparent; background: #f9f9f9; cursor: pointer; padding: 2px; }
+  .calendar-day.today { border-color: var(--keto); background: #f0fff4; }
+
+  .chart-container { 
+    margin-bottom: 25px; 
+    height: 180px !important; 
+    width: 100%;
+    position: relative;
+  }
+  .chart-title { font-size: 0.85rem; font-weight: bold; color: #555; margin-bottom: 8px; border-left: 3px solid var(--keto); padding-left: 8px; }
+
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+.header button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+}
+.header button:active {
+    transform: scale(0.9);
+}
+
+/* Admin modal */
+#adminModal .modal-content { max-width: 380px; }
+.admin-user-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid #eee;
+}
+.btn-danger-sm {
+  background: var(--danger); color: white; border: none;
+  padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;
+}
+
+</style>
+</head>
+<body>
+
+
+
+<!-- ══════════════ MODAL ADMIN ══════════════ -->
+<div id="adminModal" class="modal">
+  <div class="modal-content">
+    <h3>👑 Panel de Administración</h3>
+    <div id="adminUserList" style="margin-bottom:16px;"></div>
+    <hr style="margin:14px 0; border:none; border-top:1px solid #eee;">
+    <h4 style="margin:0 0 12px; font-size:0.95rem;">Añadir nuevo usuario</h4>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <input type="text" id="newUserName" placeholder="Nombre del usuario"
+        style="padding:10px 14px; border-radius:12px; border:2px solid #eee; font-size:1rem; outline:none;">
+      <input type="text" id="newUserPin" placeholder="PIN de 4 dígitos" maxlength="4" inputmode="numeric"
+        style="padding:10px 14px; border-radius:12px; border:2px solid #eee; font-size:1rem; outline:none; ">
+      <button onclick="crearUsuario()" style="background:var(--dark); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">
+        ➕ Crear Usuario
+      </button>
+    </div>
+    <button onclick="closeModal('adminModal')" class="btn-main" style="background:none; color:var(--muted); font-size:0.8rem; margin-top:10px;">Cerrar</button>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+    <button onclick="navegarDia(-1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">‹</button>
+    <b id="displayDate" style="font-size: 0.9rem; min-width: 60px; text-align: center;"></b>
+    <button onclick="navegarDia(1)" style="background:none; border:none; cursor:pointer; font-size:1.2rem; color:var(--dark);">›</button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+    
+    <button class="btn-icon" onclick="openModal('historyModal')">📅</button>
+    <button onclick="generarInformeMedico()" class="btn-medico"> 👨‍⚕️ </button>
+    <button class="btn-icon" onclick="abrirModalReceta()">🍽️</button>
+    <button class="btn-icon" onclick="abrirAjustes()">⚙️</button>
+    </div>
+
+</div>
+
+  <div class="dashboard">
+    <div class="dash-main">
+      <div>
+        <div class="dash-label">Carbohidratos</div>
+        <div class="dash-value"><span id="totalCarbs">0</span><small>/<span id="metaCarbsDisplay">30</span>g</small></div>
+      </div>
+      <div style="text-align:right">
+    <small>NETAS</small>
+    <div class="dash-value">
+        <span id="totalNetKcal">0</span> <small>kcal</small>
+    </div>
+</div>
+    </div>
+    
+    <div class="progress-bar"><div id="barFill"></div></div>
+
+    <div class="dash-stats-row">
+      <div class="stat-item">
+        <div>Consumidas</div>
+        <div><span id="kcalConsumidas">0</span><small> kcal</small></div>
+      </div>
+      <div class="stat-item">
+        <div>Quemadas</div>
+        <div><span id="kcalQuemadas">0</span><small> kcal</small></div>
+      </div>
+      <div class="stat-item">
+        <div>Peso</div>
+        <div id="currentWeight">--</div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <div class="action-grid">
+    <button class="btn-sec" onclick="registrarPeso()">⚖️ Peso</button>
+    <button class="btn-sec" onclick="registrarEjercicio()">🔥 Ejercicio</button>
+    <button class="btn-sec" onclick="openModal('chartModal')">📈 Gráficas</button>
+
+   </div>
+
+
+
+<textarea id="foodInput" rows="2" placeholder="Describe tu comida..."></textarea>
+
+<div style="display: grid; grid-template-columns: 4fr 1fr; gap: 8px;">
+  
+  <button class="btn-main" id="btnAnalyze" onclick="analizarIA()" ">
+    <span id="btnText">Analizar con IA ✨</span>
+  </button>
+
+<button class="btn-main" onclick="document.getElementById('cameraInput').click()" style="background:#eee;">
+    📸
+</button>
+</div>
+
+<input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none" onchange="analizarFoto(this)">
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+  <button class="btn-main" onclick="openModal('manualModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
+    ✍️ Añadir Manual
+  </button>
+  <button class="btn-main" onclick="openModal('recentModal')" style="background:#eee; color:#333; margin-top:0; font-size:0.8rem; padding:10px;">
+    🕒 Recientes
+  </button>
+
+</div>
+
+<div id="apiKeyModal" class="modal">
+  <div class="modal-content">
+    <h3>Configurar APIs</h3>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+      <div>
+        <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 5px;">Gemini Keys (separadas por comas)</label>
+        <textarea id="inputGemini" rows="3" placeholder="Key1, Key2..." style="font-size: 0.8rem;"></textarea>
+      </div>
+      <div>
+        <label style="font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 5px;">Groq Key (Rescate)</label>
+        <input type="text" id="inputGroq" placeholder="gsk_..." style="width:100%; padding:12px; border-radius:12px; border:2px solid #eee; box-sizing:border-box; outline:none;">
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top: 20px;">
+      <button onclick="guardarKeys()" style="flex:2; background:var(--dark); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Aceptar</button>
+      <button onclick="closeModal('apiKeyModal')" style="flex:1; background:#eee; color:#333; border:none; padding:12px; border-radius:12px; cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="recentModal" class="modal">
+  <div class="modal-content">
+    <h3>Alimentos Recientes</h3>
+    <input type="text" id="searchRecent" oninput="buscarEnHistorial()" placeholder="Escribe para buscar..." style="width:100%; padding:12px; border-radius:12px; border:2px solid var(--keto); box-sizing:border-box; outline:none;">
+    
+    <div id="recentResults" style="max-height: 250px; overflow-y: auto; margin-top: 15px;">
+      </div>
+    
+    <button onclick="closeModal('recentModal')" class="btn-main" style="background:#eee; color:#333; margin-top:15px;">Cancelar</button>
+  </div>
+</div>
+
+<div id="manualModal" class="modal">
+  <div class="modal-content">
+    <h3>Nuevo Alimento</h3>
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div>
+        <label style="font-size: 0.8rem; color: var(--muted);">Nombre</label>
+        <input type="text" id="manNombre" placeholder="Ej. Filete de ternera" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+          <label style="font-size: 0.8rem; color: var(--muted);">Carbohidratos (g)</label>
+          <input type="number" id="manCarbs" step="0.1" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; color: var(--muted);">Calorías (kcal)</label>
+          <input type="number" id="manKcal" placeholder="0" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing: border-box;">
+        </div>
+      </div>
+    </div>
+    
+    <div style="display:flex; gap:10px; margin-top: 20px;">
+      <button onclick="guardarManual()" style="flex:2; background:var(--dark); color:white; border:none; padding:12px; border-radius:12px; cursor:pointer; font-weight:bold;">Guardar</button>
+      <button onclick="closeModal('manualModal')" style="flex:1; background:#eee; color:#333; border:none; padding:12px; border-radius:12px; cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+  <div id="resultCard" class="result-card">
+    <h4 id="resName" style="margin:0; font-size:0.95rem;"></h4>
+    <p id="resNutri" style="margin:8px 0; font-size:0.85rem;"></p>
+    <div style="display:flex; gap:10px;">
+        <button onclick="guardar()" style="flex:2; background:var(--keto); color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">Añadir</button>
+        <button onclick="cancelarAnalisis()" style="flex:1; background:#eee; color:#333; border:none; padding:10px; border-radius:10px; cursor:pointer;">X</button>
+    </div>
+  </div>
+
+  <div id="dailyList" style="margin-top:15px;"></div>
+</div>
+
+<div id="chartModal" class="modal"><div class="modal-content" style="max-width: 95%; height: 85vh; overflow-y: auto;">
+
+    <!-- Selector de periodo -->
+   
+     <center> <button onclick="graficaMes(-1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">‹</button>
+      <b id="graficaMesLabel" style="font-size:1rem; min-width:120px; text-align:center;"></b>
+      <button onclick="graficaMes(1)" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px 8px;">›</button></center>
+      <br>   <label style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:0.85rem;color:#555;cursor:pointer;">
+      <input type="checkbox" id="chk30dias" onchange="cargarGraficas()" style="width:16px;height:16px;accent-color:var(--dark);">
+        Últimos 30 días
+      </label>    <br>
+
+    <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
+    <div class="chart-container"><div class="chart-title">Calorías Consumidas/Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
+    <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
+    <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
+</div></div>
+
+<div id="historyModal" class="modal"><div class="modal-content">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <button class="btn-icon" onclick="cambiarMes(-1)">‹</button>
+    <b id="calendarMonthName" style="text-transform: capitalize;"></b>
+    <button class="btn-icon" onclick="cambiarMes(1)">›</button>
+  </div>
+  <div class="calendar-grid" id="calendarDays"></div>
+  <button onclick="closeModal('historyModal')" class="btn-main">Cerrar</button>
+</div></div>
+
+
+
+<div id="configModal" class="modal">
+  <div class="modal-content">
+    <h3>Ajustes y Metas</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+      <div>
+        <label style="font-size: 0.7rem; color: var(--muted); display:block; margin-bottom:4px;">Meta Carbs (g)</label>
+        <input type="number" id="metaCarbs" placeholder="30" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size: 0.7rem; color: var(--muted); display:block; margin-bottom:4px;">Meta Kcal</label>
+        <input type="number" id="metaKcal" placeholder="2000" style="width:100%; padding:10px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+      </div>
+    </div>
+
+    <button class="btn-main" onclick="guardarMetas()">Guardar Metas ✅</button>
+    <button class="btn-main" onclick="cambiarKey()" style="background:#f9f9f9; color:#333; margin-top:10px;">🔑 Configurar APIs</button>
+    <button class="btn-main" onclick="exportarPDF()" style="background:#f9f9f9; color:#333; margin-top:10px;">
+  📄 Exportar Informe PDF
+</button>
+
+
+    <button id="btnAdminPanel" class="btn-main" onclick="abrirAdmin()" style="background:#f9f9f9; color:#333; margin-top:10px;">
+      👑 Panel de Administración
+    </button>
+
+
+
+    
+    <button onclick="closeModal('configModal')" class="btn-main" style="background:none; color:var(--muted); font-size: 0.8rem; border:none;">Cerrar</button>
+  </div>
+</div>
+
+
+<div id="recetaTipoModal" class="modal">
+  <div class="receta-modal-content">
+    <div class="receta-header">
+      <h3>🥑 Sugerencia de Receta Keto</h3>
+      <small>¿Para qué momento del día?</small>
+    </div>
+    <div class="receta-tipo-grid">
+      <button class="receta-tipo-btn" onclick="generarReceta('desayuno')">
+        <span>🍳</span>Desayuno
+      </button>
+      <button class="receta-tipo-btn" onclick="generarReceta('almuerzo')">
+        <span>🥗</span>Almuerzo
+      </button>
+      <button class="receta-tipo-btn" onclick="generarReceta('cena')">
+        <span>🌙</span>Cena
+      </button>
+    </div>
+    <div style="padding: 0 20px 20px;">
+      <button class="btn-nueva-receta" onclick="closeModal('recetaTipoModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Resultado de receta -->
+<div id="recetaResultadoModal" class="modal">
+  <div class="receta-modal-content">
+    <div class="receta-header">
+      <h3 id="recetaTipoLabel">🍳 Receta Keto</h3>
+      <small>Generada por IA · Adaptada a tu meta de carbos</small>
+    </div>
+    <div class="receta-body"><br>
+      <div id="recetaLoadingZone" class="loading-receta">
+        <div class="spinner-receta"></div>
+        <p>Consultando al chef keto IA...</p>
+      </div>
+      <div id="recetaContenidoZone" style="display:none">
+        <div class="receta-macros">
+          <span class="macro-pill carbs" id="recetaCarbsPill"></span>
+          <span class="macro-pill kcal"  id="recetaKcalPill"></span>
+          <span class="macro-pill"       id="recetaProtPill"></span>
+        </div>
+        <div class="receta-resultado" id="recetaTexto"></div>
+        <button class="btn-pdf" onclick="descargarRecetaPDF()">
+          📄 Descargar Receta en PDF
+        </button>
+        <button class="btn-nueva-receta" onclick="volverTipoReceta()">← Pedir otra receta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+<script>
+
+
+  // CONFIGURACIÓN FIREBASE
+  const firebaseConfig = {
+    apiKey: "AIzaSyBnmTgJYFsFAFWnGyaDZRUxOZGnL5SE1QA",
+    authDomain: "lista-compra-9d6f5.firebaseapp.com",
+    databaseURL: "https://lista-compra-9d6f5-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "lista-compra-9d6f5",
+    storageBucket: "lista-compra-9d6f5.firebasestorage.app",
+    messagingSenderId: "241322134457",
+    appId: "1:241322134457:web:1b765857911f94d69cc468"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  
+  // VARIABLES DE ESTADO
+  let fechaSeleccionada = new Date(); // La fecha que se muestra en el dashboard
+  let fechaVistaCalendario = new Date(); // La fecha que se usa para navegar por el calendario
+  let tempFood = null;
+
+  // Formato YYYY-MM-DD local seguro
+  const formatISO = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  // ══════════════════════════════════════════════════
+  // INIT
+  // ══════════════════════════════════════════════════
+
+  // ── Init directo como admin ───────────────────────
+  const ADMIN_UID  = 'admin';
+  const ADMIN_NAME = 'Administrador';
+  let currentUser  = ADMIN_UID;
+
+  window.onload = () => {
+    escucharFirebase();
+  };
+
+  // ── Ruta base dinámica ───────────────────────────
+  function dbRef(path) {
+    return db.ref(`usuarios/${currentUser}/keto_logs/${path}`);
+  }
+  function dbBase() {
+    return db.ref(`usuarios/${currentUser}/keto_logs`);
+  }
+
+  // ── Panel de Admin ───────────────────────────────
+  function abrirAdmin() {
+    closeModal('configModal');
+    cargarAdminPanel();
+    openModal('adminModal');
+  }
+
+  async function cargarAdminPanel() {
+    const el = document.getElementById('adminUserList');
+    el.innerHTML = 'Cargando...';
+    const snap = await db.ref('usuarios').once('value');
+    const usuarios = snap.val() || {};
+    el.innerHTML = '';
+    Object.entries(usuarios).forEach(([uid, data]) => {
+      const p = data.perfil || {};
+      const name = p.name || uid;
+      const row = document.createElement('div');
+      row.className = 'admin-user-row';
+      row.innerHTML = `
+        <div>
+          <b>${name}${p.isAdmin ? ' 👑' : ''}</b>
+          <br><small style="color:var(--muted);">PIN: ${p.pin || '----'} · UID: ${uid}</small>
+        </div>
+        ${uid !== ADMIN_UID ? `<button class="btn-danger-sm" onclick="eliminarUsuario('${uid}','${name}')">Eliminar</button>` : '<span style="font-size:0.75rem;color:#aaa;">Admin</span>'}
+      `;
+      el.appendChild(row);
+    });
+  }
+
+  async function crearUsuario() {
+    const name = document.getElementById('newUserName').value.trim();
+    const pin  = document.getElementById('newUserPin').value.trim();
+    if (!name)              { alert('Ponle un nombre al usuario'); return; }
+    if (!/^\d{4}$/.test(pin)) { alert('El PIN debe ser exactamente 4 dígitos'); return; }
+
+    const uid = 'user_' + Date.now();
+    await db.ref(`usuarios/${uid}/perfil`).set({ name, pin, isAdmin: false });
+    document.getElementById('newUserName').value = '';
+    document.getElementById('newUserPin').value  = '';
+    alert(`✅ Usuario "${name}" creado`);
+    cargarAdminPanel();
+  }
+
+  async function eliminarUsuario(uid, name) {
+    if (!confirm(`¿Eliminar a "${name}"? Se borrarán también sus datos.`)) return;
+    await db.ref(`usuarios/${uid}`).remove();
+    cargarAdminPanel();
+  }
+
+
+let historialAlimentos = [];
+
+async function prepararHistorial() {
+    const snap = await dbBase().once('value');
+    const all = snap.val() || {};
+    const diccionario = {};
+
+    // Recorremos todo el historial para crear una lista de alimentos únicos
+    Object.values(all).forEach(dia => {
+        const fuentes = [dia.comidas, dia];
+        fuentes.forEach(fuente => {
+            if (fuente && typeof fuente === 'object') {
+                Object.values(fuente).forEach(item => {
+                    if (item && item.n && item.c !== undefined) {
+                        // Usamos el nombre como clave para evitar duplicados
+                        diccionario[item.n.toLowerCase()] = { n: item.n, c: item.c, k: item.k };
+                    }
+                });
+            }
+        });
+    });
+    historialAlimentos = Object.values(diccionario);
+}
+
+function buscarEnHistorial() {
+    const term = document.getElementById('searchRecent').value.toLowerCase();
+    const resultsDiv = document.getElementById('recentResults');
+    resultsDiv.innerHTML = "";
+
+    if (term.length < 2) return; // Empezar a buscar tras 2 letras
+
+    const filtrados = historialAlimentos.filter(item => 
+        item.n.toLowerCase().includes(term)
+    );
+
+    filtrados.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'food-item';
+        div.style.cursor = 'pointer';
+        div.innerHTML = `<div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div> <span>➕</span>`;
+        div.onclick = () => seleccionarReciente(item);
+        resultsDiv.appendChild(div);
+    });
+}
+
+function seleccionarReciente(item) {
+    tempFood = { n: item.n, c: item.c, k: item.k };
+    guardar();
+    closeModal('recentModal');
+    
+}
+
+// Función para mover el día (delta puede ser -1 o 1)
+function navegarDia(delta) {
+    fechaSeleccionada.setDate(fechaSeleccionada.getDate() + delta);
+    escucharFirebase(); // Refresca todo con la nueva fecha
+}
+
+function guardarManual() {
+    const nombre = document.getElementById('manNombre').value.trim();
+    const carbs = document.getElementById('manCarbs').value;
+    const kcal = document.getElementById('manKcal').value;
+
+    if (!nombre) { alert("Ponle un nombre al alimento"); return; }
+
+    // Creamos el objeto temporal
+    tempFood = {
+        n: nombre,
+        c: parseFloat(carbs) || 0,
+        k: parseInt(kcal) || 0
+    };
+
+    // Usamos tu función guardar() que ya maneja Firebase y la fecha seleccionada
+    guardar();
+
+    // Limpiamos y cerramos
+    document.getElementById('manNombre').value = "";
+    document.getElementById('manCarbs').value = "";
+    document.getElementById('manKcal').value = "";
+    closeModal('manualModal');
+}
+
+
+
+  // NAVEGACIÓN
+  // Variable global para que los datos del día puedan leer las metas en cualquier momento
+let metasGlobales = { carbs: 30, kcal: 2000 };
+let _metasListener = false;    // evitar registrar el listener varias veces
+let _metasListenerRef = null;  // referencia EXACTA al nodo de metas (necesaria para .off())
+let _diaListenerRef = null;    // referencia al listener del día activo
+
+// 2. ESCUCHA DE LOGS (Se activa al cambiar de fecha o al cargar)
+function escucharFirebase() {
+    // 1. ESCUCHA DE METAS (una sola vez por sesión)
+    // Se registra sobre su propio nodo y nunca se cancela al cambiar de día
+    if (!_metasListener) {
+        _metasListener = true;
+        _metasListenerRef = dbRef('config_metas');
+        _metasListenerRef.on('value', snap => {
+            const d = snap.val();
+            if (d) {
+                metasGlobales.carbs = parseFloat(d.carbs) || 30;
+                metasGlobales.kcal = parseInt(d.kcal) || 2000;
+            }
+            actualizarVistaDiaria();
+        });
+    }
+
+    const iso = formatISO(fechaSeleccionada);
+    const hoyStr = formatISO(new Date());
+
+    let textoFecha = fechaSeleccionada.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+    if (iso === hoyStr) textoFecha = "Hoy";
+    document.getElementById('displayDate').innerText = textoFecha;
+
+    // Cancelar SOLO el listener del día anterior (no afecta al de metas)
+    if (_diaListenerRef) {
+        _diaListenerRef.off('value');
+        _diaListenerRef = null;
+    }
+
+    // Escuchamos el nuevo día seleccionado y guardamos la referencia
+    _diaListenerRef = dbRef(`${iso}`);
+    _diaListenerRef.on('value', snap => {
+        window.datosDiaActual = snap.val() || {};
+        actualizarVistaDiaria();
+    });
+}
+
+// 3. FUNCIÓN DE RENDERIZADO (Dibuja todo usando metas + datos del día)
+function actualizarVistaDiaria() {
+    const data = window.datosDiaActual || {};
+    const list = document.getElementById('dailyList');
+    if (!list) return;
+
+    list.innerHTML = "";
+    let tc = 0, tkCons = 0, tkEjer = 0;
+
+    // --- Procesar Comidas ---
+    let objetosComida = data.comidas || {};
+    Object.keys(data).forEach(key => {
+        if (key !== 'peso' && key !== 'ejercicio' && key !== 'comidas') {
+            if (typeof data[key] === 'object' && data[key].n) objetosComida[key] = data[key];
+        }
+    });
+
+    Object.keys(objetosComida).reverse().forEach(id => {
+        const item = objetosComida[id];
+        tc += parseFloat(item.c || 0);
+        tkCons += parseInt(item.k || 0);
+        list.innerHTML += `
+            <div class="food-item">
+                <div><b>${item.n}</b><br><small>${item.c}g | ${item.k} kcal</small></div>
+                <div style="color:#ccc; cursor:pointer; padding:5px;" onclick="confirmarEliminar('${id}', '${item.n}')">✕</div>
+            </div>`;
+    });
+
+    if (Object.keys(objetosComida).length === 0) {
+        list.innerHTML = "<p style='text-align:center;color:#ccc;font-size:0.8rem;'>Sin registros</p>";
+    }
+
+    // --- Procesar Ejercicio ---
+    if (data.ejercicio) {
+        Object.values(data.ejercicio).forEach(e => {
+            tkEjer += (typeof e === 'object') ? (parseInt(e.k) || 0) : (parseInt(e) || 0);
+        });
+    }
+
+    // --- Actualizar Interfaz ---
+    const netas = tkCons - tkEjer;
+
+    // Carbohidratos (Valor y Color)
+    const elCarbs = document.getElementById('totalCarbs');
+    if (elCarbs) {
+        elCarbs.innerText = tc.toFixed(1);
+        elCarbs.style.color = tc > metasGlobales.carbs ? 'var(--danger)' : 'white';
+    }
+    
+    // Texto de la Meta (ej: /30g)
+    const elMetaDisplay = document.getElementById('metaCarbsDisplay');
+    if (elMetaDisplay) elMetaDisplay.innerText = metasGlobales.carbs;
+
+    // Calorías Netas (Valor y Color)
+    const elNetas = document.getElementById('totalNetKcal');
+    if (elNetas) {
+        elNetas.innerText = netas;
+        elNetas.style.color = netas > metasGlobales.kcal ? 'var(--danger)' : 'white';
+    }
+
+    // Otros
+    document.getElementById('kcalConsumidas').innerText = tkCons;
+    document.getElementById('kcalQuemadas').innerText = tkEjer;
+    document.getElementById('currentWeight').innerText = data.peso ? data.peso + " kg" : "--";
+
+    // Barra de progreso
+    const elBar = document.getElementById('barFill');
+    if (elBar) {
+        const p = Math.min((tc / metasGlobales.carbs) * 100, 100);
+        elBar.style.width = p + '%';
+        elBar.style.background = tc > metasGlobales.carbs ? 'var(--danger)' : 'var(--keto)';
+    }
+}
+
+  function verDetalleDia(isoString) {
+    // Al hacer clic en un día del calendario, cambiamos la fecha seleccionada y refrescamos dashboard
+    fechaSeleccionada = new Date(isoString + 'T12:00:00');
+    closeModal('historyModal');
+    escucharFirebase();
+  }
+
+  // MODALES
+  function openModal(id) { 
+    document.getElementById(id).classList.add('open'); 
+    if(id === 'historyModal') generarCalendario();
+    if(id === 'chartModal') setTimeout(cargarGraficas, 400);
+    if(id === 'recentModal') {
+        document.getElementById('searchRecent').value = "";
+        document.getElementById('recentResults').innerHTML = "";
+        prepararHistorial(); // Carga los datos de Firebase
+    }
+    if(id === 'manualModal') {
+        document.getElementById('manNombre').value = "";
+        document.getElementById('manCarbs').value = "";
+        document.getElementById('manKcal').value = "";
+    }
+}
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  function cambiarMes(delta) { fechaVistaCalendario.setMonth(fechaVistaCalendario.getMonth() + delta); generarCalendario(); }
+
+  // IA GEMINI
+function cambiarKey() {
+    // 1. Cerramos el modal de Ajustes para que no estorbe
+    closeModal('configModal'); 
+    
+    // 2. Cargamos los valores guardados en los inputs del nuevo modal
+    document.getElementById('inputGemini').value = localStorage.getItem('GEMINI_KEY') || "";
+    document.getElementById('inputGroq').value = localStorage.getItem('GROQ_KEY') || "";
+    
+    // 3. Abrimos el modal de las llaves
+    openModal('apiKeyModal');
+}
+function guardarKeys() {
+    const gemini = document.getElementById('inputGemini').value.trim();
+    const groq = document.getElementById('inputGroq').value.trim();
+
+    localStorage.setItem('GEMINI_KEY', gemini);
+    localStorage.setItem('GROQ_KEY', groq);
+
+    alert("✅ Configuración actualizada con éxito.");
+    closeModal('apiKeyModal');
+    closeModal('configModal'); // Cerramos también el de ajustes
+}
+function añadirManual() {
+    const nombre = prompt("Nombre del alimento:");
+    if (!nombre) return;
+    
+    const carbs = prompt("Carbohidratos (g):", "0");
+    if (carbs === null) return;
+    
+    const kcal = prompt("Calorías (kcal):", "0");
+    if (kcal === null) return;
+
+    // Creamos el objeto con el mismo formato que usa la IA
+    tempFood = {
+        n: nombre,
+        c: parseFloat(carbs.replace(',', '.')) || 0,
+        k: parseInt(kcal) || 0
+    };
+
+    // Reutilizamos la función guardar() que ya tienes para subirlo a Firebase
+    guardar();
+    
+    // Feedback visual rápido
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  async function analizarIA() {
+  const rawKeys = localStorage.getItem('GEMINI_KEY');
+  const groqKey = localStorage.getItem('GROQ_KEY'); // Llave de rescate
+  const text = document.getElementById('foodInput').value.trim();
+  
+  if(!rawKeys && !groqKey) { alert("Falta la API Key. Configúrala en ajustes."); return; }
+  if(!text) return;
+
+  const keys = rawKeys ? rawKeys.split(',').map(k => k.trim()).filter(k => k) : [];
+  const btn = document.getElementById('btnAnalyze');
+  const btnText = document.getElementById('btnText');
+  
+  btn.disabled = true; 
+  btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
+
+  // --- FASE 1: BUCLE GEMINI ---
+  for (let i = 0; i < keys.length; i++) {
+    try {
+      console.log(`Intentando Gemini Key ${i + 1}...`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys[i]}`;
+      
+      const response = await fetch(url, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          contents: [{ 
+            parts: [{ 
+              text: `Actúa como si fueras nutricionista Keto experto. Analiza: "${text}". Si no hay cantidades, usa raciones estándar. Ten en cuenta que los carbohidratos sean netos, descontando fibra. Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` 
+            }] 
+          }] 
+        })
+      });
+
+      if (response.status === 429) {
+        console.warn(`Key ${i + 1} agotada. Probando siguiente...`);
+        continue; 
+      }
+
+      if (!response.ok) throw new Error(`Error ${response.status}`);
+
+      const data = await response.json();
+      procesarYMostrar(data.candidates[0].content.parts[0].text);
+      return; // ÉXITO
+
+    } catch (err) {
+      console.error(`Gemini ${i + 1} falló:`, err.message);
+    }
+  }
+
+  // --- FASE 2: RESCATE CON GROQ ---
+  if (groqKey) {
+    try {
+      console.log("Gemini falló. Iniciando rescate con Groq...");
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${groqKey}`,
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: `Actúa como nutricionista Keto experto. Analiza: "${text}". Si no hay cantidades, usa raciones estándar. Ten en cuenta que los carbohidratos sean netos, descontando fibra. Devuelve SOLO JSON: {"n": "nombre", "c": carbs_num, "k": kcal_num}` }],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        procesarYMostrar(data.choices[0].message.content);
+        return; // ÉXITO
+      }
+    } catch (err) {
+      console.error("Groq también falló:", err.message);
+    }
+  }
+
+  // Si llegamos aquí, todo falló
+  alert("❌ Todos los servicios de IA están agotados o fallaron.");
+  btn.disabled = false; 
+  btnText.innerText = "Analizar ✨";
+}
+
+// Función auxiliar para evitar repetir código de renderizado
+function procesarYMostrar(rawText) {
+    let cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+    tempFood = JSON.parse(cleanJson);
+    document.getElementById('resName').innerText = tempFood.n;
+    document.getElementById('resNutri').innerText = `${tempFood.c}g Carbs | ${tempFood.k} Kcal`;
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('btnAnalyze').disabled = false;
+    document.getElementById('btnText').innerText = "Analizar ✨";
+}
+
+  function cancelarAnalisis() { document.getElementById('resultCard').style.display = 'none'; document.getElementById('foodInput').value = ""; tempFood = null; }
+
+  // ESCRITURA EN DB (Siempre usa fechaSeleccionada)
+ function guardar() { 
+  if(tempFood) { 
+    // Forzamos que siempre se guarde dentro de la subcarpeta 'comidas'
+    const ref = dbRef(`${formatISO(fechaSeleccionada)}/comidas`);
+    ref.push(tempFood).then(() => {
+        cancelarAnalisis(); 
+    }).catch(err => alert("Error al guardar: " + err.message));
+  } 
+}
+
+  function registrarPeso() {
+    document.getElementById('inputPesoModal').value = '';
+    openModal('pesoModal');
+    setTimeout(() => document.getElementById('inputPesoModal').focus(), 200);
+  }
+  function guardarPeso() {
+    const val = parseFloat(document.getElementById('inputPesoModal').value);
+    if (!val || val <= 0 || val > 300) { 
+      document.getElementById('inputPesoModal').style.borderColor = '#e74c3c';
+      return; 
+    }
+    dbRef(`${formatISO(fechaSeleccionada)}/peso`).set(val);
+    closeModal('pesoModal');
+  }
+  function registrarEjercicio() {
+    document.getElementById('inputEjercicioModal').value = '';
+    openModal('ejercicioModal');
+    setTimeout(() => document.getElementById('inputEjercicioModal').focus(), 200);
+  }
+  function guardarEjercicio() {
+    const kcal = parseInt(document.getElementById('inputEjercicioModal').value);
+    if (!kcal || kcal <= 0) {
+      document.getElementById('inputEjercicioModal').style.borderColor = '#e74c3c';
+      return;
+    }
+    dbRef(`${formatISO(fechaSeleccionada)}/ejercicio`).push({ k: kcal });
+    closeModal('ejercicioModal');
+  }
+function confirmarEliminar(id, nombre) {
+    const toast = document.getElementById('toastUndo');
+    if (toast) toast.remove();
+
+    const div = document.createElement('div');
+    div.id = 'toastUndo';
+    div.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:white;padding:12px 18px;border-radius:14px;display:flex;align-items:center;gap:14px;z-index:999;font-size:0.85rem;box-shadow:0 4px 20px rgba(0,0,0,0.3);white-space:nowrap;';
+    div.innerHTML = '<span>🗑️ <b>' + nombre + '</b> eliminado</span><button onclick="undoEliminar()" style="background:#27ae60;color:white;border:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:0.8rem;">Deshacer</button>';
+    document.body.appendChild(div);
+
+    window._eliminadoId   = id;
+    window._eliminadoNombre = nombre;
+    window._eliminadoTimer = setTimeout(() => {
+        eliminarRegistro(id);
+        div.remove();
+    }, 4000);
+}
+
+function undoEliminar() {
+    clearTimeout(window._eliminadoTimer);
+    const toast = document.getElementById('toastUndo');
+    if (toast) toast.remove();
+}
+
+function eliminarRegistro(id) {
+    const iso = formatISO(fechaSeleccionada);
+    // Borramos en ambas rutas posibles para estar seguros
+    dbRef(`${iso}/comidas/${id}`).remove();
+    dbRef(`${iso}/${id}`).remove();
+}
+
+  // CALENDARIO
+  async function generarCalendario() {
+    const grid = document.getElementById('calendarDays');
+    const title = document.getElementById('calendarMonthName');
+    const y = fechaVistaCalendario.getFullYear(), m = fechaVistaCalendario.getMonth();
+    title.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVistaCalendario);
+    
+    const snap = await dbBase().once('value');
+    const all = snap.val() || {};
+    grid.innerHTML = "LuMaMiJuViSaDo".split(/(?=[A-Z])/).map(d => `<div style="font-size:0.55rem;font-weight:bold;color:#999;margin-bottom:2px">${d}</div>`).join('');
+    
+    const first = new Date(y, m, 1).getDay();
+    const offset = (first === 0) ? 6 : first - 1;
+    for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
+
+    const days = new Date(y, m + 1, 0).getDate();
+    const hoyStr = formatISO(new Date());
+
+    for(let d=1; d<=days; d++){
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      let status = '', info = '', cls = (ds === hoyStr) ? 'today' : '';
+      if(all[ds]){
+        let tc = 0, tkc = 0, tke = 0;
+        let regs = all[ds].comidas || all[ds];
+        Object.values(regs).forEach(v => { if(v && v.k){ tc += parseFloat(v.c || 0); tkc += parseInt(v.k || 0); } });
+        if(all[ds].ejercicio) Object.values(all[ds].ejercicio).forEach(e => tke += (e.k || 0));
+        status = `<span style="font-size:0.5rem;">${tc > 30 ? '❌' : '✅'}</span>`;
+        const pInfo = all[ds].peso ? `<br><span style="color:var(--keto); font-weight:bold;">${all[ds].peso}kg</span>` : '';
+        info = `<div style="font-size:0.45rem; line-height:0.9; color:#666;">${tkc-tke}k${pInfo}</div>`;
+      }
+      grid.innerHTML += `<div class="calendar-day ${cls}" onclick="verDetalleDia('${ds}')"><b style="font-size:0.7rem;">${d}</b>${status}${info}</div>`;
+    }
+  }
+
+  // GRÁFICAS
+  let graficaFecha = new Date();
+
+  function graficaMes(delta) {
+    const chk = document.getElementById('chk30dias');
+    if (chk && chk.checked) { chk.checked = false; }
+    graficaFecha = new Date(graficaFecha.getFullYear(), graficaFecha.getMonth() + delta, 1);
+    cargarGraficas();
+  }
+
+  function cargarGraficas() {
+    const chk30 = document.getElementById('chk30dias');
+    const modo30 = chk30 && chk30.checked;
+    const labelEl = document.getElementById('graficaMesLabel');
+
+    dbBase().once('value', snap => {
+        const all = snap.val() || {};
+        const labels = [], pesos = [], carbos = [], kcals = [], kcalsdia = [];
+        const dias = [];
+
+        if (modo30) {
+            if (labelEl) labelEl.textContent = 'Últimos 30 días';
+            const hoy = new Date();
+            for (let i = 29; i >= 0; i--) {
+                const d = new Date(hoy); d.setDate(hoy.getDate() - i);
+                const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                labels.push(`${d.getDate()}/${d.getMonth()+1}`);
+                dias.push(ds);
+            }
+        } else {
+            const y = graficaFecha.getFullYear();
+            const m = graficaFecha.getMonth();
+            const nombreMes = graficaFecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            if (labelEl) labelEl.textContent = nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1);
+            const ultimoDia = new Date(y, m + 1, 0).getDate();
+            for (let d = 1; d <= ultimoDia; d++) {
+                const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                labels.push(d);
+                dias.push(ds);
+            }
+        }
+
+        dias.forEach(ds => {
+            if (all[ds]) {
+                const dia = all[ds];
+                pesos.push(dia.peso ? parseFloat(dia.peso) : null);
+                let cDia = 0, kDia = 0, tieneDatos = false;
+                const fuentes = [dia.comidas, dia];
+                fuentes.forEach(fuente => {
+                    if (fuente && typeof fuente === 'object') {
+                        Object.values(fuente).forEach(item => {
+                            if (item && typeof item === 'object' && (item.c !== undefined || item.k !== undefined)) {
+                                cDia += parseFloat(item.c || 0);
+                                kDia += parseFloat(item.k || 0);
+                                tieneDatos = true;
+                            }
+                        });
+                    }
+                });
+                let eDia = 0;
+                if (dia.ejercicio) {
+                    Object.values(dia.ejercicio).forEach(ex => {
+                        const valorK = typeof ex === 'object' ? (ex.k || 0) : ex;
+                        eDia += parseFloat(valorK || 0);
+                        tieneDatos = true;
+                    });
+                }
+                if (tieneDatos) {
+                    carbos.push(cDia); kcals.push(kDia - eDia); kcalsdia.push(kDia);
+                } else {
+                    carbos.push(null); kcals.push(null); kcalsdia.push(null);
+                }
+            } else {
+                pesos.push(null); carbos.push(null); kcals.push(null); kcalsdia.push(null);
+            }
+        });
+
+        const opt = (max) => ({
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max, ticks: { font: { size: 10 } } },
+                x: { ticks: { font: { size: 9 }, maxRotation: modo30 ? 45 : 0 } }
+            },
+            spanGaps: true
+        });
+
+        if (window.wChart) window.wChart.destroy();
+        if (window.cChart) window.cChart.destroy();
+        if (window.kChart) window.kChart.destroy();
+
+        window.wChart = new Chart(document.getElementById('weightChart'), {
+            type: 'line',
+            data: { labels, datasets: [{ data: pesos, label: "Peso", borderColor: '#3b82f6', tension: 0.3, pointRadius: 3, fill: true }] },
+            options: opt(100)
+        });
+        window.kChart = new Chart(document.getElementById('kcalChart'), {
+            type: 'line',
+            data: { labels, datasets: [
+                { data: kcalsdia, label: 'Consumidas (Bruto)', borderColor: '#F54927', fill: true, backgroundColor: 'rgba(39,174,96,0.1)', tension: 0.3 },
+                { label: 'Netas', data: kcals, borderColor: '#27ae60', borderWidth: 2, tension: 0.3, fill: true }
+            ]},
+            options: opt(2000)
+        });
+        window.cChart = new Chart(document.getElementById('carbChart'), {
+            type: 'bar',
+            data: { labels, datasets: [{ data: carbos, label: 'Carbohidratos', backgroundColor: carbos.map(v => v > 30 ? '#e74c3c' : '#333') }] },
+            options: opt(60)
+        });
+    });
+  }
+
+// --- FUNCIONES DE AJUSTES Y METAS ---
+function guardarMetas() {
+    const mCarbs = parseFloat(document.getElementById('metaCarbs').value);
+    const mKcal = parseInt(document.getElementById('metaKcal').value);
+
+    if (isNaN(mCarbs) || isNaN(mKcal)) {
+        alert("Introduce números válidos");
+        return;
+    }
+
+    // Guardamos DENTRO de keto_logs para aprovechar tus reglas actuales
+    dbRef('config_metas').set({
+        carbs: mCarbs,
+        kcal: mKcal
+    })
+    .then(() => {
+        alert("✅ Metas guardadas (dentro de keto_logs)");
+        closeModal('configModal');
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Sigue fallando. Verifica que tus reglas permitan escribir en keto_logs");
+    });
+}
+async function exportarExcel() {
+    const snap = await dbBase().once('value');
+    const all = snap.val() || {};
+    
+    // Cabecera. Usamos comas para CSV estándar
+    let csv = "Fecha,Peso,Carbohidratos,Kcal Consumidas,Kcal Quemadas,Netas\n";
+    
+    const fechas = Object.keys(all).sort();
+    
+    fechas.forEach(fecha => {
+        const dia = all[fecha];
+        let tc = 0, tkc = 0, tke = 0;
+        
+        // Sumar comidas (Flexible)
+        const fuentes = [dia.comidas, dia];
+        fuentes.forEach(f => {
+            if (f && typeof f === 'object') {
+                Object.values(f).forEach(item => {
+                    if (item && item.c !== undefined) {
+                        tc += parseFloat(item.c || 0);
+                        tkc += parseInt(item.k || 0);
+                    }
+                });
+            }
+        });
+
+        // Sumar ejercicio
+        if (dia.ejercicio) {
+            Object.values(dia.ejercicio).forEach(e => {
+                tke += parseInt(typeof e === 'object' ? e.k : e || 0);
+            });
+        }
+
+        csv += `${fecha},${dia.peso || ""},${tc.toFixed(1)},${tkc},${tke},${tkc - tke}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Keto_Reporte_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+}
+
+function abrirAjustes() {
+    // 1. Buscamos los inputs del modal
+    const inputCarbs = document.getElementById('metaCarbs');
+    const inputKcal = document.getElementById('metaKcal');
+
+    // 2. Si existen, les ponemos el valor que tenemos guardado en la variable global
+    if (inputCarbs) inputCarbs.value = metasGlobales.carbs;
+    if (inputKcal) inputKcal.value = metasGlobales.kcal;
+
+    // 3. Abrimos el modal
+    openModal('configModal');
+}
+async function generarInformeMedico() {
+    const btn = document.querySelector('.btn-medico');
+    const contenedor = document.getElementById('contenidoInforme');
+
+    if (!btn || !contenedor) return;
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = "⌛";
+    btn.disabled = true;
+
+    try {
+        const hoy = new Date();
+        let datosMensuales = [];
+
+        // 1. Recopilar datos (30 días)
+        for (let i = 0; i < 30; i++) {
+            let d = new Date();
+            d.setDate(hoy.getDate() - i);
+            const iso = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            
+            const snap = await dbRef(`${iso}`).once('value');
+            if (snap.exists()) {
+                const dia = snap.val();
+                datosMensuales.push({
+                    fecha: iso,
+                    peso: dia.peso || "---",
+                    comidas: dia.comidas ? Object.values(dia.comidas).map(c => ({ n: c.n, c: c.c, k: c.k })) : []
+                });
+            }
+        }
+
+        if (datosMensuales.length === 0) {
+            alert("No hay registros en los últimos 30 días.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        // 2. Preparar el mensaje para Groq
+        const promptMedico = `Analiza este historial keto mensual: ${JSON.stringify(datosMensuales)}. 
+        
+	Meta: ${metasGlobales.carbs}g carbs. Actúa como nutricionista experto en dietas Keto, analiza todos los datos con detenimiento y en base a ello elaborame un informe estructurado en tres partes: 
+        1. Resumen Análisis Alimentación. 2. Resumen Análisis de peso. 3. Algunos consejos rápidos. Usa HTML y dale un aspecto bien estructurado con saltos de linea entre secciones. (<b>, <br>).`;
+
+        // 3. AQUÍ ESTÁ EL CAMBIO: 
+        // Cambia 'llamarIA' por el nombre de la función que ya usas para Groq en tu app.
+        // Si no sabes cuál es, busca en tu código "fetch" o "groq".
+        const respuestaIA = await llamarIA(promptMedico); 
+
+        contenedor.innerHTML = respuestaIA;
+        openModal('medicoModal');
+
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Error al obtener el informe. Revisa la consola.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+async function llamarIA(mensaje) {
+    // Asegúrate de que API_KEY_GROQ sea tu variable con la clave
+const groqKey = localStorage.getItem('GROQ_KEY');
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+         //   "Authorization": `Bearer ${API_KEY_GROQ}`, // Usa tu variable existente
+'Authorization': `Bearer ${groqKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [{role: "user", content: mensaje}]
+        })
+    });
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+async function analizarFoto(input) {
+    const rawKeys = localStorage.getItem('GEMINI_KEY');
+    if (!rawKeys) { alert("Configura primero tu API Key de Gemini en Ajustes."); return; }
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k);
+        const btnText = document.getElementById('btnText');
+        const btn = document.getElementById('btnAnalyze');
+
+        // UI en carga
+        btn.disabled = true;
+        btnText.innerHTML = '<div class="spinner" style="margin:auto"></div>';
+
+        try {
+            // Convertir imagen a Base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            const base64Promise = new Promise(res => reader.onload = () => res(reader.result));
+            const base64Data = await base64Promise;
+            const base64Content = base64Data.split(',')[1];
+
+            // Intentar con las llaves de Gemini disponibles
+            for (let i = 0; i < keys.length; i++) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keys[i]}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    
+                                   { text: "Actúa como nutricionista keto experto. Analiza la imagen y genera un JSON con estos campos exactos: 'n' para el nombre del alimento, 'c' para los carbohidratos netos descontando fibra (número) y 'k' para las kilocalorías (número). Asegúrate de NO invertir los valores de carbohidratos y calorías. Responde SOLO el JSON: {\"n\": \"Nombre\", \"c\": 0, \"k\": 0}" },
+									{ inline_data: { mime_type: "image/jpeg", data: base64Content } }
+                                ]
+                            }]
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        let textoIA = data.candidates[0].content.parts[0].text;
+                        // Usamos la misma función procesarYMostrar que ya tienes en tu código estable
+                        procesarYMostrar(textoIA); 
+                        return; // Éxito
+                    }
+                } catch (e) { console.error("Error Key Gemini Vision:", i); }
+            }
+            alert("No se pudo analizar la foto. Revisa tus llaves de Gemini.");
+        } catch (error) {
+            console.error("Error general cámara:", error);
+        } finally {
+            btn.disabled = false;
+            btnText.innerText = "Analizar ✨";
+            input.value = ""; // Limpiar input para poder repetir
+        }
+    }
+}
+
+let recetaActual = null; // Almacena la receta generada para el PDF
+
+function abrirModalReceta() {
+openModal('recetaTipoModal');  
+closeModal('configModal');
+ }
+
+function volverTipoReceta() {
+  closeModal('recetaResultadoModal');
+  openModal('recetaTipoModal');
+}
+
+const EMOJIS_TIPO = { desayuno: '🍳', almuerzo: '🥗', cena: '🌙' };
+
+
+async function generarReceta(tipo) {
+  closeModal('recetaTipoModal');
+
+  // Preparar modal de resultado en estado "cargando"
+  document.getElementById('recetaTipoLabel').innerText = `${EMOJIS_TIPO[tipo]} Receta de ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+  document.getElementById('recetaLoadingZone').style.display = 'block';
+  document.getElementById('recetaContenidoZone').style.display = 'none';
+  openModal('recetaResultadoModal');
+
+  const metaCarbs = metasGlobales.carbs || 30;
+  const metaKcal  = metasGlobales.kcal  || 2000;
+
+  // Estimamos la proporción de kcal para cada comida
+  const proporcion = tipo === 'desayuno' ? 0.25 : tipo === 'almuerzo' ? 0.40 : 0.35;
+  const kcalObjetivo = Math.round(metaKcal * proporcion);
+  const carbsObjetivo = Math.round(metaCarbs * proporcion);
+
+  const prompt = `Eres un chef nutricionista experto en dieta cetogénica (keto).
+Sugiere UNA receta keto para el ${tipo} con estas metas aproximadas:
+- Carbohidratos netos: máximo ${carbsObjetivo}g
+- Calorías: aprox. ${kcalObjetivo} kcal
+- Proteína alta, grasa saludable, sin cereales ni azúcar.
+
+Devuelve EXCLUSIVAMENTE este JSON (sin texto extra ni markdown):
+{
+  "nombre": "Nombre de la receta",
+  "carbs": 5,
+  "kcal": 450,
+  "proteina": 35,
+  "ingredientes": ["100g de X", "2 huevos", "..."],
+  "pasos": ["Paso 1...", "Paso 2...", "Paso 3..."],
+  "nota": "Consejo breve del chef"
+}`;
+
+  try {
+    const respuestaRaw = await llamarIAReceta(prompt);
+    const clean = respuestaRaw.replace(/```json/g,'').replace(/```/g,'').trim();
+    recetaActual = JSON.parse(clean);
+    mostrarReceta(recetaActual, tipo);
+  } catch(err) {
+    console.error('Error receta:', err);
+    document.getElementById('recetaLoadingZone').innerHTML =
+      '❌ Error al generar la receta. Comprueba tu clave API.';
+ }
+}
+
+async function llamarIAReceta(prompt) {
+  // Intenta Gemini primero, luego Groq de rescate
+  const rawKeys = localStorage.getItem('GEMINI_KEY');
+  const groqKey  = localStorage.getItem('GROQ_KEY');
+
+  if (rawKeys) {
+    const keys = rawKeys.split(',').map(k => k.trim()).filter(k => k);
+    for (const key of keys) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        if (res.status === 429) continue;
+        if (res.ok) {
+          const data = await res.json();
+          return data.candidates[0].content.parts[0].text;
+        }
+      } catch(e) { /* probar siguiente */ }
+    }
+  }
+
+  if (groqKey) {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+  }
+
+  throw new Error('Sin API disponible');
+}
+
+
+function mostrarReceta(r, tipo) {
+  document.getElementById('recetaCarbsPill').innerText = `🥦 ${r.carbs}g carbs netos`;
+  document.getElementById('recetaKcalPill').innerText  = `🔥 ${r.kcal} kcal`;
+  document.getElementById('recetaProtPill').innerText  = `💪 ${r.proteina}g proteína`;
+
+  const ingredientesHTML = r.ingredientes.map(i => `
+${i}
+`).join('');
+  const pasosHTML        = r.pasos.map((p, idx) => `
+Paso ${idx+1}: ${p}
+`).join('');
+
+  document.getElementById('recetaTexto').innerHTML = `
+    
+🍽️<b> ${r.nombre}</b>
+
+<br>    
+<b>INGREDIENTES:</b>
+
+
+    
+${ingredientesHTML}
+
+<br>     
+<b>ELABORACIÓN:</b>
+
+
+    
+${pasosHTML}
+
+    ${r.nota ? `
+<br> 
+<b>CONSEJO:</b> ${r.nota}
+
+` : ''}
+  `;
+
+  document.getElementById('recetaLoadingZone').style.display  = 'none';
+  document.getElementById('recetaContenidoZone').style.display = 'block';
+}
+
+
+
+
+
+
+
+
+function descargarRecetaPDF() {
+  if (!recetaActual) return;
+  const r = recetaActual;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const W = doc.internal.pageSize.getWidth();
+  let y = 0;
+
+  // ── Cabecera verde ──────────────────────────
+  doc.setFillColor(27, 94, 60);
+  doc.rect(0, 0, W, 42, 'F');
+
+  doc.setFillColor(39, 174, 96);
+  doc.rect(0, 35, W, 7, 'F');
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('KETO CALENDAR PRO · RECETA', 14, 12);
+
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  const tituloLines = doc.splitTextToSize(r.nombre);
+  doc.text(tituloLines, 14, 24);
+
+  y = 52;
+
+  // ── Pills de macros ──────────────────────────
+  const pills = [
+    { label: `${r.carbs}g Carbs Netos`,  bg: [39,174,96],   tx: [255,255,255] },
+    { label: `${r.kcal} kcal`,            bg: [230,126,34],  tx: [255,255,255] },
+    { label: `${r.proteina}g Proteína`,   bg: [44,62,80],    tx: [255,255,255] },
+  ];
+  let px = 14;
+  pills.forEach(p => {
+    const tw = doc.getTextWidth(p.label) + 10;
+    doc.setFillColor(...p.bg);
+    doc.roundedRect(px, y - 5, tw, 8, 2, 2, 'F');
+    doc.setTextColor(...p.tx);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(p.label, px + 5, y + 0.5);
+    px += tw + 5;
+  });
+  y += 12;
+
+  // ── Sección: Ingredientes ─────────────────────
+  doc.setDrawColor(39, 174, 96);
+  doc.setLineWidth(0.8);
+  doc.line(14, y, W - 14, y);
+  y += 6;
+
+  doc.setTextColor(27, 94, 60);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  
+doc.text('INGREDIENTES', 14, y);
+  y += 7;
+
+  doc.setTextColor(51, 51, 51);
+  doc.setFontSize(9.5);
+  doc.setFont('helvetica', 'normal');
+  r.ingredientes.forEach(ing => {
+    doc.setFillColor(39, 174, 96);
+    doc.circle(16, y - 1.5, 1, 'F');
+    const lines = doc.splitTextToSize(ing, W - 32);
+    doc.text(lines, 20, y);
+    y += lines.length * 5.5;
+    if (y > 270) { doc.addPage(); y = 20; }
+  });
+  y += 5;
+
+  // ── Sección: Elaboración ──────────────────────
+  doc.setDrawColor(39, 174, 96);
+  doc.line(14, y, W - 14, y);
+  y += 6;
+
+  doc.setTextColor(27, 94, 60);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ELABORACIÓN', 14, y);
+  y += 7;
+
+  doc.setTextColor(51, 51, 51);
+  doc.setFontSize(9.5);
+  r.pasos.forEach((paso, idx) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(39, 174, 96);
+    doc.text(`${idx + 1}.`, 14, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 51, 51);
+    const lines = doc.splitTextToSize(paso, W - 30);
+    doc.text(lines, 20, y);
+    y += lines.length * 5.5 + 2;
+    if (y > 270) { doc.addPage(); y = 20; }
+  });
+
+  // ── Nota del chef ─────────────────────────────
+  if (r.nota) {
+    y += 4;
+    doc.setFillColor(240, 255, 244);
+    doc.setDrawColor(39, 174, 96);
+    doc.setLineWidth(0.5);
+    const notaLines = doc.splitTextToSize(r.nota);
+    doc.roundedRect(14, y - 4, W - 28, notaLines.length * 5.5 + 8, 3, 3, 'FD');
+    doc.setTextColor(27, 94, 60);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Consejo del chef', 20, y + 1);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(51, 51, 51);
+    doc.setFontSize(8.5);
+    doc.text(notaLines, 20, y + 7);
+    y += notaLines.length * 5.5 + 12;
+  }
+
+  // ── Pie de página ─────────────────────────────
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(245, 245, 245);
+    doc.rect(0, 287, W, 10, 'F');
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Keto Calendar Pro · Receta generada por IA · No sustituye consejo médico', W/2, 293, { align: 'center' });
+  }
+
+  const fecha = new Date().toISOString().slice(0, 10);
+  doc.save(`Receta_Keto_${r.nombre.replace(/\s+/g,'_')}_${fecha}.pdf`);
+}
+
+
+
+
+
+
+
+async function exportarPDF() {
+  const btn = event.currentTarget;
+  const original = btn.innerHTML;
+  btn.innerHTML = '⏳ Generando...';
+  btn.disabled = true;
+
+  try {
+    const snap = await dbBase().once('value');
+    const all  = snap.val() || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W   = doc.internal.pageSize.getWidth();
+
+    // Procesar datos por fecha
+    const fechas = Object.keys(all).filter(k => k !== 'config_metas').sort();
+    const filas  = fechas.map(fecha => {
+      const dia = all[fecha];
+      let tc = 0, tkc = 0, tke = 0;
+      [dia.comidas, dia].forEach(f => {
+        if (f && typeof f === 'object') {
+          Object.values(f).forEach(item => {
+            if (item && item.c !== undefined) {
+              tc  += parseFloat(item.c || 0);
+              tkc += parseInt(item.k  || 0);
+            }
+          });
+        }
+      });
+      if (dia.ejercicio) Object.values(dia.ejercicio).forEach(e => {
+        tke += parseInt(typeof e === 'object' ? e.k : e || 0);
+      });
+      return { fecha, peso: dia.peso || '–', tc: tc.toFixed(1), tkc, tke, netas: tkc - tke };
+    });
+
+    const totalDias  = filas.length;
+    const diasBuenos = filas.filter(f => parseFloat(f.tc) <= metasGlobales.carbs).length;
+    const pesoInicio = filas.find(f => f.peso !== '–')?.peso || '–';
+    const pesoFin    = [...filas].reverse().find(f => f.peso !== '–')?.peso || '–';
+    const avgCarbs   = totalDias ? (filas.reduce((s,f) => s + parseFloat(f.tc), 0) / totalDias).toFixed(1) : 0;
+    const avgKcal    = totalDias ? Math.round(filas.reduce((s,f) => s + f.netas, 0) / totalDias) : 0;
+
+    // ── Portada ────────────────────────────────
+    doc.setFillColor(27, 94, 60);
+    doc.rect(0, 0, W, 55, 'F');
+    doc.setFillColor(39, 174, 96);
+    doc.rect(0, 49, W, 6, 'F');
+
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.text('KETO CALENDAR PRO', 14, 14);
+
+    doc.setFontSize(22);
+    doc.setFont('helvetica','bold');
+    doc.text('Informe de Progreso', 14, 28);
+    doc.setFontSize(11);
+    doc.setFont('helvetica','normal');
+    doc.text('Dieta Cetogénica · Análisis completo', 14, 38);
+
+    doc.setFontSize(8);
+    const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+    doc.text(`Generado el ${hoy}`, W - 14, 14, { align: 'right' });
+
+    // ── Resumen ejecutivo ──────────────────────
+    let y = 68;
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.text('RESUMEN EJECUTIVO', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96);
+    doc.setLineWidth(0.7);
+    doc.line(14, y, W-14, y);
+    y += 8;
+
+    const kpis = [
+      { label: 'Días registrados', value: totalDias },
+      { label: 'Días dentro de meta', value: `${diasBuenos} (${totalDias ? Math.round(diasBuenos/totalDias*100) : 0}%)` },
+      { label: 'Media carbos/día', value: `${avgCarbs}g / ${metasGlobales.carbs}g meta` },
+      { label: 'Media kcal netas/día', value: `${avgKcal} kcal` },
+      { label: 'Peso inicial registrado', value: pesoInicio !== '–' ? `${pesoInicio} kg` : 'Sin datos' },
+      { label: 'Peso más reciente', value: pesoFin !== '–' ? `${pesoFin} kg` : 'Sin datos' },
+    ];
+
+    kpis.forEach((kpi, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const bx  = 14 + col * (W/2 - 10);
+      const by  = y + row * 18;
+
+      doc.setFillColor(col === 0 ? 240 : 248, 255, col === 0 ? 244 : 252);
+      doc.setDrawColor(200,230,200);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(bx, by - 5, W/2 - 14, 14, 2, 2, 'FD');
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(100);
+      doc.text(kpi.label, bx + 5, by + 1);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(27,94,60);
+      doc.text(String(kpi.value), bx + 5, by + 7);
+    });
+
+    y += Math.ceil(kpis.length / 2) * 18 + 10;
+
+    // ── Tabla de registros diarios ─────────────
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.text('REGISTRO DIARIO', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96);
+    doc.line(14, y, W-14, y);
+    y += 7;
+
+    // Cabecera tabla
+    const cols = [
+      { label:'Fecha',       x:14,  w:35 },
+      { label:'Peso',        x:49,  w:22 },
+      { label:'Carbs (g)',   x:71,  w:28 },
+      { label:'Cons. kcal', x:99,  w:28 },
+      { label:'Ej. kcal',   x:127, w:25 },
+      { label:'Netas',       x:152, w:25 },
+      { label:'Estado',      x:177, w:18 },
+    ];
+
+    doc.setFillColor(27,94,60);
+    doc.rect(14, y-4, W-28, 8, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    cols.forEach(c => doc.text(c.label, c.x + 1, y + 1));
+    y += 7;
+
+    // Filas
+    filas.forEach((f, idx) => {
+      if (y > 275) { doc.addPage(); y = 20; }
+
+      const dentroMeta = parseFloat(f.tc) <= metasGlobales.carbs;
+      if (idx % 2 === 0) {
+        doc.setFillColor(248,255,250);
+        doc.rect(14, y-3.5, W-28, 7, 'F');
+      }
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(51,51,51);
+
+      const vals = [f.fecha, f.peso !== '–' ? f.peso+'kg' : '–', f.tc+'g', f.tkc+'', f.tke+'', f.netas+'', dentroMeta ? 'V' : 'X'];
+      cols.forEach((c, ci) => {
+        if (ci === 6) {
+          doc.setTextColor(dentroMeta ? 39 : 231, dentroMeta ? 174 : 76, dentroMeta ? 96 : 60);
+          doc.setFont('helvetica','bold');
+        }
+        doc.text(vals[ci], c.x + 1, y + 1);
+        doc.setTextColor(51,51,51);
+        doc.setFont('helvetica','normal');
+      });
+
+      // Línea separadora
+      doc.setDrawColor(220,240,225);
+      doc.setLineWidth(0.2);
+      doc.line(14, y+3.5, W-14, y+3.5);
+      y += 7;
+    });
+
+    // ── Pie de página en todas las páginas ─────
+    const totalPgs = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPgs; i++) {
+      doc.setPage(i);
+      doc.setFillColor(245,245,245);
+      doc.rect(0, 287, W, 10, 'F');
+      doc.setFontSize(7);
+      doc.setTextColor(150);
+      doc.setFont('helvetica','normal');
+      doc.text(`Keto Calendar Pro · Informe generado automáticamente · Página ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
+    }
+
+    const fechaHoy = new Date().toISOString().slice(0,10);
+    doc.save(`Keto_Informe_${fechaHoy}.pdf`);
+
+  } catch(err) {
+    console.error('Error PDF:', err);
+    alert('❌ Error al generar el PDF: ' + err.message);
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+<div id="medicoModal" class="modal">
+    <div class="modal-content" style="background:#fdfdfd; color:#2c3e50; border-left:10px solid #e74c3c; width:90%; max-width:600px; padding:20px; border-radius:12px; position:relative; max-height:85vh; display:flex; flex-direction:column;">
+
+        <span class="close" onclick="closeModal('medicoModal')" style="position:absolute; right:15px; top:10px; font-size:28px; cursor:pointer; color:#aaa;">&times;</span>
+
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; flex-shrink:0;">
+            <div style="font-size:30px;">👨‍⚕️</div>
+            <div>
+                <h3 style="margin:0; color:#c0392b; font-size:1.1rem;">DIAGNÓSTICO MENSUAL</h3>
+                <small style="color:#7f8c8d;">Análisis de Inteligencia Artificial</small>
+            </div>
+        </div>
+
+        <div id="contenidoInforme" style="background:white; padding:15px; border-radius:8px; border:1px dashed #bdc3c7; color:#333; overflow-y:auto; flex-grow:1; font-family:sans-serif; line-height:1.5; font-size:0.95rem; -webkit-overflow-scrolling:touch;">
+            Analizando datos...
+        </div>
+
+        <div style="margin-top:15px; flex-shrink:0;">
+            <button onclick="closeModal('medicoModal')" style="width:100%; padding:12px; background:#2c3e50; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Cerrar</button>
+            <p style="font-size:0.65rem; color:#95a5a6; margin-top:8px; text-align:center; font-style:italic;">
+                *IA no sustituye criterio médico profesional.
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL: Selector de tipo de receta -->
+
+
+
+
+
+
+
+
+
+
+
+<!-- MODAL: Registrar Peso -->
+<div id="pesoModal" class="modal">
+  <div class="modal-content" style="max-width:320px;">
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="font-size:2.2rem; margin-bottom:6px;">⚖️</div>
+      <h3 style="margin:0; font-size:1.1rem;">Registrar Peso</h3>
+      <small style="color:#888;">Introduce tu peso de hoy</small>
+    </div>
+    <div style="position:relative; margin-bottom:16px;">
+      <input type="number" id="inputPesoModal" step="0.1" min="20" max="300"
+        
+        style="width:100%; padding:14px 48px 14px 16px; border-radius:14px; border:2px solid #eee;
+               font-size:1.3rem; font-weight:bold; text-align:center; outline:none; box-sizing:border-box;"
+        oninput="this.style.borderColor='#eee'"
+        onkeydown="if(event.key==='Enter') guardarPeso()">
+      <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#888; font-size:0.9rem;">kg</span>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="guardarPeso()" style="flex:2; background:var(--dark); color:white; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold; font-size:0.95rem;">Guardar ✅</button>
+      <button onclick="closeModal('pesoModal')" style="flex:1; background:#eee; color:#333; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold;">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Registrar Ejercicio -->
+<div id="ejercicioModal" class="modal">
+  <div class="modal-content" style="max-width:320px;">
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="font-size:2.2rem; margin-bottom:6px;">🔥</div>
+      <h3 style="margin:0; font-size:1.1rem;">Registrar Ejercicio</h3>
+      <small style="color:#888;">¿Cuánto has quemado?</small>
+    </div>
+    <div style="position:relative; margin-bottom:16px;">
+        <input type="number" id="inputEjercicioModal" min="1" max="5000" 
+          style="width:100%; padding:14px 60px 14px 16px; border-radius:14px; border:2px solid #eee;
+                 font-size:1.3rem; font-weight:bold; text-align:center; outline:none; box-sizing:border-box;"
+          oninput="this.style.borderColor='#eee'"
+          onkeydown="if(event.key==='Enter') guardarEjercicio()">
+        <span style="position:absolute; right:14px; top:50%; transform:translateY(-50%); color:#888; font-size:0.85rem;">kcal</span>
+      </div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="guardarEjercicio()" style="flex:2; background:var(--dark); color:white; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold; font-size:0.95rem;">Guardar ✅</button>
+      <button onclick="closeModal('ejercicioModal')" style="flex:1; background:#eee; color:#333; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold;">✕</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
