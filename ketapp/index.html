@@ -419,7 +419,10 @@
     <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Calorías Consumidas/Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
-    <button onclick="closeModal('chartModal')" class="btn-main">Cerrar</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
+      <button onclick="abrirModalInforme()" class="btn-main" style="background:#1b5e3c; margin-top:0;">📄 Informe</button>
+      <button onclick="closeModal('chartModal')" class="btn-main" style="margin-top:0;">Cerrar</button>
+    </div>
 </div></div>
 
 <div id="historyModal" class="modal"><div class="modal-content">
@@ -1945,6 +1948,388 @@ async function exportarPDF() {
   }
 }
 
+// ══════════════════════════════════════════════════
+// INFORME PDF POR RANGO DE FECHAS
+// ══════════════════════════════════════════════════
+
+function abrirModalInforme() {
+  // Valores por defecto: último mes
+  const hoy = new Date();
+  const fin = formatISO(hoy);
+  const inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate());
+  const inicioStr = formatISO(inicio);
+
+  document.getElementById('informeFechaInicio').value = inicioStr;
+  document.getElementById('informeFechaFin').value = fin;
+  closeModal('chartModal');
+  openModal('informeModal');
+}
+
+async function generarInformePDFFechas() {
+  const btn = document.getElementById('btnGenerarInforme');
+  const original = btn.innerHTML;
+  const fechaInicio = document.getElementById('informeFechaInicio').value;
+  const fechaFin    = document.getElementById('informeFechaFin').value;
+
+  if (!fechaInicio || !fechaFin || fechaInicio > fechaFin) {
+    alert('Por favor, selecciona un rango de fechas válido.');
+    return;
+  }
+
+  btn.innerHTML = '⏳ Generando...';
+  btn.disabled = true;
+
+  try {
+    const snap = await dbBase().once('value');
+    const all  = snap.val() || {};
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W   = doc.internal.pageSize.getWidth();
+
+    // Filtrar y procesar fechas en el rango
+    const fechas = Object.keys(all)
+      .filter(k => k !== 'config_metas' && k >= fechaInicio && k <= fechaFin)
+      .sort();
+
+    if (fechas.length === 0) {
+      alert('No hay datos en el rango seleccionado.');
+      btn.innerHTML = original;
+      btn.disabled = false;
+      return;
+    }
+
+    const filas = fechas.map((fecha, idx) => {
+      const dia = all[fecha];
+      let tc = 0, tkc = 0, tke = 0;
+      [dia.comidas, dia].forEach(f => {
+        if (f && typeof f === 'object') {
+          Object.values(f).forEach(item => {
+            if (item && item.c !== undefined) {
+              tc  += parseFloat(item.c || 0);
+              tkc += parseInt(item.k  || 0);
+            }
+          });
+        }
+      });
+      if (dia.ejercicio) Object.values(dia.ejercicio).forEach(e => {
+        tke += parseInt(typeof e === 'object' ? e.k : e || 0);
+      });
+      return { fecha, peso: dia.peso || null, tc: tc.toFixed(1), tkc, tke, netas: tkc - tke };
+    });
+
+    // Calcular variación de peso día a día
+    const filasConDelta = filas.map((f, idx) => {
+      let delta = null;
+      if (f.peso !== null) {
+        // Buscar el día anterior más cercano con peso
+        for (let i = idx - 1; i >= 0; i--) {
+          if (filas[i].peso !== null) {
+            delta = (parseFloat(f.peso) - parseFloat(filas[i].peso)).toFixed(1);
+            break;
+          }
+        }
+      }
+      return { ...f, delta };
+    });
+
+    // KPIs resumen
+    const totalDias  = filasConDelta.length;
+    const diasBuenos = filasConDelta.filter(f => parseFloat(f.tc) <= metasGlobales.carbs).length;
+    const avgCarbs   = totalDias ? (filasConDelta.reduce((s,f) => s + parseFloat(f.tc), 0) / totalDias).toFixed(1) : 0;
+    const avgKcal    = totalDias ? Math.round(filasConDelta.reduce((s,f) => s + f.netas, 0) / totalDias) : 0;
+    const pesoInicio = filasConDelta.find(f => f.peso !== null)?.peso || '–';
+    const pesoFin    = [...filasConDelta].reverse().find(f => f.peso !== null)?.peso || '–';
+    const perdidaPeso = (pesoInicio !== '–' && pesoFin !== '–')
+      ? (parseFloat(pesoFin) - parseFloat(pesoInicio)).toFixed(1)
+      : null;
+
+    // Formatear fecha legible
+    const fmtDate = d => {
+      const [y,m,dd] = d.split('-');
+      return `${dd}/${m}/${y}`;
+    };
+
+    // ── Cabecera ────────────────────────────────
+    doc.setFillColor(27, 94, 60);
+    doc.rect(0, 0, W, 55, 'F');
+    doc.setFillColor(39, 174, 96);
+    doc.rect(0, 49, W, 6, 'F');
+
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.text('KETO CALENDAR PRO', 14, 14);
+
+    doc.setFontSize(20);
+    doc.setFont('helvetica','bold');
+    doc.text('Informe de Progreso', 14, 27);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica','normal');
+    doc.text(`${fmtDate(fechaInicio)}  -  ${fmtDate(fechaFin)}`, 14, 37);
+
+    const hoyStr = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+    doc.setFontSize(8);
+    doc.text(`Generado el ${hoyStr}`, W - 14, 14, { align: 'right' });
+
+    // ── Resumen ejecutivo ──────────────────────
+    let y = 68;
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.text('RESUMEN DEL PERÍODO', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96);
+    doc.setLineWidth(0.7);
+    doc.line(14, y, W-14, y);
+    y += 8;
+
+    const kpis = [
+      { label: 'Días registrados',        value: totalDias },
+      { label: 'Días dentro de meta',     value: `${diasBuenos} (${totalDias ? Math.round(diasBuenos/totalDias*100) : 0}%)` },
+      { label: 'Media carbos/día',        value: `${avgCarbs}g` },
+      { label: 'Media kcal netas/día',    value: `${avgKcal} kcal` },
+      { label: 'Peso inicial (período)',  value: pesoInicio !== '–' ? `${pesoInicio} kg` : 'Sin datos' },
+      { label: 'Peso final (período)',    value: pesoFin !== '–' ? `${pesoFin} kg` : 'Sin datos' },
+    ];
+    if (perdidaPeso !== null) {
+      kpis.push({
+        label: parseFloat(perdidaPeso) <= 0 ? 'Variación de peso' : 'Variación de peso',
+        value: `${perdidaPeso > 0 ? '+' : ''}${perdidaPeso} kg`
+      });
+    }
+
+    kpis.forEach((kpi, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const bx  = 14 + col * (W/2 - 10);
+      const by  = y + row * 18;
+
+      doc.setFillColor(col === 0 ? 240 : 248, 255, col === 0 ? 244 : 252);
+      doc.setDrawColor(200,230,200);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(bx, by - 5, W/2 - 14, 14, 2, 2, 'FD');
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(100);
+      doc.text(kpi.label, bx + 5, by + 1);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica','bold');
+      doc.setTextColor(27,94,60);
+      doc.text(String(kpi.value), bx + 5, by + 7);
+    });
+
+    y += Math.ceil(kpis.length / 2) * 18 + 10;
+
+    // ── Gráficas ───────────────────────────────
+    const labelsG  = filasConDelta.map(f => fmtDate(f.fecha).slice(0,5));
+    const pesosG   = filasConDelta.map(f => f.peso !== null ? parseFloat(f.peso) : null);
+    const carbosG  = filasConDelta.map(f => parseFloat(f.tc));
+    const consG    = filasConDelta.map(f => f.tkc);
+    const netasG   = filasConDelta.map(f => f.netas);
+
+    function chartToImage(type, labels, datasets, metaLinea) {
+      return new Promise(resolve => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 900; canvas.height = 300;
+        canvas.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+        document.body.appendChild(canvas);
+        const extraPlugins = [];
+        if (metaLinea != null) {
+          extraPlugins.push({
+            id: 'metaLine',
+            afterDraw(ch) {
+              const ctx2 = ch.ctx, yS = ch.scales.y;
+              const xL = ch.chartArea.left, xR = ch.chartArea.right;
+              const yP = yS.getPixelForValue(metaLinea);
+              ctx2.save();
+              ctx2.strokeStyle = 'rgba(231,76,60,0.7)'; ctx2.lineWidth = 2;
+              ctx2.setLineDash([6,4]);
+              ctx2.beginPath(); ctx2.moveTo(xL,yP); ctx2.lineTo(xR,yP); ctx2.stroke();
+              ctx2.fillStyle = 'rgba(231,76,60,0.9)'; ctx2.font = 'bold 11px sans-serif';
+              ctx2.fillText('Meta '+metaLinea+'g', xR-70, yP-5);
+              ctx2.restore();
+            }
+          });
+        }
+        const ch = new Chart(canvas, {
+          type, data: { labels, datasets },
+          options: {
+            animation: false, responsive: false,
+            plugins: { legend: { display: datasets.length > 1, labels: { font: { size: 11 } } } },
+            scales: {
+              x: { ticks: { font: { size: 9 }, maxRotation: labels.length > 20 ? 45 : 0, autoSkip: true, maxTicksLimit: 20 } },
+              y: { min: 0, ticks: { font: { size: 10 } } }
+            },
+            spanGaps: true
+          },
+          plugins: extraPlugins
+        });
+        setTimeout(() => {
+          const img = canvas.toDataURL('image/png');
+          ch.destroy(); document.body.removeChild(canvas); resolve(img);
+        }, 150);
+      });
+    }
+
+    const imgPeso = await chartToImage('line', labelsG, [{
+      label: 'Peso (kg)', data: pesosG,
+      borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+      tension: 0.3, pointRadius: 3, fill: true
+    }], null);
+
+    const imgKcal = await chartToImage('line', labelsG, [
+      { label: 'Consumidas', data: consG,  borderColor: '#F54927', backgroundColor: 'rgba(245,73,39,0.08)', tension: 0.3, fill: true },
+      { label: 'Netas',      data: netasG, borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.08)', tension: 0.3, fill: true }
+    ], null);
+
+    const imgCarbs = await chartToImage('bar', labelsG, [{
+      label: 'Carbohidratos (g)', data: carbosG,
+      backgroundColor: carbosG.map(v => v > metasGlobales.carbs ? 'rgba(231,76,60,0.7)' : 'rgba(39,174,96,0.7)'),
+      borderRadius: 3
+    }], metasGlobales.carbs);
+
+    function insertarGrafica(imgData, titulo) {
+      const alturaGraf = 55;
+      if (y + alturaGraf + 14 > 285) { doc.addPage(); y = 20; }
+      doc.setFillColor(39,174,96);
+      doc.rect(14, y - 1, 3, 7, 'F');
+      doc.setTextColor(27,94,60);
+      doc.setFontSize(9); doc.setFont('helvetica','bold');
+      doc.text(titulo, 20, y + 5);
+      y += 10;
+      doc.addImage(imgData, 'PNG', 14, y, W - 28, alturaGraf);
+      y += alturaGraf + 10;
+    }
+
+    if (y + 12 > 280) { doc.addPage(); y = 20; }
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12); doc.setFont('helvetica','bold');
+    doc.text('EVOLUCIÓN GRÁFICA', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96); doc.setLineWidth(0.7);
+    doc.line(14, y, W-14, y);
+    y += 10;
+
+    insertarGrafica(imgPeso,  'Peso (kg)');
+    insertarGrafica(imgKcal,  'Calorías Consumidas / Netas (kcal)');
+    insertarGrafica(imgCarbs, 'Carbohidratos (g)  ·  verde = dentro de meta  ·  rojo = supera meta');
+
+    // ── Tabla de registros diarios ─────────────
+    if (y + 30 > 280) { doc.addPage(); y = 20; }
+    doc.setTextColor(27,94,60);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.text('REGISTRO DIARIO', 14, y);
+    y += 5;
+    doc.setDrawColor(39,174,96);
+    doc.line(14, y, W-14, y);
+    y += 7;
+
+    // Cabecera tabla
+    const cols = [
+      { label:'Fecha',        x:14,  w:32 },
+      { label:'Peso',         x:46,  w:26 },
+      { label:'Dif. Peso',       x:72,  w:22 },
+      { label:'Carbs (g)',    x:94,  w:26 },
+      { label:'Cons. kcal',   x:120, w:26 },
+      { label:'Ej. kcal',     x:146, w:22 },
+      { label:'Netas',        x:168, w:22 },
+    ];
+
+    doc.setFillColor(27,94,60);
+    doc.rect(14, y-4, W-28, 8, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica','bold');
+    cols.forEach(c => doc.text(c.label, c.x + 1, y + 1));
+    y += 7;
+
+    // Filas
+    filasConDelta.forEach((f, idx) => {
+      if (y > 275) { doc.addPage(); y = 20; }
+
+      const dentroMeta = parseFloat(f.tc) <= metasGlobales.carbs;
+      const deltaNum   = f.delta !== null ? parseFloat(f.delta) : null;
+
+      if (idx % 2 === 0) {
+        doc.setFillColor(248,255,250);
+        doc.rect(14, y-3.5, W-28, 7, 'F');
+      }
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(51,51,51);
+
+      const pesoDisplay  = f.peso !== null ? `${f.peso} kg` : '–';
+      let   deltaDisplay = '–';
+      if (deltaNum !== null) {
+        deltaDisplay = (deltaNum > 0 ? '+' : '') + deltaNum + ' kg';
+      }
+
+      const vals = [
+        fmtDate(f.fecha),
+        pesoDisplay,
+        deltaDisplay,
+        f.tc + 'g',
+        f.tkc + '',
+        f.tke + '',
+        f.netas + '',
+      ];
+
+      cols.forEach((c, ci) => {
+        // Color para Δ Peso
+        if (ci === 2 && deltaNum !== null) {
+          doc.setTextColor(deltaNum <= 0 ? 39 : 231, deltaNum <= 0 ? 174 : 76, deltaNum <= 0 ? 96 : 60);
+          doc.setFont('helvetica','bold');
+        }
+        // Color para carbs
+        else if (ci === 3) {
+          doc.setTextColor(dentroMeta ? 39 : 231, dentroMeta ? 174 : 76, dentroMeta ? 96 : 60);
+          doc.setFont('helvetica', dentroMeta ? 'normal' : 'bold');
+        } else {
+          doc.setTextColor(51,51,51);
+          doc.setFont('helvetica','normal');
+        }
+        doc.text(vals[ci], c.x + 1, y + 1);
+      });
+      doc.setTextColor(51,51,51);
+      doc.setFont('helvetica','normal');
+
+      doc.setDrawColor(220,240,225);
+      doc.setLineWidth(0.2);
+      doc.line(14, y+3.5, W-14, y+3.5);
+      y += 7;
+    });
+
+    // ── Pie de página en todas las páginas ─────
+    const totalPgs = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPgs; i++) {
+      doc.setPage(i);
+      doc.setFillColor(245,245,245);
+      doc.rect(0, 287, W, 10, 'F');
+      doc.setFontSize(7);
+      doc.setTextColor(150);
+      doc.setFont('helvetica','normal');
+      doc.text(`Keto Calendar Pro · Informe generado automáticamente · Página ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
+    }
+
+    const rango = `${fechaInicio}_${fechaFin}`;
+    doc.save(`Keto_Informe_${rango}.pdf`);
+
+    closeModal('informeModal');
+
+  } catch(err) {
+    console.error('Error PDF Informe:', err);
+    alert('❌ Error al generar el informe: ' + err.message);
+  } finally {
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
+
 
 
 
@@ -2012,6 +2397,33 @@ async function exportarPDF() {
 
 
 
+
+<!-- MODAL: Informe PDF por fechas -->
+<div id="informeModal" class="modal">
+  <div class="modal-content" style="max-width:360px;">
+    <div style="text-align:center; margin-bottom:18px;">
+      <div style="font-size:2.2rem; margin-bottom:6px;">📄</div>
+      <h3 style="margin:0; font-size:1.1rem;">Generar Informe PDF</h3>
+      <small style="color:#888;">Selecciona el rango de fechas</small>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+      <div>
+        <label style="font-size:0.78rem; color:#888; display:block; margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Fecha inicio</label>
+        <input type="date" id="informeFechaInicio"
+          style="width:100%; padding:11px 14px; border-radius:12px; border:2px solid #eee; font-size:1rem; box-sizing:border-box; outline:none; color:var(--dark);">
+      </div>
+      <div>
+        <label style="font-size:0.78rem; color:#888; display:block; margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Fecha fin</label>
+        <input type="date" id="informeFechaFin"
+          style="width:100%; padding:11px 14px; border-radius:12px; border:2px solid #eee; font-size:1rem; box-sizing:border-box; outline:none; color:var(--dark);">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button id="btnGenerarInforme" onclick="generarInformePDFFechas()" style="flex:2; background:#1b5e3c; color:white; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold; font-size:0.95rem;">Generar ✅</button>
+      <button onclick="closeModal('informeModal')" style="flex:1; background:#eee; color:#333; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold;">✕</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: Registrar Peso -->
 <div id="pesoModal" class="modal">
