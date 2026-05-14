@@ -12,10 +12,10 @@ jobs:
 
       - name: Inyectar API key
         run: |
-          sed -i 's/__GROQ_API_KEY__/${{ secrets.GROQ_API_KEY }}/g' TEAyudo.html
+          sed -i 's/__GROQ_API_KEY__/${{ secrets.GROQ_API_KEY }}/g' mi-lista/teayudo/TEAyudo.html
 
       - name: Deploy a GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          publish_dir: mi-lista
