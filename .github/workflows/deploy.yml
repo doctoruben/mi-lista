@@ -10,12 +10,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Ver estructura
+        run: find . -name "TEAyudo.html"
+
       - name: Inyectar API key
         run: |
-          sed -i 's/__GROQ_API_KEY__/${{ secrets.GROQ_API_KEY }}/g' mi-lista/teayudo/TEAyudo.html
+          sed -i 's/__GROQ_API_KEY__/${{ secrets.GROQ_API_KEY }}/g' $(find . -name "TEAyudo.html")
 
       - name: Deploy a GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: mi-lista
+          publish_dir: .
