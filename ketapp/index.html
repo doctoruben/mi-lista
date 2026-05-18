@@ -419,9 +419,10 @@
     <div class="chart-container"><div class="chart-title">Peso (kg)</div><canvas id="weightChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Calorías Consumidas/Netas (kcal)</div><canvas id="kcalChart"></canvas></div>
     <div class="chart-container"><div class="chart-title">Carbohidratos (g)</div><canvas id="carbChart"></canvas></div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:4px;">
-      <button onclick="abrirModalInforme()" class="btn-main" style="background:#1b5e3c; margin-top:0;">📄 Informe</button>
-      <button onclick="closeModal('chartModal')" class="btn-main" style="margin-top:0;">Cerrar</button>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:4px;">
+      <button onclick="abrirModalInforme(false)" class="btn-main" style="background:#1b5e3c; margin-top:0; font-size:0.8rem; padding:11px 6px;">📄 Informe</button>
+      <button onclick="abrirModalInforme(true)"  class="btn-main" style="background:#0d3d6e; margin-top:0; font-size:0.8rem; padding:11px 6px;">📋 Detallado</button>
+      <button onclick="closeModal('chartModal')" class="btn-main" style="margin-top:0; font-size:0.8rem; padding:11px 6px;">Cerrar</button>
     </div>
 </div></div>
 
@@ -1635,7 +1636,7 @@ function descargarRecetaPDF() {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('KETO CALENDAR PRO · RECETA', 14, 12);
+  doc.text('KETO CALENDAR PRO - RECETA', 14, 12);
 
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
@@ -1742,7 +1743,7 @@ doc.text('INGREDIENTES', 14, y);
     doc.setFontSize(7);
     doc.setTextColor(150);
     doc.setFont('helvetica', 'normal');
-    doc.text('Keto Calendar Pro · Receta generada por IA · No sustituye consejo médico', W/2, 293, { align: 'center' });
+    doc.text('Keto Calendar Pro - Receta generada por IA - No sustituye consejo medico', W/2, 293, { align: 'center' });
   }
 
   const fecha = new Date().toISOString().slice(0, 10);
@@ -1812,7 +1813,7 @@ async function exportarPDF() {
     doc.text('Informe de Progreso', 14, 28);
     doc.setFontSize(11);
     doc.setFont('helvetica','normal');
-    doc.text('Dieta Cetogénica · Análisis completo', 14, 38);
+    doc.text('Dieta Cetogenica - Analisis completo', 14, 38);
 
     doc.setFontSize(8);
     const hoy = new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
@@ -1933,7 +1934,7 @@ async function exportarPDF() {
       doc.setFontSize(7);
       doc.setTextColor(150);
       doc.setFont('helvetica','normal');
-      doc.text(`Keto Calendar Pro · Informe generado automáticamente · Página ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
+      doc.text(`Keto Calendar Pro - Informe generado automaticamente - Pagina ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
     }
 
     const fechaHoy = new Date().toISOString().slice(0,10);
@@ -1952,8 +1953,7 @@ async function exportarPDF() {
 // INFORME PDF POR RANGO DE FECHAS
 // ══════════════════════════════════════════════════
 
-function abrirModalInforme() {
-  // Valores por defecto: último mes
+function abrirModalInforme(detallado = false) {
   const hoy = new Date();
   const fin = formatISO(hoy);
   const inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate());
@@ -1961,6 +1961,14 @@ function abrirModalInforme() {
 
   document.getElementById('informeFechaInicio').value = inicioStr;
   document.getElementById('informeFechaFin').value = fin;
+  document.getElementById('informeModoDetallado').value = detallado ? '1' : '0';
+
+  // Adaptar visual del modal según el tipo
+  document.getElementById('informeModalIcon').textContent    = detallado ? '📋' : '📄';
+  document.getElementById('informeModalTitulo').textContent  = detallado ? 'Informe Detallado PDF' : 'Generar Informe PDF';
+  document.getElementById('informeModalSub').textContent     = detallado ? 'Incluye comidas de cada día' : 'Selecciona el rango de fechas';
+  document.getElementById('btnGenerarInforme').style.background = detallado ? '#0d3d6e' : '#1b5e3c';
+
   closeModal('chartModal');
   openModal('informeModal');
 }
@@ -1968,8 +1976,9 @@ function abrirModalInforme() {
 async function generarInformePDFFechas() {
   const btn = document.getElementById('btnGenerarInforme');
   const original = btn.innerHTML;
-  const fechaInicio = document.getElementById('informeFechaInicio').value;
-  const fechaFin    = document.getElementById('informeFechaFin').value;
+  const fechaInicio  = document.getElementById('informeFechaInicio').value;
+  const fechaFin     = document.getElementById('informeFechaFin').value;
+  const esDetallado  = document.getElementById('informeModoDetallado').value === '1';
 
   if (!fechaInicio || !fechaFin || fechaInicio > fechaFin) {
     alert('Por favor, selecciona un rango de fechas válido.');
@@ -2001,20 +2010,32 @@ async function generarInformePDFFechas() {
     const filas = fechas.map((fecha, idx) => {
       const dia = all[fecha];
       let tc = 0, tkc = 0, tke = 0;
-      [dia.comidas, dia].forEach(f => {
-        if (f && typeof f === 'object') {
-          Object.values(f).forEach(item => {
-            if (item && item.c !== undefined) {
-              tc  += parseFloat(item.c || 0);
-              tkc += parseInt(item.k  || 0);
-            }
-          });
+      // Recopilar comidas (pueden estar en dia.comidas o sueltas en dia)
+      let objetosComida = {};
+      if (dia.comidas && typeof dia.comidas === 'object') {
+        Object.assign(objetosComida, dia.comidas);
+      }
+      Object.keys(dia).forEach(key => {
+        if (key !== 'peso' && key !== 'ejercicio' && key !== 'comidas') {
+          if (typeof dia[key] === 'object' && dia[key] !== null && dia[key].n !== undefined) {
+            objetosComida[key] = dia[key];
+          }
+        }
+      });
+      Object.values(objetosComida).forEach(item => {
+        if (item && item.c !== undefined) {
+          tc  += parseFloat(item.c || 0);
+          tkc += parseInt(item.k  || 0);
         }
       });
       if (dia.ejercicio) Object.values(dia.ejercicio).forEach(e => {
         tke += parseInt(typeof e === 'object' ? e.k : e || 0);
       });
-      return { fecha, peso: dia.peso || null, tc: tc.toFixed(1), tkc, tke, netas: tkc - tke };
+      // Lista ordenada de comidas para el informe detallado
+      const comidas = Object.values(objetosComida)
+        .filter(i => i && i.n)
+        .map(i => ({ n: i.n, c: parseFloat(i.c || 0), k: parseInt(i.k || 0) }));
+      return { fecha, peso: dia.peso || null, tc: tc.toFixed(1), tkc, tke, netas: tkc - tke, comidas };
     });
 
     // Calcular variación de peso día a día
@@ -2215,7 +2236,7 @@ async function generarInformePDFFechas() {
 
     insertarGrafica(imgPeso,  'Peso (kg)');
     insertarGrafica(imgKcal,  'Calorías Consumidas / Netas (kcal)');
-    insertarGrafica(imgCarbs, 'Carbohidratos (g)  ·  verde = dentro de meta  ·  rojo = supera meta');
+    insertarGrafica(imgCarbs, 'Carbohidratos (g)  -  verde = dentro de meta  -  rojo = supera meta');
 
     // ── Tabla de registros diarios ─────────────
     if (y + 30 > 280) { doc.addPage(); y = 20; }
@@ -2304,6 +2325,110 @@ async function generarInformePDFFechas() {
       y += 7;
     });
 
+    // ── Detalle de comidas por día (solo en modo detallado) ────
+    if (esDetallado) {
+      if (y + 20 > 280) { doc.addPage(); y = 20; }
+
+      doc.setTextColor(13, 61, 110);
+      doc.setFontSize(12);
+      doc.setFont('helvetica','bold');
+      doc.text('DETALLE DE COMIDAS POR DÍA', 14, y);
+      y += 5;
+      doc.setDrawColor(13, 61, 110);
+      doc.setLineWidth(0.7);
+      doc.line(14, y, W-14, y);
+      y += 8;
+
+      filasConDelta.forEach(f => {
+        const comidas = f.comidas || [];
+        if (comidas.length === 0) return;
+
+        if (y + 22 > 280) { doc.addPage(); y = 20; }
+
+        // Cabecera del día
+        const dentroMeta = parseFloat(f.tc) <= metasGlobales.carbs;
+        doc.setFillColor(dentroMeta ? 27 : 150, dentroMeta ? 94 : 30, dentroMeta ? 60 : 30);
+        doc.roundedRect(14, y - 3, W - 28, 9, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('helvetica','bold');
+        const pesoTexto  = f.peso ? '  ' + f.peso + ' kg' : '';
+        const deltaNum2  = f.delta !== null ? parseFloat(f.delta) : null;
+        const deltaTexto = deltaNum2 !== null ? '  (' + (deltaNum2 > 0 ? '+' : '') + deltaNum2 + ' kg)' : '';
+        doc.text(fmtDate(f.fecha) + pesoTexto + deltaTexto + '  |  ' + f.tc + 'g carbs  ' + f.tkc + ' kcal  ' + f.netas + ' netas', 18, y + 3);
+        y += 11;
+
+        // Sub-cabecera columnas
+        doc.setFillColor(220, 235, 255);
+        doc.rect(14, y - 3, W - 28, 6, 'F');
+        doc.setTextColor(13, 61, 110);
+        doc.setFontSize(7);
+        doc.setFont('helvetica','bold');
+        doc.text('Alimento', 17, y + 1);
+        doc.text('Carbs', 142, y + 1);
+        doc.text('Kcal', 163, y + 1);
+        doc.text('% día', 178, y + 1);
+        y += 6;
+
+        // Filas de comida
+        comidas.forEach((c, ci) => {
+          if (y > 278) { doc.addPage(); y = 20; }
+          if (ci % 2 === 1) {
+            doc.setFillColor(245, 249, 255);
+            doc.rect(14, y - 2.5, W - 28, 6, 'F');
+          }
+
+          // Fijar fuente ANTES de calcular anchos
+          doc.setFontSize(7.5);
+          doc.setFont('helvetica','normal');
+          doc.setTextColor(40, 40, 40);
+
+          // Truncar nombre correctamente (getStringUnitWidth devuelve en unidades internas)
+          const fontSize = 7.5;
+          const maxW = 120; // mm disponibles para el nombre
+          let nombre = c.n || '';
+          const escala = fontSize / doc.internal.scaleFactor;
+          const anchoMax = maxW / escala;
+          while (nombre.length > 4 && doc.getStringUnitWidth(nombre) * escala > maxW) {
+            nombre = nombre.slice(0, -1);
+          }
+          if (nombre !== (c.n || '')) nombre = nombre.trimEnd() + '...';
+          doc.text(nombre, 17, y + 1);
+
+          // Carbs coloreados
+          doc.setFont('helvetica','bold');
+          doc.setTextColor(parseFloat(c.c) > 10 ? 200 : 39, parseFloat(c.c) > 10 ? 60 : 130, parseFloat(c.c) > 10 ? 40 : 70);
+          doc.text(`${c.c}g`, 142, y + 1);
+
+          doc.setFont('helvetica','normal');
+          doc.setTextColor(80, 80, 80);
+          doc.text(`${c.k}`, 163, y + 1);
+
+          const pct = parseFloat(f.tc) > 0 ? Math.round((c.c / parseFloat(f.tc)) * 100) : 0;
+          doc.setTextColor(110, 110, 110);
+          doc.text(`${pct}%`, 179, y + 1);
+
+          doc.setDrawColor(210, 225, 245);
+          doc.setLineWidth(0.15);
+          doc.line(14, y + 3, W - 14, y + 3);
+          y += 6;
+        });
+
+        // Fila de total del día
+        if (y > 278) { doc.addPage(); y = 20; }
+        doc.setFillColor(200, 225, 255);
+        doc.rect(14, y - 2, W - 28, 7, 'F');
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica','bold');
+        doc.setTextColor(13, 61, 110);
+        doc.text('TOTAL', 17, y + 2.5);
+        doc.text(`${f.tc}g`, 142, y + 2.5);
+        doc.text(`${f.tkc}`, 163, y + 2.5);
+        doc.text('100%', 179, y + 2.5);
+        y += 11;
+      });
+    }
+
     // ── Pie de página en todas las páginas ─────
     const totalPgs = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPgs; i++) {
@@ -2313,7 +2438,7 @@ async function generarInformePDFFechas() {
       doc.setFontSize(7);
       doc.setTextColor(150);
       doc.setFont('helvetica','normal');
-      doc.text(`Keto Calendar Pro · Informe generado automáticamente · Página ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
+      doc.text(`Keto Calendar Pro - Informe generado automaticamente - Pagina ${i} de ${totalPgs}`, W/2, 293, { align:'center' });
     }
 
     const rango = `${fechaInicio}_${fechaFin}`;
@@ -2402,10 +2527,11 @@ async function generarInformePDFFechas() {
 <div id="informeModal" class="modal">
   <div class="modal-content" style="max-width:360px;">
     <div style="text-align:center; margin-bottom:18px;">
-      <div style="font-size:2.2rem; margin-bottom:6px;">📄</div>
-      <h3 style="margin:0; font-size:1.1rem;">Generar Informe PDF</h3>
-      <small style="color:#888;">Selecciona el rango de fechas</small>
+      <div id="informeModalIcon" style="font-size:2.2rem; margin-bottom:6px;">📄</div>
+      <h3 id="informeModalTitulo" style="margin:0; font-size:1.1rem;">Generar Informe PDF</h3>
+      <small id="informeModalSub" style="color:#888;">Selecciona el rango de fechas</small>
     </div>
+    <input type="hidden" id="informeModoDetallado" value="0">
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
       <div>
         <label style="font-size:0.78rem; color:#888; display:block; margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Fecha inicio</label>
@@ -2419,7 +2545,7 @@ async function generarInformePDFFechas() {
       </div>
     </div>
     <div style="display:flex; gap:10px;">
-      <button id="btnGenerarInforme" onclick="generarInformePDFFechas()" style="flex:2; background:#1b5e3c; color:white; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold; font-size:0.95rem;">Generar ✅</button>
+      <button id="btnGenerarInforme" onclick="generarInformePDFFechas()" style="flex:2; color:white; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold; font-size:0.95rem; background:#1b5e3c;">Generar ✅</button>
       <button onclick="closeModal('informeModal')" style="flex:1; background:#eee; color:#333; border:none; padding:13px; border-radius:12px; cursor:pointer; font-weight:bold;">✕</button>
     </div>
   </div>
