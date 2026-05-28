@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador BOE Automático</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 p-4 font-sans text-sm">
+
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md p-6">
+        <h1 class="text-xl font-bold text-blue-900 mb-1 text-center">⚖️ Alertas Subastas BOE</h1>
+        <p class="text-center text-xs text-gray-400 mb-5 font-mono">Autosave en LocalStorage</p>
+        
+        <div class="space-y-4 mb-6">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Categoría de Bien</label>
+                <select id="categoria" onchange="guardarPreferencias()" class="w-full p-2.5 border rounded-lg bg-gray-50 text-gray-700 font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="I">Inmuebles (Pisos, Casas, Locales, Garajes)</option>
+                    <option value="V">Vehículos (Coches, Motos, Camiones)</option>
+                    <option value="M">Bienes Muebles (Maquinaria, Mobiliario, Existencias)</option>
+                    <option value="A">Otros (Derechos, Licencias, Acciones)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Provincia</label>
+                <select id="provincia" onchange="guardarPreferencias()" class="w-full p-2.5 border rounded-lg bg-gray-50 text-gray-700 font-medium focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="01">Álava</option><option value="02">Albacete</option><option value="03">Alicante</option><option value="04">Almería</option><option value="33">Asturias</option><option value="05">Ávila</option><option value="06">Badajoz</option><option value="07">Baleares (Illes)</option><option value="08">Barcelona</option><option value="48">Bizkaia</option><option value="09">Burgos</option><option value="10">Cáceres</option><option value="11">Cádiz</option><option value="39">Cantabria</option><option value="12">Castellón</option><option value="51">Ceuta</option><option value="13">Ciudad Real</option><option value="14">Córdoba</option><option value="15">A Coruña</option><option value="16">Cuenca</option><option value="20">Gipuzkoa</option><option value="17">Girona</option><option value="18">Granada</option><option value="19">Guadalajara</option><option value="21">Huelva</option><option value="22">Huesca</option><option value="23">Jaén</option><option value="24">León</option><option value="25">Lleida</option><option value="27">Lugo</option><option value="28">Madrid</option><option value="29">Málaga</option><option value="52">Melilla</option><option value="30">Murcia</option><option value="31">Navarra</option><option value="32">Ourense</option><option value="34">Palencia</option><option value="35">Las Palmas</option><option value="36">Pontevedra</option><option value="26">La Rioja</option><option value="37">Salamanca</option><option value="38">Santa Cruz de Tenerife</option><option value="40">Segovia</option><option value="41">Sevilla</option><option value="42">Soria</option><option value="43">Tarragona</option><option value="44">Teruel</option><option value="45">Toledo</option><option value="46">Valencia</option><option value="47">Valladolid</option><option value="49">Zamora</option><option value="50">Zaragoza</option>
+                </select>
+            </div>
+
+            <button onclick="consultarBOE()" id="btnBuscar" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-xs">
+                Buscar Subastas Activas
+            </button>
+        </div>
+
+        <div id="estado" class="text-center text-gray-500 my-5 hidden">
+            <span class="animate-spin inline-block mr-2">⏳</span> Conectando al BOE...
+        </div>
+
+        <div id="resultados" class="space-y-3">
+            </div>
+    </div>
+
+    <script>
+        // Al cargar la página, recuperamos lo guardado en LocalStorage
+        document.addEventListener("DOMContentLoaded", () => {
+            const catGuardada = localStorage.getItem("boe_categoria");
+            const provGuardada = localStorage.getItem("boe_provincia");
+
+            if (catGuardada) document.getElementById('categoria').value = catGuardada;
+            if (provGuardada) document.getElementById('provincia').value = provGuardada;
+            
+            actualizarMensajeInicial();
+        });
+
+        // Guarda la selección cada vez que el usuario cambia un desplegable
+        function guardarPreferencias() {
+            const cat = document.getElementById('categoria').value;
+            const prov = document.getElementById('provincia').value;
+            
+            localStorage.setItem("boe_categoria", cat);
+            localStorage.setItem("boe_provincia", prov);
+        }
+
+        function actualizarMensajeInicial() {
+            const contenedor = document.getElementById('resultados');
+            contenedor.innerHTML = `<p class="text-center text-gray-400 italic">Preferencias cargadas. Pulsa buscar para escanear el BOE.</p>`;
+        }
+
+        async function consultarBOE() {
+            const cat = document.getElementById('categoria').value;
+            const prov = document.getElementById('provincia').value;
+            const contenedor = document.getElementById('resultados');
+            const estado = document.getElementById('estado');
+            const btn = document.getElementById('btnBuscar');
+
+            estado.classList.remove('hidden');
+            contenedor.innerHTML = '';
+            btn.disabled = true;
+
+            // URL oficial del buscador del BOE
+            const urlBoe = `https://subastas.boe.es/subastas_ava.php?idCat=${cat}&provincia=${prov}&idAmb=J`;
+            
+            // Usamos un proxy que responde bien desde GitHub Pages
+            const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(urlBoe);
+
+            try {
+                const respuesta = await fetch(proxyUrl);
+                const datos = await respuesta.json();
+                const htmlDelBoe = datos.contents;
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlDelBoe, 'text/html');
+
+                // Filtramos los enlaces que llevan a fichas de subastas reales
+                const enlaces = doc.querySelectorAll("a[href*='subastas.php?idSub=']");
+
+                if (enlaces.length === 0) {
+                    contenedor.innerHTML = `
+                        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center text-yellow-800">
+                            No hay subastas activas en este momento para los filtros seleccionados o el BOE está saturado.
+                        </div>`;
+                } else {
+                    enlaces.forEach(enlace => {
+                        const textoAnuncio = enlace.innerText.trim();
+                        const linkReal = "https://subastas.boe.es/" + enlace.getAttribute('href');
+
+                        if (textoAnuncio.length > 5) {
+                            const tarjeta = document.createElement('div');
+                            tarjeta.className = "p-4 bg-blue-50 border border-blue-100 rounded-lg shadow-2xs hover:bg-blue-100/50 transition-colors";
+                            tarjeta.innerHTML = `
+                                <h3 class="font-bold text-gray-900 leading-tight">${textoAnuncio}</h3>
+                                <a href="${linkReal}" target="_blank" class="text-xs text-blue-600 font-bold block mt-3 text-right uppercase tracking-wider">🔒 Abrir en BOE ➔</a>
+                            `;
+                            contenedor.appendChild(tarjeta);
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error(error);
+                contenedor.innerHTML = `
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-center text-red-700">
+                        Error de conexión con el servidor Proxy. Vuelve a intentarlo en unos segundos.
+                    </div>`;
+            } finally {
+                estado.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
