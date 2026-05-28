@@ -9,8 +9,8 @@
 <body class="bg-gray-100 p-4 font-sans text-sm flex items-center justify-center min-h-screen">
 
     <div class="w-full max-w-md bg-white rounded-xl shadow-md p-6">
-        <h1 class="text-xl font-bold text-blue-950 mb-1 text-center">⚖️ Lanzador de Subastas BOE</h1>
-        <p class="text-center text-xs text-gray-400 mb-6">Guarda tu combinación favorita en el móvil</p>
+        <h1 class="text-xl font-bold text-blue-950 mb-1 text-center">⚖️ Acceso Directo BOE</h1>
+        <p class="text-center text-xs text-gray-400 mb-6">Salto de restricciones por enlace directo</p>
         
         <div class="space-y-4">
             <div>
@@ -35,35 +35,35 @@
                 </select>
             </div>
 
-            <button onclick="irAlBoe()" class="w-full bg-blue-600 text-white p-3.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md text-base">
-                🚀 Abrir Subastas en el BOE
+            <button onclick="redirigirAlBoe()" class="w-full bg-blue-600 text-white p-3.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-md text-base">
+                🚀 Ver Subastas en el BOE
             </button>
         </div>
     </div>
 
     <script>
-        // Al abrir la app en el móvil, recupera lo que elegiste la última vez
+        // Recupera los datos guardados en el móvil al abrir la página
         document.addEventListener("DOMContentLoaded", () => {
-            if (localStorage.getItem("cat")) document.getElementById('categoria').value = localStorage.getItem("cat");
-            if (localStorage.getItem("prov")) document.getElementById('provincia').value = localStorage.getItem("prov");
+            if (localStorage.getItem("cat_boe_dir")) document.getElementById('categoria').value = localStorage.getItem("cat_boe_dir");
+            if (localStorage.getItem("prov_boe_dir")) document.getElementById('provincia').value = localStorage.getItem("prov_boe_dir");
         });
 
-        // Guarda automáticamente tu selección en el móvil
+        // Guarda tu selección en el almacenamiento local del móvil
         function guardarPreferencia() {
-            localStorage.setItem("cat", document.getElementById('categoria').value);
-            localStorage.setItem("prov", document.getElementById('provincia').value);
+            localStorage.setItem("cat_boe_dir", document.getElementById('categoria').value);
+            localStorage.setItem("prov_boe_dir", document.getElementById('provincia').value);
         }
 
-        // Construye el enlace directo al buscador del BOE y lo abre
-        function irAlBoe() {
+        // Genera la redirección limpia que el BOE acepta sin cookies previas
+        function redirigirAlBoe() {
             const cat = document.getElementById('categoria').value;
             const prov = document.getElementById('provincia').value;
             
-            // Creamos el enlace oficial con tus filtros automáticos
-            const urlFinal = `https://subastas.boe.es/subastas_ava.php?campoIdBuscar=idSubasta&idCat=${cat}&provincia=${prov}&idAmb=J&tipoSubasta=A&fechafinBuscar=&ordenar=FECHA_FIN_REC-DESC&bIdBuscar=Buscar`;
+            // Esta estructura de URL carga los resultados del BOE de forma pública y directa sin pasar por el formulario tramposo
+            const urlLimpia = `https://subastas.boe.es/subastas_ava.php?idCat=${cat}&provincia=${prov}&idAmb=J&tipoSubasta=A&ordenar=FECHA_FIN_REC-DESC&bIdBuscar=Buscar`;
             
-            // Abre la pestaña en tu móvil directamente en la lista de resultados del BOE
-            window.open(urlFinal, '_blank');
+            // Forzamos la apertura directa
+            window.location.href = urlLimpia;
         }
     </script>
 </body>
