@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Men's Health - Los 20 Mejores Ejercicios con Mancuernas</title>
+    <!-- ESTA LÍNEA SOLUCIONA EL PROBLEMA DE LAS IMÁGENES: -->
+    <meta name="referrer" content="no-referrer">
+    
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: #151f32;
+            --bg-darker: #090d16;
+            --accent-color: #e50914; /* Rojo Men's Health */
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding-bottom: 100px;
+        }
+
+        header {
+            background-color: var(--bg-card);
+            padding: 20px 15px;
+            text-align: center;
+            border-bottom: 3px solid var(--accent-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        header h1 span {
+            color: var(--accent-color);
+        }
+
+        header p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .day-nav {
+            display: flex;
+            background-color: var(--bg-darker);
+            padding: 8px;
+            gap: 5px;
+            position: sticky;
+            top: 76px;
+            z-index: 99;
+            border-bottom: 1px solid #222f47;
+        }
+
+        .day-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 12px 5px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .day-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .app-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 12px;
+        }
+
+        .routine-section {
+            display: none;
+        }
+
+        .routine-section.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 1px solid #1e2d4a;
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background-color: #fff; /* Fondo blanco para contrastar con los GIFs recortados */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .exercise-gif {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .badge-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-left: 3px solid var(--accent-color);
+            z-index: 10;
+        }
+
+        .card-content {
+            padding: 18px;
+        }
+
+        .exercise-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .exercise-presets {
+            font-size: 0.85rem;
+            color: var(--warning);
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .guide-box {
+            background-color: var(--bg-darker);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .guide-box strong {
+            color: white;
+        }
+
+        .series-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #0e1624;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .series-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .series-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #2d3f5e;
+            background-color: transparent;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .dot.completed {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .timer-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #161d31;
+            border-top: 3px solid var(--accent-color);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .timer-bar.show {
+            transform: translateY(0);
+        }
+
+        .timer-countdown {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--warning);
+            font-family: monospace;
+        }
+
+        .timer-btn {
+            background-color: var(--accent-color);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Los 20 Ejercicios <span>Mancuernas</span></h1>
+        <p>Rutina Definitiva - Imágenes en Vivo Directas de Men's Health</p>
+    </header>
+
+    <nav class="day-nav">
+        <button class="day-btn active" onclick="changeDay(1, this)">Día 1: Empuje</button>
+        <button class="day-btn" onclick="changeDay(2, this)">Día 2: Tirón</button>
+        <button class="day-btn" onclick="changeDay(3, this)">Día 3: Piernas</button>
+    </nav>
+
+    <div class="app-container">
+
+        <!-- ================= DÍA 1: EMPUJE (7 EJERCICIOS) ================= -->
+        <section id="day-1" class="routine-section active">
+            
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Hombros</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594216347-shoulder-press.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">1. Press de hombros con mancuernas</div>
+                    <div class="exercise-presets">3-4 Series x 10-12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Posición erguida, empuja con fuerza por encima de tu cabeza bloqueando los codos arriba de forma controlada.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Pecho</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594215206-floor-press-1.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">2. Press en el suelo (Floor Press)</div>
+                    <div class="exercise-presets">3-4 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Tumbado boca arriba en el suelo, baja las mancuernas hasta que tus tríceps toquen ligeramente el piso y vuelve a empujar.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Hombros</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594215707-lateral-raise.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">3. Elevaciones laterales (Lateral Raise)</div>
+                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Sube las mancuernas hacia los lados manteniendo una flexión mínima en tus codos hasta quedar paralelo al suelo.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Tríceps</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594301540-overhead-extension.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">4. Extensión de tríceps tras nuca</div>
+                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Sujeta una mancuerna con ambas manos tras la cabeza. Extiende los codos verticalmente apuntando al techo.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Pecho / Core</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594215904-push-up.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">5. Flexiones sobre mancuernas (Dumbbell Push-Up)</div>
+                    <div class="exercise-presets">3 Series x Al fallo técnico</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Agarra las mancuernas en el suelo para mantener las muñecas neutras y baja aumentando el rango de profundidad.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Hombro Frontal</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594214555-front-raise.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">6. Elevaciones frontales (Front Raise)</div>
+                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Eleva las mancuernas hacia el frente de forma alternada hasta la altura de tus ojos sin balancear el torso.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Hombros / Trapecios</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594216503-upright-row.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">7. Remo al mentón (Upright Row)</div>
+                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Eleva las mancuernas verticalmente pegadas a tu cuerpo guiando el movimiento con tus codos hacia el techo.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 75)">1</div><div class="dot" onclick="toggleDot(this, 75)">2</div><div class="dot" onclick="toggleDot(this, 75)">3</div></div></div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= DÍA 2: TIRÓN Y CORE (7 EJERCICIOS) ================= -->
+        <section id="day-2" class="routine-section">
+            
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Espalda</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594214693-dumbbell-row.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">8. Remo con mancuernas (Dumbbell Row)</div>
+                    <div class="exercise-presets">4 Series x 10-12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Flexiona ligeramente las rodillas e inclina el torso. Tira de los pesos hacia tus caderas apretando fuertemente la zona dorsal.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Bícep</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594213797-bicep-curl.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">9. Curl de Bíceps (Bicep Curl)</div>
+                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Codos inmóviles pegados a las costillas. Sube las mancuernas girando ligeramente las muñecas hacia afuera.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Espalda Completa</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594214227-deadlift.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">10. Peso Muerto con mancuernas (Deadlift)</div>
+                    <div class="exercise-presets">4 Series x 10 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Baja las mancuernas rozando tus espinillas doblando las caderas hacia atrás. Mantén tu espalda completamente recta.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Espalda / Core</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594216016-renegade-row.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">11. Remo Renegado (Renegade Row)</div>
+                    <div class="exercise-presets">3 Series x 10 Repeticiones por lado</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> En posición de flexión alta apoyado sobre tus mancuernas, realiza un remo hacia tu costado alternando los brazos.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Trapecios</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594216120-shrug.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">12. Encogimientos de hombros (Shrug)</div>
+                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Deja los brazos colgados a los lados y eleva los hombros verticalmente hacia las orejas.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Bícep / Antebrazo</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594301481-hammer-curl.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">13. Curl de Martillo (Hammer Curl)</div>
+                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Ejecuta el curl pero manteniendo las palmas de las manos mirándose entre sí durante todo el recorrido.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Core / Abdomen</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594301735-weighted-crunch.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">14. Abdominales con carga (Weighted Crunch)</div>
+                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Tumbado con las rodillas dobladas, sujeta una mancuerna contra tu pecho e inicia la elevación despegando los omóplatos.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= DÍA 3: PIERNAS (6 EJERCICIOS) ================= -->
+        <section id="day-3" class="routine-section">
+            
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Cuádriceps / Glúteos</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594214434-goblet-squat.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">15. Sentadilla Goblet (Goblet Squat)</div>
+                    <div class="exercise-presets">4 Series x 12-15 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Abraza una mancuerna pesada verticalmente pegada a tu pecho. Baja la cadera recta con los talones firmes.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Piernas / Estabilidad</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594214878-lunge.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">16. Zancadas con mancuernas (Lunge)</div>
+                    <div class="exercise-presets">3 Series x 10 Repeticiones por pierna</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Da un paso amplio adelante doblando las rodillas a 90 grados. Evita que la rodilla pase la punta del pie.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Cardio / Potencia</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594216259-clean.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">17. Cargada con mancuernas (Dumbbell Clean)</div>
+                    <div class="exercise-presets">3 Series x 10 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Desde el semi-peso muerto, genera impulso explosivo con tu cadera y "recibe" las mancuernas sobre tus hombros.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Pierna Posterior</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594301614-stiff-legged-deadlift.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">18. Peso Muerto Rumano / Piernas Rígidas</div>
+                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Rodillas fijas. Empuja los glúteos hacia atrás sintiendo un estiramiento profundo en los femorales.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Gemelos</span>
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/animated-gifs/prod/2020/07/1594301389-calf-raise.gif">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">19. Elevación de Talones (Calf Raise)</div>
+                    <div class="exercise-presets">4 Series x 20 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Sostén las mancuernas a los lados y elévate sobre las puntas de tus pies manteniendo la tensión arriba 1 segundo.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 45)">1</div><div class="dot" onclick="toggleDot(this, 45)">2</div><div class="dot" onclick="toggleDot(this, 45)">3</div><div class="dot" onclick="toggleDot(this, 45)">4</div></div></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="image-container">
+                    <span class="badge-tag">Glúteos / Cadera</span>
+                    <!-- Aquí incluí como extra el ejemplo de URL que me pasaste para asegurar compatibilidad perfecta de formato -->
+                    <img class="exercise-gif" src="https://hips.hearstapps.com/hmg-prod/images/dumbell-scaption-649441e16bfab.gif?resize=980:*">
+                </div>
+                <div class="card-content">
+                    <div class="exercise-name">20. Scaption con Mancuerna / Puente de Glúteos</div>
+                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+                    <div class="guide-box"><strong>Instrucciones MH:</strong> Movimiento controlado para estabilización escapular y del core. Eleva las mancuernas en un ángulo de 30 grados respecto al torso.</div>
+                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Barra de Temporizador Global -->
+    <div id="global-timer" class="timer-bar">
+        <div>
+            <span style="font-size:0.75rem; display:block; color:var(--text-muted);">DESCANSO ACTIVO MH</span>
+            <span id="countdown-display" class="timer-countdown">00:00</span>
+        </div>
+        <button class="timer-btn" onclick="closeTimer()">SALTAR</button>
+    </div>
+
+    <script>
+        let timerInterval;
+        let timeRemaining = 0;
+
+        function changeDay(dayNumber, btnElement) {
+            document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.routine-section').forEach(sec => sec.classList.remove('active'));
+            btnElement.classList.add('active');
+            document.getElementById(`day-${dayNumber}`).classList.add('active');
+            closeTimer();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function toggleDot(element, seconds) {
+            element.classList.toggle('completed');
+            if (element.classList.contains('completed')) {
+                launchTimer(seconds);
+            }
+        }
+
+        function launchTimer(seconds) {
+            clearInterval(timerInterval);
+            const timerBar = document.getElementById('global-timer');
+            timerBar.classList.add('show');
+            timeRemaining = seconds;
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                const mins = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+                const secs = (timeRemaining % 60).toString().padStart(2, '0');
+                document.getElementById('countdown-display').innerText = `${mins}:${secs}`;
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    document.getElementById('countdown-display').innerText = "¡A POR LA OTRA!";
+                    setTimeout(closeTimer, 1500);
+                }
+            }, 1000);
+        }
+
+        function closeTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('global-timer').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
