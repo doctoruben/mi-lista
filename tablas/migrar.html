@@ -113,28 +113,17 @@
             position: relative;
             width: 100%;
             height: 250px;
-            background-color: #ffffff; /* Fondo blanco para contrastar los dibujos técnicos */
+            background-color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
         }
 
-        /* Si es una foto de Unsplash, mantenemos fondo oscuro */
-        .image-container.dark-bg {
-            background-color: #0d131f;
-        }
-
         .exercise-gif {
-            height: 90%;
-            width: auto;
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-        }
-
-        .exercise-gif.cover {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
 
         .badge-tag {
@@ -272,7 +261,7 @@
 
     <header>
         <h1>Entrenamiento <span>Mancuernas</span></h1>
-        <p>20 Ejercicios - Animaciones Técnicas de Alta Calidad</p>
+        <p>20 Ejercicios - Guía Ilustrada de Alta Estabilidad</p>
     </header>
 
     <nav class="day-nav">
@@ -283,27 +272,24 @@
 
     <div class="app-container">
 
-        <!-- ================= DÍA 1: EMPUJE ================= -->
         <section id="day-1" class="routine-section active">
-            <!-- 1. Press de Banca -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Pecho</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/4/Bench-press-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-bench-press-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">1. Press de Banca con Mancuernas</div>
                     <div class="exercise-presets">4 Series x 10-12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Túmbate boca arriba. Empuja las mancuernas hacia el techo extendiendo los brazos y bajando controladamente hasta el pecho.</div>
+                    <div class="guide-box"><strong>Instrucciones:</strong> Túmbate boca arriba en un banco. Empuja las mancuernas hacia el techo extendiendo los brazos y bajando controladamente hasta el pecho.</div>
                     <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
                 </div>
             </div>
 
-            <!-- 2. Press de hombros -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Hombros</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/148/Shoulder-press-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-shoulder-press-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">2. Press de Hombros Sentado</div>
@@ -313,11 +299,10 @@
                 </div>
             </div>
 
-            <!-- 3. Elevaciones laterales animadas -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Hombros</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/69/Lateral-raises-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-lateral-raise-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">3. Elevaciones Laterales</div>
@@ -327,11 +312,10 @@
                 </div>
             </div>
 
-            <!-- 4. Aperturas -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Pecho</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/54/Dumbbell-flys-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-flys-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">4. Aperturas Planas (Dumbbell Fly)</div>
@@ -341,11 +325,10 @@
                 </div>
             </div>
 
-            <!-- 5. Patada de Triceps -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Tríceps</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/81/Tricep-kickbacks-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-kickback-side.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">5. Patada de Tríceps</div>
@@ -355,11 +338,10 @@
                 </div>
             </div>
 
-            <!-- 6. Press Arnold -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Hombros</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-arnold-press-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">6. Press Arnold</div>
@@ -369,11 +351,10 @@
                 </div>
             </div>
 
-            <!-- 7. Press Inclinado -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Pecho</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-incline-chest-press-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">7. Press Inclinado con Mancuernas</div>
@@ -384,13 +365,11 @@
             </div>
         </section>
 
-        <!-- ================= DÍA 2: TIRÓN ================= -->
         <section id="day-2" class="routine-section">
-            <!-- 8. Remo -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Espalda</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/22/Dumbbell-row-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-row-side.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">8. Remo con Mancuerna a una Mano</div>
@@ -400,11 +379,10 @@
                 </div>
             </div>
 
-            <!-- 9. Curl Biceps -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Bíceps</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/128/Biceps-curl-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-curl-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">9. Curl de Bíceps Alterno</div>
@@ -414,11 +392,10 @@
                 </div>
             </div>
 
-            <!-- 10. Remo inclinado -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Espalda</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1605296867304-46d5465a25f1?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-incline-row-side.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">10. Remo en Banco Inclinado</div>
@@ -428,11 +405,10 @@
                 </div>
             </div>
 
-            <!-- 11. Curl martillo -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Bíceps</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/114/Hammer-curls-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-hammer-curl-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">11. Curl Martillo</div>
@@ -442,11 +418,10 @@
                 </div>
             </div>
 
-            <!-- 12. Remo renegado -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Espalda / Core</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-renegade-row-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">12. Remo Renegado (Renegade Row)</div>
@@ -456,11 +431,10 @@
                 </div>
             </div>
 
-            <!-- 13. Curl Zottman -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Bíceps</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1594911774802-8822a707cbb3?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-zottman-curl-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">13. Curl Zottman</div>
@@ -471,13 +445,11 @@
             </div>
         </section>
 
-        <!-- ================= DÍA 3: PIERNAS Y CORE ================= -->
         <section id="day-3" class="routine-section">
-            <!-- 14. Goblet Squat -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Piernas</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/107/Goblet-squat-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-goblet-squat-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">14. Sentadilla Goblet</div>
@@ -487,11 +459,10 @@
                 </div>
             </div>
 
-            <!-- 15. Peso muerto rumano -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Fémorales</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/157/Romanian-deadlift-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-deadlift-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">15. Peso Muerto Rumano</div>
@@ -501,11 +472,10 @@
                 </div>
             </div>
 
-            <!-- 16. Zancadas -->
             <div class="card">
                 <div class="image-container">
                     <span class="badge-tag">Piernas</span>
-                    <img class="exercise-gif" src="https://wger.de/media/exercise-images/111/Lunges-1.png">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-lunge-side.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">16. Zancadas (Lunges)</div>
@@ -515,11 +485,10 @@
                 </div>
             </div>
 
-            <!-- 17. Bulgara -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Glúteos</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-bulgarian-split-squat-side.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">17. Sentadilla Búlgara</div>
@@ -529,11 +498,10 @@
                 </div>
             </div>
 
-            <!-- 18. Gemelos -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Gemelos</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1594911774802-8822a707cbb3?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-calf-raise-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">18. Elevación de Talones de Pie</div>
@@ -543,11 +511,10 @@
                 </div>
             </div>
 
-            <!-- 19. Giros rusos -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Core</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-russian-twist-front.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">19. Giros Rusos con Peso</div>
@@ -557,16 +524,15 @@
                 </div>
             </div>
 
-            <!-- 20. Granjero -->
             <div class="card">
-                <div class="image-container dark-bg">
+                <div class="image-container">
                     <span class="badge-tag">Agarre</span>
-                    <img class="exercise-gif cover" src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&auto=format&fit=crop&q=80">
+                    <img class="exercise-gif" src="https://static.musclewiki.com/illustrations/male-dumbbell-farmers-walk-side.png">
                 </div>
                 <div class="card-content">
                     <div class="exercise-name">20. Paseo del Granjero</div>
-                    <div class="exercise-presets">3 Series x 40 Segundos</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Sujeta dos mancuernas pesadas a los lados y camina con pasos cortos y firmes manteniendo la espalda recta.</div>
+                    <div class="exercise-presets">3 Series x 40 Segundos de caminata</div>
+                    <div class="guide-box"><strong>Instrucciones:</strong> Sujeta dos mancuernas pesadas a los lados y camina con pasos cortos y firmes manteniendo la espalda recta. Fuerza tu agarre.</div>
                     <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
                 </div>
             </div>
@@ -574,7 +540,6 @@
 
     </div>
 
-    <!-- Temporizador Global -->
     <div id="global-timer" class="timer-bar">
         <div>
             <span style="font-size:0.75rem; display:block; color:var(--text-muted);">DESCANSO ACTIVO</span>
