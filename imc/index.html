@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de IMC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #f5f3ef;
+      --surface:   #ffffff;
+      --surface2:  #f0ede8;
+      --border:    rgba(0,0,0,0.10);
+      --border2:   rgba(0,0,0,0.18);
+      --text:      #1a1816;
+      --text2:     #6b6760;
+      --text3:     #a09d98;
+      --accent:    #2d5a3d;
+      --accent-bg: #e8f2ec;
+      --radius:    12px;
+      --radius-sm: 8px;
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:        #131210;
+        --surface:   #1e1c1a;
+        --surface2:  #252320;
+        --border:    rgba(255,255,255,0.08);
+        --border2:   rgba(255,255,255,0.15);
+        --text:      #f0ede8;
+        --text2:     #9a9690;
+        --text3:     #5e5b57;
+        --accent:    #6ab87a;
+        --accent-bg: #1a2e1f;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+    .container { max-width: 520px; margin: 0 auto; }
+
+    header { margin-bottom: 2.5rem; }
+    .header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+    h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.5px; line-height: 1.1; }
+    h1 span { font-family: var(--mono); font-weight: 400; }
+    .tagline { font-size: 14px; color: var(--text2); margin-top: 6px; }
+
+    .unit-toggle {
+      display: flex; border: 0.5px solid var(--border2); border-radius: 999px;
+      overflow: hidden; flex-shrink: 0; margin-top: 2px;
+    }
+    .unit-toggle button {
+      padding: 5px 13px; font-size: 12px; font-family: var(--mono);
+      border: none; background: transparent; color: var(--text2); cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .unit-toggle button.active {
+      background: var(--text); color: var(--bg);
+    }
+
+    .card {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
+    }
+
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+    .fields-imperial { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: 12px; font-family: var(--mono); color: var(--text2); letter-spacing: 0.03em; }
+
+    .input-wrap { display: flex; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); overflow: hidden; transition: border-color 0.15s; }
+    .input-wrap:focus-within { border-color: var(--text); }
+    .input-wrap input {
+      flex: 1; min-width: 0; border: none; background: transparent;
+      font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--text);
+      padding: 10px 10px; outline: none;
+    }
+    .input-wrap input::placeholder { color: var(--text3); font-weight: 400; }
+    .unit-label {
+      padding: 0 10px; display: flex; align-items: center;
+      font-family: var(--mono); font-size: 12px; color: var(--text3);
+      background: var(--surface2); border-left: 0.5px solid var(--border2);
+      white-space: nowrap;
+    }
+
+    .calc-btn {
+      width: 100%; padding: 13px; font-size: 15px; font-weight: 500;
+      font-family: var(--sans); border-radius: var(--radius-sm); cursor: pointer;
+      background: var(--text); color: var(--bg); border: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .calc-btn:hover { opacity: 0.88; }
+    .calc-btn:active { transform: scale(0.99); }
+
+    /* Result */
+    .result-section { display: none; }
+    .result-section.visible { display: block; }
+
+    .imc-row { display: flex; align-items: flex-end; gap: 14px; margin-bottom: 10px; }
+    .imc-number { font-family: var(--mono); font-size: 64px; font-weight: 400; line-height: 1; letter-spacing: -2px; }
+    .imc-meta { padding-bottom: 8px; }
+    .imc-meta-label { font-size: 11px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+    .category-pill {
+      display: inline-block; margin-top: 5px; padding: 4px 12px;
+      border-radius: 999px; font-size: 13px; font-weight: 500; transition: all 0.3s;
+    }
+
+    /* Bar */
+    .bar-section { margin: 1.25rem 0 0.5rem; }
+    .bar-track { position: relative; height: 6px; border-radius: 3px; overflow: visible; margin-bottom: 8px; }
+    .bar-fill { display: flex; height: 100%; border-radius: 3px; overflow: hidden; }
+    .bar-seg { height: 100%; }
+    .bar-dot {
+      position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%;
+      transform: translate(-50%, -50%); border: 2px solid var(--surface);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+      transition: left 0.6s cubic-bezier(.34,1.56,.64,1);
+    }
+    .bar-labels {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono); font-size: 10px; color: var(--text3);
+    }
+
+    /* Extra stats */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1.25rem; }
+    .stat-box {
+      background: var(--surface2); border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+    .stat-box-label { font-size: 11px; font-family: var(--mono); color: var(--text3); margin-bottom: 3px; }
+    .stat-box-val { font-size: 16px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+    .stat-box-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+    /* History */
+    .history-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .history-header h2 { font-size: 14px; font-weight: 500; font-family: var(--mono); color: var(--text2); }
+    .clear-btn {
+      font-size: 11px; font-family: var(--mono); color: var(--text3); background: none;
+      border: 0.5px solid var(--border2); border-radius: 999px; padding: 3px 10px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .clear-btn:hover { color: var(--text); border-color: var(--text); }
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; background: var(--surface2); border-radius: var(--radius-sm);
+      transition: opacity 0.2s;
+    }
+    .history-item.latest { border-left: 3px solid var(--accent); padding-left: 11px; }
+    .hi-left { display: flex; flex-direction: column; gap: 2px; }
+    .hi-date { font-size: 11px; font-family: var(--mono); color: var(--text3); }
+    .hi-detail { font-size: 12px; color: var(--text2); }
+    .hi-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .hi-imc { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+    .hi-cat { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
+    .empty-history {
+      text-align: center; padding: 2rem; font-size: 13px; color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    /* Animations */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .result-section.visible .card { animation: fadeUp 0.3s ease both; }
+
+    @media (max-width: 420px) {
+      h1 { font-size: 22px; }
+      .imc-number { font-size: 52px; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="header-row">
+      <div>
+        <h1>Calcula tu <span>IMC</span></h1>
+        <p class="tagline">Índice de Masa Corporal · OMS</p>
+      </div>
+      <div class="unit-toggle" role="group" aria-label="Sistema de unidades">
+        <button class="active" id="btnMetric" onclick="setUnits('metric')">kg · cm</button>
+        <button id="btnImperial" onclick="setUnits('imperial')">lb · ft</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Input card -->
+  <div class="card">
+    <div id="fieldsMetric" class="fields">
+      <div class="field-group">
+        <label for="peso">PESO</label>
+        <div class="input-wrap">
+          <input type="number" id="peso" min="1" max="500" step="0.1" placeholder="70">
+          <span class="unit-label">kg</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="estatura">ESTATURA</label>
+        <div class="input-wrap">
+          <input type="number" id="estatura" min="50" max="300" step="1" placeholder="175">
+          <span class="unit-label">cm</span>
+        </div>
+      </div>
+    </div>
+    <div id="fieldsImperial" class="fields-imperial" style="display:none">
+      <div class="field-group">
+        <label for="lbs">PESO</label>
+        <div class="input-wrap">
+          <input type="number" id="lbs" min="1" max="1000" step="0.1" placeholder="154">
+          <span class="unit-label">lb</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="feet">ALTURA</label>
+        <div class="input-wrap">
+          <input type="number" id="feet" min="1" max="9" step="1" placeholder="5">
+          <span class="unit-label">ft</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="inches">PULGADAS</label>
+        <div class="input-wrap">
+          <input type="number" id="inches" min="0" max="11" step="1" placeholder="9">
+          <span class="unit-label">in</span>
+        </div>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcular()">Calcular IMC</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-section" id="resultSection">
+    <div class="card">
+      <div class="imc-row">
+        <div class="imc-number" id="imcNum">—</div>
+        <div class="imc-meta">
+          <div class="imc-meta-label">IMC</div>
+          <span class="category-pill" id="catPill">—</span>
+        </div>
+      </div>
+
+      <div class="bar-section">
+        <div class="bar-track">
+          <div class="bar-fill">
+            <div class="bar-seg" style="width:16.67%;background:#5DCAA5"></div>
+            <div class="bar-seg" style="width:16.67%;background:#97C459"></div>
+            <div class="bar-seg" style="width:16.67%;background:#EF9F27"></div>
+            <div class="bar-seg" style="width:16.67%;background:#E24B4A"></div>
+            <div class="bar-seg" style="width:16.67%;background:#A32D2D"></div>
+            <div class="bar-seg" style="width:16.65%;background:#791F1F"></div>
+          </div>
+          <div class="bar-dot" id="barDot"></div>
+        </div>
+        <div class="bar-labels">
+          <span>10</span><span>16</span><span>18.5</span><span>25</span><span>30</span><span>35</span><span>40+</span>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-box-label">PESO</div>
+          <div class="stat-box-val" id="sPeso">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">ESTATURA</div>
+          <div class="stat-box-val" id="sEstatura">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">PESO IDEAL (rango)</div>
+          <div class="stat-box-val" id="sPesoIdeal">—</div>
+          <div class="stat-box-sub">IMC 18.5 – 25</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-box-label">DIFERENCIA</div>
+          <div class="stat-box-val" id="sDiff">—</div>
+          <div class="stat-box-sub" id="sDiffSub">respecto al rango</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="card" id="historyCard" style="display:none">
+    <div class="history-header">
+      <h2>HISTORIAL</h2>
+      <button class="clear-btn" onclick="clearHistory()">limpiar</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<script>
+const CATS = [
+  { max: 16,       label: 'Bajo peso severo',   bg: '#1D9E75', text: '#e8f8f3' },
+  { max: 18.5,     label: 'Bajo peso',           bg: '#639922', text: '#eaf3de' },
+  { max: 25,       label: 'Peso normal',         bg: '#2d5a3d', text: '#e8f2ec' },
+  { max: 30,       label: 'Sobrepeso',           bg: '#BA7517', text: '#faeeda' },
+  { max: 35,       label: 'Obesidad I',          bg: '#E24B4A', text: '#fcebeb' },
+  { max: Infinity, label: 'Obesidad II+',        bg: '#791F1F', text: '#fcebeb' },
+];
+
+let units = 'metric';
+
+function setUnits(u) {
+  units = u;
+  document.getElementById('btnMetric').classList.toggle('active', u === 'metric');
+  document.getElementById('btnImperial').classList.toggle('active', u === 'imperial');
+  document.getElementById('fieldsMetric').style.display = u === 'metric' ? '' : 'none';
+  document.getElementById('fieldsImperial').style.display = u === 'imperial' ? '' : 'none';
+  try { localStorage.setItem('imc_units', u); } catch(e) {}
+}
+
+function getCategory(imc) {
+  return CATS.find(c => imc < c.max);
+}
+
+function imcToPercent(imc) {
+  return Math.max(0, Math.min(100, ((Math.min(imc, 40) - 10) / 30) * 100));
+}
+
+function calcular() {
+  let pesoKg, alturaCm;
+
+  if (units === 'metric') {
+    pesoKg   = parseFloat(document.getElementById('peso').value);
+    alturaCm = parseFloat(document.getElementById('estatura').value);
+    if (!pesoKg || !alturaCm || pesoKg <= 0 || alturaCm <= 0) return shake();
+  } else {
+    const lbs    = parseFloat(document.getElementById('lbs').value);
+    const ft     = parseFloat(document.getElementById('feet').value) || 0;
+    const inc    = parseFloat(document.getElementById('inches').value) || 0;
+    if (!lbs || (!ft && !inc)) return shake();
+    pesoKg   = lbs * 0.453592;
+    alturaCm = (ft * 12 + inc) * 2.54;
+  }
+
+  const altM = alturaCm / 100;
+  const imc  = pesoKg / (altM * altM);
+  const imcR = Math.round(imc * 10) / 10;
+  const cat  = getCategory(imcR);
+
+  const idealMin = +(18.5 * altM * altM).toFixed(1);
+  const idealMax = +(25   * altM * altM).toFixed(1);
+
+  let diffText, diffSub;
+  if (pesoKg < idealMin) {
+    const d = (idealMin - pesoKg).toFixed(1);
+    diffText = units === 'imperial' ? `−${(d * 2.20462).toFixed(1)} lb` : `−${d} kg`;
+    diffSub  = 'por debajo del rango';
+  } else if (pesoKg > idealMax) {
+    const d = (pesoKg - idealMax).toFixed(1);
+    diffText = units === 'imperial' ? `+${(d * 2.20462).toFixed(1)} lb` : `+${d} kg`;
+    diffSub  = 'por encima del rango';
+  } else {
+    diffText = '✓ dentro';
+    diffSub  = 'del rango saludable';
+  }
+
+  const idealStr = units === 'imperial'
+    ? `${(idealMin * 2.20462).toFixed(0)}–${(idealMax * 2.20462).toFixed(0)} lb`
+    : `${idealMin}–${idealMax} kg`;
+
+  const pesoStr = units === 'imperial'
+    ? `${(pesoKg * 2.20462).toFixed(1)} lb`
+    : `${pesoKg.toFixed(1)} kg`;
+
+  const altStr = units === 'imperial'
+    ? `${Math.floor(alturaCm / 30.48)}′${Math.round((alturaCm % 30.48) / 2.54)}″`
+    : `${alturaCm.toFixed(0)} cm`;
+
+  document.getElementById('imcNum').textContent = imcR.toFixed(1);
+  const pill = document.getElementById('catPill');
+  pill.textContent = cat.label;
+  pill.style.background = cat.bg;
+  pill.style.color = cat.text;
+  document.getElementById('barDot').style.left = imcToPercent(imcR) + '%';
+  document.getElementById('barDot').style.background = cat.bg;
+  document.getElementById('sPeso').textContent = pesoStr;
+  document.getElementById('sEstatura').textContent = altStr;
+  document.getElementById('sPesoIdeal').textContent = idealStr;
+  document.getElementById('sDiff').textContent = diffText;
+  document.getElementById('sDiffSub').textContent = diffSub;
+
+  document.getElementById('resultSection').classList.add('visible');
+
+  const entry = {
+    date: new Date().toISOString(),
+    imc: imcR,
+    pesoKg: +pesoKg.toFixed(2),
+    alturaCm: +alturaCm.toFixed(1),
+    cat: cat.label,
+    catBg: cat.bg,
+    catText: cat.text
+  };
+  saveEntry(entry);
+  renderHistory();
+
+  try {
+    if (units === 'metric') {
+      localStorage.setItem('imc_peso', pesoKg.toFixed(1));
+      localStorage.setItem('imc_estatura', alturaCm.toFixed(0));
+    } else {
+      localStorage.setItem('imc_lbs', document.getElementById('lbs').value);
+      localStorage.setItem('imc_feet', document.getElementById('feet').value);
+      localStorage.setItem('imc_inches', document.getElementById('inches').value);
+    }
+  } catch(e) {}
+}
+
+function shake() {
+  const btn = document.querySelector('.calc-btn');
+  btn.style.animation = 'none';
+  btn.offsetHeight;
+  btn.style.animation = 'shake 0.4s ease';
+}
+
+function saveEntry(entry) {
+  try {
+    let history = JSON.parse(localStorage.getItem('imc_history') || '[]');
+    history.unshift(entry);
+    history = history.slice(0, 5);
+    localStorage.setItem('imc_history', JSON.stringify(history));
+  } catch(e) {}
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('imc_history') || '[]'); }
+  catch(e) { return []; }
+}
+
+function clearHistory() {
+  try { localStorage.removeItem('imc_history'); }
+  catch(e) {}
+  renderHistory();
+}
+
+function renderHistory() {
+  const hist = getHistory();
+  const card = document.getElementById('historyCard');
+  const list = document.getElementById('historyList');
+  if (hist.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  list.innerHTML = hist.map((e, i) => {
+    const d = new Date(e.date);
+    const dateStr = d.toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+    const pesoStr = units === 'imperial' ? `${(e.pesoKg * 2.20462).toFixed(1)} lb` : `${e.pesoKg} kg`;
+    const altStr  = units === 'imperial'
+      ? `${Math.floor(e.alturaCm / 30.48)}′${Math.round((e.alturaCm % 30.48) / 2.54)}″`
+      : `${e.alturaCm} cm`;
+    return `<div class="history-item${i === 0 ? ' latest' : ''}">
+      <div class="hi-left">
+        <span class="hi-date">${dateStr} · ${timeStr}</span>
+        <span class="hi-detail">${pesoStr} · ${altStr}</span>
+      </div>
+      <div class="hi-right">
+        <span class="hi-imc">${e.imc.toFixed(1)}</span>
+        <span class="hi-cat" style="background:${e.catBg};color:${e.catText}">${e.cat}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function loadSaved() {
+  try {
+    const savedUnits = localStorage.getItem('imc_units') || 'metric';
+    setUnits(savedUnits);
+    if (savedUnits === 'metric') {
+      const p = localStorage.getItem('imc_peso');
+      const e = localStorage.getItem('imc_estatura');
+      if (p) document.getElementById('peso').value = p;
+      if (e) document.getElementById('estatura').value = e;
+    } else {
+      const l = localStorage.getItem('imc_lbs');
+      const f = localStorage.getItem('imc_feet');
+      const i = localStorage.getItem('imc_inches');
+      if (l) document.getElementById('lbs').value = l;
+      if (f) document.getElementById('feet').value = f;
+      if (i) document.getElementById('inches').value = i;
+    }
+  } catch(e) {}
+  renderHistory();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') calcular(); });
+loadSaved();
+</script>
+
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
+</style>
+</body>
+</html>
