@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Men's Health - Los 20 Mejores Ejercicios con Mancuernas</title>
-    
+    <title>Los 20 Ejercicios con Mancuernas</title>
     <style>
         :root {
             --bg-main: #0b0f19;
@@ -16,579 +15,453 @@
             --success: #10b981;
             --warning: #f59e0b;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            padding-bottom: 100px;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
+        body { background-color:var(--bg-main); color:var(--text-main); padding-bottom:100px; }
 
         header {
-            background-color: var(--bg-card);
-            padding: 20px 15px;
-            text-align: center;
-            border-bottom: 3px solid var(--accent-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            background-color:var(--bg-card); padding:20px 15px; text-align:center;
+            border-bottom:3px solid var(--accent-color); position:sticky; top:0; z-index:100;
         }
-
-        header h1 {
-            font-size: 1.4rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        header h1 span {
-            color: var(--accent-color);
-        }
-
-        header p {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 5px;
-        }
+        header h1 { font-size:1.4rem; text-transform:uppercase; letter-spacing:1px; }
+        header h1 span { color:var(--accent-color); }
+        header p { font-size:0.85rem; color:var(--text-muted); margin-top:5px; }
 
         .day-nav {
-            display: flex;
-            background-color: var(--bg-darker);
-            padding: 8px;
-            gap: 5px;
-            position: sticky;
-            top: 76px;
-            z-index: 99;
-            border-bottom: 1px solid #222f47;
+            display:flex; background-color:var(--bg-darker); padding:8px; gap:5px;
+            position:sticky; top:76px; z-index:99; border-bottom:1px solid #222f47;
         }
-
         .day-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 12px 5px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-            text-align: center;
+            flex:1; background:none; border:none; color:var(--text-muted);
+            padding:12px 5px; font-weight:700; font-size:0.8rem; text-transform:uppercase;
+            cursor:pointer; border-radius:6px; transition:all 0.2s; text-align:center;
         }
+        .day-btn.active { background-color:var(--accent-color); color:white; }
 
-        .day-btn.active {
-            background-color: var(--accent-color);
-            color: white;
-        }
+        .app-container { max-width:600px; margin:20px auto; padding:0 12px; }
+        .routine-section { display:none; }
+        .routine-section.active { display:block; }
 
-        .app-container {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 0 12px;
-        }
-
-        .routine-section {
-            display: none;
-        }
-
-        .routine-section.active {
-            display: block;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 12px;
-            margin-bottom: 25px;
-            overflow: hidden;
-            border: 1px solid #1e2d4a;
-        }
+        .card { background-color:var(--bg-card); border-radius:12px; margin-bottom:25px; overflow:hidden; border:1px solid #1e2d4a; }
 
         .image-container {
-            position: relative;
-            width: 100%;
-            display: block;
+            position:relative; width:100%; background:#0a0f1c;
+            display:flex; overflow:hidden;
         }
-
-        .exercise-gif {
-            width: 100%;
-            display: block;
-            height: auto;
+        /* Dos imágenes lado a lado */
+        .image-container img {
+            width:50%; display:block;
+            aspect-ratio:4/3; object-fit:cover; object-position:center;
+            background:#111827;
+            border-right:2px solid #0b0f19;
+        }
+        .image-container img:last-child { border-right:none; }
+        /* Una sola imagen */
+        .image-container img:only-child {
+            width:100%; aspect-ratio:16/9; object-fit:contain; background:#111827;
         }
 
         .badge-tag {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background-color: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-left: 3px solid var(--accent-color);
-            z-index: 10;
+            position:absolute; top:10px; right:10px; z-index:10;
+            background:rgba(0,0,0,0.72); color:white; padding:4px 10px;
+            border-radius:4px; font-size:0.7rem; font-weight:bold;
+            text-transform:uppercase; border-left:3px solid var(--accent-color);
+            backdrop-filter:blur(4px);
         }
 
-        .card-content {
-            padding: 18px;
-        }
-
-        .exercise-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 6px;
-        }
-
-        .exercise-presets {
-            font-size: 0.85rem;
-            color: var(--warning);
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
+        .card-content { padding:18px; }
+        .exercise-name { font-size:1.2rem; font-weight:700; color:white; margin-bottom:6px; }
+        .exercise-presets { font-size:0.85rem; color:var(--warning); font-weight:bold; margin-bottom:12px; }
         .guide-box {
-            background-color: var(--bg-darker);
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.4;
-            margin-bottom: 15px;
+            background-color:var(--bg-darker); padding:12px; border-radius:8px;
+            font-size:0.85rem; color:var(--text-muted); line-height:1.4; margin-bottom:15px;
         }
-
-        .guide-box strong {
-            color: white;
-        }
-
+        .guide-box strong { color:white; }
         .series-control {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: #0e1624;
-            padding: 10px 12px;
-            border-radius: 8px;
+            display:flex; align-items:center; justify-content:space-between;
+            background-color:#0e1624; padding:10px 12px; border-radius:8px;
         }
-
-        .series-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .series-dots {
-            display: flex;
-            gap: 6px;
-        }
-
+        .series-label { font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; }
+        .series-dots { display:flex; gap:6px; }
         .dot {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 2px solid #2d3f5e;
-            background-color: transparent;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8rem;
-            cursor: pointer;
-            user-select: none;
+            width:34px; height:34px; border-radius:50%; border:2px solid #2d3f5e;
+            background-color:transparent; color:var(--text-main); display:flex;
+            align-items:center; justify-content:center; font-weight:bold;
+            font-size:0.8rem; cursor:pointer; user-select:none;
         }
-
-        .dot.completed {
-            background-color: var(--success);
-            border-color: var(--success);
-            color: white;
-        }
+        .dot.completed { background-color:var(--success); border-color:var(--success); color:white; }
 
         .timer-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #161d31;
-            border-top: 3px solid var(--accent-color);
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
-            z-index: 1000;
-            transform: translateY(100%);
-            transition: transform 0.3s ease-in-out;
+            position:fixed; bottom:0; left:0; right:0; background-color:#161d31;
+            border-top:3px solid var(--accent-color); padding:15px 20px;
+            display:flex; align-items:center; justify-content:space-between;
+            box-shadow:0 -4px 15px rgba(0,0,0,0.5); z-index:1000;
+            transform:translateY(100%); transition:transform 0.3s ease-in-out;
         }
-
-        .timer-bar.show {
-            transform: translateY(0);
-        }
-
-        .timer-countdown {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--warning);
-            font-family: monospace;
-        }
-
+        .timer-bar.show { transform:translateY(0); }
+        .timer-countdown { font-size:1.5rem; font-weight:800; color:var(--warning); font-family:monospace; }
         .timer-btn {
-            background-color: var(--accent-color);
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
+            background-color:var(--accent-color); border:none; color:white;
+            padding:8px 15px; font-size:0.8rem; font-weight:bold; border-radius:4px; cursor:pointer;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Los 20 Ejercicios <span>Mancuernas</span></h1>
-        <p>Rutina Definitiva - Enlaces Universales Estables</p>
-    </header>
+<header>
+    <h1>Los 20 Ejercicios <span>Mancuernas</span></h1>
+    <p>Rutina Definitiva · 3 días · Push / Pull / Legs</p>
+</header>
 
-    <nav class="day-nav">
-        <button class="day-btn active" onclick="changeDay(1, this)">Día 1: Empuje</button>
-        <button class="day-btn" onclick="changeDay(2, this)">Día 2: Tirón</button>
-        <button class="day-btn" onclick="changeDay(3, this)">Día 3: Piernas</button>
-    </nav>
+<nav class="day-nav">
+    <button class="day-btn active" onclick="changeDay(1,this)">Día 1: Empuje</button>
+    <button class="day-btn" onclick="changeDay(2,this)">Día 2: Tirón</button>
+    <button class="day-btn" onclick="changeDay(3,this)">Día 3: Piernas</button>
+</nav>
 
-    <div class="app-container">
+<div class="app-container">
 
-        <!-- ================= DÍA 1: EMPUJE ================= -->
-        <section id="day-1" class="routine-section active">
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Hombros</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/e/fe/Dumbbell-shoulder-press-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">1. Press de hombros con mancuernas</div>
-                    <div class="exercise-presets">3-4 Series x 10-12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Posición erguida, empuja con fuerza por encima de tu cabeza bloqueando los codos de forma controlada.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
-                </div>
-            </div>
+<!-- ===== DÍA 1: EMPUJE ===== -->
+<section id="day-1" class="routine-section active">
 
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Pecho</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/e/ec/Floor-press-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">2. Press en el suelo (Floor Press)</div>
-                    <div class="exercise-presets">3-4 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Tumbado boca arriba en el suelo, baja las mancuernas hasta que tus tríceps toquen el piso y vuelve a empujar.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Hombros</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Dumbbell-lateral-raise-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">3. Elevaciones laterales (Lateral Raise)</div>
-                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Sube las mancuernas hacia los lados manteniendo una flexión mínima en tus codos hasta quedar paralelo al suelo.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Tríceps</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/0/05/Dumbbell-overhead-tricep-extension-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">4. Extensión de tríceps tras nuca</div>
-                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Sujeta una mancuerna con ambas manos tras la cabeza. Extiende los codos verticalmente apuntando al techo.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Pecho / Core</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Push-up-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">5. Flexiones sobre mancuernas</div>
-                    <div class="exercise-presets">3 Series x Al fallo técnico</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Agarra las mancuernas en el suelo para mantener las muñecas neutras y baja aumentando el rango de profundidad.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Hombro Frontal</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/5/53/Dumbbell-front-raise-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">6. Elevaciones frontales (Front Raise)</div>
-                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Eleva las mancuernas hacia el frente de forma alternada hasta la altura de tus ojos sin balancear el torso.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Hombros / Trapecios</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Upright-row-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">7. Remo al mentón (Upright Row)</div>
-                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Eleva las mancuernas verticalmente pegadas a tu cuerpo guiando el movimiento con tus codos hacia el techo.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 75)">1</div><div class="dot" onclick="toggleDot(this, 75)">2</div><div class="dot" onclick="toggleDot(this, 75)">3</div></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= DÍA 2: TIRÓN ================= -->
-        <section id="day-2" class="routine-section">
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Espalda</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/1/12/Dumbbell-row-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">8. Remo con mancuerna (Dumbbell Row)</div>
-                    <div class="exercise-presets">4 Series x 10-12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Flexiona ligeramente las rodillas e inclina el torso. Tira de los pesos hacia tus caderas apretando la zona dorsal.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Bíceps</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/1/19/Dumbbell-biceps-curl-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">9. Curl de Bíceps (Bicep Curl)</div>
-                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Codos inmóviles pegados a las costillas. Sube las mancuernas girando ligeramente las muñecas hacia afuera.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Espalda Completa</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Dumbbell-deadlift-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">10. Peso Muerto con mancuernas</div>
-                    <div class="exercise-presets">4 Series x 10 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Baja las mancuernas rozando tus espinillas doblando las caderas hacia atrás. Mantén tu espalda recta.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Espalda / Core</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Renegade-row-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">11. Remo Renegado (Renegade Row)</div>
-                    <div class="exercise-presets">3 Series x 10 Repeticiones por lado</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> En posición de flexión alta apoyado sobre tus mancuernas, realiza un remo hacia tu costado alternando los brazos.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Trapecios</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/d/df/Dumbbell-shrug-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">12. Encogimientos de hombros (Shrug)</div>
-                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Deja los brazos colgados a los lados y eleva los hombros verticalmente hacia las orejas.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Bíceps / Antebrazo</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/4/4f/Hammer-curl-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">13. Curl de Martillo (Hammer Curl)</div>
-                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Ejecuta el curl pero manteniendo las palmas de las manos mirándose entre sí durante todo el recorrido.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Core / Abdomen</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/0/0a/Crunch-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">14. Abdominales con carga</div>
-                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Tumbado con las rodillas dobladas, sujeta una mancuerna contra tu pecho e inicia la elevación despegando los omóplatos.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= DÍA 3: PIERNAS ================= -->
-        <section id="day-3" class="routine-section">
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Cuádriceps / Glúteos</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/1/15/Goblet-squat-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">15. Sentadilla Goblet (Goblet Squat)</div>
-                    <div class="exercise-presets">4 Series x 12-15 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Abraza una mancuerna pesada verticalmente pegada a tu pecho. Baja la cadera recta con los talones firmes.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div><div class="dot" onclick="toggleDot(this, 90)">4</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Piernas / Estabilidad</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/2/25/Dumbbell-lunge-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">16. Zancadas con mancuernas (Lunge)</div>
-                    <div class="exercise-presets">3 Series x 10 Repeticiones por pierna</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Da un paso amplio adelante doblando las rodillas a 90 grados. Evita que la rodilla pase la punta del pie.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Cardio / Potencia</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/d/df/Dumbbell-clean-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">17. Cargada con mancuernas (Dumbbell Clean)</div>
-                    <div class="exercise-presets">3 Series x 10 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Desde el semi-peso muerto, genera impulso explosivo con tu cadera y "recibe" las mancuernas sobre tus hombros.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Pierna Posterior</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Dumbbell-straight-leg-deadlift-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">18. Peso Muerto Rumano / Piernas Rígidas</div>
-                    <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Rodillas fijas. Empuja los glúteos hacia atrás sintiendo un estiramiento profundo en los femorales.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 90)">1</div><div class="dot" onclick="toggleDot(this, 90)">2</div><div class="dot" onclick="toggleDot(this, 90)">3</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Gemelos</span>
-                    <img class="exercise-gif" src="https://upload.wikimedia.org/wikipedia/commons/3/30/Calf-raise-animation.gif">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">19. Elevación de Talones (Calf Raise)</div>
-                    <div class="exercise-presets">4 Series x 20 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Sostén las mancuernas a los lados y elévate sobre las puntas de tus pies manteniendo la tensión arriba 1 segundo.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 45)">1</div><div class="dot" onclick="toggleDot(this, 45)">2</div><div class="dot" onclick="toggleDot(this, 45)">3</div><div class="dot" onclick="toggleDot(this, 45)">4</div></div></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="image-container">
-                    <span class="badge-tag">Cardio / FullBody</span>
-                    <img class="exercise-gif" src="https://hips.hearstapps.com/hmg-prod/images/one-arm-swing-64943a71b1047.gif?resize=980:*">
-                </div>
-                <div class="card-content">
-                    <div class="exercise-name">20. Swing con Mancuerna a una mano</div>
-                    <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-                    <div class="guide-box"><strong>Instrucciones:</strong> Pasa la mancuerna entre tus piernas flexionando la cadera y empújala explosivamente hacia el frente usando la fuerza de tus glúteos.</div>
-                    <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this, 60)">1</div><div class="dot" onclick="toggleDot(this, 60)">2</div><div class="dot" onclick="toggleDot(this, 60)">3</div></div></div>
-                </div>
-            </div>
-        </section>
-
-    </div>
-
-    <div id="global-timer" class="timer-bar">
-        <div>
-            <span style="font-size:0.75rem; display:block; color:var(--text-muted);">DESCANSO ACTIVO</span>
-            <span id="countdown-display" class="timer-countdown">00:00</span>
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/1.jpg" alt="">
+            <span class="badge-tag">Hombros</span>
         </div>
-        <button class="timer-btn" onclick="closeTimer()">SALTAR</button>
+        <div class="card-content">
+            <div class="exercise-name">1. Press de hombros con mancuernas</div>
+            <div class="exercise-presets">3-4 Series x 10-12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Posición erguida, empuja con fuerza por encima de tu cabeza bloqueando los codos de forma controlada.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
+        </div>
     </div>
 
-    <script>
-        let timerInterval;
-        let timeRemaining = 0;
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/1.jpg" alt="">
+            <span class="badge-tag">Pecho</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">2. Press en el suelo (Floor Press)</div>
+            <div class="exercise-presets">3-4 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Tumbado boca arriba en el suelo, baja las mancuernas hasta que tus tríceps toquen el piso y vuelve a empujar.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
+        </div>
+    </div>
 
-        function changeDay(dayNumber, btnElement) {
-            document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.routine-section').forEach(sec => sec.classList.remove('active'));
-            btnElement.classList.add('active');
-            document.getElementById(`day-${dayNumber}`).classList.add('active');
-            closeTimer();
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lying_Rear_Lateral_Raise/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lying_Rear_Lateral_Raise/1.jpg" alt="">
+            <span class="badge-tag">Hombros</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">3. Elevaciones laterales (Lateral Raise)</div>
+            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Sube las mancuernas hacia los lados manteniendo una flexión mínima en tus codos hasta quedar paralelo al suelo.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
 
-        function toggleDot(element, seconds) {
-            element.classList.toggle('completed');
-            if (element.classList.contains('completed')) {
-                launchTimer(seconds);
-            }
-        }
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_One-Arm_Triceps_Extension/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_One-Arm_Triceps_Extension/1.jpg" alt="">
+            <span class="badge-tag">Tríceps</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">4. Extensión de tríceps tras nuca</div>
+            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Sujeta una mancuerna con ambas manos tras la cabeza. Extiende los codos verticalmente apuntando al techo.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
 
-        function launchTimer(seconds) {
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/1.jpg" alt="">
+            <span class="badge-tag">Pecho / Core</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">5. Flexiones sobre mancuernas</div>
+            <div class="exercise-presets">3 Series x Al fallo técnico</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Agarra las mancuernas en el suelo para mantener las muñecas neutras y baja aumentando el rango de profundidad.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/1.jpg" alt="">
+            <span class="badge-tag">Hombro Frontal</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">6. Elevaciones frontales (Front Raise)</div>
+            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Eleva las mancuernas hacia el frente de forma alternada hasta la altura de tus ojos sin balancear el torso.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/1.jpg" alt="">
+            <span class="badge-tag">Hombros / Trapecios</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">7. Remo al mentón (Upright Row)</div>
+            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Eleva las mancuernas verticalmente pegadas a tu cuerpo guiando el movimiento con tus codos hacia el techo.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,75)">1</div><div class="dot" onclick="toggleDot(this,75)">2</div><div class="dot" onclick="toggleDot(this,75)">3</div></div></div>
+        </div>
+    </div>
+
+</section>
+
+<!-- ===== DÍA 2: TIRÓN ===== -->
+<section id="day-2" class="routine-section">
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg" alt="">
+            <span class="badge-tag">Espalda</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">8. Remo con mancuerna (Dumbbell Row)</div>
+            <div class="exercise-presets">4 Series x 10-12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Flexiona ligeramente las rodillas e inclina el torso. Tira de los pesos hacia tus caderas apretando la zona dorsal.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/1.jpg" alt="">
+            <span class="badge-tag">Bíceps</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">9. Curl de Bíceps (Bicep Curl)</div>
+            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Codos inmóviles pegados a las costillas. Sube las mancuernas girando ligeramente las muñecas hacia afuera.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Dumbbell_Deadlift/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Dumbbell_Deadlift/1.jpg" alt="">
+            <span class="badge-tag">Espalda Completa</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">10. Peso Muerto con mancuernas</div>
+            <div class="exercise-presets">4 Series x 10 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Baja las mancuernas rozando tus espinillas doblando las caderas hacia atrás. Mantén tu espalda recta.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternating_Renegade_Row/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternating_Renegade_Row/1.jpg" alt="">
+            <span class="badge-tag">Espalda / Core</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">11. Remo Renegado (Renegade Row)</div>
+            <div class="exercise-presets">3 Series x 10 Repeticiones por lado</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> En posición de flexión alta apoyado sobre tus mancuernas, realiza un remo hacia tu costado alternando los brazos.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shrug/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shrug/1.jpg" alt="">
+            <span class="badge-tag">Trapecios</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">12. Encogimientos de hombros (Shrug)</div>
+            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Deja los brazos colgando a los lados y eleva los hombros verticalmente hacia las orejas.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternate_Hammer_Curl/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternate_Hammer_Curl/1.jpg" alt="">
+            <span class="badge-tag">Bíceps / Antebrazo</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">13. Curl de Martillo (Hammer Curl)</div>
+            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Ejecuta el curl manteniendo las palmas de las manos mirándose entre sí durante todo el recorrido.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/1.jpg" alt="">
+            <span class="badge-tag">Core / Abdomen</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">14. Abdominales con carga</div>
+            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Tumbado con las rodillas dobladas, sujeta una mancuerna contra tu pecho e inicia la elevación despegando los omóplatos.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+</section>
+
+<!-- ===== DÍA 3: PIERNAS ===== -->
+<section id="day-3" class="routine-section">
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/1.jpg" alt="">
+            <span class="badge-tag">Cuádriceps / Glúteos</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">15. Sentadilla Goblet (Goblet Squat)</div>
+            <div class="exercise-presets">4 Series x 12-15 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Abraza una mancuerna pesada verticalmente pegada a tu pecho. Baja la cadera recta con los talones firmes.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/1.jpg" alt="">
+            <span class="badge-tag">Piernas / Estabilidad</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">16. Zancadas con mancuernas (Lunge)</div>
+            <div class="exercise-presets">3 Series x 10 Repeticiones por pierna</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Da un paso amplio adelante doblando las rodillas a 90 grados. Evita que la rodilla pase la punta del pie.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Clean/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Clean/1.jpg" alt="">
+            <span class="badge-tag">Cardio / Potencia</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">17. Cargada con mancuernas (Dumbbell Clean)</div>
+            <div class="exercise-presets">3 Series x 10 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Desde el semi-peso muerto, genera impulso explosivo con tu cadera y "recibe" las mancuernas sobre tus hombros.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/1.jpg" alt="">
+            <span class="badge-tag">Pierna Posterior</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">18. Peso Muerto Rumano / Piernas Rígidas</div>
+            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Rodillas fijas. Empuja los glúteos hacia atrás sintiendo un estiramiento profundo en los femorales.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Calf_Raise/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Calf_Raise/1.jpg" alt="">
+            <span class="badge-tag">Gemelos</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">19. Elevación de Talones (Calf Raise)</div>
+            <div class="exercise-presets">4 Series x 20 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Sostén las mancuernas a los lados y elévate sobre las puntas de tus pies manteniendo la tensión arriba 1 segundo.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,45)">1</div><div class="dot" onclick="toggleDot(this,45)">2</div><div class="dot" onclick="toggleDot(this,45)">3</div><div class="dot" onclick="toggleDot(this,45)">4</div></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="image-container">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/0.jpg" alt="">
+            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/1.jpg" alt="">
+            <span class="badge-tag">Cardio / FullBody</span>
+        </div>
+        <div class="card-content">
+            <div class="exercise-name">20. Swing con Mancuerna a una mano</div>
+            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
+            <div class="guide-box"><strong>Instrucciones:</strong> Pasa la mancuerna entre tus piernas flexionando la cadera y empújala explosivamente hacia el frente usando la fuerza de tus glúteos.</div>
+            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
+        </div>
+    </div>
+
+</section>
+</div>
+
+<div id="global-timer" class="timer-bar">
+    <div>
+        <span style="font-size:0.75rem;display:block;color:var(--text-muted);">DESCANSO ACTIVO</span>
+        <span id="countdown-display" class="timer-countdown">00:00</span>
+    </div>
+    <button class="timer-btn" onclick="closeTimer()">SALTAR</button>
+</div>
+
+<script>
+let timerInterval, timeRemaining = 0;
+
+function changeDay(n, btn) {
+    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.routine-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('day-' + n).classList.add('active');
+    closeTimer();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function toggleDot(el, secs) {
+    el.classList.toggle('completed');
+    if (el.classList.contains('completed')) launchTimer(secs);
+}
+
+function launchTimer(secs) {
+    clearInterval(timerInterval);
+    document.getElementById('global-timer').classList.add('show');
+    timeRemaining = secs;
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        const m = String(Math.floor(timeRemaining / 60)).padStart(2,'0');
+        const s = String(timeRemaining % 60).padStart(2,'0');
+        document.getElementById('countdown-display').innerText = m + ':' + s;
+        if (timeRemaining <= 0) {
             clearInterval(timerInterval);
-            const timerBar = document.getElementById('global-timer');
-            timerBar.classList.add('show');
-            timeRemaining = seconds;
-            
-            timerInterval = setInterval(() => {
-                timeRemaining--;
-                const mins = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-                const secs = (timeRemaining % 60).toString().padStart(2, '0');
-                document.getElementById('countdown-display').innerText = `${mins}:${secs}`;
-
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    document.getElementById('countdown-display').innerText = "¡A POR LA OTRA!";
-                    setTimeout(closeTimer, 1500);
-                }
-            }, 1000);
+            document.getElementById('countdown-display').innerText = '¡A POR LA OTRA!';
+            setTimeout(closeTimer, 1500);
         }
+    }, 1000);
+}
 
-        function closeTimer() {
-            clearInterval(timerInterval);
-            document.getElementById('global-timer').classList.remove('show');
-        }
-    </script>
+function closeTimer() {
+    clearInterval(timerInterval);
+    document.getElementById('global-timer').classList.remove('show');
+}
+</script>
 </body>
 </html>
