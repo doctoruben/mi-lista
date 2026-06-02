@@ -1,467 +1,1135 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Los 20 Ejercicios con Mancuernas</title>
-    <style>
-        :root {
-            --bg-main: #0b0f19;
-            --bg-card: #151f32;
-            --bg-darker: #090d16;
-            --accent-color: #e50914;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --success: #10b981;
-            --warning: #f59e0b;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; }
-        body { background-color:var(--bg-main); color:var(--text-main); padding-bottom:100px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rutina Mancuernas</title>
+<style>
+:root {
+  --bg: #0b0f19;
+  --card: #131c2e;
+  --card2: #0e1623;
+  --border: #1e2d47;
+  --accent: #e50914;
+  --accent2: #ff4d57;
+  --gold: #f59e0b;
+  --green: #10b981;
+  --blue: #3b82f6;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --muted2: #94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;padding-bottom:80px;min-height:100vh;}
 
-        header {
-            background-color:var(--bg-card); padding:20px 15px; text-align:center;
-            border-bottom:3px solid var(--accent-color); position:sticky; top:0; z-index:100;
-        }
-        header h1 { font-size:1.4rem; text-transform:uppercase; letter-spacing:1px; }
-        header h1 span { color:var(--accent-color); }
-        header p { font-size:0.85rem; color:var(--text-muted); margin-top:5px; }
+/* ── HEADER ── */
+header{
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:12px 16px;position:sticky;top:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.header-title{font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.header-title span{color:var(--accent);}
+.header-btns{display:flex;gap:8px;align-items:center;}
+.btn-icon{
+  background:none;border:1px solid var(--border);color:var(--muted2);
+  border-radius:8px;padding:7px 10px;cursor:pointer;font-size:0.75rem;
+  display:flex;align-items:center;gap:5px;transition:all .2s;white-space:nowrap;
+}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent);}
+.btn-icon svg{width:15px;height:15px;flex-shrink:0;}
 
-        .day-nav {
-            display:flex; background-color:var(--bg-darker); padding:8px; gap:5px;
-            position:sticky; top:76px; z-index:99; border-bottom:1px solid #222f47;
-        }
-        .day-btn {
-            flex:1; background:none; border:none; color:var(--text-muted);
-            padding:12px 5px; font-weight:700; font-size:0.8rem; text-transform:uppercase;
-            cursor:pointer; border-radius:6px; transition:all 0.2s; text-align:center;
-        }
-        .day-btn.active { background-color:var(--accent-color); color:white; }
+/* ── DAY NAV ── */
+.day-nav{
+  display:flex;background:var(--card2);padding:8px;gap:5px;
+  position:sticky;top:53px;z-index:199;border-bottom:1px solid var(--border);
+}
+.day-btn{
+  flex:1;background:none;border:none;color:var(--muted);padding:10px 4px;
+  font-weight:700;font-size:0.72rem;text-transform:uppercase;cursor:pointer;
+  border-radius:6px;transition:all .2s;letter-spacing:.5px;
+}
+.day-btn.active{background:var(--accent);color:#fff;}
 
-        .app-container { max-width:600px; margin:20px auto; padding:0 12px; }
-        .routine-section { display:none; }
-        .routine-section.active { display:block; }
+/* ── CARDS ── */
+.app{max-width:600px;margin:16px auto;padding:0 12px;}
+.section{display:none;}.section.active{display:block;}
 
-        .card { background-color:var(--bg-card); border-radius:12px; margin-bottom:25px; overflow:hidden; border:1px solid #1e2d4a; }
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  margin-bottom:20px;overflow:hidden;
+}
 
-        .image-container {
-            position:relative; width:100%; background:#0a0f1c;
-            display:flex; overflow:hidden;
-        }
-        /* Dos imágenes lado a lado */
-        .image-container img {
-            width:50%; display:block;
-            aspect-ratio:4/3; object-fit:cover; object-position:center;
-            background:#111827;
-            border-right:2px solid #0b0f19;
-        }
-        .image-container img:last-child { border-right:none; }
-        /* Una sola imagen */
-        .image-container img:only-child {
-            width:100%; aspect-ratio:16/9; object-fit:contain; background:#111827;
-        }
+/* ── IMAGE ── */
+.img-wrap{
+  position:relative;display:flex;width:100%;
+  background:#08101c;overflow:hidden;cursor:zoom-in;
+}
+.img-wrap img{
+  width:50%;aspect-ratio:4/3;object-fit:cover;object-position:center;
+  display:block;transition:transform .3s;
+}
+.img-wrap img:only-child{width:100%;aspect-ratio:16/9;object-fit:contain;}
+.img-wrap img:first-child{border-right:2px solid var(--bg);}
+.img-wrap:hover img{transform:scale(1.03);}
+.badge{
+  position:absolute;bottom:10px;left:10px;z-index:10;
+  background:rgba(0,0,0,.78);color:#fff;padding:4px 10px;border-radius:20px;
+  font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  border:1px solid rgba(229,9,20,.5);backdrop-filter:blur(6px);
+}
 
-        .badge-tag {
-            position:absolute; top:10px; right:10px; z-index:10;
-            background:rgba(0,0,0,0.72); color:white; padding:4px 10px;
-            border-radius:4px; font-size:0.7rem; font-weight:bold;
-            text-transform:uppercase; border-left:3px solid var(--accent-color);
-            backdrop-filter:blur(4px);
-        }
+/* ── LIGHTBOX ── */
+#lightbox{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column;gap:12px;
+}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:90vw;max-height:80vh;object-fit:contain;border-radius:8px;}
+#lightbox-close{
+  position:absolute;top:16px;right:16px;background:rgba(255,255,255,.1);
+  border:none;color:#fff;font-size:1.4rem;width:40px;height:40px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.lb-pair{display:flex;gap:10px;max-width:90vw;}
+.lb-pair img{max-height:70vh;max-width:44vw;object-fit:contain;border-radius:6px;}
 
-        .card-content { padding:18px; }
-        .exercise-name { font-size:1.2rem; font-weight:700; color:white; margin-bottom:6px; }
-        .exercise-presets { font-size:0.85rem; color:var(--warning); font-weight:bold; margin-bottom:12px; }
-        .guide-box {
-            background-color:var(--bg-darker); padding:12px; border-radius:8px;
-            font-size:0.85rem; color:var(--text-muted); line-height:1.4; margin-bottom:15px;
-        }
-        .guide-box strong { color:white; }
-        .series-control {
-            display:flex; align-items:center; justify-content:space-between;
-            background-color:#0e1624; padding:10px 12px; border-radius:8px;
-        }
-        .series-label { font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; }
-        .series-dots { display:flex; gap:6px; }
-        .dot {
-            width:34px; height:34px; border-radius:50%; border:2px solid #2d3f5e;
-            background-color:transparent; color:var(--text-main); display:flex;
-            align-items:center; justify-content:center; font-weight:bold;
-            font-size:0.8rem; cursor:pointer; user-select:none;
-        }
-        .dot.completed { background-color:var(--success); border-color:var(--success); color:white; }
+/* ── CARD CONTENT ── */
+.card-body{padding:16px;}
+.ex-name{font-size:1.05rem;font-weight:700;margin-bottom:3px;}
+.ex-presets{font-size:0.8rem;color:var(--gold);font-weight:600;margin-bottom:10px;}
+.guide{
+  background:var(--card2);border-left:3px solid var(--accent);
+  padding:10px 12px;border-radius:0 8px 8px 0;
+  font-size:0.82rem;color:var(--muted2);line-height:1.5;margin-bottom:14px;
+}
+.guide strong{color:var(--text);}
 
-        .timer-bar {
-            position:fixed; bottom:0; left:0; right:0; background-color:#161d31;
-            border-top:3px solid var(--accent-color); padding:15px 20px;
-            display:flex; align-items:center; justify-content:space-between;
-            box-shadow:0 -4px 15px rgba(0,0,0,0.5); z-index:1000;
-            transform:translateY(100%); transition:transform 0.3s ease-in-out;
-        }
-        .timer-bar.show { transform:translateY(0); }
-        .timer-countdown { font-size:1.5rem; font-weight:800; color:var(--warning); font-family:monospace; }
-        .timer-btn {
-            background-color:var(--accent-color); border:none; color:white;
-            padding:8px 15px; font-size:0.8rem; font-weight:bold; border-radius:4px; cursor:pointer;
-        }
-    </style>
+/* ── SERIES BUTTONS ── */
+.series-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.series-lbl{font-size:0.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:2px;}
+.dot{
+  width:36px;height:36px;border-radius:50%;border:2px solid var(--border);
+  background:none;color:var(--text);font-weight:700;font-size:0.8rem;
+  cursor:pointer;user-select:none;transition:all .2s;position:relative;
+}
+.dot.active-series{border-color:var(--gold);color:var(--gold);box-shadow:0 0 8px rgba(245,158,11,.4);}
+.dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+.dot.done::after{content:'✓';font-size:0.9rem;}
+.dot.done span{display:none;}
+
+/* ── CRONÓMETRO INLINE ── */
+.serie-timer{
+  display:none;margin-top:12px;background:var(--card2);
+  border:1px solid var(--border);border-radius:10px;padding:14px;
+}
+.serie-timer.open{display:block;}
+.st-phase{font-size:0.65rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px;}
+.st-time{font-size:2.2rem;font-weight:800;font-family:monospace;color:var(--gold);line-height:1;}
+.st-bar-wrap{height:4px;background:var(--border);border-radius:2px;margin:10px 0;}
+.st-bar{height:4px;border-radius:2px;background:var(--gold);width:100%;transition:width .9s linear;}
+.st-bar.rest{background:var(--green);}
+.st-btns{display:flex;gap:8px;margin-top:10px;}
+.st-btn{
+  flex:1;padding:10px;border:none;border-radius:8px;font-weight:700;
+  font-size:0.82rem;cursor:pointer;transition:all .2s;
+}
+.st-btn-done{background:var(--green);color:#fff;}
+.st-btn-done:hover{background:#0d9e6e;}
+.st-btn-skip{background:var(--border);color:var(--muted2);}
+.st-btn-skip:hover{background:#2d3f5e;color:#fff;}
+.st-rest-msg{font-size:0.78rem;color:var(--muted2);text-align:center;margin-top:6px;}
+
+/* ── MODALS ── */
+.modal-bg{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:16px;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  width:100%;max-width:420px;max-height:90vh;overflow-y:auto;padding:24px;position:relative;
+}
+.modal h2{font-size:1.1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.modal-close{
+  position:absolute;top:14px;right:14px;background:var(--border);border:none;
+  color:var(--muted2);width:30px;height:30px;border-radius:50%;cursor:pointer;
+  font-size:1rem;display:flex;align-items:center;justify-content:center;
+}
+
+/* ── FINALIZAR SESIÓN ── */
+.finish-stat{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+.finish-stat:last-of-type{border-bottom:none;}
+.finish-stat .lbl{font-size:0.8rem;color:var(--muted2);}
+.finish-stat .val{font-size:1rem;font-weight:700;color:var(--text);}
+.weight-input{
+  width:100%;background:var(--card2);border:1px solid var(--border);
+  color:var(--text);padding:12px;border-radius:8px;font-size:1rem;
+  text-align:center;margin:14px 0;outline:none;
+}
+.weight-input:focus{border-color:var(--accent);}
+.btn-finish-confirm{
+  width:100%;background:var(--accent);border:none;color:#fff;
+  padding:13px;border-radius:10px;font-size:0.9rem;font-weight:700;
+  cursor:pointer;margin-top:4px;
+}
+.btn-finish-confirm:hover{background:var(--accent2);}
+
+/* ── CALENDARIO ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-nav button{background:none;border:1px solid var(--border);color:var(--muted2);border-radius:6px;padding:5px 10px;cursor:pointer;}
+.cal-nav button:hover{border-color:var(--accent);color:var(--accent);}
+.cal-nav span{font-weight:700;font-size:0.95rem;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-dow{text-align:center;font-size:0.62rem;color:var(--muted);padding:4px 0;text-transform:uppercase;font-weight:600;}
+.cal-day{
+  aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-size:0.78rem;cursor:default;
+  background:var(--card2);border:1px solid transparent;gap:1px;
+}
+.cal-day.empty{background:none;border:none;}
+.cal-day.today{border-color:var(--accent);color:var(--accent);}
+.cal-day.has-data{cursor:pointer;border-color:var(--green);}
+.cal-day.has-data:hover{background:#0d2a1e;}
+.cal-kcal{font-size:0.55rem;color:var(--green);font-weight:700;}
+.day-detail{margin-top:16px;background:var(--card2);border-radius:10px;padding:14px;display:none;}
+.day-detail.open{display:block;}
+.day-detail h3{font-size:0.85rem;font-weight:700;margin-bottom:10px;color:var(--gold);}
+.day-ex{font-size:0.78rem;color:var(--muted2);padding:5px 0;border-bottom:1px solid var(--border);}
+.day-ex:last-child{border-bottom:none;}
+.day-ex strong{color:var(--text);}
+
+/* ── BOTTOM BAR (sesión activa) ── */
+.session-bar{
+  position:fixed;bottom:0;left:0;right:0;background:var(--card);
+  border-top:1px solid var(--border);padding:10px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;z-index:300;
+}
+.sb-info{display:flex;gap:16px;}
+.sb-item{text-align:center;}
+.sb-val{font-size:1rem;font-weight:800;color:var(--gold);font-family:monospace;}
+.sb-lbl{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.btn-finish{
+  background:var(--accent);border:none;color:#fff;padding:9px 16px;
+  border-radius:8px;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;
+}
+.btn-finish:hover{background:var(--accent2);}
+
+/* ── RESULTADO FINAL ── */
+.result-hero{text-align:center;padding:10px 0 20px;}
+.result-hero .kcal{font-size:3rem;font-weight:900;color:var(--gold);line-height:1;}
+.result-hero .kcal-lbl{font-size:0.8rem;color:var(--muted2);margin-top:4px;}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.result-box{background:var(--card2);border-radius:10px;padding:12px;text-align:center;}
+.result-box .rv{font-size:1.3rem;font-weight:800;color:var(--text);}
+.result-box .rl{font-size:0.68rem;color:var(--muted2);text-transform:uppercase;margin-top:2px;}
+.btn-close-result{
+  width:100%;background:var(--green);border:none;color:#fff;
+  padding:12px;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;
+}
+</style>
 </head>
 <body>
 
+<!-- ══════════════════════════════ HEADER ══════════════════════════════ -->
 <header>
-    <h1>Los 20 Ejercicios <span>Mancuernas</span></h1>
-    <p>Rutina Definitiva · 3 días · Push / Pull / Legs</p>
+  <div class="header-title">💪 <span>Mancuernas</span> PRO</div>
+  <div class="header-btns">
+    <button class="btn-icon" onclick="openCal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Historial
+    </button>
+  </div>
 </header>
 
+<!-- ══════════════════════════════ DAY NAV ══════════════════════════════ -->
 <nav class="day-nav">
-    <button class="day-btn active" onclick="changeDay(1,this)">Día 1: Empuje</button>
-    <button class="day-btn" onclick="changeDay(2,this)">Día 2: Tirón</button>
-    <button class="day-btn" onclick="changeDay(3,this)">Día 3: Piernas</button>
+  <button class="day-btn active" onclick="changeDay(1,this)">Día 1 · Empuje</button>
+  <button class="day-btn" onclick="changeDay(2,this)">Día 2 · Tirón</button>
+  <button class="day-btn" onclick="changeDay(3,this)">Día 3 · Piernas</button>
 </nav>
 
-<div class="app-container">
+<!-- ══════════════════════════════ EJERCICIOS ══════════════════════════════ -->
+<div class="app">
 
-<!-- ===== DÍA 1: EMPUJE ===== -->
-<section id="day-1" class="routine-section active">
+<!-- ───────── DÍA 1: EMPUJE ───────── -->
+<section id="day-1" class="section active">
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/1.jpg" alt="">
-            <span class="badge-tag">Hombros</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">1. Press de hombros con mancuernas</div>
-            <div class="exercise-presets">3-4 Series x 10-12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Posición erguida, empuja con fuerza por encima de tu cabeza bloqueando los codos de forma controlada.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
-        </div>
+  <div class="card" data-exid="ex1">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shoulder_Press/1.jpg" alt="">
+      <span class="badge">Hombros</span>
     </div>
-
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/1.jpg" alt="">
-            <span class="badge-tag">Pecho</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">2. Press en el suelo (Floor Press)</div>
-            <div class="exercise-presets">3-4 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Tumbado boca arriba en el suelo, baja las mancuernas hasta que tus tríceps toquen el piso y vuelve a empujar.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
-        </div>
+    <div class="card-body">
+      <div class="ex-name">1. Press de hombros con mancuernas</div>
+      <div class="ex-presets">4 Series · 10-12 reps · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Sentado o de pie, mancuernas a la altura de los hombros. Empuja hacia arriba hasta casi extender, baja controlado. Espalda neutra.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="4"><span>4</span></button>
+      </div>
+      <div class="serie-timer"></div>
     </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lying_Rear_Lateral_Raise/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lying_Rear_Lateral_Raise/1.jpg" alt="">
-            <span class="badge-tag">Hombros</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">3. Elevaciones laterales (Lateral Raise)</div>
-            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Sube las mancuernas hacia los lados manteniendo una flexión mínima en tus codos hasta quedar paralelo al suelo.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex2">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/1.jpg" alt="">
+      <span class="badge">Pecho</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">2. Press de pecho con mancuernas</div>
+      <div class="ex-presets">4 Series · 12 reps · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Tumbado en el suelo (floor press). Baja hasta que los tríceps toquen el suelo. Empuja explosivo, baja lento.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="4"><span>4</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_One-Arm_Triceps_Extension/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_One-Arm_Triceps_Extension/1.jpg" alt="">
-            <span class="badge-tag">Tríceps</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">4. Extensión de tríceps tras nuca</div>
-            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Sujeta una mancuerna con ambas manos tras la cabeza. Extiende los codos verticalmente apuntando al techo.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex3">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lying_Rear_Lateral_Raise/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lying_Rear_Lateral_Raise/1.jpg" alt="">
+      <span class="badge">Deltoides lateral</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">3. Elevaciones laterales</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> De pie o sentado, codos ligeramente flexionados. Sube hasta paralelo al suelo. No balancees el torso.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/1.jpg" alt="">
-            <span class="badge-tag">Pecho / Core</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">5. Flexiones sobre mancuernas</div>
-            <div class="exercise-presets">3 Series x Al fallo técnico</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Agarra las mancuernas en el suelo para mantener las muñecas neutras y baja aumentando el rango de profundidad.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex4">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_One-Arm_Triceps_Extension/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_One-Arm_Triceps_Extension/1.jpg" alt="">
+      <span class="badge">Tríceps</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">4. Extensión tríceps tras nuca</div>
+      <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Sujeta la mancuerna con ambas manos sobre la cabeza. Dobla codos a 90° y extiende. Codo quieto apuntando al techo.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/1.jpg" alt="">
-            <span class="badge-tag">Hombro Frontal</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">6. Elevaciones frontales (Front Raise)</div>
-            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Eleva las mancuernas hacia el frente de forma alternada hasta la altura de tus ojos sin balancear el torso.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex5">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/1.jpg" alt="">
+      <span class="badge">Pecho / Core</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">5. Flexiones sobre mancuernas</div>
+      <div class="ex-presets">3 Series · Fallo técnico · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Manos sobre las mancuernas, muñecas neutras. Mayor profundidad que la flexión normal. Cuerpo rígido como una tabla.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/1.jpg" alt="">
-            <span class="badge-tag">Hombros / Trapecios</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">7. Remo al mentón (Upright Row)</div>
-            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Eleva las mancuernas verticalmente pegadas a tu cuerpo guiando el movimiento con tus codos hacia el techo.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,75)">1</div><div class="dot" onclick="toggleDot(this,75)">2</div><div class="dot" onclick="toggleDot(this,75)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex6">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/1.jpg" alt="">
+      <span class="badge">Deltoides frontal</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">6. Elevaciones frontales</div>
+      <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Brazos casi extendidos, sube hasta la altura de los ojos. Alterna brazos o simultáneo. Sin impulso lumbar.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <div class="card" data-exid="ex7">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Upright_Row/1.jpg" alt="">
+      <span class="badge">Trapecios</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">7. Remo al mentón</div>
+      <div class="ex-presets">3 Series · 12 reps · Descanso 75 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Mancuernas frente al cuerpo. Sube guiando con los codos por encima de los hombros. Pausa arriba 1 segundo.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,75)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,75)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,75)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
 </section>
 
-<!-- ===== DÍA 2: TIRÓN ===== -->
-<section id="day-2" class="routine-section">
+<!-- ───────── DÍA 2: TIRÓN ───────── -->
+<section id="day-2" class="section">
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg" alt="">
-            <span class="badge-tag">Espalda</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">8. Remo con mancuerna (Dumbbell Row)</div>
-            <div class="exercise-presets">4 Series x 10-12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Flexiona ligeramente las rodillas e inclina el torso. Tira de los pesos hacia tus caderas apretando la zona dorsal.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
-        </div>
+  <div class="card" data-exid="ex8">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/1.jpg" alt="">
+      <span class="badge">Dorsal</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">8. Remo inclinado con mancuernas</div>
+      <div class="ex-presets">4 Series · 10-12 reps · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Torso a 45°, rodillas ligeramente flexionadas. Tira hacia las caderas apretando la escápula. Codos pegados al cuerpo.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="4"><span>4</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/1.jpg" alt="">
-            <span class="badge-tag">Bíceps</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">9. Curl de Bíceps (Bicep Curl)</div>
-            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Codos inmóviles pegados a las costillas. Sube las mancuernas girando ligeramente las muñecas hacia afuera.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex9">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/1.jpg" alt="">
+      <span class="badge">Bíceps</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">9. Curl de bíceps</div>
+      <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Codos fijos en las costillas. Sube supinando la muñeca. Baja completamente para máximo estiramiento. Alterna o simultáneo.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Dumbbell_Deadlift/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Dumbbell_Deadlift/1.jpg" alt="">
-            <span class="badge-tag">Espalda Completa</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">10. Peso Muerto con mancuernas</div>
-            <div class="exercise-presets">4 Series x 10 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Baja las mancuernas rozando tus espinillas doblando las caderas hacia atrás. Mantén tu espalda recta.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
-        </div>
+  <div class="card" data-exid="ex10">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Dumbbell_Deadlift/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Stiff-Legged_Dumbbell_Deadlift/1.jpg" alt="">
+      <span class="badge">Isquiotibiales</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">10. Peso muerto piernas rígidas</div>
+      <div class="ex-presets">4 Series · 10 reps · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Rodillas casi extendidas. Empuja caderas hacia atrás bajando las mancuernas por las espinillas. Espalda recta siempre.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="4"><span>4</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternating_Renegade_Row/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternating_Renegade_Row/1.jpg" alt="">
-            <span class="badge-tag">Espalda / Core</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">11. Remo Renegado (Renegade Row)</div>
-            <div class="exercise-presets">3 Series x 10 Repeticiones por lado</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> En posición de flexión alta apoyado sobre tus mancuernas, realiza un remo hacia tu costado alternando los brazos.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex11">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternating_Renegade_Row/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternating_Renegade_Row/1.jpg" alt="">
+      <span class="badge">Dorsal / Core</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">11. Remo renegado alternado</div>
+      <div class="ex-presets">3 Series · 10 reps/lado · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Plancha sobre mancuernas. Tira alternando brazos sin rotar las caderas. Core completamente activado.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shrug/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shrug/1.jpg" alt="">
-            <span class="badge-tag">Trapecios</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">12. Encogimientos de hombros (Shrug)</div>
-            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Deja los brazos colgando a los lados y eleva los hombros verticalmente hacia las orejas.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex12">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shrug/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Shrug/1.jpg" alt="">
+      <span class="badge">Trapecios</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">12. Encogimientos (Shrug)</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Brazos rectos, eleva hombros hacia las orejas. Pausa arriba 2 segundos. No gires los hombros hacia atrás.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternate_Hammer_Curl/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternate_Hammer_Curl/1.jpg" alt="">
-            <span class="badge-tag">Bíceps / Antebrazo</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">13. Curl de Martillo (Hammer Curl)</div>
-            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Ejecuta el curl manteniendo las palmas de las manos mirándose entre sí durante todo el recorrido.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex13">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternate_Hammer_Curl/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Alternate_Hammer_Curl/1.jpg" alt="">
+      <span class="badge">Braquial / Antebrazo</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">13. Curl martillo alterno</div>
+      <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Palmas enfrentadas durante todo el recorrido. Rango completo. Trabaja braquial y braquiorradial junto al bíceps.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/1.jpg" alt="">
-            <span class="badge-tag">Core / Abdomen</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">14. Abdominales con carga</div>
-            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Tumbado con las rodillas dobladas, sujeta una mancuerna contra tu pecho e inicia la elevación despegando los omóplatos.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex14">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/1.jpg" alt="">
+      <span class="badge">Abdomen</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">14. Crunch en banco inclinado con carga</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> En el banco abdominal inclinado, sujeta la mancuerna en el pecho. Mayor rango de movimiento que en suelo. Excelente activación.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
 </section>
 
-<!-- ===== DÍA 3: PIERNAS ===== -->
-<section id="day-3" class="routine-section">
+<!-- ───────── DÍA 3: PIERNAS ───────── -->
+<section id="day-3" class="section">
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/1.jpg" alt="">
-            <span class="badge-tag">Cuádriceps / Glúteos</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">15. Sentadilla Goblet (Goblet Squat)</div>
-            <div class="exercise-presets">4 Series x 12-15 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Abraza una mancuerna pesada verticalmente pegada a tu pecho. Baja la cadera recta con los talones firmes.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div><div class="dot" onclick="toggleDot(this,90)">4</div></div></div>
-        </div>
+  <div class="card" data-exid="ex15">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/1.jpg" alt="">
+      <span class="badge">Cuádriceps / Glúteos</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">15. Sentadilla Goblet</div>
+      <div class="ex-presets">4 Series · 15 reps · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Mancuerna abrazada verticalmente al pecho. Pies algo más anchos que hombros. Baja profundo manteniendo talones en suelo.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="4"><span>4</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/1.jpg" alt="">
-            <span class="badge-tag">Piernas / Estabilidad</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">16. Zancadas con mancuernas (Lunge)</div>
-            <div class="exercise-presets">3 Series x 10 Repeticiones por pierna</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Da un paso amplio adelante doblando las rodillas a 90 grados. Evita que la rodilla pase la punta del pie.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex16">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/1.jpg" alt="">
+      <span class="badge">Cuádriceps / Glúteos</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">16. Zancadas con mancuernas</div>
+      <div class="ex-presets">3 Series · 10 reps/pierna · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Paso amplio adelante, rodilla trasera casi toca el suelo. Rodilla delantera no sobrepasa la punta del pie. Alterna piernas.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Clean/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Clean/1.jpg" alt="">
-            <span class="badge-tag">Cardio / Potencia</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">17. Cargada con mancuernas (Dumbbell Clean)</div>
-            <div class="exercise-presets">3 Series x 10 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Desde el semi-peso muerto, genera impulso explosivo con tu cadera y "recibe" las mancuernas sobre tus hombros.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex17">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/1.jpg" alt="">
+      <span class="badge">Isquiotibiales / Glúteos</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">17. Peso muerto rumano</div>
+      <div class="ex-presets">3 Series · 12 reps · Descanso 90 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Rodillas con leve flexión fija. Empuja las caderas hacia atrás, baja sintiendo estiramiento en femorales. Espalda neutra.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,90)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/1.jpg" alt="">
-            <span class="badge-tag">Pierna Posterior</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">18. Peso Muerto Rumano / Piernas Rígidas</div>
-            <div class="exercise-presets">3 Series x 12 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Rodillas fijas. Empuja los glúteos hacia atrás sintiendo un estiramiento profundo en los femorales.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,90)">1</div><div class="dot" onclick="toggleDot(this,90)">2</div><div class="dot" onclick="toggleDot(this,90)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex18">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/1.jpg" alt="">
+      <span class="badge">Glúteos</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">18. Hip thrust con mancuerna</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 75 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Espalda apoyada en el banco, mancuerna sobre las caderas. Empuja hacia arriba apretando glúteos al máximo. Pausa 1 s arriba.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,75)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,75)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,75)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Calf_Raise/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Calf_Raise/1.jpg" alt="">
-            <span class="badge-tag">Gemelos</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">19. Elevación de Talones (Calf Raise)</div>
-            <div class="exercise-presets">4 Series x 20 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Sostén las mancuernas a los lados y elévate sobre las puntas de tus pies manteniendo la tensión arriba 1 segundo.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,45)">1</div><div class="dot" onclick="toggleDot(this,45)">2</div><div class="dot" onclick="toggleDot(this,45)">3</div><div class="dot" onclick="toggleDot(this,45)">4</div></div></div>
-        </div>
+  <div class="card" data-exid="ex19">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Calf_Raise/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Calf_Raise/1.jpg" alt="">
+      <span class="badge">Gemelos</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">19. Elevación de talones</div>
+      <div class="ex-presets">4 Series · 20 reps · Descanso 45 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Mancuernas a los lados. Sube lento (2 s), pausa arriba (1 s), baja lento (3 s). Rango máximo en punta de pies.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,45)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,45)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,45)" data-n="3"><span>3</span></button>
+        <button class="dot" onclick="startSerie(this,45)" data-n="4"><span>4</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
-    <div class="card">
-        <div class="image-container">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/0.jpg" alt="">
-            <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/1.jpg" alt="">
-            <span class="badge-tag">Cardio / FullBody</span>
-        </div>
-        <div class="card-content">
-            <div class="exercise-name">20. Swing con Mancuerna a una mano</div>
-            <div class="exercise-presets">3 Series x 15 Repeticiones</div>
-            <div class="guide-box"><strong>Instrucciones:</strong> Pasa la mancuerna entre tus piernas flexionando la cadera y empújala explosivamente hacia el frente usando la fuerza de tus glúteos.</div>
-            <div class="series-control"><span class="series-label">Series:</span><div class="series-dots"><div class="dot" onclick="toggleDot(this,60)">1</div><div class="dot" onclick="toggleDot(this,60)">2</div><div class="dot" onclick="toggleDot(this,60)">3</div></div></div>
-        </div>
+  <div class="card" data-exid="ex20">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/1.jpg" alt="">
+      <span class="badge">Cardio · FullBody</span>
     </div>
+    <div class="card-body">
+      <div class="ex-name">20. Bici estática HIIT (finisher)</div>
+      <div class="ex-presets">3 Rondas · 20 s sprint / 40 s suave · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> 20 segundos al máximo esfuerzo en la bici estática, 40 segundos recuperación activa suave. Excelente finisher cardiovascular para piernas.</div>
+      <div class="series-row">
+        <span class="series-lbl">Rondas</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
 
 </section>
+</div><!-- /app -->
+
+<!-- ══════════════════════════════ BOTTOM BAR ══════════════════════════════ -->
+<div class="session-bar" id="session-bar">
+  <div class="sb-info">
+    <div class="sb-item">
+      <div class="sb-val" id="sb-time">00:00</div>
+      <div class="sb-lbl">Sesión</div>
+    </div>
+    <div class="sb-item">
+      <div class="sb-val" id="sb-series">0</div>
+      <div class="sb-lbl">Series</div>
+    </div>
+    <div class="sb-item">
+      <div class="sb-val" id="sb-rest">0:00</div>
+      <div class="sb-lbl">Descanso</div>
+    </div>
+  </div>
+  <button class="btn-finish" onclick="openFinish()">Finalizar sesión</button>
 </div>
 
-<div id="global-timer" class="timer-bar">
-    <div>
-        <span style="font-size:0.75rem;display:block;color:var(--text-muted);">DESCANSO ACTIVO</span>
-        <span id="countdown-display" class="timer-countdown">00:00</span>
-    </div>
-    <button class="timer-btn" onclick="closeTimer()">SALTAR</button>
+<!-- ══════════════════════════════ LIGHTBOX ══════════════════════════════ -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <div id="lb-content"></div>
 </div>
 
+<!-- ══════════════════════════════ MODAL FINALIZAR ══════════════════════════════ -->
+<div class="modal-bg" id="modal-finish">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-finish')">✕</button>
+    <h2>🏁 Finalizar sesión</h2>
+    <div id="finish-stats"></div>
+    <label style="font-size:.8rem;color:var(--muted2);display:block;margin-top:14px;">Tu peso actual (kg) — para estimar calorías</label>
+    <input type="number" class="weight-input" id="weight-input" placeholder="ej. 80" min="30" max="200" step="0.5">
+    <button class="btn-finish-confirm" onclick="confirmFinish()">✅ Guardar sesión y ver resultados</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ MODAL RESULTADO ══════════════════════════════ -->
+<div class="modal-bg" id="modal-result">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-result')">✕</button>
+    <h2>🎉 Sesión completada</h2>
+    <div id="result-content"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ MODAL CALENDARIO ══════════════════════════════ -->
+<div class="modal-bg" id="modal-cal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-cal')">✕</button>
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Historial de sesiones
+    </h2>
+    <div class="cal-nav">
+      <button onclick="calMove(-1)">‹</button>
+      <span id="cal-title"></span>
+      <button onclick="calMove(1)">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="day-detail" id="day-detail"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ JAVASCRIPT ══════════════════════════════ -->
 <script>
-let timerInterval, timeRemaining = 0;
+// ─── ESTADO GLOBAL ───────────────────────────────────────────────────
+const STORE_KEY = 'mancuernas_sessions_v1';
 
+let session = {
+  startTs: Date.now(),
+  day: 1,
+  series: [],           // {exid, n, execMs, restMs, ts}
+  totalRestMs: 0,
+  activeTimer: null     // referencia al bloque timer activo
+};
+
+let sessionClockInterval = null;
+let sessionActive = true;
+
+// ─── NOMBRES DE EJERCICIOS ────────────────────────────────────────────
+const EX_NAMES = {
+  ex1:'Press de hombros', ex2:'Press de pecho', ex3:'Elevaciones laterales',
+  ex4:'Extensión tríceps', ex5:'Flexiones mancuernas', ex6:'Elevaciones frontales',
+  ex7:'Remo al mentón', ex8:'Remo inclinado', ex9:'Curl de bíceps',
+  ex10:'Peso muerto rígido', ex11:'Remo renegado', ex12:'Shrug',
+  ex13:'Curl martillo', ex14:'Crunch banco', ex15:'Goblet squat',
+  ex16:'Zancadas', ex17:'Peso muerto rumano', ex18:'Hip thrust',
+  ex19:'Elevación talones', ex20:'Bici HIIT'
+};
+
+// ─── SESSION CLOCK ────────────────────────────────────────────────────
+function startSessionClock() {
+  sessionClockInterval = setInterval(() => {
+    const ms = Date.now() - session.startTs;
+    const m = Math.floor(ms/60000);
+    const s = Math.floor((ms%60000)/1000);
+    document.getElementById('sb-time').textContent =
+      String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    updateSbRest();
+  }, 1000);
+}
+
+function updateSbRest() {
+  const tot = session.totalRestMs;
+  const m = Math.floor(tot/60000);
+  const s = Math.floor((tot%60000)/1000);
+  document.getElementById('sb-rest').textContent = m+':'+String(s).padStart(2,'0');
+  document.getElementById('sb-series').textContent = session.series.length;
+}
+
+// ─── NAVEGACIÓN DE DÍAS ───────────────────────────────────────────────
 function changeDay(n, btn) {
-    document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.routine-section').forEach(s => s.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('day-' + n).classList.add('active');
-    closeTimer();
-    window.scrollTo({top: 0, behavior: 'smooth'});
+  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('day-'+n).classList.add('active');
+  session.day = n;
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function toggleDot(el, secs) {
-    el.classList.toggle('completed');
-    if (el.classList.contains('completed')) launchTimer(secs);
+// ─── LIGHTBOX ─────────────────────────────────────────────────────────
+function openLightbox(wrap) {
+  const imgs = wrap.querySelectorAll('img');
+  const lb = document.getElementById('lightbox');
+  const cnt = document.getElementById('lb-content');
+  cnt.innerHTML = '';
+  if (imgs.length >= 2) {
+    const div = document.createElement('div');
+    div.className = 'lb-pair';
+    imgs.forEach(img => {
+      const i = new Image();
+      i.src = img.src;
+      div.appendChild(i);
+    });
+    cnt.appendChild(div);
+  } else if (imgs.length === 1) {
+    const i = new Image();
+    i.src = imgs[0].src;
+    i.style.cssText = 'max-width:90vw;max-height:80vh;border-radius:8px;';
+    cnt.appendChild(i);
+  }
+  lb.classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
 }
 
-function launchTimer(secs) {
-    clearInterval(timerInterval);
-    document.getElementById('global-timer').classList.add('show');
-    timeRemaining = secs;
-    timerInterval = setInterval(() => {
-        timeRemaining--;
-        const m = String(Math.floor(timeRemaining / 60)).padStart(2,'0');
-        const s = String(timeRemaining % 60).padStart(2,'0');
-        document.getElementById('countdown-display').innerText = m + ':' + s;
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            document.getElementById('countdown-display').innerText = '¡A POR LA OTRA!';
-            setTimeout(closeTimer, 1500);
-        }
-    }, 1000);
+// ─── CRONÓMETRO DE SERIE ──────────────────────────────────────────────
+let activeSerieTimer = null;  // {interval, el, restSecs, execStart}
+
+function startSerie(dotEl, restSecs) {
+  // Si ya está completada, ignorar
+  if (dotEl.classList.contains('done')) return;
+
+  // Cerrar cualquier timer activo anterior
+  if (activeSerieTimer) {
+    clearInterval(activeSerieTimer.interval);
+    // Cerrar el timer anterior suavemente
+    const prevTimerEl = document.querySelector('.serie-timer.open');
+    if (prevTimerEl) prevTimerEl.classList.remove('open');
+  }
+
+  const card = dotEl.closest('.card');
+  const timerEl = card.querySelector('.serie-timer');
+  const exid = card.dataset.exid;
+  const serieN = dotEl.dataset.n;
+  const execStart = Date.now();
+
+  // Marcar como activo
+  card.querySelectorAll('.dot').forEach(d => d.classList.remove('active-series'));
+  dotEl.classList.add('active-series');
+
+  // Fase 1: EJECUCIÓN — mostrar cronómetro ascendente
+  timerEl.innerHTML = buildTimerHTML('EJECUTANDO SERIE '+serieN, '00:00', 100, false, false);
+  timerEl.classList.add('open');
+
+  let execSecs = 0;
+  const execInterval = setInterval(() => {
+    execSecs++;
+    const mm = String(Math.floor(execSecs/60)).padStart(2,'0');
+    const ss = String(execSecs%60).padStart(2,'0');
+    const timeEl = timerEl.querySelector('.st-time');
+    if (timeEl) timeEl.textContent = mm+':'+ss;
+  }, 1000);
+
+  activeSerieTimer = { interval: execInterval, el: timerEl, dotEl, restSecs, execStart, exid, serieN };
+
+  // Botón "COMPLETAR SERIE"
+  timerEl.querySelector('.st-btn-done').onclick = () => {
+    clearInterval(execInterval);
+    const execMs = Date.now() - execStart;
+    startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN);
+  };
+  timerEl.querySelector('.st-btn-skip').onclick = () => {
+    clearInterval(execInterval);
+    timerEl.classList.remove('open');
+    dotEl.classList.remove('active-series');
+    activeSerieTimer = null;
+  };
 }
 
-function closeTimer() {
-    clearInterval(timerInterval);
-    document.getElementById('global-timer').classList.remove('show');
+function buildTimerHTML(phase, time, barPct, isRest, showDone) {
+  const barClass = isRest ? 'st-bar rest' : 'st-bar';
+  const doneBtn = showDone
+    ? `<button class="st-btn st-btn-done">✅ Completar serie</button>`
+    : `<div style="flex:1;text-align:center;font-size:.75rem;color:var(--muted2)" class="st-rest-msg">Descansando…</div>`;
+  return `
+    <div class="st-phase">${phase}</div>
+    <div class="st-time">${time}</div>
+    <div class="st-bar-wrap"><div class="${barClass}" style="width:${barPct}%"></div></div>
+    <div class="st-btns">
+      ${doneBtn}
+      <button class="st-btn st-btn-skip">Saltar</button>
+    </div>`;
 }
+
+function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
+  // Marcar serie como hecha
+  dotEl.classList.remove('active-series');
+  dotEl.classList.add('done');
+
+  // Registrar la serie (rest aún 0, lo completaremos al acabar)
+  const serieRecord = { exid, n: serieN, execMs, restMs: 0, ts: Date.now() };
+  session.series.push(serieRecord);
+  updateSbRest();
+
+  let remaining = restSecs;
+  const restStart = Date.now();
+
+  const updateRest = () => {
+    const barPct = (remaining / restSecs) * 100;
+    const mm = String(Math.floor(remaining/60)).padStart(2,'0');
+    const ss = String(remaining%60).padStart(2,'0');
+    timerEl.innerHTML = buildTimerHTML(
+      'DESCANSO — próxima serie lista en', mm+':'+ss, barPct, true, false
+    );
+    timerEl.querySelector('.st-btn-skip').onclick = () => {
+      clearInterval(restInterval);
+      const restMs = Date.now() - restStart;
+      serieRecord.restMs = restMs;
+      session.totalRestMs += restMs;
+      timerEl.classList.remove('open');
+      activeSerieTimer = null;
+      updateSbRest();
+    };
+  };
+
+  updateRest();
+  const restInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(restInterval);
+      const restMs = Date.now() - restStart;
+      serieRecord.restMs = restMs;
+      session.totalRestMs += restMs;
+      timerEl.classList.remove('open');
+      activeSerieTimer = null;
+      updateSbRest();
+      // Vibrar si disponible
+      if (navigator.vibrate) navigator.vibrate([200,100,200]);
+    } else {
+      updateRest();
+    }
+  }, 1000);
+
+  activeSerieTimer = { interval: restInterval };
+}
+
+// ─── FINALIZAR SESIÓN ─────────────────────────────────────────────────
+function openFinish() {
+  // Construir estadísticas previas
+  const elapsed = Date.now() - session.startTs;
+  const elMin = Math.floor(elapsed/60000);
+  const elSec = Math.floor((elapsed%60000)/1000);
+  const restMin = Math.floor(session.totalRestMs/60000);
+  const restSec = Math.floor((session.totalRestMs%60000)/1000);
+  const activeMs = elapsed - session.totalRestMs;
+  const actMin = Math.floor(activeMs/60000);
+
+  // Agrupar series por ejercicio
+  const byEx = {};
+  session.series.forEach(s => {
+    byEx[s.exid] = (byEx[s.exid]||0) + 1;
+  });
+  const exList = Object.entries(byEx).map(([id,n]) => `${EX_NAMES[id]||id}: ${n} serie${n>1?'s':''}`).join(' · ');
+
+  document.getElementById('finish-stats').innerHTML = `
+    <div class="finish-stat"><span class="lbl">⏱ Duración total</span><span class="val">${elMin}m ${elSec}s</span></div>
+    <div class="finish-stat"><span class="lbl">💪 Tiempo activo</span><span class="val">${actMin} min</span></div>
+    <div class="finish-stat"><span class="lbl">😮‍💨 Tiempo descanso</span><span class="val">${restMin}m ${restSec}s</span></div>
+    <div class="finish-stat"><span class="lbl">📊 Series completadas</span><span class="val">${session.series.length}</span></div>
+    <div class="finish-stat"><span class="lbl">🏋️ Ejercicios</span><span class="val" style="font-size:.75rem;text-align:right">${exList||'—'}</span></div>
+  `;
+  document.getElementById('modal-finish').classList.add('open');
+}
+
+function confirmFinish() {
+  const weight = parseFloat(document.getElementById('weight-input').value) || 75;
+  const elapsed = Date.now() - session.startTs;
+  const activeMs = elapsed - session.totalRestMs;
+  const actMin = activeMs / 60000;
+
+  // MET estimado entrenamiento con mancuernas moderado = 4.5
+  // Kcal = MET × peso(kg) × tiempo(h)
+  const kcal = Math.round(4.5 * weight * (actMin / 60));
+
+  // Guardar sesión en localStorage
+  const record = {
+    date: new Date().toISOString().slice(0,10),
+    dayNum: session.day,
+    durationMs: elapsed,
+    activeMs,
+    restMs: session.totalRestMs,
+    seriesCount: session.series.length,
+    weight,
+    kcal,
+    series: session.series.map(s => ({ exid: s.exid, n: s.n }))
+  };
+  saveSession(record);
+
+  closeModal('modal-finish');
+  showResult(record);
+}
+
+function showResult(rec) {
+  const elMin = Math.floor(rec.durationMs/60000);
+  const actMin = Math.floor(rec.activeMs/60000);
+  const restMin = Math.floor(rec.restMs/60000);
+
+  const byEx = {};
+  rec.series.forEach(s => { byEx[s.exid] = (byEx[s.exid]||0)+1; });
+
+  document.getElementById('result-content').innerHTML = `
+    <div class="result-hero">
+      <div class="kcal">${rec.kcal}</div>
+      <div class="kcal-lbl">kcal estimadas quemadas</div>
+    </div>
+    <div class="result-grid">
+      <div class="result-box"><div class="rv">${elMin} min</div><div class="rl">Duración</div></div>
+      <div class="result-box"><div class="rv">${actMin} min</div><div class="rl">Tiempo activo</div></div>
+      <div class="result-box"><div class="rv">${restMin} min</div><div class="rl">Descanso</div></div>
+      <div class="result-box"><div class="rv">${rec.seriesCount}</div><div class="rl">Series totales</div></div>
+    </div>
+    <button class="btn-close-result" onclick="closeModal('modal-result')">¡Genial! Cerrar</button>
+  `;
+  document.getElementById('modal-result').classList.add('open');
+  clearInterval(sessionClockInterval);
+  sessionActive = false;
+}
+
+// ─── PERSISTENCIA ─────────────────────────────────────────────────────
+function saveSession(rec) {
+  const all = getSessions();
+  all.push(rec);
+  localStorage.setItem(STORE_KEY, JSON.stringify(all));
+}
+
+function getSessions() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+
+// ─── CALENDARIO ───────────────────────────────────────────────────────
+let calYear, calMonth;
+
+function openCal() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCal();
+  document.getElementById('modal-cal').classList.add('open');
+}
+
+function calMove(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  document.getElementById('day-detail').classList.remove('open');
+  renderCal();
+}
+
+function renderCal() {
+  const sessions = getSessions();
+  const byDate = {};
+  sessions.forEach(s => {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  });
+
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('cal-title').textContent = monthNames[calMonth]+' '+calYear;
+
+  const dows = ['L','M','X','J','V','S','D'];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Dom
+  const blanks = (firstDay === 0) ? 6 : firstDay - 1; // ajustar a lunes=0
+  for (let i=0;i<blanks;i++) html += `<div class="cal-day empty"></div>`;
+
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    const recs = byDate[dateStr];
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    if (recs) cls += ' has-data';
+    const kcal = recs ? recs.reduce((a,r)=>a+r.kcal,0) : 0;
+    const kcalHtml = recs ? `<span class="cal-kcal">${kcal} kcal</span>` : '';
+    const onclick = recs ? `onclick="showDayDetail('${dateStr}')"` : '';
+    html += `<div class="${cls}" ${onclick}><span>${d}</span>${kcalHtml}</div>`;
+  }
+
+  document.getElementById('cal-grid').innerHTML = html;
+}
+
+function showDayDetail(dateStr) {
+  const sessions = getSessions().filter(s => s.date === dateStr);
+  if (!sessions.length) return;
+
+  const det = document.getElementById('day-detail');
+  const totalKcal = sessions.reduce((a,s)=>a+s.kcal,0);
+  const totalSeries = sessions.reduce((a,s)=>a+s.seriesCount,0);
+
+  let html = `<h3>📅 ${dateStr} · ${totalKcal} kcal · ${totalSeries} series</h3>`;
+  sessions.forEach((s,i) => {
+    const min = Math.floor(s.durationMs/60000);
+    const dayLabel = `Día ${s.dayNum}`;
+    html += `<div class="day-ex"><strong>${dayLabel} – ${min} min – ${s.kcal} kcal</strong><br>`;
+    const byEx = {};
+    s.series.forEach(sr => { byEx[sr.exid] = (byEx[sr.exid]||0)+1; });
+    html += Object.entries(byEx).map(([id,n])=>`${EX_NAMES[id]||id} ×${n}`).join(', ');
+    html += `</div>`;
+  });
+
+  det.innerHTML = html;
+  det.classList.add('open');
+}
+
+// ─── MODALES ──────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
+});
+
+// ─── INICIO ───────────────────────────────────────────────────────────
+startSessionClock();
 </script>
 </body>
 </html>
