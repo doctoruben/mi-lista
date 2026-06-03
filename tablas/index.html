@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -234,6 +233,30 @@ header{
 </head>
 <body>
 
+<!-- ══════════════════════════════ PANTALLA INICIO ══════════════════════════════ -->
+<div id="start-screen" style="
+  position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;
+">
+  <div style="font-size:3.5rem;line-height:1;">💪</div>
+  <div style="font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;text-align:center;line-height:1.3;">
+    Rutina <span style="color:var(--accent);">Mancuernas</span> PRO
+  </div>
+  <div style="font-size:0.85rem;color:var(--muted2);text-align:center;max-width:280px;line-height:1.6;">
+    Selecciona el día de entrenamiento y pulsa iniciar. El cronómetro arrancará en ese momento.
+  </div>
+  <div style="display:flex;gap:8px;width:100%;max-width:320px;">
+    <button onclick="selectStartDay(1,this)" id="sd1" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 1<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Empuje</span></button>
+    <button onclick="selectStartDay(2,this)" id="sd2" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 2<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Tirón</span></button>
+    <button onclick="selectStartDay(3,this)" id="sd3" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 3<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Piernas</span></button>
+  </div>
+  <button id="btn-start" onclick="iniciarSesion()" disabled style="
+    width:100%;max-width:320px;padding:16px;background:var(--accent);border:none;color:#fff;
+    font-size:1rem;font-weight:800;border-radius:12px;cursor:pointer;letter-spacing:1px;
+    opacity:.35;transition:all .3s;
+  ">▶&nbsp; INICIAR SESIÓN</button>
+</div>
+
 <!-- ══════════════════════════════ HEADER ══════════════════════════════ -->
 <header>
   <div class="header-title">💪 <span>Mancuernas</span> PRO</div>
@@ -281,14 +304,14 @@ header{
 
   <div class="card" data-exid="ex2">
     <div class="img-wrap" onclick="openLightbox(this)">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/0.jpg" alt="">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bench_Press/1.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Floor_Press/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Floor_Press/1.jpg" alt="">
       <span class="badge">Pecho</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">2. Press de pecho con mancuernas</div>
+      <div class="ex-name">2. Floor Press con mancuernas</div>
       <div class="ex-presets">4 Series · 12 reps · Descanso 90 s</div>
-      <div class="guide"><strong>Ejecución:</strong> Tumbado en el suelo (floor press). Baja hasta que los tríceps toquen el suelo. Empuja explosivo, baja lento.</div>
+      <div class="guide"><strong>Ejecución:</strong> Tumbado en el suelo, mancuernas a la altura del pecho. Baja hasta que los tríceps toquen el suelo. Empuja explosivo, baja controlado.</div>
       <div class="series-row">
         <span class="series-lbl">Series</span>
         <button class="dot" onclick="startSerie(this,90)" data-n="1"><span>1</span></button>
@@ -529,14 +552,14 @@ header{
 
   <div class="card" data-exid="ex14">
     <div class="img-wrap" onclick="openLightbox(this)">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/0.jpg" alt="">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/1.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Decline_Crunch/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Decline_Crunch/1.jpg" alt="">
       <span class="badge">Abdomen</span>
     </div>
     <div class="card-body">
       <div class="ex-name">14. Crunch en banco inclinado con carga</div>
       <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
-      <div class="guide"><strong>Ejecución:</strong> En el banco abdominal inclinado, sujeta la mancuerna en el pecho. Mayor rango de movimiento que en suelo. Excelente activación.</div>
+      <div class="guide"><strong>Ejecución:</strong> En el banco abdominal inclinado, sujeta la mancuerna en el pecho. Mayor rango de movimiento que en suelo. Excelente activación del recto abdominal.</div>
       <div class="series-row">
         <span class="series-lbl">Series</span>
         <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
@@ -615,8 +638,8 @@ header{
 
   <div class="card" data-exid="ex18">
     <div class="img-wrap" onclick="openLightbox(this)">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/0.jpg" alt="">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/1.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hip_Thrust/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hip_Thrust/1.jpg" alt="">
       <span class="badge">Glúteos</span>
     </div>
     <div class="card-body">
@@ -656,21 +679,21 @@ header{
 
   <div class="card" data-exid="ex20">
     <div class="img-wrap" onclick="openLightbox(this)">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/0.jpg" alt="">
-      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/One-Arm_Kettlebell_Swings/1.jpg" alt="">
-      <span class="badge">Cardio · FullBody</span>
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Glute_Bridge/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Glute_Bridge/1.jpg" alt="">
+      <span class="badge">Cardio · HIIT</span>
     </div>
     <div class="card-body">
       <div class="ex-name">20. Bici estática HIIT (finisher)</div>
-      <div class="ex-presets">3 Rondas · 20 s sprint / 40 s suave · Descanso 60 s</div>
-      <div class="guide"><strong>Ejecución:</strong> 20 segundos al máximo esfuerzo en la bici estática, 40 segundos recuperación activa suave. Excelente finisher cardiovascular para piernas.</div>
-      <div class="series-row">
-        <span class="series-lbl">Rondas</span>
-        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
-        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
-        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación · Calentamiento y enfriamiento incluidos</div>
+      <div class="guide"><strong>Estructura:</strong> 3 min calentamiento → 5 × (30 s sprint + 60 s recuperación) → 3 min enfriamiento. Las calorías quemadas se suman automáticamente a tu sesión.</div>
+      <div class="series-row" style="margin-top:4px;">
+        <button onclick="openBiciModal()" style="
+          width:100%;padding:13px;background:var(--accent);border:none;color:#fff;
+          font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;
+          letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:8px;
+        ">🚴 INICIAR ENTRENAMIENTO BICI</button>
       </div>
-      <div class="serie-timer"></div>
     </div>
   </div>
 
@@ -694,6 +717,66 @@ header{
     </div>
   </div>
   <button class="btn-finish" onclick="openFinish()">Finalizar sesión</button>
+</div>
+
+<!-- ══════════════════════════════ MODAL BICI HIIT ══════════════════════════════ -->
+<div class="modal-bg" id="modal-bici">
+  <div class="modal" style="max-width:380px;">
+    <button class="modal-close" onclick="closeBiciModal()">✕</button>
+    <h2>🚴 HIIT Bici Estática</h2>
+
+    <!-- Fase actual -->
+    <div id="bici-phase" style="font-size:1.4rem;font-weight:800;text-align:center;margin-bottom:8px;transition:color .4s;">LISTO</div>
+
+    <!-- Círculo timer -->
+    <div style="display:flex;justify-content:center;margin-bottom:16px;">
+      <div style="
+        width:140px;height:140px;border-radius:50%;
+        border:6px solid var(--border);
+        display:flex;align-items:center;justify-content:center;
+        background:var(--card2);
+      ">
+        <span id="bici-timer" style="font-size:2.4rem;font-weight:800;font-family:monospace;transition:color .4s;">00:00</span>
+      </div>
+    </div>
+
+    <!-- Barra de progreso del bloque actual -->
+    <div style="height:8px;background:var(--border);border-radius:4px;margin-bottom:10px;overflow:hidden;">
+      <div id="bici-bar" style="height:100%;width:0%;border-radius:4px;transition:width 1s linear,background .4s;"></div>
+    </div>
+
+    <!-- Timeline visual de bloques -->
+    <div id="bici-blocks" style="display:flex;gap:3px;margin-bottom:14px;"></div>
+
+    <!-- Stats -->
+    <div style="display:flex;justify-content:space-around;margin-bottom:16px;">
+      <div style="text-align:center;">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--text);" id="bici-sprints">0 / 5</div>
+        <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;">Sprints</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:1.2rem;font-weight:800;color:var(--gold);" id="bici-kcal">0</div>
+        <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;">kcal estimadas</div>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div style="display:flex;gap:8px;">
+      <button id="bici-btn-start" onclick="biciStartPause()" style="
+        flex:1;padding:13px;background:var(--accent);border:none;color:#fff;
+        font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;
+      ">▶ Iniciar</button>
+      <button onclick="closeBiciModal()" style="
+        padding:13px 16px;background:var(--border);border:none;color:var(--muted2);
+        font-size:0.85rem;font-weight:700;border-radius:10px;cursor:pointer;
+      ">Cerrar</button>
+    </div>
+
+    <div style="margin-top:12px;font-size:0.72rem;color:var(--muted);text-align:center;line-height:1.5;">
+      3 min calentamiento · 5 sprints (30 s) · 5 recuperaciones (60 s) · 3 min enfriamiento<br>
+      Las kcal se suman al total de la sesión al completar.
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════ LIGHTBOX ══════════════════════════════ -->
@@ -755,7 +838,7 @@ let session = {
 };
 
 let sessionClockInterval = null;
-let sessionActive = true;
+let sessionActive = false;
 
 // ─── NOMBRES DE EJERCICIOS ────────────────────────────────────────────
 const EX_NAMES = {
@@ -826,80 +909,79 @@ function closeLightbox() {
 }
 
 // ─── CRONÓMETRO DE SERIE ──────────────────────────────────────────────
-let activeSerieTimer = null;  // {interval, el, restSecs, execStart}
+let activeSerieTimer = null;
 
 function startSerie(dotEl, restSecs) {
-  // Si ya está completada, ignorar
   if (dotEl.classList.contains('done')) return;
+  if (!sessionActive) { alert('Primero pulsa "Iniciar sesión"'); return; }
 
-  // Cerrar cualquier timer activo anterior
+  // Cerrar timer previo
   if (activeSerieTimer) {
     clearInterval(activeSerieTimer.interval);
-    // Cerrar el timer anterior suavemente
-    const prevTimerEl = document.querySelector('.serie-timer.open');
-    if (prevTimerEl) prevTimerEl.classList.remove('open');
+    document.querySelectorAll('.serie-timer.open').forEach(t => t.classList.remove('open'));
   }
 
-  const card = dotEl.closest('.card');
+  const card  = dotEl.closest('.card');
   const timerEl = card.querySelector('.serie-timer');
-  const exid = card.dataset.exid;
+  const exid  = card.dataset.exid;
   const serieN = dotEl.dataset.n;
   const execStart = Date.now();
 
-  // Marcar como activo
   card.querySelectorAll('.dot').forEach(d => d.classList.remove('active-series'));
   dotEl.classList.add('active-series');
 
-  // Fase 1: EJECUCIÓN — mostrar cronómetro ascendente
-  timerEl.innerHTML = buildTimerHTML('EJECUTANDO SERIE '+serieN, '00:00', 100, false, false);
+  // ── Fase ejecución: construir DOM a mano para poder adjuntar listeners fiables
+  timerEl.innerHTML = '';
   timerEl.classList.add('open');
+
+  const phaseEl = document.createElement('div'); phaseEl.className='st-phase'; phaseEl.textContent='EJECUTANDO SERIE '+serieN;
+  const timeEl  = document.createElement('div'); timeEl.className='st-time';  timeEl.textContent='00:00';
+  const barWrap = document.createElement('div'); barWrap.className='st-bar-wrap';
+  const barEl   = document.createElement('div'); barEl.className='st-bar'; barEl.style.width='100%';
+  barWrap.appendChild(barEl);
+  const btnsEl  = document.createElement('div'); btnsEl.className='st-btns';
+  const doneBtn = document.createElement('button'); doneBtn.className='st-btn st-btn-done'; doneBtn.textContent='✅ Completar serie';
+  const skipBtn = document.createElement('button'); skipBtn.className='st-btn st-btn-skip'; skipBtn.textContent='Saltar';
+  btnsEl.appendChild(doneBtn);
+  btnsEl.appendChild(skipBtn);
+  timerEl.appendChild(phaseEl);
+  timerEl.appendChild(timeEl);
+  timerEl.appendChild(barWrap);
+  timerEl.appendChild(btnsEl);
+
+  // Scroll suave al timer
+  setTimeout(() => timerEl.scrollIntoView({behavior:'smooth', block:'nearest'}), 100);
 
   let execSecs = 0;
   const execInterval = setInterval(() => {
     execSecs++;
-    const mm = String(Math.floor(execSecs/60)).padStart(2,'0');
-    const ss = String(execSecs%60).padStart(2,'0');
-    const timeEl = timerEl.querySelector('.st-time');
-    if (timeEl) timeEl.textContent = mm+':'+ss;
+    timeEl.textContent = fmt(execSecs);
   }, 1000);
 
-  activeSerieTimer = { interval: execInterval, el: timerEl, dotEl, restSecs, execStart, exid, serieN };
+  activeSerieTimer = { interval: execInterval };
 
-  // Botón "COMPLETAR SERIE"
-  timerEl.querySelector('.st-btn-done').onclick = () => {
+  doneBtn.addEventListener('click', () => {
     clearInterval(execInterval);
     const execMs = Date.now() - execStart;
     startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN);
-  };
-  timerEl.querySelector('.st-btn-skip').onclick = () => {
+  });
+
+  skipBtn.addEventListener('click', () => {
     clearInterval(execInterval);
     timerEl.classList.remove('open');
     dotEl.classList.remove('active-series');
     activeSerieTimer = null;
-  };
+  });
 }
 
-function buildTimerHTML(phase, time, barPct, isRest, showDone) {
-  const barClass = isRest ? 'st-bar rest' : 'st-bar';
-  const doneBtn = showDone
-    ? `<button class="st-btn st-btn-done">✅ Completar serie</button>`
-    : `<div style="flex:1;text-align:center;font-size:.75rem;color:var(--muted2)" class="st-rest-msg">Descansando…</div>`;
-  return `
-    <div class="st-phase">${phase}</div>
-    <div class="st-time">${time}</div>
-    <div class="st-bar-wrap"><div class="${barClass}" style="width:${barPct}%"></div></div>
-    <div class="st-btns">
-      ${doneBtn}
-      <button class="st-btn st-btn-skip">Saltar</button>
-    </div>`;
+function fmt(secs) {
+  return String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0');
 }
 
 function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
-  // Marcar serie como hecha
   dotEl.classList.remove('active-series');
   dotEl.classList.add('done');
 
-  // Registrar la serie (rest aún 0, lo completaremos al acabar)
   const serieRecord = { exid, n: serieN, execMs, restMs: 0, ts: Date.now() };
   session.series.push(serieRecord);
   updateSbRest();
@@ -907,22 +989,41 @@ function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
   let remaining = restSecs;
   const restStart = Date.now();
 
+  // Construir DOM del descanso una sola vez
+  timerEl.innerHTML = '';
+  const phaseEl = document.createElement('div'); phaseEl.className='st-phase'; phaseEl.textContent='DESCANSO — próxima serie lista en';
+  const timeEl  = document.createElement('div'); timeEl.className='st-time'; timeEl.style.color='var(--green)';
+  const barWrap = document.createElement('div'); barWrap.className='st-bar-wrap';
+  const barEl   = document.createElement('div'); barEl.className='st-bar rest'; barEl.style.width='100%';
+  barWrap.appendChild(barEl);
+  const btnsEl  = document.createElement('div'); btnsEl.className='st-btns';
+  const msgEl   = document.createElement('div'); msgEl.style.cssText='flex:1;text-align:center;font-size:.75rem;color:var(--muted2)'; msgEl.textContent='Descansando…';
+  const skipBtn = document.createElement('button'); skipBtn.className='st-btn st-btn-skip'; skipBtn.textContent='Saltar';
+  btnsEl.appendChild(msgEl);
+  btnsEl.appendChild(skipBtn);
+  timerEl.appendChild(phaseEl);
+  timerEl.appendChild(timeEl);
+  timerEl.appendChild(barWrap);
+  timerEl.appendChild(btnsEl);
+
+  const finishRest = () => {
+    const restMs = Date.now() - restStart;
+    serieRecord.restMs = restMs;
+    session.totalRestMs += restMs;
+    timerEl.classList.remove('open');
+    activeSerieTimer = null;
+    updateSbRest();
+    if (navigator.vibrate) navigator.vibrate([200,100,200]);
+  };
+
+  skipBtn.addEventListener('click', () => {
+    clearInterval(restInterval);
+    finishRest();
+  });
+
   const updateRest = () => {
-    const barPct = (remaining / restSecs) * 100;
-    const mm = String(Math.floor(remaining/60)).padStart(2,'0');
-    const ss = String(remaining%60).padStart(2,'0');
-    timerEl.innerHTML = buildTimerHTML(
-      'DESCANSO — próxima serie lista en', mm+':'+ss, barPct, true, false
-    );
-    timerEl.querySelector('.st-btn-skip').onclick = () => {
-      clearInterval(restInterval);
-      const restMs = Date.now() - restStart;
-      serieRecord.restMs = restMs;
-      session.totalRestMs += restMs;
-      timerEl.classList.remove('open');
-      activeSerieTimer = null;
-      updateSbRest();
-    };
+    timeEl.textContent = fmt(remaining);
+    barEl.style.width = (remaining / restSecs * 100) + '%';
   };
 
   updateRest();
@@ -930,14 +1031,7 @@ function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
     remaining--;
     if (remaining <= 0) {
       clearInterval(restInterval);
-      const restMs = Date.now() - restStart;
-      serieRecord.restMs = restMs;
-      session.totalRestMs += restMs;
-      timerEl.classList.remove('open');
-      activeSerieTimer = null;
-      updateSbRest();
-      // Vibrar si disponible
-      if (navigator.vibrate) navigator.vibrate([200,100,200]);
+      finishRest();
     } else {
       updateRest();
     }
@@ -982,7 +1076,7 @@ function confirmFinish() {
 
   // MET estimado entrenamiento con mancuernas moderado = 4.5
   // Kcal = MET × peso(kg) × tiempo(h)
-  const kcal = Math.round(4.5 * weight * (actMin / 60));
+  const kcal = Math.round(4.5 * weight * (actMin / 60)) + (session.biciKcal || 0);
 
   // Guardar sesión en localStorage
   const record = {
@@ -1128,8 +1222,169 @@ document.querySelectorAll('.modal-bg').forEach(bg => {
   bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
 });
 
-// ─── INICIO ───────────────────────────────────────────────────────────
-startSessionClock();
+// ─── BICI HIIT ────────────────────────────────────────────────────────
+const BICI_WORKOUT = [
+  {name:'CALENTAMIENTO', duration:180, color:'#3b82f6'},
+  {name:'SPRINT 1 🔥',   duration:30,  color:'#e50914'},
+  {name:'RECUPERACIÓN',  duration:60,  color:'#10b981'},
+  {name:'SPRINT 2 🔥',   duration:30,  color:'#e50914'},
+  {name:'RECUPERACIÓN',  duration:60,  color:'#10b981'},
+  {name:'SPRINT 3 🔥',   duration:30,  color:'#e50914'},
+  {name:'RECUPERACIÓN',  duration:60,  color:'#10b981'},
+  {name:'SPRINT 4 🔥',   duration:30,  color:'#e50914'},
+  {name:'RECUPERACIÓN',  duration:60,  color:'#10b981'},
+  {name:'SPRINT 5 🔥',   duration:30,  color:'#e50914'},
+  {name:'RECUPERACIÓN',  duration:60,  color:'#10b981'},
+  {name:'ENFRIAMIENTO',  duration:180, color:'#3b82f6'},
+];
+
+let biciBlock = 0, biciRemaining = 0, biciElapsed = 0;
+let biciTimer = null, biciRunning = false;
+
+function openBiciModal() {
+  if (!sessionActive) { alert('Primero pulsa "Iniciar sesión"'); return; }
+  biciBlock = 0;
+  biciRemaining = BICI_WORKOUT[0].duration;
+  biciElapsed = 0;
+  biciRunning = false;
+  clearInterval(biciTimer);
+  renderBici();
+  document.getElementById('modal-bici').classList.add('open');
+}
+
+function renderBici() {
+  const block = BICI_WORKOUT[biciBlock];
+  const totalSprints = BICI_WORKOUT.filter(b => b.name.startsWith('SPRINT')).length;
+  const donesprints = BICI_WORKOUT.slice(0, biciBlock + 1).filter(b => b.name.startsWith('SPRINT')).length;
+  const kcal = Math.round(biciElapsed * 0.185); // ~11 kcal/min bici HIIT
+
+  document.getElementById('bici-phase').textContent = block.name;
+  document.getElementById('bici-phase').style.color = block.color;
+  document.getElementById('bici-timer').textContent = fmt(biciRemaining);
+  document.getElementById('bici-timer').style.color = block.color;
+  document.getElementById('bici-sprints').textContent = donesprints + ' / ' + totalSprints;
+  document.getElementById('bici-kcal').textContent = kcal;
+
+  const elapsed = block.duration - biciRemaining;
+  const pct = (elapsed / block.duration) * 100;
+  document.getElementById('bici-bar').style.width = pct + '%';
+  document.getElementById('bici-bar').style.background = block.color;
+
+  // Bloques visuales
+  const blocksEl = document.getElementById('bici-blocks');
+  blocksEl.innerHTML = BICI_WORKOUT.map((b, i) => {
+    const done = i < biciBlock;
+    const active = i === biciBlock;
+    const isSprint = b.name.startsWith('SPRINT');
+    return `<div style="
+      flex:${b.duration / 30};height:8px;border-radius:3px;
+      background:${done ? b.color : active ? b.color : 'var(--border)'};
+      opacity:${done ? 0.5 : active ? 1 : 0.3};
+      transition:all .3s;
+    "></div>`;
+  }).join('');
+
+  // Botón start/pause
+  document.getElementById('bici-btn-start').textContent = biciRunning ? '⏸ Pausar' : (biciElapsed === 0 ? '▶ Iniciar' : '▶ Continuar');
+}
+
+function biciStartPause() {
+  if (biciRunning) {
+    clearInterval(biciTimer);
+    biciRunning = false;
+    renderBici();
+    return;
+  }
+  biciRunning = true;
+  biciTimer = setInterval(() => {
+    biciRemaining--;
+    biciElapsed++;
+    if (biciRemaining < 0) {
+      biciBlock++;
+      if (biciBlock >= BICI_WORKOUT.length) {
+        clearInterval(biciTimer);
+        biciRunning = false;
+        biciFinished();
+        return;
+      }
+      biciRemaining = BICI_WORKOUT[biciBlock].duration;
+      if (navigator.vibrate) navigator.vibrate([150, 80, 150]);
+    }
+    renderBici();
+  }, 1000);
+  renderBici();
+}
+
+function biciFinished() {
+  const kcal = Math.round(biciElapsed * 0.185);
+  // Sumar kcal de bici al registro de sesión
+  session.biciKcal = (session.biciKcal || 0) + kcal;
+
+  document.getElementById('bici-phase').textContent = '🎉 ¡COMPLETADO!';
+  document.getElementById('bici-phase').style.color = '#10b981';
+  document.getElementById('bici-timer').textContent = '✓';
+  document.getElementById('bici-kcal').textContent = kcal;
+  document.getElementById('bici-btn-start').style.display = 'none';
+
+  // Registrar como "serie" en la sesión para el historial
+  session.series.push({ exid: 'ex20', n: '1', execMs: biciElapsed * 1000, restMs: 0, ts: Date.now() });
+  updateSbRest();
+}
+
+function closeBiciModal() {
+  clearInterval(biciTimer);
+  biciRunning = false;
+  document.getElementById('modal-bici').classList.remove('open');
+}
+
+// Parchear confirmFinish para sumar biciKcal
+const _origConfirmFinish = confirmFinish;
+// (ya gestionado inline en confirmFinish abajo)
+
+let selectedStartDay = null;
+
+function selectStartDay(n, btn) {
+  selectedStartDay = n;
+  // Resaltar botón seleccionado
+  [1,2,3].forEach(i => {
+    const b = document.getElementById('sd'+i);
+    b.style.borderColor = 'var(--border)';
+    b.style.color = 'var(--muted2)';
+    b.style.background = 'var(--card)';
+  });
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.color = '#fff';
+  btn.style.background = 'rgba(229,9,20,.18)';
+
+  // Activar botón iniciar
+  const startBtn = document.getElementById('btn-start');
+  startBtn.disabled = false;
+  startBtn.style.opacity = '1';
+  startBtn.style.cursor = 'pointer';
+}
+
+function iniciarSesion() {
+  if (!selectedStartDay) return;
+
+  // Activar el día seleccionado en la nav
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const navBtns = document.querySelectorAll('.day-btn');
+  navBtns[selectedStartDay - 1].classList.add('active');
+  document.getElementById('day-' + selectedStartDay).classList.add('active');
+  session.day = selectedStartDay;
+
+  // Ocultar pantalla de inicio
+  const ss = document.getElementById('start-screen');
+  ss.style.transition = 'opacity .4s';
+  ss.style.opacity = '0';
+  setTimeout(() => ss.style.display = 'none', 400);
+
+  // Arrancar reloj desde este momento
+  session.startTs = Date.now();
+  sessionActive = true;
+  startSessionClock();
+}
 </script>
 </body>
 </html>
