@@ -1507,18 +1507,29 @@ function biciFinished() {
 
   // Registrar como "serie" en la sesión para el historial
   session.series.push({ exid: 'ex20', n: '1', execMs: biciElapsed * 1000, restMs: 0, ts: Date.now() });
-  updateSbRest();
+  refreshBar();
 }
 
 function closeBiciModal() {
   clearInterval(biciTimer);
   biciRunning = false;
+
+  // Sumar kcal acumuladas hasta el momento del cierre (si las hay y no se completó ya)
+  if (biciElapsed > 0) {
+    const kcalAcum = Math.round(biciElapsed * 0.185);
+    // Evitar doble suma si ya se llamó a biciFinished (que pone el botón en display:none)
+    const btnStart = document.getElementById('bici-btn-start');
+    const yaCompletado = btnStart && btnStart.style.display === 'none';
+    if (!yaCompletado) {
+      session.biciKcal = (session.biciKcal || 0) + kcalAcum;
+      session.series.push({ exid: 'ex20', n: 'parcial', execMs: biciElapsed * 1000, restMs: 0, ts: Date.now() });
+      refreshBar();
+    }
+    biciElapsed = 0; // reset para que no vuelva a sumarse si se reabre
+  }
+
   document.getElementById('modal-bici').classList.remove('open');
 }
-
-// Parchear confirmFinish para sumar biciKcal
-const _origConfirmFinish = confirmFinish;
-// (ya gestionado inline en confirmFinish abajo)
 
 let selectedStartDay = null;
 
