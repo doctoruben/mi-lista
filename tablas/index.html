@@ -236,19 +236,32 @@ header{
 <!-- ══════════════════════════════ PANTALLA INICIO ══════════════════════════════ -->
 <div id="start-screen" style="
   position:fixed;inset:0;z-index:9999;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:32px;
 ">
   <div style="font-size:3.5rem;line-height:1;">💪</div>
   <div style="font-size:1.4rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;text-align:center;line-height:1.3;">
     Rutina <span style="color:var(--accent);">HouseGYM</span> PRO
   </div>
   <div style="font-size:0.85rem;color:var(--muted2);text-align:center;max-width:280px;line-height:1.6;">
-    Selecciona el día de entrenamiento y pulsa iniciar. El cronómetro arrancará en ese momento.
+    Selecciona el día, introduce tu peso y pulsa iniciar.
   </div>
   <div style="display:flex;gap:8px;width:100%;max-width:320px;">
     <button onclick="selectStartDay(1,this)" id="sd1" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 1<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Empuje</span></button>
     <button onclick="selectStartDay(2,this)" id="sd2" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 2<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Tirón</span></button>
     <button onclick="selectStartDay(3,this)" id="sd3" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 3<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Piernas</span></button>
+  </div>
+  <!-- PESO -->
+  <div style="width:100%;max-width:320px;">
+    <label style="font-size:0.75rem;color:var(--muted2);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;">Tu peso (kg) — para calcular calorías en tiempo real</label>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input id="start-weight" type="number" min="30" max="200" step="0.5" placeholder="ej. 80"
+        oninput="checkStartReady()"
+        style="flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);
+               padding:12px 14px;border-radius:10px;font-size:1.1rem;font-weight:700;
+               text-align:center;outline:none;transition:border-color .2s;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <span style="font-size:1rem;color:var(--muted);">kg</span>
+    </div>
   </div>
   <button id="btn-start" onclick="iniciarSesion()" disabled style="
     width:100%;max-width:320px;padding:16px;background:var(--accent);border:none;color:#fff;
@@ -288,7 +301,7 @@ header{
       <span class="badge">Hombros</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">1. Press de hombros con mancuernas</div>
+      <div class="ex-name">Press de hombros con mancuernas</div>
       <div class="ex-presets">4 Series · 10-12 reps · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Sentado o de pie, mancuernas a la altura de los hombros. Empuja hacia arriba hasta casi extender, baja controlado. Espalda neutra.</div>
       <div class="series-row">
@@ -309,7 +322,7 @@ header{
       <span class="badge">Pecho</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">2. Floor Press con mancuernas</div>
+      <div class="ex-name">Floor Press con mancuernas</div>
       <div class="ex-presets">4 Series · 12 reps · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Tumbado en el suelo, mancuernas a la altura del pecho. Baja hasta que los tríceps toquen el suelo. Empuja explosivo, baja controlado.</div>
       <div class="series-row">
@@ -330,7 +343,7 @@ header{
       <span class="badge">Deltoides lateral</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">3. Elevaciones laterales</div>
+      <div class="ex-name">Elevaciones laterales</div>
       <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> De pie o sentado, codos ligeramente flexionados. Sube hasta paralelo al suelo. No balancees el torso.</div>
       <div class="series-row">
@@ -350,7 +363,7 @@ header{
       <span class="badge">Tríceps</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">4. Extensión tríceps tras nuca</div>
+      <div class="ex-name">Extensión tríceps tras nuca</div>
       <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> Sujeta la mancuerna con ambas manos sobre la cabeza. Dobla codos a 90° y extiende. Codo quieto apuntando al techo.</div>
       <div class="series-row">
@@ -370,7 +383,7 @@ header{
       <span class="badge">Pecho / Core</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">5. Flexiones sobre mancuernas</div>
+      <div class="ex-name">Flexiones sobre mancuernas</div>
       <div class="ex-presets">3 Series · Fallo técnico · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> Manos sobre las mancuernas, muñecas neutras. Mayor profundidad que la flexión normal. Cuerpo rígido como una tabla.</div>
       <div class="series-row">
@@ -390,7 +403,7 @@ header{
       <span class="badge">Deltoides frontal</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">6. Elevaciones frontales</div>
+      <div class="ex-name">Elevaciones frontales</div>
       <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> Brazos casi extendidos, sube hasta la altura de los ojos. Alterna brazos o simultáneo. Sin impulso lumbar.</div>
       <div class="series-row">
@@ -410,7 +423,7 @@ header{
       <span class="badge">Trapecios</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">7. Remo al mentón</div>
+      <div class="ex-name">Remo al mentón</div>
       <div class="ex-presets">3 Series · 12 reps · Descanso 75 s</div>
       <div class="guide"><strong>Ejecución:</strong> Mancuernas frente al cuerpo. Sube guiando con los codos por encima de los hombros. Pausa arriba 1 segundo.</div>
       <div class="series-row">
@@ -422,10 +435,65 @@ header{
       <div class="serie-timer"></div>
     </div>
   </div>
+  <!-- ── BANDA ELÁSTICA: Día 1 ── -->
+  <div class="card" data-exid="ex1b">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Shoulder_Press_-_With_Bands/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Shoulder_Press_-_With_Bands/1.jpg" alt="">
+      <span class="badge">Banda · Hombros</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Press de hombros con banda</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Pisa la banda con ambos pies, agarra los extremos a la altura de los hombros. Empuja hacia arriba hasta extensión completa. Complementa al press con mancuernas trabajando la zona de extensión final.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <div class="card" data-exid="ex1c">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cross_Over_-_With_Bands/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cross_Over_-_With_Bands/1.jpg" alt="">
+      <span class="badge">Banda · Pecho</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Cruce de pecho con banda</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Ancla la banda detrás de ti a la altura del pecho. Lleva los brazos hacia el centro cruzándolos ligeramente. Ideal para el pectoral interno que el press no alcanza bien.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <!-- ── BICI FINISHER: Día 1 ── -->
+  <div class="card" data-exid="ex1bici">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://zycle.eu/imagenes/Hacer-bicicleta-estatica-engorda-las-piernas.jpg" alt="">
+      <img src="https://www.musculacion.net/Uploads/musculacion.net/Imagenes/que-musculos-se-trabajan-con-la-bicicleta-estatica.jpg" alt="">
+      <span class="badge">Cardio · Finisher</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Bici estática HIIT — Finisher Día 1</div>
+      <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación</div>
+      <div class="guide"><strong>Por qué aquí:</strong> Tras el trabajo de empuje el corazón está activo. El HIIT de bici como finisher maximiza la quema calórica post-ejercicio (efecto EPOC) sin cargar articulaciones ya fatigadas.</div>
+      <div class="series-row" style="margin-top:4px;">
+        <button onclick="openBiciModal()" style="width:100%;padding:13px;background:var(--accent);border:none;color:#fff;font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">🚴 INICIAR ENTRENAMIENTO BICI</button>
+      </div>
+    </div>
+  </div>
 
 </section>
-
-<!-- ───────── DÍA 2: TIRÓN ───────── -->
 <section id="day-2" class="section">
 
   <div class="card" data-exid="ex8">
@@ -435,7 +503,7 @@ header{
       <span class="badge">Dorsal</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">8. Remo inclinado con mancuernas</div>
+      <div class="ex-name">Remo inclinado con mancuernas</div>
       <div class="ex-presets">4 Series · 10-12 reps · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Torso a 45°, rodillas ligeramente flexionadas. Tira hacia las caderas apretando la escápula. Codos pegados al cuerpo.</div>
       <div class="series-row">
@@ -456,7 +524,7 @@ header{
       <span class="badge">Bíceps</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">9. Curl de bíceps</div>
+      <div class="ex-name">Curl de bíceps</div>
       <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> Codos fijos en las costillas. Sube supinando la muñeca. Baja completamente para máximo estiramiento. Alterna o simultáneo.</div>
       <div class="series-row">
@@ -476,7 +544,7 @@ header{
       <span class="badge">Isquiotibiales</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">10. Peso muerto piernas rígidas</div>
+      <div class="ex-name">Peso muerto piernas rígidas</div>
       <div class="ex-presets">4 Series · 10 reps · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Rodillas casi extendidas. Empuja caderas hacia atrás bajando las mancuernas por las espinillas. Espalda recta siempre.</div>
       <div class="series-row">
@@ -497,7 +565,7 @@ header{
       <span class="badge">Dorsal / Core</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">11. Remo renegado alternado</div>
+      <div class="ex-name">Remo renegado alternado</div>
       <div class="ex-presets">3 Series · 10 reps/lado · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Plancha sobre mancuernas. Tira alternando brazos sin rotar las caderas. Core completamente activado.</div>
       <div class="series-row">
@@ -517,7 +585,7 @@ header{
       <span class="badge">Trapecios</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">12. Encogimientos (Shrug)</div>
+      <div class="ex-name">Encogimientos (Shrug)</div>
       <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> Brazos rectos, eleva hombros hacia las orejas. Pausa arriba 2 segundos. No gires los hombros hacia atrás.</div>
       <div class="series-row">
@@ -537,7 +605,7 @@ header{
       <span class="badge">Braquial / Antebrazo</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">13. Curl martillo alterno</div>
+      <div class="ex-name">Curl martillo alterno</div>
       <div class="ex-presets">3 Series · 12 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> Palmas enfrentadas durante todo el recorrido. Rango completo. Trabaja braquial y braquiorradial junto al bíceps.</div>
       <div class="series-row">
@@ -557,7 +625,7 @@ header{
       <span class="badge">Abdomen</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">14. Crunch en banco inclinado con carga</div>
+      <div class="ex-name">Crunch en banco inclinado con carga</div>
       <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
       <div class="guide"><strong>Ejecución:</strong> En el banco abdominal inclinado, sujeta la mancuerna en el pecho. Mayor rango de movimiento que en suelo. Excelente activación del recto abdominal.</div>
       <div class="series-row">
@@ -569,10 +637,65 @@ header{
       <div class="serie-timer"></div>
     </div>
   </div>
+  <!-- ── BANDA ELÁSTICA: Día 2 ── -->
+  <div class="card" data-exid="ex2b">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Band_Pull_Apart/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Band_Pull_Apart/1.jpg" alt="">
+      <span class="badge">Banda · Hombro posterior</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Band Pull Apart</div>
+      <div class="ex-presets">3 Series · 20 reps · Descanso 45 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Agarra la banda con los brazos extendidos al frente. Separa los brazos hacia los lados hasta que la banda toque el pecho. Trabaja deltoides posterior y manguito rotador — fundamental para salud de hombros.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,45)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,45)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,45)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <div class="card" data-exid="ex2c">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Back_Flyes_-_With_Bands/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Back_Flyes_-_With_Bands/1.jpg" alt="">
+      <span class="badge">Banda · Espalda alta</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Aperturas de espalda con banda</div>
+      <div class="ex-presets">3 Series · 15 reps · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Ancla la banda al frente a la altura del pecho. Con codos ligeramente flexionados, abre los brazos hacia atrás apretando las escápulas. Complementa el remo trabajando el romboide y trapecio medio.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <!-- ── BICI FINISHER: Día 2 ── -->
+  <div class="card" data-exid="ex2bici">
+    <div class="img-wrap" onclick="openLightbox(this)">
+     <img src="https://zycle.eu/imagenes/Hacer-bicicleta-estatica-engorda-las-piernas.jpg" alt="">
+      <img src="https://www.musculacion.net/Uploads/musculacion.net/Imagenes/que-musculos-se-trabajan-con-la-bicicleta-estatica.jpg" alt="">
+      <span class="badge">Cardio · Finisher</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Bici estática HIIT — Finisher Día 2</div>
+      <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación</div>
+      <div class="guide"><strong>Por qué aquí:</strong> El día de tirón deja las piernas relativamente frescas. La bici activa el tren inferior sin comprometer la recuperación de espalda y bíceps, completando el gasto calórico de la sesión.</div>
+      <div class="series-row" style="margin-top:4px;">
+        <button onclick="openBiciModal()" style="width:100%;padding:13px;background:var(--accent);border:none;color:#fff;font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">🚴 INICIAR ENTRENAMIENTO BICI</button>
+      </div>
+    </div>
+  </div>
 
 </section>
-
-<!-- ───────── DÍA 3: PIERNAS ───────── -->
 <section id="day-3" class="section">
 
   <div class="card" data-exid="ex15">
@@ -582,7 +705,7 @@ header{
       <span class="badge">Cuádriceps / Glúteos</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">15. Sentadilla Goblet</div>
+      <div class="ex-name">Sentadilla Goblet</div>
       <div class="ex-presets">4 Series · 15 reps · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Mancuerna abrazada verticalmente al pecho. Pies algo más anchos que hombros. Baja profundo manteniendo talones en suelo.</div>
       <div class="series-row">
@@ -603,7 +726,7 @@ header{
       <span class="badge">Cuádriceps / Glúteos</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">16. Zancadas con mancuernas</div>
+      <div class="ex-name">Zancadas con mancuernas</div>
       <div class="ex-presets">3 Series · 10 reps/pierna · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Paso amplio adelante, rodilla trasera casi toca el suelo. Rodilla delantera no sobrepasa la punta del pie. Alterna piernas.</div>
       <div class="series-row">
@@ -623,7 +746,7 @@ header{
       <span class="badge">Isquiotibiales / Glúteos</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">17. Peso muerto rumano</div>
+      <div class="ex-name">Peso muerto rumano</div>
       <div class="ex-presets">3 Series · 12 reps · Descanso 90 s</div>
       <div class="guide"><strong>Ejecución:</strong> Rodillas con leve flexión fija. Empuja las caderas hacia atrás, baja sintiendo estiramiento en femorales. Espalda neutra.</div>
       <div class="series-row">
@@ -643,7 +766,7 @@ header{
       <span class="badge">Glúteos</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">18. Hip thrust con mancuerna</div>
+      <div class="ex-name">Hip thrust con mancuerna</div>
       <div class="ex-presets">3 Series · 15 reps · Descanso 75 s</div>
       <div class="guide"><strong>Ejecución:</strong> Espalda apoyada en el banco, mancuerna sobre las caderas. Empuja hacia arriba apretando glúteos al máximo. Pausa 1 s arriba.</div>
       <div class="series-row">
@@ -663,7 +786,7 @@ header{
       <span class="badge">Gemelos</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">19. Elevación de talones</div>
+      <div class="ex-name">Elevación de talones</div>
       <div class="ex-presets">4 Series · 20 reps · Descanso 45 s</div>
       <div class="guide"><strong>Ejecución:</strong> Mancuernas a los lados. Sube lento (2 s), pausa arriba (1 s), baja lento (3 s). Rango máximo en punta de pies.</div>
       <div class="series-row">
@@ -677,22 +800,60 @@ header{
     </div>
   </div>
 
-  <div class="card" data-exid="ex20">
+  <!-- ── BANDA ELÁSTICA: Día 3 ── -->
+  <div class="card" data-exid="ex3b">
     <div class="img-wrap" onclick="openLightbox(this)">
-      <img src="https://zycle.eu/imagenes/Hacer-bicicleta-estatica-engorda-las-piernas.jpg" alt="">
-      <img src="https://www.musculacion.net/Uploads/musculacion.net/Imagenes/que-musculos-se-trabajan-con-la-bicicleta-estatica.jpg" alt="">
-      <span class="badge">Cardio · HIIT</span>
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Monster_Walk/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Monster_Walk/1.jpg" alt="">
+      <span class="badge">Banda · Glúteos / Abductores</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">20. Bici estática HIIT (finisher)</div>
-      <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación · Calentamiento y enfriamiento incluidos</div>
-      <div class="guide"><strong>Estructura:</strong> 3 min calentamiento → 5 × (30 s sprint + 60 s recuperación) → 3 min enfriamiento. Las calorías quemadas se suman automáticamente a tu sesión.</div>
+      <div class="ex-name">Monster Walk con banda</div>
+      <div class="ex-presets">3 Series · 15 pasos/lado · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> Banda alrededor de los tobillos o encima de las rodillas. En posición de sentadilla parcial, da pasos laterales manteniendo la tensión de la banda. Activa el glúteo medio y abductores, clave para estabilidad de rodilla.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <div class="card" data-exid="ex3c">
+    <div class="img-wrap" onclick="openLightbox(this)">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hip_Extension_with_Bands/0.jpg" alt="">
+      <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hip_Extension_with_Bands/1.jpg" alt="">
+      <span class="badge">Banda · Glúteos</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Extensión de cadera con banda</div>
+      <div class="ex-presets">3 Series · 15 reps/lado · Descanso 60 s</div>
+      <div class="guide"><strong>Ejecución:</strong> A cuatro patas con la banda en el pie, extiende la pierna hacia atrás y arriba apretando el glúteo en el punto máximo. Aísla el glúteo mayor de forma más directa que las sentadillas.</div>
+      <div class="series-row">
+        <span class="series-lbl">Series</span>
+        <button class="dot" onclick="startSerie(this,60)" data-n="1"><span>1</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="2"><span>2</span></button>
+        <button class="dot" onclick="startSerie(this,60)" data-n="3"><span>3</span></button>
+      </div>
+      <div class="serie-timer"></div>
+    </div>
+  </div>
+
+  <!-- ── BICI FINISHER: Día 3 (al final, las piernas ya están trabajadas — bici a ritmo moderado) ── -->
+  <div class="card" data-exid="ex20">
+    <div class="img-wrap" onclick="openLightbox(this)">
+<img src="https://zycle.eu/imagenes/Hacer-bicicleta-estatica-engorda-las-piernas.jpg" alt="">
+      <img src="https://www.musculacion.net/Uploads/musculacion.net/Imagenes/que-musculos-se-trabajan-con-la-bicicleta-estatica.jpg" alt="">
+      <span class="badge">Cardio · Finisher</span>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">Bici estática HIIT — Finisher Día 3</div>
+      <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación</div>
+      <div class="guide"><strong>Por qué al final:</strong> Día de piernas → la bici va después del trabajo de fuerza, no antes. Las piernas ya están activadas y el HIIT final maximiza la quema calórica. Si notas fatiga excesiva, reduce la intensidad del sprint.</div>
       <div class="series-row" style="margin-top:4px;">
-        <button onclick="openBiciModal()" style="
-          width:100%;padding:13px;background:var(--accent);border:none;color:#fff;
-          font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;
-          letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:8px;
-        ">🚴 INICIAR ENTRENAMIENTO BICI</button>
+        <button onclick="openBiciModal()" style="width:100%;padding:13px;background:var(--accent);border:none;color:#fff;font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">🚴 INICIAR ENTRENAMIENTO BICI</button>
       </div>
     </div>
   </div>
@@ -705,7 +866,7 @@ header{
   <div class="sb-info">
     <div class="sb-item">
       <div class="sb-val" id="sb-time">00:00</div>
-      <div class="sb-lbl">Sesión</div>
+      <div class="sb-lbl">Activo</div>
     </div>
     <div class="sb-item">
       <div class="sb-val" id="sb-series">0</div>
@@ -715,8 +876,12 @@ header{
       <div class="sb-val" id="sb-rest">0:00</div>
       <div class="sb-lbl">Descanso</div>
     </div>
+    <div class="sb-item">
+      <div class="sb-val" id="sb-kcal" style="color:var(--accent);">0</div>
+      <div class="sb-lbl">kcal 🔥</div>
+    </div>
   </div>
-  <button class="btn-finish" onclick="openFinish()">Finalizar sesión</button>
+  <button class="btn-finish" onclick="openFinish()">Finalizar</button>
 </div>
 
 <!-- ══════════════════════════════ MODAL BICI HIIT ══════════════════════════════ -->
@@ -791,9 +956,7 @@ header{
     <button class="modal-close" onclick="closeModal('modal-finish')">✕</button>
     <h2>🏁 Finalizar sesión</h2>
     <div id="finish-stats"></div>
-    <label style="font-size:.8rem;color:var(--muted2);display:block;margin-top:14px;">Tu peso actual (kg) — para estimar calorías</label>
-    <input type="number" class="weight-input" id="weight-input" placeholder="ej. 80" min="30" max="200" step="0.5">
-    <button class="btn-finish-confirm" onclick="confirmFinish()">✅ Guardar sesión y ver resultados</button>
+    <button class="btn-finish-confirm" onclick="confirmFinish()" style="margin-top:16px;">✅ Guardar sesión y ver resultados</button>
   </div>
 </div>
 
@@ -830,11 +993,12 @@ header{
 const STORE_KEY = 'mancuernas_sessions_v1';
 
 let session = {
-  startTs: Date.now(),
   day: 1,
-  series: [],           // {exid, n, execMs, restMs, ts}
+  weight: 75,        // kg — se fija al iniciar sesión
+  series: [],        // {exid, n, execMs, restMs, ts}
   totalRestMs: 0,
-  activeTimer: null     // referencia al bloque timer activo
+  totalActiveMs: 0,  // acumulado real de tiempo ejecutando series
+  biciKcal: 0,
 };
 
 let sessionClockInterval = null;
@@ -842,33 +1006,48 @@ let sessionActive = false;
 
 // ─── NOMBRES DE EJERCICIOS ────────────────────────────────────────────
 const EX_NAMES = {
-  ex1:'Press de hombros', ex2:'Press de pecho', ex3:'Elevaciones laterales',
+  ex1:'Press de hombros', ex2:'Floor Press', ex3:'Elevaciones laterales',
   ex4:'Extensión tríceps', ex5:'Flexiones mancuernas', ex6:'Elevaciones frontales',
   ex7:'Remo al mentón', ex8:'Remo inclinado', ex9:'Curl de bíceps',
   ex10:'Peso muerto rígido', ex11:'Remo renegado', ex12:'Shrug',
   ex13:'Curl martillo', ex14:'Crunch banco', ex15:'Goblet squat',
   ex16:'Zancadas', ex17:'Peso muerto rumano', ex18:'Hip thrust',
-  ex19:'Elevación talones', ex20:'Bici HIIT'
+  ex19:'Elevación talones', ex20:'Bici HIIT',
+  ex1b:'Press hombros banda', ex1c:'Cruce pecho banda', ex1bici:'Bici Día 1',
+  ex2b:'Band Pull Apart', ex2c:'Aperturas espalda banda', ex2bici:'Bici Día 2',
+  ex3b:'Monster Walk banda', ex3c:'Extensión cadera banda',
 };
 
 // ─── SESSION CLOCK ────────────────────────────────────────────────────
+// El reloj de la barra inferior solo muestra tiempo activo acumulado.
+// Se incrementa tick a tick SOLO cuando hay una serie en ejecución (execPhaseActive=true).
+let execPhaseActive = false;
+
 function startSessionClock() {
   sessionClockInterval = setInterval(() => {
-    const ms = Date.now() - session.startTs;
-    const m = Math.floor(ms/60000);
-    const s = Math.floor((ms%60000)/1000);
-    document.getElementById('sb-time').textContent =
-      String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-    updateSbRest();
+    if (execPhaseActive) {
+      session.totalActiveMs += 1000;
+    }
+    refreshBar();
   }, 1000);
 }
 
-function updateSbRest() {
-  const tot = session.totalRestMs;
-  const m = Math.floor(tot/60000);
-  const s = Math.floor((tot%60000)/1000);
-  document.getElementById('sb-rest').textContent = m+':'+String(s).padStart(2,'0');
+function refreshBar() {
+  const ms = session.totalActiveMs;
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  document.getElementById('sb-time').textContent =
+    String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+
+  const rm = Math.floor(session.totalRestMs / 60000);
+  const rs = Math.floor((session.totalRestMs % 60000) / 1000);
+  document.getElementById('sb-rest').textContent = rm + ':' + String(rs).padStart(2,'0');
   document.getElementById('sb-series').textContent = session.series.length;
+
+  // Kcal en tiempo real: MET 4.5 × peso × horas activas + bici
+  const kcal = Math.round(4.5 * session.weight * (session.totalActiveMs / 3600000))
+               + (session.biciKcal || 0);
+  document.getElementById('sb-kcal').textContent = kcal;
 }
 
 // ─── NAVEGACIÓN DE DÍAS ───────────────────────────────────────────────
@@ -933,6 +1112,7 @@ function startSerie(dotEl, restSecs) {
   // ── Fase ejecución: construir DOM a mano para poder adjuntar listeners fiables
   timerEl.innerHTML = '';
   timerEl.classList.add('open');
+  execPhaseActive = true;  // ← empieza a contar tiempo activo
 
   const phaseEl = document.createElement('div'); phaseEl.className='st-phase'; phaseEl.textContent='EJECUTANDO SERIE '+serieN;
   const timeEl  = document.createElement('div'); timeEl.className='st-time';  timeEl.textContent='00:00';
@@ -962,12 +1142,14 @@ function startSerie(dotEl, restSecs) {
 
   doneBtn.addEventListener('click', () => {
     clearInterval(execInterval);
+    execPhaseActive = false;  // ← deja de contar al completar
     const execMs = Date.now() - execStart;
     startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN);
   });
 
   skipBtn.addEventListener('click', () => {
     clearInterval(execInterval);
+    execPhaseActive = false;  // ← deja de contar al saltar
     timerEl.classList.remove('open');
     dotEl.classList.remove('active-series');
     activeSerieTimer = null;
@@ -984,7 +1166,7 @@ function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
 
   const serieRecord = { exid, n: serieN, execMs, restMs: 0, ts: Date.now() };
   session.series.push(serieRecord);
-  updateSbRest();
+  refreshBar();
 
   let remaining = restSecs;
   const restStart = Date.now();
@@ -1012,7 +1194,7 @@ function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
     session.totalRestMs += restMs;
     timerEl.classList.remove('open');
     activeSerieTimer = null;
-    updateSbRest();
+    refreshBar();
     if (navigator.vibrate) navigator.vibrate([200,100,200]);
   };
 
@@ -1040,49 +1222,47 @@ function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
   activeSerieTimer = { interval: restInterval };
 }
 
-// ─── FINALIZAR SESIÓN ─────────────────────────────────────────────────
 function openFinish() {
-  // Construir estadísticas previas
-  const elapsed = Date.now() - session.startTs;
-  const elMin = Math.floor(elapsed/60000);
-  const elSec = Math.floor((elapsed%60000)/1000);
-  const restMin = Math.floor(session.totalRestMs/60000);
-  const restSec = Math.floor((session.totalRestMs%60000)/1000);
-  const activeMs = elapsed - session.totalRestMs;
-  const actMin = Math.floor(activeMs/60000);
+  const activeMs  = session.totalActiveMs;
+  const restMs    = session.totalRestMs;
+  const totalMs   = activeMs + restMs;
+  const actMin    = Math.floor(activeMs / 60000);
+  const actSec    = Math.floor((activeMs % 60000) / 1000);
+  const restMin   = Math.floor(restMs / 60000);
+  const restSec   = Math.floor((restMs % 60000) / 1000);
+  const totalMin  = Math.floor(totalMs / 60000);
+  const totalSec  = Math.floor((totalMs % 60000) / 1000);
+  const kcal      = Math.round(4.5 * session.weight * (activeMs / 3600000)) + (session.biciKcal || 0);
 
-  // Agrupar series por ejercicio
   const byEx = {};
-  session.series.forEach(s => {
-    byEx[s.exid] = (byEx[s.exid]||0) + 1;
-  });
-  const exList = Object.entries(byEx).map(([id,n]) => `${EX_NAMES[id]||id}: ${n} serie${n>1?'s':''}`).join(' · ');
+  session.series.forEach(s => { byEx[s.exid] = (byEx[s.exid]||0) + 1; });
+  const exList = Object.entries(byEx)
+    .map(([id,n]) => `${EX_NAMES[id]||id} ×${n}`)
+    .join(' · ');
 
   document.getElementById('finish-stats').innerHTML = `
-    <div class="finish-stat"><span class="lbl">⏱ Duración total</span><span class="val">${elMin}m ${elSec}s</span></div>
-    <div class="finish-stat"><span class="lbl">💪 Tiempo activo</span><span class="val">${actMin} min</span></div>
-    <div class="finish-stat"><span class="lbl">😮‍💨 Tiempo descanso</span><span class="val">${restMin}m ${restSec}s</span></div>
+    <div class="finish-stat"><span class="lbl">🔥 Calorías estimadas</span><span class="val" style="color:var(--accent);font-size:1.3rem;">${kcal} kcal</span></div>
+    <div class="finish-stat"><span class="lbl">💪 Tiempo activo (series)</span><span class="val">${actMin}m ${actSec}s</span></div>
+    <div class="finish-stat"><span class="lbl">😮‍💨 Tiempo de descanso</span><span class="val">${restMin}m ${restSec}s</span></div>
+    <div class="finish-stat"><span class="lbl">⏱ Tiempo total</span><span class="val">${totalMin}m ${totalSec}s</span></div>
     <div class="finish-stat"><span class="lbl">📊 Series completadas</span><span class="val">${session.series.length}</span></div>
-    <div class="finish-stat"><span class="lbl">🏋️ Ejercicios</span><span class="val" style="font-size:.75rem;text-align:right">${exList||'—'}</span></div>
+    <div class="finish-stat"><span class="lbl">⚖️ Peso registrado</span><span class="val">${session.weight} kg</span></div>
+    <div class="finish-stat"><span class="lbl">🏋️ Ejercicios</span><span class="val" style="font-size:.72rem;text-align:right;max-width:200px">${exList||'—'}</span></div>
   `;
   document.getElementById('modal-finish').classList.add('open');
 }
 
 function confirmFinish() {
-  const weight = parseFloat(document.getElementById('weight-input').value) || 75;
-  const elapsed = Date.now() - session.startTs;
-  const activeMs = elapsed - session.totalRestMs;
-  const actMin = activeMs / 60000;
-
-  // MET estimado entrenamiento con mancuernas moderado = 4.5
-  // Kcal = MET × peso(kg) × tiempo(h)
-  const kcal = Math.round(4.5 * weight * (actMin / 60)) + (session.biciKcal || 0);
-
-  // Guardar sesión en localStorage
+  const weight    = session.weight;
+  const activeMs  = session.totalActiveMs;
+  const actMin    = activeMs / 60000;
+  const kcalMancuernas = Math.round(4.5 * weight * (actMin / 60));
+  const kcal = kcalMancuernas + (session.biciKcal || 0);
+  const totalMs = session.totalActiveMs + session.totalRestMs;
   const record = {
     date: new Date().toISOString().slice(0,10),
     dayNum: session.day,
-    durationMs: elapsed,
+    durationMs: totalMs,
     activeMs,
     restMs: session.totalRestMs,
     seriesCount: session.series.length,
@@ -1091,7 +1271,6 @@ function confirmFinish() {
     series: session.series.map(s => ({ exid: s.exid, n: s.n }))
   };
   saveSession(record);
-
   closeModal('modal-finish');
   showResult(record);
 }
@@ -1345,7 +1524,6 @@ let selectedStartDay = null;
 
 function selectStartDay(n, btn) {
   selectedStartDay = n;
-  // Resaltar botón seleccionado
   [1,2,3].forEach(i => {
     const b = document.getElementById('sd'+i);
     b.style.borderColor = 'var(--border)';
@@ -1355,18 +1533,25 @@ function selectStartDay(n, btn) {
   btn.style.borderColor = 'var(--accent)';
   btn.style.color = '#fff';
   btn.style.background = 'rgba(229,9,20,.18)';
+  checkStartReady();
+}
 
-  // Activar botón iniciar
+function checkStartReady() {
+  const w = parseFloat(document.getElementById('start-weight').value);
+  const ready = selectedStartDay && w >= 30 && w <= 200;
   const startBtn = document.getElementById('btn-start');
-  startBtn.disabled = false;
-  startBtn.style.opacity = '1';
-  startBtn.style.cursor = 'pointer';
+  startBtn.disabled = !ready;
+  startBtn.style.opacity = ready ? '1' : '.35';
+  startBtn.style.cursor = ready ? 'pointer' : 'default';
 }
 
 function iniciarSesion() {
   if (!selectedStartDay) return;
+  const w = parseFloat(document.getElementById('start-weight').value);
+  if (!w || w < 30) return;
 
-  // Activar el día seleccionado en la nav
+  session.weight = w;
+
   document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   const navBtns = document.querySelectorAll('.day-btn');
@@ -1374,14 +1559,11 @@ function iniciarSesion() {
   document.getElementById('day-' + selectedStartDay).classList.add('active');
   session.day = selectedStartDay;
 
-  // Ocultar pantalla de inicio
   const ss = document.getElementById('start-screen');
   ss.style.transition = 'opacity .4s';
   ss.style.opacity = '0';
   setTimeout(() => ss.style.display = 'none', 400);
 
-  // Arrancar reloj desde este momento
-  session.startTs = Date.now();
   sessionActive = true;
   startSessionClock();
 }
