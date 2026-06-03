@@ -1004,6 +1004,43 @@ let session = {
 let sessionClockInterval = null;
 let sessionActive = false;
 
+
+        let wakeLock = null;
+
+        // Función para activar el bloqueo de pantalla
+        async function activarWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    document.getElementById('estado').innerText = "Activado (Pantalla Bloqueada)";
+                    console.log("Wake Lock activo.");
+                    
+                    // Si el usuario cambia de pestaña y vuelve, reajustamos el bloqueo
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock liberado.');
+                    });
+                } else {
+                    document.getElementById('estado').innerText = "Tu navegador no soporta Wake Lock API. Usa la opción del vídeo.";
+                }
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
+
+        // Activar automáticamente al cargar la página
+        // Nota: Algunos navegadores exigen que el usuario interactúe antes (un clic)
+        window.addEventListener('click', activarWakeLock);
+        window.addEventListener('load', activarWakeLock);
+
+        // Volver a activar si la pestaña vuelve a estar visible
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await activarWakeLock();
+            }
+        });
+    
+
+  
 // ─── NOMBRES DE EJERCICIOS ────────────────────────────────────────────
 const EX_NAMES = {
   ex1:'Press de hombros', ex2:'Floor Press', ex3:'Elevaciones laterales',
