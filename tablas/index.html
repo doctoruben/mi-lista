@@ -246,9 +246,9 @@ header{
     Selecciona el día, introduce tu peso y pulsa iniciar.
   </div>
   <div style="display:flex;gap:8px;width:100%;max-width:320px;">
-    <button onclick="selectStartDay(1,this)" id="sd1" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 1<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Empuje</span></button>
-    <button onclick="selectStartDay(2,this)" id="sd2" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 2<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Tirón</span></button>
-    <button onclick="selectStartDay(3,this)" id="sd3" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Día 3<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Piernas</span></button>
+    <button onclick="selectStartDay(1,this)" id="sd1" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Sesión<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Empuje</span></button>
+    <button onclick="selectStartDay(2,this)" id="sd2" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Sesión<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Tirón</span></button>
+    <button onclick="selectStartDay(3,this)" id="sd3" style="flex:1;padding:14px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);color:var(--muted2);font-weight:700;font-size:0.8rem;cursor:pointer;line-height:1.4;transition:all .2s;">Sesión<br><span style="font-size:0.65rem;font-weight:400;color:var(--muted);">Piernas</span></button>
   </div>
   <!-- PESO -->
   <div style="width:100%;max-width:320px;">
@@ -283,9 +283,9 @@ header{
 
 <!-- ══════════════════════════════ DAY NAV ══════════════════════════════ -->
 <nav class="day-nav">
-  <button class="day-btn active" onclick="changeDay(1,this)">Día 1 · Empuje</button>
-  <button class="day-btn" onclick="changeDay(2,this)">Día 2 · Tirón</button>
-  <button class="day-btn" onclick="changeDay(3,this)">Día 3 · Piernas</button>
+  <button class="day-btn active" onclick="changeDay(1,this)">Sesión · Empuje</button>
+  <button class="day-btn" onclick="changeDay(2,this)">Sesión · Tirón</button>
+  <button class="day-btn" onclick="changeDay(3,this)">Sesión · Piernas</button>
 </nav>
 
 <!-- ══════════════════════════════ EJERCICIOS ══════════════════════════════ -->
@@ -484,7 +484,7 @@ header{
       <span class="badge">Cardio · Finisher</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">Bici estática HIIT — Finisher Día 1</div>
+      <div class="ex-name">Bici estática HIIT — Finisher Empuje</div>
       <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación</div>
       <div class="guide"><strong>Por qué aquí:</strong> Tras el trabajo de empuje el corazón está activo. El HIIT de bici como finisher maximiza la quema calórica post-ejercicio (efecto EPOC) sin cargar articulaciones ya fatigadas.</div>
       <div class="series-row" style="margin-top:4px;">
@@ -492,10 +492,45 @@ header{
       </div>
     </div>
   </div>
+  <!-- CARDIO: Running/Caminar Día 1 -->
+  <div class="card" data-exid="exRun1">
+    <div class="img-wrap" style="cursor:pointer;" onclick="openRunModal()">
+      <div style="width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#0d1f0d 0%,#0a1a0a 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+          <img src="https://www.choosept.com/globalassets/choosept/assets/spotlight-images/runners-all-ages_sizes_750x419.jpg">
+	<img src="https://www.womensrunning.co.uk/wp-content/uploads/2016/04/improve-running.png">
+        
+        <span class="badge" style="border-color:rgba(16,185,129,.5);">Cardio · Running</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">🏃 Running / Caminar</div>
+      <div class="ex-presets">Cardio libre · Registra tu distancia y calorías</div>
+      <div class="guide"><strong>Instrucciones:</strong> Sal a correr o caminar. Al volver registra la distancia recorrida y las calorías quemadas (del reloj/app) para sumarlas al total de tu sesión.</div>
+      <div class="series-row" style="margin-top:4px;">
+        <button onclick="openRunModal()" style="width:100%;padding:13px;background:#10b981;border:none;color:#fff;font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">🏃 REGISTRAR CARDIO</button>
+      </div>
+    </div>
+  </div>
 
 </section>
-<section id="day-2" class="section">
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section id="day-2" class="section">
   <div class="card" data-exid="ex8">
     <div class="img-wrap" onclick="openLightbox(this)">
       <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Two-Dumbbell_Row/0.jpg" alt="">
@@ -686,7 +721,7 @@ header{
       <span class="badge">Cardio · Finisher</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">Bici estática HIIT — Finisher Día 2</div>
+      <div class="ex-name">Bici estática HIIT — Finisher Tirón</div>
       <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación</div>
       <div class="guide"><strong>Por qué aquí:</strong> El día de tirón deja las piernas relativamente frescas. La bici activa el tren inferior sin comprometer la recuperación de espalda y bíceps, completando el gasto calórico de la sesión.</div>
       <div class="series-row" style="margin-top:4px;">
@@ -694,10 +729,29 @@ header{
       </div>
     </div>
   </div>
+  <!-- CARDIO: Running/Caminar Día 2 -->
+  <div class="card" data-exid="exRun2">
+    <div class="img-wrap" style="cursor:pointer;" onclick="openRunModal()">
+  <div style="width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#0d1f0d 0%,#0a1a0a 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">          
+<img src="https://www.choosept.com/globalassets/choosept/assets/spotlight-images/runners-all-ages_sizes_750x419.jpg">
+	<img src="https://www.womensrunning.co.uk/wp-content/uploads/2016/04/improve-running.png">
+        
+        <span class="badge" style="border-color:rgba(16,185,129,.5);">Cardio · Running</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">🏃 Running / Caminar</div>
+      <div class="ex-presets">Cardio libre · Registra tu distancia y calorías</div>
+      <div class="guide"><strong>Instrucciones:</strong> Sal a correr o caminar. Al volver registra la distancia recorrida y las calorías quemadas (del reloj/app) para sumarlas al total de tu sesión.</div>
+      <div class="series-row" style="margin-top:4px;">
+        <button onclick="openRunModal()" style="width:100%;padding:13px;background:#10b981;border:none;color:#fff;font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">🏃 REGISTRAR CARDIO</button>
+      </div>
+    </div>
+  </div>
 
 </section>
-<section id="day-3" class="section">
 
+<section id="day-3" class="section">
   <div class="card" data-exid="ex15">
     <div class="img-wrap" onclick="openLightbox(this)">
       <img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Goblet_Squat/0.jpg" alt="">
@@ -849,7 +903,7 @@ header{
       <span class="badge">Cardio · Finisher</span>
     </div>
     <div class="card-body">
-      <div class="ex-name">Bici estática HIIT — Finisher Día 3</div>
+      <div class="ex-name">Bici estática HIIT — Finisher Piernas</div>
       <div class="ex-presets">5 sprints · 30 s máx / 60 s recuperación</div>
       <div class="guide"><strong>Por qué al final:</strong> Día de piernas → la bici va después del trabajo de fuerza, no antes. Las piernas ya están activadas y el HIIT final maximiza la quema calórica. Si notas fatiga excesiva, reduce la intensidad del sprint.</div>
       <div class="series-row" style="margin-top:4px;">
@@ -857,9 +911,25 @@ header{
       </div>
     </div>
   </div>
+  <!-- CARDIO: Running/Caminar Día 3 -->
+  <div class="card" data-exid="exRun3">
+    <div class="img-wrap" style="cursor:pointer;" onclick="openRunModal()">
+       <img src="https://www.choosept.com/globalassets/choosept/assets/spotlight-images/runners-all-ages_sizes_750x419.jpg">
+	<img src="https://www.womensrunning.co.uk/wp-content/uploads/2016/04/improve-running.png">
+                 <span class="badge" style="border-color:rgba(16,185,129,.5);">Cardio · Running</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="ex-name">🏃 Running / Caminar</div>
+      <div class="ex-presets">Cardio libre · Registra tu distancia y calorías</div>
+      <div class="guide"><strong>Instrucciones:</strong> Sal a correr o caminar. Al volver registra la distancia recorrida y las calorías quemadas (del reloj/app) para sumarlas al total de tu sesión.</div>
+      <div class="series-row" style="margin-top:4px;">
+        <button onclick="openRunModal()" style="width:100%;padding:13px;background:#10b981;border:none;color:#fff;font-size:0.9rem;font-weight:800;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">🏃 REGISTRAR CARDIO</button>
+      </div>
+    </div>
+  </div>
 
 </section>
-</div><!-- /app -->
 
 <!-- ══════════════════════════════ BOTTOM BAR ══════════════════════════════ -->
 <div class="session-bar" id="session-bar">
@@ -944,6 +1014,73 @@ header{
   </div>
 </div>
 
+<!-- ══════════════════════════════ MODAL RUNNING ══════════════════════════════ -->
+<div class="modal-bg" id="modal-run" onclick="return false;">
+  <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeRunModal()">✕</button>
+    <h2>🏃 Registrar Cardio</h2>
+
+    <div style="background:var(--card2);border-radius:10px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:0.82rem;color:var(--muted2);line-height:1.5;">
+        Introduce los datos de tu sesión. La duración se sumará al tiempo activo y las calorías al total del día.
+      </div>
+    </div>
+
+    <!-- Tipo de actividad -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Tipo de actividad</label>
+      <div style="display:flex;gap:6px;">
+        <button class="run-type-btn active" onclick="selectRunType(this,'🏃 Correr')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:rgba(229,9,20,.12);color:#fff;font-size:0.78rem;font-weight:700;cursor:pointer;">🏃 Correr</button>
+        <button class="run-type-btn" onclick="selectRunType(this,'🚶 Caminar')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:none;color:var(--muted2);font-size:0.78rem;font-weight:700;cursor:pointer;">🚶 Caminar</button>
+        <button class="run-type-btn" onclick="selectRunType(this,'🚵 MTB/Bici')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:none;color:var(--muted2);font-size:0.78rem;font-weight:700;cursor:pointer;">🚵 Bici ext.</button>
+      </div>
+    </div>
+
+    <!-- Distancia -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Distancia recorrida</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="run-km" type="number" min="0" max="100" step="0.1" placeholder="0.0"
+          style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-size:1.3rem;font-weight:700;text-align:center;outline:none;"
+          onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+        <span style="font-size:1rem;color:var(--muted);font-weight:600;">km</span>
+      </div>
+    </div>
+
+    <!-- Duración -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Duración</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="run-min" type="number" min="0" max="300" step="1" placeholder="0"
+          style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-size:1.3rem;font-weight:700;text-align:center;outline:none;"
+          onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+        <span style="font-size:1rem;color:var(--muted);font-weight:600;">min</span>
+      </div>
+    </div>
+
+    <!-- Calorías manual -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:0.72rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Calorías quemadas</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input id="run-kcal" type="number" min="0" max="5000" step="1" placeholder="0"
+          style="flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-size:1.3rem;font-weight:700;text-align:center;outline:none;"
+          onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor='var(--border)'">
+        <span style="font-size:1rem;color:var(--muted);font-weight:600;">kcal</span>
+      </div>
+    </div>
+
+    <div id="run-kcal-hint" style="font-size:0.68rem;margin-bottom:12px;min-height:18px;text-align:center;"></div>
+
+    <!-- Botón guardar -->
+    <button onclick="saveRunModal()" style="width:100%;padding:14px;background:var(--green);border:none;color:#fff;font-size:0.95rem;font-weight:800;border-radius:10px;cursor:pointer;letter-spacing:.5px;">
+      ✅ Guardar y sumar al total
+    </button>
+
+    <!-- Historial de runs de hoy -->
+    <div id="run-history-today" style="margin-top:14px;"></div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════ LIGHTBOX ══════════════════════════════ -->
 <div id="lightbox" onclick="closeLightbox()">
   <button id="lightbox-close" onclick="closeLightbox()">✕</button>
@@ -994,53 +1131,19 @@ const STORE_KEY = 'mancuernas_sessions_v1';
 
 let session = {
   day: 1,
-  weight: 75,        // kg — se fija al iniciar sesión
-  series: [],        // {exid, n, execMs, restMs, ts}
+  weight: 75,
+  series: [],
   totalRestMs: 0,
-  totalActiveMs: 0,  // acumulado real de tiempo ejecutando series
+  totalActiveMs: 0,   // solo series de mancuernas → usado para cálculo MET
+  totalDisplayMs: 0,  // totalActiveMs + cardio → solo para mostrar en barra
   biciKcal: 0,
+  runKcal: 0,
+  runs: [],
 };
 
 let sessionClockInterval = null;
 let sessionActive = false;
 
-
-        let wakeLock = null;
-
-        // Función para activar el bloqueo de pantalla
-        async function activarWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    document.getElementById('estado').innerText = "Activado (Pantalla Bloqueada)";
-                    console.log("Wake Lock activo.");
-                    
-                    // Si el usuario cambia de pestaña y vuelve, reajustamos el bloqueo
-                    wakeLock.addEventListener('release', () => {
-                        console.log('Wake Lock liberado.');
-                    });
-                } else {
-                    document.getElementById('estado').innerText = "Tu navegador no soporta Wake Lock API. Usa la opción del vídeo.";
-                }
-            } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
-            }
-        }
-
-        // Activar automáticamente al cargar la página
-        // Nota: Algunos navegadores exigen que el usuario interactúe antes (un clic)
-        window.addEventListener('click', activarWakeLock);
-        window.addEventListener('load', activarWakeLock);
-
-        // Volver a activar si la pestaña vuelve a estar visible
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await activarWakeLock();
-            }
-        });
-    
-
-  
 // ─── NOMBRES DE EJERCICIOS ────────────────────────────────────────────
 const EX_NAMES = {
   ex1:'Press de hombros', ex2:'Floor Press', ex3:'Elevaciones laterales',
@@ -1050,9 +1153,10 @@ const EX_NAMES = {
   ex13:'Curl martillo', ex14:'Crunch banco', ex15:'Goblet squat',
   ex16:'Zancadas', ex17:'Peso muerto rumano', ex18:'Hip thrust',
   ex19:'Elevación talones', ex20:'Bici HIIT',
-  ex1b:'Press hombros banda', ex1c:'Cruce pecho banda', ex1bici:'Bici Día 1',
-  ex2b:'Band Pull Apart', ex2c:'Aperturas espalda banda', ex2bici:'Bici Día 2',
+  ex1b:'Press hombros banda', ex1c:'Cruce pecho banda', ex1bici:'Bici Empuje',
+  ex2b:'Band Pull Apart', ex2c:'Aperturas espalda banda', ex2bici:'Bici Tirón',
   ex3b:'Monster Walk banda', ex3c:'Extensión cadera banda',
+  exRun1:'Running/Cardio', exRun2:'Running/Cardio', exRun3:'Running/Cardio',
 };
 
 // ─── SESSION CLOCK ────────────────────────────────────────────────────
@@ -1070,7 +1174,8 @@ function startSessionClock() {
 }
 
 function refreshBar() {
-  const ms = session.totalActiveMs;
+  // Tiempo mostrado = series mancuernas + cardio externo
+  const ms = session.totalActiveMs + (session.totalDisplayMs || 0);
   const m = Math.floor(ms / 60000);
   const s = Math.floor((ms % 60000) / 1000);
   document.getElementById('sb-time').textContent =
@@ -1081,9 +1186,9 @@ function refreshBar() {
   document.getElementById('sb-rest').textContent = rm + ':' + String(rs).padStart(2,'0');
   document.getElementById('sb-series').textContent = session.series.length;
 
-  // Kcal en tiempo real: MET 4.5 × peso × horas activas + bici
+  // Kcal: MET solo sobre series de mancuernas + bici (ya calculadas) + cardio manual
   const kcal = Math.round(4.5 * session.weight * (session.totalActiveMs / 3600000))
-               + (session.biciKcal || 0);
+               + (session.biciKcal || 0) + (session.runKcal || 0);
   document.getElementById('sb-kcal').textContent = kcal;
 }
 
@@ -1260,7 +1365,7 @@ function startRestPhase(timerEl, dotEl, restSecs, execMs, exid, serieN) {
 }
 
 function openFinish() {
-  const activeMs  = session.totalActiveMs;
+  const activeMs  = session.totalActiveMs + (session.totalDisplayMs || 0); // series + cardio
   const restMs    = session.totalRestMs;
   const totalMs   = activeMs + restMs;
   const actMin    = Math.floor(activeMs / 60000);
@@ -1269,7 +1374,9 @@ function openFinish() {
   const restSec   = Math.floor((restMs % 60000) / 1000);
   const totalMin  = Math.floor(totalMs / 60000);
   const totalSec  = Math.floor((totalMs % 60000) / 1000);
-  const kcal      = Math.round(4.5 * session.weight * (activeMs / 3600000)) + (session.biciKcal || 0);
+  // Kcal: MET solo sobre series mancuernas + bici + cardio manual
+  const kcal = Math.round(4.5 * session.weight * (session.totalActiveMs / 3600000))
+               + (session.biciKcal || 0) + (session.runKcal || 0);
 
   const byEx = {};
   session.series.forEach(s => { byEx[s.exid] = (byEx[s.exid]||0) + 1; });
@@ -1277,25 +1384,30 @@ function openFinish() {
     .map(([id,n]) => `${EX_NAMES[id]||id} ×${n}`)
     .join(' · ');
 
+  // Línea de cardio si hay runs
+  const runLine = session.runs && session.runs.length
+    ? `<div class="finish-stat"><span class="lbl">🏃 Cardio registrado</span><span class="val" style="font-size:.78rem;text-align:right;max-width:200px">${session.runs.map(r=>`${r.type} ${r.km>0?r.km+'km':''} ${r.min>0?r.min+'min':''} ${r.kcal}kcal`).join(' · ')}</span></div>`
+    : '';
+
   document.getElementById('finish-stats').innerHTML = `
-    <div class="finish-stat"><span class="lbl">🔥 Calorías estimadas</span><span class="val" style="color:var(--accent);font-size:1.3rem;">${kcal} kcal</span></div>
-    <div class="finish-stat"><span class="lbl">💪 Tiempo activo (series)</span><span class="val">${actMin}m ${actSec}s</span></div>
+    <div class="finish-stat"><span class="lbl">🔥 Calorías totales</span><span class="val" style="color:var(--accent);font-size:1.3rem;">${kcal} kcal</span></div>
+    <div class="finish-stat"><span class="lbl">💪 Tiempo activo total</span><span class="val">${actMin}m ${actSec}s</span></div>
     <div class="finish-stat"><span class="lbl">😮‍💨 Tiempo de descanso</span><span class="val">${restMin}m ${restSec}s</span></div>
     <div class="finish-stat"><span class="lbl">⏱ Tiempo total</span><span class="val">${totalMin}m ${totalSec}s</span></div>
     <div class="finish-stat"><span class="lbl">📊 Series completadas</span><span class="val">${session.series.length}</span></div>
     <div class="finish-stat"><span class="lbl">⚖️ Peso registrado</span><span class="val">${session.weight} kg</span></div>
+    ${runLine}
     <div class="finish-stat"><span class="lbl">🏋️ Ejercicios</span><span class="val" style="font-size:.72rem;text-align:right;max-width:200px">${exList||'—'}</span></div>
   `;
   document.getElementById('modal-finish').classList.add('open');
 }
 
 function confirmFinish() {
-  const weight    = session.weight;
-  const activeMs  = session.totalActiveMs;
-  const actMin    = activeMs / 60000;
-  const kcalMancuernas = Math.round(4.5 * weight * (actMin / 60));
-  const kcal = kcalMancuernas + (session.biciKcal || 0);
-  const totalMs = session.totalActiveMs + session.totalRestMs;
+  const weight         = session.weight;
+  const activeMs       = session.totalActiveMs + (session.totalDisplayMs || 0);
+  const kcalMancuernas = Math.round(4.5 * weight * (session.totalActiveMs / 3600000));
+  const kcal           = kcalMancuernas + (session.biciKcal || 0) + (session.runKcal || 0);
+  const totalMs        = activeMs + session.totalRestMs;
   const record = {
     date: new Date().toISOString().slice(0,10),
     dayNum: session.day,
@@ -1305,7 +1417,8 @@ function confirmFinish() {
     seriesCount: session.series.length,
     weight,
     kcal,
-    series: session.series.map(s => ({ exid: s.exid, n: s.n }))
+    series: session.series.map(s => ({ exid: s.exid, n: s.n })),
+    runs: session.runs || [],
   };
   saveSession(record);
   closeModal('modal-finish');
@@ -1418,11 +1531,18 @@ function showDayDetail(dateStr) {
   let html = `<h3>📅 ${dateStr} · ${totalKcal} kcal · ${totalSeries} series</h3>`;
   sessions.forEach((s,i) => {
     const min = Math.floor(s.durationMs/60000);
-    const dayLabel = `Día ${s.dayNum}`;
+    const SESSION_NAMES = {1:'Sesión Empuje', 2:'Sesión Tirón', 3:'Sesión Piernas'};
+    const dayLabel = SESSION_NAMES[s.dayNum] || `Sesión ${s.dayNum}`;
     html += `<div class="day-ex"><strong>${dayLabel} – ${min} min – ${s.kcal} kcal</strong><br>`;
     const byEx = {};
     s.series.forEach(sr => { byEx[sr.exid] = (byEx[sr.exid]||0)+1; });
     html += Object.entries(byEx).map(([id,n])=>`${EX_NAMES[id]||id} ×${n}`).join(', ');
+    // Runs registrados
+    if (s.runs && s.runs.length) {
+      html += `<br><span style="color:var(--green);">🏃 Cardio: ` +
+        s.runs.map(r => `${r.type} ${r.km}km ${r.min}min ${r.kcal}kcal`).join(' · ') +
+        `</span>`;
+    }
     html += `</div>`;
   });
 
@@ -1435,6 +1555,7 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 document.querySelectorAll('.modal-bg').forEach(bg => {
+  if (bg.id === 'modal-run') return; // solo se cierra con X o guardando
   bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); });
 });
 
@@ -1566,6 +1687,107 @@ function closeBiciModal() {
   }
 
   document.getElementById('modal-bici').classList.remove('open');
+}
+
+// ─── RUNNING / CARDIO MODAL ───────────────────────────────────────────
+let currentRunType = '🏃 Correr';
+
+// MET por tipo de actividad (para estimación si no introduce kcal)
+const RUN_MET = { '🏃 Correr': 8.0, '🚶 Caminar': 3.5, '🚵 MTB/Bici': 6.0 };
+
+function openRunModal() {
+  if (!sessionActive) { alert('Primero pulsa "Iniciar sesión"'); return; }
+  // Resetear campos
+  document.getElementById('run-km').value = '';
+  document.getElementById('run-min').value = '';
+  document.getElementById('run-kcal').value = '';
+  document.getElementById('run-kcal-hint').textContent = '';
+  currentRunType = '🏃 Correr';
+  // Reset botones tipo
+  document.querySelectorAll('.run-type-btn').forEach((b,i) => {
+    const isFirst = i === 0;
+    b.style.borderColor = isFirst ? 'var(--accent)' : 'var(--border)';
+    b.style.background  = isFirst ? 'rgba(229,9,20,.12)' : 'none';
+    b.style.color       = isFirst ? '#fff' : 'var(--muted2)';
+  });
+  renderRunHistoryToday();
+  document.getElementById('modal-run').classList.add('open');
+}
+
+function closeRunModal() {
+  document.getElementById('modal-run').classList.remove('open');
+}
+
+function selectRunType(btn, type) {
+  currentRunType = type;
+  document.querySelectorAll('.run-type-btn').forEach(b => {
+    b.style.borderColor = 'var(--border)';
+    b.style.background  = 'none';
+    b.style.color       = 'var(--muted2)';
+  });
+  btn.style.borderColor = 'var(--accent)';
+  btn.style.background  = 'rgba(229,9,20,.12)';
+  btn.style.color       = '#fff';
+}
+
+function saveRunModal() {
+  const km   = parseFloat(document.getElementById('run-km').value)   || 0;
+  const min  = parseFloat(document.getElementById('run-min').value)  || 0;
+  const kcal = parseFloat(document.getElementById('run-kcal').value) || 0;
+
+  if (kcal <= 0 && km <= 0) {
+    alert('Introduce al menos la distancia o las calorías.');
+    return;
+  }
+
+  const run = { type: currentRunType, km, min, kcal, ts: Date.now() };
+
+  session.runs.push(run);
+  session.runKcal = (session.runKcal || 0) + kcal;
+
+  // Sumar duración al tiempo mostrado (no al MET — las kcal ya son manuales)
+  if (min > 0) session.totalDisplayMs = (session.totalDisplayMs || 0) + min * 60000;
+
+  // Registrar en series para el historial
+  session.series.push({ exid: 'exRun' + session.day, n: '1', execMs: min * 60000, restMs: 0, ts: Date.now() });
+
+  refreshBar();
+
+  // Feedback
+  document.getElementById('run-kcal-hint').innerHTML =
+    `<span style="color:var(--green);font-weight:700;">✅ +${kcal} kcal · ${km > 0 ? km + ' km' : ''} ${min > 0 ? min + ' min' : ''} sumados al total</span>`;
+
+  document.getElementById('run-km').value   = '';
+  document.getElementById('run-min').value  = '';
+  document.getElementById('run-kcal').value = '';
+
+  renderRunHistoryToday();
+}
+
+function renderRunHistoryToday() {
+  const el = document.getElementById('run-history-today');
+  if (!session.runs || !session.runs.length) { el.innerHTML = ''; return; }
+
+  const total = session.runs.reduce((a, r) => a + r.kcal, 0);
+  const totalKm = session.runs.reduce((a, r) => a + r.km, 0);
+
+  el.innerHTML = `
+    <div style="margin-top:4px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+        Cardio registrado hoy
+      </div>
+      ${session.runs.map(r => `
+        <div style="display:flex;justify-content:space-between;align-items:center;
+             padding:7px 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
+          <span style="color:var(--text);">${r.type}${r.km > 0 ? ' · ' + r.km + ' km' : ''}${r.min > 0 ? ' · ' + r.min + ' min' : ''}</span>
+          <span style="color:var(--green);font-weight:700;">${r.kcal} kcal</span>
+        </div>
+      `).join('')}
+      <div style="display:flex;justify-content:space-between;padding-top:8px;font-size:0.82rem;font-weight:700;">
+        <span style="color:var(--muted2);">Total${totalKm > 0 ? ' · ' + totalKm.toFixed(1) + ' km' : ''}</span>
+        <span style="color:var(--green);">${total} kcal</span>
+      </div>
+    </div>`;
 }
 
 let selectedStartDay = null;
