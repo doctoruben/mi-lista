@@ -1704,6 +1704,7 @@ function biciStartPause() {
 function biciFinished() {
   const kcal = Math.round(biciElapsed * 0.185);
   session.biciKcal = (session.biciKcal || 0) + kcal;
+  session.totalDisplayMs = (session.totalDisplayMs || 0) + biciElapsed * 1000; // sumar tiempo al activo
   biciRondas++;
 
   document.getElementById('bici-phase').textContent = '🎉 ¡COMPLETADO!';
@@ -1712,7 +1713,6 @@ function biciFinished() {
   document.getElementById('bici-timer').style.color = '#10b981';
   document.getElementById('bici-kcal').textContent = kcal;
 
-  // Cambiar botón a "Nueva ronda" en lugar de ocultarlo
   const btn = document.getElementById('bici-btn-start');
   btn.textContent = '🔄 Nueva ronda';
   btn.style.background = '#10b981';
@@ -1731,13 +1731,14 @@ function closeBiciModal() {
   clearInterval(biciTimer);
   biciRunning = false;
 
-  // Sumar kcal parciales si no se completó la ronda
   if (biciElapsed > 0) {
     const btnStart = document.getElementById('bici-btn-start');
     const yaCompletado = btnStart && btnStart.textContent.includes('Nueva ronda');
     if (!yaCompletado) {
+      // Ronda parcial: sumar kcal y tiempo acumulado hasta el cierre
       const kcalAcum = Math.round(biciElapsed * 0.185);
       session.biciKcal = (session.biciKcal || 0) + kcalAcum;
+      session.totalDisplayMs = (session.totalDisplayMs || 0) + biciElapsed * 1000;
       session.series.push({ exid: 'ex20', n: 'parcial', execMs: biciElapsed * 1000, restMs: 0, ts: Date.now() });
       refreshBar();
     }
