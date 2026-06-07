@@ -1,0 +1,62 @@
+{
+  "name": "HGYM · Rutina Mancuernas",
+  "short_name": "HGYM",
+  "description": "Rutina de entrenamiento con mancuernas: empuje, tirón y piernas. Seguimiento de series, descansos, calorías y cardio.",
+  "start_url": "/mi-lista/tablas/index.html",
+  "scope": "/mi-lista/tablas/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "lang": "es",
+  "categories": ["health", "fitness"],
+  "icons": [
+    {
+      "src": "/mi-lista/tablas/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mi-lista/tablas/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/mi-lista/tablas/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mi-lista/tablas/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sesión Empuje",
+      "short_name": "Empuje",
+      "description": "Iniciar sesión de empuje (hombros, pecho, tríceps)",
+      "url": "/mi-lista/tablas/index.html",
+      "icons": [{ "src": "/mi-lista/tablas/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Sesión Tirón",
+      "short_name": "Tirón",
+      "description": "Iniciar sesión de tirón (espalda, bíceps)",
+      "url": "/mi-lista/tablas/index.html",
+      "icons": [{ "src": "/mi-lista/tablas/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Sesión Piernas",
+      "short_name": "Piernas",
+      "description": "Iniciar sesión de piernas (cuádriceps, glúteos, femorales)",
+      "url": "/mi-lista/tablas/index.html",
+      "icons": [{ "src": "/mi-lista/tablas/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
