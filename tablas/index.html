@@ -1140,6 +1140,35 @@ let session = {
 
 let sessionClockInterval = null;
 let sessionActive = false;
+// Variable para guardar el "candado" de la pantalla
+let wakeLock = null;
+
+// Función para activar el bloqueo de apagado
+async function activarPantallaEncendida() {
+  try {
+    // Solicita que la pantalla se mantenga activa
+    wakeLock = await navigator.wakeLock.request('screen');
+    console.log('La pantalla se mantendrá encendida.');
+    
+    // Escucha si el sistema libera el bloqueo (por ejemplo, si el usuario minimiza la pestaña)
+    wakeLock.addEventListener('release', () => {
+      console.log('El bloqueo de pantalla ha sido liberado.');
+    });
+
+  } catch (err) {
+    console.error(`Error al activar Wake Lock: ${err.name}, ${err.message}`);
+  }
+}
+
+// Función para liberar el bloqueo manualmente cuando ya no lo necesites
+function desactivarPantallaEncendida() {
+  if (wakeLock !== null) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
+
+
 
 // ─── NOMBRES DE EJERCICIOS ────────────────────────────────────────────
 const EX_NAMES = {
