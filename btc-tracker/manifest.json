@@ -1,0 +1,26 @@
+{
+  "name": "Bitcoin Tracker",
+  "short_name": "BTC Tracker",
+  "description": "Consulta el precio del Bitcoin y calcula el valor de tu inversión",
+  "start_url": "/mi-lista/btc-tracker/index.html",
+  "scope": "/mi-lista/btc-tracker/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAC775",
+  "theme_color": "#FAC775",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/mi-lista/btc-tracker/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/mi-lista/btc-tracker/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
