@@ -180,6 +180,20 @@
     .success-bg { background: var(--success-bg) !important; }
     .danger-bg  { background: var(--danger-bg) !important; }
 
+    .btn-period {
+      padding: 5px 12px; font-size: 13px; font-weight: 500;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-md);
+      background: transparent; color: var(--text-secondary);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-period:hover { background: var(--bg-secondary); color: var(--text-primary); }
+    .active-period {
+      background: var(--text-primary) !important;
+      color: var(--bg) !important;
+      border-color: var(--text-primary) !important;
+    }
+
     #install-banner {
       display: none;
       align-items: center; justify-content: space-between;
@@ -193,6 +207,7 @@
     }
     #install-banner span { color: var(--text-secondary); }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </head>
 <body>
 <div class="container">
@@ -291,6 +306,49 @@
 
   <p id="last-updated"></p>
 
+  <div style="text-align:center; margin-top: 1rem;">
+    <button onclick="openChart()" style="padding: 9px 20px; font-size: 14px; font-weight:500;">
+      <i class="ti ti-chart-line" aria-hidden="true"></i> Gráficas
+    </button>
+  </div>
+
+</div>
+
+<!-- Modal gráfica -->
+<div id="chart-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; padding:1rem; align-items:center; justify-content:center;">
+  <div style="background:var(--bg-card); border-radius:var(--radius-lg); width:100%; max-width:720px; max-height:90vh; overflow-y:auto; padding:1.25rem; position:relative;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+      <span style="font-size:16px; font-weight:500; color:var(--text-primary);"><i class="ti ti-chart-line" aria-hidden="true"></i> Evolución del Bitcoin</span>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button onclick="loadChart('1')"  id="btn-1d" class="btn-period active-period">1D</button>
+        <button onclick="loadChart('7')"  id="btn-7d" class="btn-period">7D</button>
+        <button onclick="loadChart('30')" id="btn-30d" class="btn-period">1M</button>
+        <button onclick="loadChart('365')"id="btn-365d" class="btn-period">1A</button>
+        <button onclick="closeChart()" style="padding:6px 12px; font-size:13px; margin-left:8px;">
+          <i class="ti ti-x" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <p id="chart-range-label" style="font-size:13px; color:var(--text-secondary); margin-bottom:0.75rem;"></p>
+    <div style="position:relative; height:320px;">
+      <canvas id="btc-chart"></canvas>
+      <div id="chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:14px;">Cargando datos...</div>
+    </div>
+    <div style="display:flex; gap:16px; margin-top:1rem; flex-wrap:wrap;">
+      <div style="background:var(--bg-secondary); border-radius:var(--radius-md); padding:0.75rem 1rem; flex:1; min-width:100px;">
+        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 2px;">Mínimo</p>
+        <p id="chart-min" style="font-size:16px; font-weight:500; color:var(--danger-text); margin:0;">—</p>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:var(--radius-md); padding:0.75rem 1rem; flex:1; min-width:100px;">
+        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 2px;">Máximo</p>
+        <p id="chart-max" style="font-size:16px; font-weight:500; color:var(--success-text); margin:0;">—</p>
+      </div>
+      <div style="background:var(--bg-secondary); border-radius:var(--radius-md); padding:0.75rem 1rem; flex:1; min-width:100px;">
+        <p style="font-size:12px; color:var(--text-secondary); margin:0 0 2px;">Variación</p>
+        <p id="chart-change" style="font-size:16px; font-weight:500; margin:0;">—</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -506,6 +564,128 @@
   loadAlert();
   fetchPrice();
   setInterval(fetchPrice, 60000);
+
+  // ── Gráfica ──────────────────────────────────────────────
+  let chartInstance = null;
+  let currentDays = '1';
+
+  function openChart() {
+    document.getElementById('chart-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    loadChart(currentDays);
+  }
+
+  function closeChart() {
+    document.getElementById('chart-modal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  // Cerrar al pulsar fuera del modal
+  document.getElementById('chart-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeChart();
+  });
+
+  function setActivePeriodBtn(days) {
+    ['1','7','30','365'].forEach(d => {
+      const btn = document.getElementById('btn-' + d + 'd');
+      if (btn) btn.className = 'btn-period' + (d === days ? ' active-period' : '');
+    });
+  }
+
+  async function loadChart(days) {
+    currentDays = days;
+    setActivePeriodBtn(days);
+
+    const loading = document.getElementById('chart-loading');
+    loading.style.display = 'flex';
+
+    const labels_map = { '1': 'Último día', '7': 'Última semana', '30': 'Último mes', '365': 'Último año' };
+    document.getElementById('chart-range-label').textContent = labels_map[days] + ' — precio BTC en EUR';
+
+    try {
+      const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=eur&days=${days}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const prices = data.prices; // [[timestamp, price], ...]
+
+      const labels = prices.map(p => {
+        const d = new Date(p[0]);
+        if (days === '1')   return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        if (days === '7')   return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+        if (days === '30')  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        return d.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+      });
+
+      const values = prices.map(p => p[1]);
+      const minVal = Math.min(...values);
+      const maxVal = Math.max(...values);
+      const first  = values[0];
+      const last   = values[values.length - 1];
+      const change = ((last - first) / first * 100).toFixed(2);
+      const isUp   = last >= first;
+
+      document.getElementById('chart-min').textContent    = fEUR(minVal);
+      document.getElementById('chart-max').textContent    = fEUR(maxVal);
+      const chEl = document.getElementById('chart-change');
+      chEl.textContent  = (isUp ? '+' : '') + change + '%';
+      chEl.className    = 'metric-value ' + (isUp ? 'success' : 'danger') ;
+      chEl.style.fontSize = '16px';
+
+      const color = isUp ? '#639922' : '#E24B4A';
+      const colorAlpha = isUp ? 'rgba(99,153,34,0.12)' : 'rgba(226,75,74,0.12)';
+
+      // Reducir puntos para rendimiento (máx 200)
+      const step = Math.max(1, Math.floor(labels.length / 200));
+      const lReduced = labels.filter((_, i) => i % step === 0);
+      const vReduced = values.filter((_, i) => i % step === 0);
+
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+      const ctx = document.getElementById('btc-chart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: lReduced,
+          datasets: [{
+            data: vReduced,
+            borderColor: color,
+            backgroundColor: colorAlpha,
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => fEUR(ctx.parsed.y)
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: { callback: v => fEUR(v), font: { size: 11 }, maxTicksLimit: 6 },
+              grid: { color: 'rgba(128,128,128,0.12)' }
+            },
+            x: {
+              ticks: { font: { size: 10 }, autoSkip: true, maxTicksLimit: 8 },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      loading.style.display = 'none';
+    } catch(e) {
+      loading.textContent = '❌ Error al cargar datos. Inténtalo de nuevo.';
+      console.error('loadChart:', e);
+    }
+  }
 </script>
 </body>
 </html>
