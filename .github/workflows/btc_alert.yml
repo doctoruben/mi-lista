@@ -23,4 +23,4 @@ jobs:
           TELEGRAM_TOKEN:   ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FIREBASE_URL:     ${{ secrets.FIREBASE_URL }}
-        run: python mi-lista/btc-tracker/btc_alert.py
+        run: python btc-tracker/btc_alert.py
