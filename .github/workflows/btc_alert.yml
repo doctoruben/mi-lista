@@ -2,7 +2,7 @@ name: BTC Price Alert
 
 on:
   schedule:
-    - cron: '0 9 * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:           # también se puede lanzar manualmente desde GitHub
 
 jobs:
