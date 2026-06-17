@@ -4,7 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bitcoin Tracker</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/mi-lista/btc-tracker/manifest.json" />
+  <meta name="theme-color" content="#FAC775" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="BTC Tracker" />
+  <link rel="apple-touch-icon" href="/mi-lista/btc-tracker/icons/icon-192.png" />
+
+  <!-- Iconos -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,10 +64,7 @@
       padding: 1.5rem 1rem;
     }
 
-    .container {
-      max-width: 680px;
-      margin: 0 auto;
-    }
+    .container { max-width: 680px; margin: 0 auto; }
 
     .header {
       display: flex;
@@ -66,68 +75,39 @@
       margin-bottom: 1.5rem;
     }
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
 
     .btc-icon {
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       border-radius: 50%;
       background: var(--amber);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
 
-    .btc-icon i {
-      font-size: 22px;
-      color: var(--amber-dark);
-    }
+    .btc-icon i { font-size: 22px; color: var(--amber-dark); }
 
-    h1 {
-      font-size: 20px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
+    h1 { font-size: 20px; font-weight: 500; color: var(--text-primary); }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
     #status-dot {
-      width: 8px;
-      height: 8px;
+      width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--text-tertiary);
       flex-shrink: 0;
     }
 
-    #status-text {
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
+    #status-text { font-size: 13px; color: var(--text-secondary); }
 
     button {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 7px 14px;
-      font-size: 13px;
-      font-family: inherit;
-      color: var(--text-primary);
-      background: transparent;
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 7px 14px; font-size: 13px; font-family: inherit;
+      color: var(--text-primary); background: transparent;
       border: 0.5px solid var(--border-md);
       border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: background 0.15s;
+      cursor: pointer; transition: background 0.15s;
     }
-
     button:hover { background: var(--bg-secondary); }
     button:active { transform: scale(0.98); }
 
@@ -146,23 +126,15 @@
     }
 
     .metric-card p:first-child {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
+      font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;
     }
 
     .metric-value {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-primary);
-      word-break: break-word;
+      font-size: 20px; font-weight: 500;
+      color: var(--text-primary); word-break: break-word;
     }
 
-    .metric-sub {
-      font-size: 20px;
-      color: var(--text-secondary);
-      margin-top: 4px;
-    }
+    .metric-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
     .form-card {
       background: var(--bg-card);
@@ -172,12 +144,7 @@
       margin-bottom: 1rem;
     }
 
-    .form-card h2 {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 1rem;
-    }
+    .form-card h2 { font-size: 15px; font-weight: 500; margin-bottom: 1rem; }
 
     .fields {
       display: grid;
@@ -185,65 +152,57 @@
       gap: 12px;
     }
 
-    label {
-      display: block;
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-    }
+    label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
 
     input[type="number"] {
-      width: 100%;
-      padding: 8px 12px;
-      font-size: 15px;
-      font-family: inherit;
-      color: var(--text-primary);
-      background: var(--bg-secondary);
+      width: 100%; padding: 8px 12px;
+      font-size: 15px; font-family: inherit;
+      color: var(--text-primary); background: var(--bg-secondary);
       border: 0.5px solid var(--border);
       border-radius: var(--radius-md);
-      outline: none;
-      transition: border-color 0.15s;
+      outline: none; transition: border-color 0.15s;
     }
-
     input[type="number"]:focus {
       border-color: var(--border-md);
       box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
     }
-
     input[type="number"]::placeholder { color: var(--text-tertiary); }
 
-    .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 1rem;
-      flex-wrap: wrap;
-    }
+    .actions { display: flex; gap: 8px; margin-top: 1rem; flex-wrap: wrap; }
 
-    .btn-primary {
-      padding: 9px 18px;
-      font-size: 14px;
-      font-weight: 500;
-    }
+    .btn-primary { padding: 9px 18px; font-size: 14px; font-weight: 500; }
+    .btn-ghost { color: var(--text-secondary); border-color: transparent; }
 
-    .btn-ghost {
-      color: var(--text-secondary);
-      border-color: transparent;
-    }
-
-    #last-updated {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      text-align: right;
-    }
+    #last-updated { font-size: 12px; color: var(--text-tertiary); text-align: right; }
 
     .success { color: var(--success-text) !important; }
     .danger  { color: var(--danger-text) !important; }
     .success-bg { background: var(--success-bg) !important; }
     .danger-bg  { background: var(--danger-bg) !important; }
+
+    #install-banner {
+      display: none;
+      align-items: center; justify-content: space-between;
+      gap: 8px; flex-wrap: wrap;
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1.25rem;
+      margin-bottom: 1rem;
+      font-size: 14px;
+    }
+    #install-banner span { color: var(--text-secondary); }
   </style>
 </head>
 <body>
 <div class="container">
+
+  <div id="install-banner">
+    <span><i class="ti ti-download" aria-hidden="true"></i> Instala la app en tu dispositivo</span>
+    <button id="install-btn" class="btn-primary">
+      <i class="ti ti-device-mobile" aria-hidden="true"></i> Instalar
+    </button>
+  </div>
 
   <div class="header">
     <div class="header-left">
@@ -262,9 +221,8 @@
   <div class="metrics">
     <div class="metric-card">
       <p><i class="ti ti-currency-bitcoin" aria-hidden="true"></i> Precio actual BTC</p>
-      <p class="metric-sub" id="price-eur">— EUR</p>
-      <p class="metric-value" id="btc-price">—</p>
-      
+      <p class="metric-value" id="price-eur">—</p>
+      <p class="metric-sub" id="btc-price">— USD</p>
     </div>
     <div class="metric-card">
       <p><i class="ti ti-wallet" aria-hidden="true"></i> Valor de tus BTC</p>
@@ -310,6 +268,7 @@
 <script>
   let currentPriceEUR = null;
   let currentPriceUSD = null;
+  let deferredPrompt = null;
 
   function fEUR(v) {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(v);
@@ -341,10 +300,10 @@
     const pnlCard = document.getElementById('pnl-card');
     pnlCard.className = 'metric-card';
     document.getElementById('btc-value').textContent = '—';
-    document.getElementById('pnl-value').textContent = '—';
-    document.getElementById('pnl-value').className = 'metric-value';
-    document.getElementById('pnl-pct').textContent = '—';
-    document.getElementById('pnl-pct').className = 'metric-sub';
+    const pv = document.getElementById('pnl-value');
+    pv.textContent = '—'; pv.className = 'metric-value';
+    const pp = document.getElementById('pnl-pct');
+    pp.textContent = '—'; pp.className = 'metric-sub';
   }
 
   function calculate() {
@@ -363,7 +322,6 @@
       const pnl = value - inv;
       const pct = ((pnl / inv) * 100).toFixed(2);
       const gain = pnl >= 0;
-
       pnlVal.textContent = (gain ? '+' : '') + fEUR(pnl);
       pnlPct.textContent = (gain ? '+' : '') + pct + '%';
       pnlVal.className = 'metric-value ' + (gain ? 'success' : 'danger');
@@ -387,24 +345,50 @@
       const data = await res.json();
       currentPriceUSD = parseFloat(data.data.rates.USD);
       currentPriceEUR = parseFloat(data.data.rates.EUR);
-
-      document.getElementById('btc-price').textContent = fUSD(currentPriceUSD);
       document.getElementById('price-eur').textContent = fEUR(currentPriceEUR);
+      document.getElementById('btc-price').textContent = fUSD(currentPriceUSD);
       dot.style.background = '#639922';
       txt.textContent = 'Precio en tiempo real';
-
       const now = new Date();
       document.getElementById('last-updated').textContent =
         'Última actualización: ' + now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES');
-
       calculate();
     } catch (e) {
       dot.style.background = '#E24B4A';
-      txt.textContent = 'Error al cargar precio';
-      document.getElementById('btc-price').textContent = 'Error';
-      console.error('fetchPrice error:', e);
+      txt.textContent = 'Sin conexión — datos en caché';
+      console.error('fetchPrice:', e);
     }
   }
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/mi-lista/btc-tracker/sw.js')
+        .then(r => console.log('SW registrado:', r.scope))
+        .catch(e => console.error('SW error:', e));
+    });
+  }
+
+  // Banner de instalación PWA
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-banner').style.display = 'flex';
+  });
+
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('install-banner').style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('install-banner').style.display = 'none';
+  });
 
   loadFromStorage();
   fetchPrice();
