@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bitcoin Tracker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f0;
+      --bg-card: #ffffff;
+      --bg-secondary: #f0ede6;
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6a65;
+      --text-tertiary: #9e9d98;
+      --border: rgba(0,0,0,0.12);
+      --border-md: rgba(0,0,0,0.22);
+      --success-bg: #eaf3de;
+      --success-text: #3b6d11;
+      --danger-bg: #fcebeb;
+      --danger-text: #a32d2d;
+      --amber: #FAC775;
+      --amber-dark: #633806;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18;
+        --bg-card: #242422;
+        --bg-secondary: #2c2c2a;
+        --text-primary: #f0ede6;
+        --text-secondary: #a8a79f;
+        --text-tertiary: #6b6a65;
+        --border: rgba(255,255,255,0.1);
+        --border-md: rgba(255,255,255,0.2);
+        --success-bg: #173404;
+        --success-text: #97c459;
+        --danger-bg: #501313;
+        --danger-text: #f09595;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 1.5rem 1rem;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btc-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--amber);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .btc-icon i {
+      font-size: 22px;
+      color: var(--amber-dark);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+
+    #status-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: transparent;
+      border: 0.5px solid var(--border-md);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: var(--bg-secondary); }
+    button:active { transform: scale(0.98); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric-card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      transition: background 0.3s;
+    }
+
+    .metric-card p:first-child {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .form-card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-card h2 {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--border-md);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+    }
+
+    input[type="number"]::placeholder { color: var(--text-tertiary); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-ghost {
+      color: var(--text-secondary);
+      border-color: transparent;
+    }
+
+    #last-updated {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      text-align: right;
+    }
+
+    .success { color: var(--success-text) !important; }
+    .danger  { color: var(--danger-text) !important; }
+    .success-bg { background: var(--success-bg) !important; }
+    .danger-bg  { background: var(--danger-bg) !important; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="btc-icon"><i class="ti ti-currency-bitcoin" aria-hidden="true"></i></div>
+      <h1>Bitcoin tracker</h1>
+    </div>
+    <div class="header-right">
+      <span id="status-dot"></span>
+      <span id="status-text">Cargando...</span>
+      <button onclick="fetchPrice()" aria-label="Actualizar precio">
+        <i class="ti ti-refresh" aria-hidden="true"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric-card">
+      <p><i class="ti ti-currency-bitcoin" aria-hidden="true"></i> Precio actual BTC</p>
+      <p class="metric-value" id="btc-price">—</p>
+      <p class="metric-sub" id="price-eur">— EUR</p>
+    </div>
+    <div class="metric-card">
+      <p><i class="ti ti-wallet" aria-hidden="true"></i> Valor de tus BTC</p>
+      <p class="metric-value" id="btc-value">—</p>
+    </div>
+    <div class="metric-card" id="pnl-card">
+      <p><i class="ti ti-trending-up" aria-hidden="true"></i> Ganancia / Pérdida</p>
+      <p class="metric-value" id="pnl-value">—</p>
+      <p class="metric-sub" id="pnl-pct">—</p>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h2>Mis datos</h2>
+    <div class="fields">
+      <div>
+        <label for="btc-amount">
+          <i class="ti ti-currency-bitcoin" aria-hidden="true"></i> Cantidad de Bitcoin (BTC)
+        </label>
+        <input type="number" id="btc-amount" min="0" step="0.00000001" placeholder="Ej: 0.05" />
+      </div>
+      <div>
+        <label for="invested">
+          <i class="ti ti-cash" aria-hidden="true"></i> Cantidad invertida (€)
+        </label>
+        <input type="number" id="invested" min="0" step="0.01" placeholder="Ej: 1500" />
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-primary" onclick="saveAndCalc()">
+        <i class="ti ti-device-floppy" aria-hidden="true"></i> Guardar y calcular
+      </button>
+      <button class="btn-ghost" onclick="clearData()">
+        <i class="ti ti-trash" aria-hidden="true"></i> Borrar datos
+      </button>
+    </div>
+  </div>
+
+  <p id="last-updated"></p>
+
+</div>
+
+<script>
+  let currentPriceEUR = null;
+  let currentPriceUSD = null;
+
+  function fEUR(v) {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(v);
+  }
+  function fUSD(v) {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(v);
+  }
+
+  function loadFromStorage() {
+    const amt = localStorage.getItem('btc_amount');
+    const inv = localStorage.getItem('btc_invested');
+    if (amt) document.getElementById('btc-amount').value = amt;
+    if (inv) document.getElementById('invested').value = inv;
+  }
+
+  function saveAndCalc() {
+    const amt = document.getElementById('btc-amount').value;
+    const inv = document.getElementById('invested').value;
+    if (amt) localStorage.setItem('btc_amount', amt);
+    if (inv) localStorage.setItem('btc_invested', inv);
+    calculate();
+  }
+
+  function clearData() {
+    localStorage.removeItem('btc_amount');
+    localStorage.removeItem('btc_invested');
+    document.getElementById('btc-amount').value = '';
+    document.getElementById('invested').value = '';
+    const pnlCard = document.getElementById('pnl-card');
+    pnlCard.className = 'metric-card';
+    document.getElementById('btc-value').textContent = '—';
+    document.getElementById('pnl-value').textContent = '—';
+    document.getElementById('pnl-value').className = 'metric-value';
+    document.getElementById('pnl-pct').textContent = '—';
+    document.getElementById('pnl-pct').className = 'metric-sub';
+  }
+
+  function calculate() {
+    const amt = parseFloat(document.getElementById('btc-amount').value);
+    const inv = parseFloat(document.getElementById('invested').value);
+    if (!currentPriceEUR || isNaN(amt)) return;
+
+    const value = amt * currentPriceEUR;
+    document.getElementById('btc-value').textContent = fEUR(value);
+
+    const pnlCard = document.getElementById('pnl-card');
+    const pnlVal = document.getElementById('pnl-value');
+    const pnlPct = document.getElementById('pnl-pct');
+
+    if (!isNaN(inv) && inv > 0) {
+      const pnl = value - inv;
+      const pct = ((pnl / inv) * 100).toFixed(2);
+      const gain = pnl >= 0;
+
+      pnlVal.textContent = (gain ? '+' : '') + fEUR(pnl);
+      pnlPct.textContent = (gain ? '+' : '') + pct + '%';
+      pnlVal.className = 'metric-value ' + (gain ? 'success' : 'danger');
+      pnlPct.className = 'metric-sub ' + (gain ? 'success' : 'danger');
+      pnlCard.className = 'metric-card ' + (gain ? 'success-bg' : 'danger-bg');
+    } else {
+      pnlVal.textContent = 'Introduce inversión';
+      pnlPct.textContent = '';
+      pnlCard.className = 'metric-card';
+    }
+  }
+
+  async function fetchPrice() {
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    dot.style.background = '#FAC775';
+    txt.textContent = 'Actualizando...';
+    try {
+      const res = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      currentPriceUSD = parseFloat(data.data.rates.USD);
+      currentPriceEUR = parseFloat(data.data.rates.EUR);
+
+      document.getElementById('btc-price').textContent = fUSD(currentPriceUSD);
+      document.getElementById('price-eur').textContent = fEUR(currentPriceEUR);
+      dot.style.background = '#639922';
+      txt.textContent = 'Precio en tiempo real';
+
+      const now = new Date();
+      document.getElementById('last-updated').textContent =
+        'Última actualización: ' + now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES');
+
+      calculate();
+    } catch (e) {
+      dot.style.background = '#E24B4A';
+      txt.textContent = 'Error al cargar precio';
+      document.getElementById('btc-price').textContent = 'Error';
+      console.error('fetchPrice error:', e);
+    }
+  }
+
+  loadFromStorage();
+  fetchPrice();
+  setInterval(fetchPrice, 60000);
+</script>
+</body>
+</html>
