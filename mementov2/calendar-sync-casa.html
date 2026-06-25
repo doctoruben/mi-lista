@@ -649,9 +649,9 @@ async function calcularEfectos() {
 
     const calNormal   = find('Calendario NORMAL');
     const calSDF      = find('Calendario S,D y F');
-    const calSaliente = find('Saliente Guardia');
+    const calSegunda = find('Segunda Guardia');
 
-    if (!calNormal && !calSDF && !calSaliente) {
+    if (!calNormal && !calSDF && !calSegunda) {
       resultado.innerHTML = '<p style="color:var(--red);margin:1rem 0;">No se encontró ningún calendario origen.</p>';
       return;
     }
@@ -675,16 +675,16 @@ async function calcularEfectos() {
     const rangoMin = new Date(meses[0].year, meses[0].month, 1).toISOString();
     const rangoMax = new Date(meses[meses.length-1].year, meses[meses.length-1].month + 1, 0, 23, 59, 59).toISOString();
 
-    const [evsNormal, evsSDF, evsSaliente] = await Promise.all([
+    const [evsNormal, evsSDF, evsSegunda] = await Promise.all([
       calNormal   ? listEvents(calNormal.id,   rangoMin, rangoMax) : Promise.resolve([]),
       calSDF      ? listEvents(calSDF.id,      rangoMin, rangoMax) : Promise.resolve([]),
-      calSaliente ? listEvents(calSaliente.id, rangoMin, rangoMax) : Promise.resolve([])
+      calSegunda ? listEvents(calSegunda.id, rangoMin, rangoMax) : Promise.resolve([])
     ]);
 
     const normalRuben  = evsNormal.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'));
     const festivoRuben = [
       ...evsSDF.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN')),
-      ...evsSaliente.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'))
+      ...evsSegunda.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'))
     ];
 
     function evMonth(ev) {
