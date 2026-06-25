@@ -536,6 +536,7 @@ async function startSync() {
 
     log('Obteniendo lista de calendarios…', 'dim');
     const cals = await listCalendars();
+   console.log(cals.map(c => `"${c.summary}"`).join('\n'));
     const find = name => cals.find(c => c.summary?.trim().toLowerCase() === name.trim().toLowerCase());
 
     const calNormal = find('Calendario NORMAL');
