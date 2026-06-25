@@ -122,7 +122,7 @@
 
   .metrics {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     margin-bottom: 1rem;
   }
@@ -171,7 +171,6 @@
 
   @media (max-width: 480px) {
     .metrics { grid-template-columns: 1fr 1fr; }
-    .metric:last-child { grid-column: span 2; }
   }
 </style>
 </head>
@@ -195,13 +194,13 @@
       <span class="badge badge-src">Calendario S,D y F</span>
       <span class="arrow">→</span>
       <span class="badge badge-dst">Casa</span>
-      <span class="badge badge-rule">título = "Ruben Marcos"</span>
+      <span class="badge badge-rule">título = "Ruben Marcos" → "Guardia"</span>
     </div>
     <div class="rule">
       <span class="badge badge-src">VACACIONES</span>
       <span class="arrow">→</span>
       <span class="badge badge-dst">Casa</span>
-      <span class="badge badge-rule">título contiene "RUBEN"</span>
+      <span class="badge badge-rule">contiene "RUBEN" → "Vacaciones Papa"</span>
     </div>
   </div>
 
@@ -223,6 +222,7 @@
     <div class="metric"><div class="metric-num" id="mTotal">—</div><div class="metric-lbl">Revisados</div></div>
     <div class="metric"><div class="metric-num green" id="mCopied">—</div><div class="metric-lbl">Copiados</div></div>
     <div class="metric"><div class="metric-num gray" id="mSkipped">—</div><div class="metric-lbl">Ya existían</div></div>
+    <div class="metric"><div class="metric-num" style="color:#991b1b" id="mDeleted">—</div><div class="metric-lbl">Eliminados</div></div>
   </div>
 
   <div class="card log-wrap">
@@ -241,7 +241,7 @@ const CLIENT_ID = '948639859257-ou7s31mt97u9il8m0d1gku5nhhlcrtu5.apps.googleuser
 
 const BASE = 'https://www.googleapis.com/calendar/v3';
 let token = null;
-let rev = 0, cop = 0, ski = 0;
+let rev = 0, cop = 0, ski = 0, del = 0;
 
 function initDates() {
   const t = new Date();
@@ -265,6 +265,7 @@ function setMetrics() {
   document.getElementById('mTotal').textContent   = rev;
   document.getElementById('mCopied').textContent  = cop;
   document.getElementById('mSkipped').textContent = ski;
+  document.getElementById('mDeleted').textContent = del;
 }
 
 function getToken() {
@@ -335,6 +336,12 @@ async function createEvent(calId, ev) {
   });
 }
 
+async function deleteEvent(calId, eventId) {
+  return api(`/calendars/${encodeURIComponent(calId)}/events/${encodeURIComponent(eventId)}`, {
+    method: 'DELETE'
+  });
+}
+
 function evKey(ev) {
   const s = ev.start?.dateTime || ev.start?.date || '';
   return (ev.summary || '').trim().toLowerCase() + '|' + s.slice(0, 16);
@@ -351,7 +358,7 @@ async function startSync() {
   btn.disabled = true;
   btn.innerHTML = '⏳ Sincronizando…';
   document.getElementById('logBox').innerHTML = '';
-  rev = 0; cop = 0; ski = 0;
+  rev = 0; cop = 0; ski = 0; del = 0;
   setMetrics();
 
   const timeMin = new Date(document.getElementById('dateFrom').value).toISOString();
@@ -383,11 +390,14 @@ async function startSync() {
     log(`  → ${casaEvs.length} eventos ya en "Casa".`, 'dim');
 
     const rules = [];
-    if (calNormal) rules.push({ cal: calNormal, mode: 'exact',    match: 'Ruben Marcos' });
-    if (calSDF)    rules.push({ cal: calSDF,    mode: 'exact',    match: 'Ruben Marcos' });
-    if (calVac)    rules.push({ cal: calVac,    mode: 'contains', match: 'RUBEN' });
+    if (calNormal) rules.push({ cal: calNormal, mode: 'exact',    match: 'Ruben Marcos', destTitle: 'Guardia' });
+    if (calSDF)    rules.push({ cal: calSDF,    mode: 'exact',    match: 'Ruben Marcos', destTitle: 'Guardia' });
+    if (calVac)    rules.push({ cal: calVac,    mode: 'contains', match: 'RUBEN',         destTitle: 'Vacaciones Papa' });
 
-    for (const { cal, mode, match } of rules) {
+    // Construir conjunto de claves que DEBEN existir en Casa tras la sync
+    const validKeys = new Set();
+
+    for (const { cal, mode, match, destTitle } of rules) {
       log(`\nRevisando "${cal.summary}"…`, 'info');
       const evs = await listEvents(cal.id, timeMin, timeMax);
       const hits = evs.filter(ev => {
@@ -399,28 +409,53 @@ async function startSync() {
       for (const ev of hits) {
         rev++;
         setMetrics();
-        const k    = evKey(ev);
+        const evDest = { ...ev, summary: destTitle };
+        const k    = evKey(evDest);
+        validKeys.add(k);
         const date = (ev.start?.dateTime || ev.start?.date || '').slice(0, 10);
         if (casaKeys.has(k)) {
-          log(`  ↩ Ya existe: "${ev.summary}"  ${date}`, 'dim');
+          log(`  ↩ Ya existe: "${destTitle}"  ${date}`, 'dim');
           ski++;
           setMetrics();
           continue;
         }
         try {
-          await createEvent(calCasa.id, ev);
+          await createEvent(calCasa.id, evDest);
           casaKeys.add(k);
-          log(`  ✓ Copiado: "${ev.summary}"  ${date}`, 'ok');
+          log(`  ✓ Copiado: "${destTitle}"  ${date}`, 'ok');
           cop++;
         } catch(e) {
-          log(`  ✗ Error en "${ev.summary}": ${e.message}`, 'err');
+          log(`  ✗ Error en "${destTitle}": ${e.message}`, 'err');
         }
         setMetrics();
         await new Promise(r => setTimeout(r, 180));
       }
     }
 
-    log(`\n✅ Sincronización completada. Copiados: ${cop} | Ya existían: ${ski} | Revisados: ${rev}`, 'ok');
+    // Borrar de Casa los eventos "Guardia" y "Vacaciones Papa" que ya no existen en origen
+    const managedTitles = new Set(['guardia', 'vacaciones papa']);
+    const toDelete = casaEvs.filter(ev => {
+      const title = (ev.summary || '').trim().toLowerCase();
+      return managedTitles.has(title) && !validKeys.has(evKey(ev));
+    });
+
+    if (toDelete.length > 0) {
+      log(`\nEliminando ${toDelete.length} eventos obsoletos de "Casa"…`, 'info');
+      for (const ev of toDelete) {
+        const date = (ev.start?.dateTime || ev.start?.date || '').slice(0, 10);
+        try {
+          await deleteEvent(calCasa.id, ev.id);
+          log(`  🗑 Eliminado: "${ev.summary}"  ${date}`, 'err');
+          del++;
+        } catch(e) {
+          log(`  ✗ Error eliminando "${ev.summary}": ${e.message}`, 'err');
+        }
+        setMetrics();
+        await new Promise(r => setTimeout(r, 180));
+      }
+    }
+
+    log(`\n✅ Sincronización completada. Copiados: ${cop} | Ya existían: ${ski} | Eliminados: ${del} | Revisados: ${rev}`, 'ok');
 
   } catch(e) {
     log(`\n✗ ${e.message}`, 'err');
