@@ -358,6 +358,12 @@
           <input type="number" id="importeFestivo" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
         </div>
       </div>
+      <div class="date-row" style="margin-top:0.75rem;">
+        <label for="ecoFrom">Desde</label>
+        <input type="date" id="ecoFrom">
+        <label for="ecoTo">Hasta</label>
+        <input type="date" id="ecoTo">
+      </div>
       <button class="btn-amber" onclick="calcularEfectos()">
         <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         Calcular efectos económicos
@@ -628,39 +634,45 @@ const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agos
 async function calcularEfectos() {
   const importeNormal  = parseFloat(document.getElementById('importeNormal').value)  || 0;
   const importeFestivo = parseFloat(document.getElementById('importeFestivo').value) || 0;
+  const fromVal = document.getElementById('ecoFrom').value;
+  const toVal   = document.getElementById('ecoTo').value;
 
   const resultado = document.getElementById('ecoResultado');
   resultado.innerHTML = '<p class="month-loading" style="margin:1rem 0;">Calculando… obteniendo acceso a Calendar…</p>';
 
   try {
-    if (!token) {
-      token = await getToken();
-    }
+    if (!token) token = await getToken();
 
     const cals = await listCalendars();
     const find = name => cals.find(c => c.summary?.trim().toLowerCase() === name.trim().toLowerCase());
 
-    const calNormal    = find('Calendario NORMAL');
-    const calSDF       = find('Calendario S,D y F');
-    const calSaliente  = find('Saliente Guardia');
+    const calNormal   = find('Calendario NORMAL');
+    const calSDF      = find('Calendario S,D y F');
+    const calSaliente = find('Saliente Guardia');
 
     if (!calNormal && !calSDF && !calSaliente) {
       resultado.innerHTML = '<p style="color:var(--red);margin:1rem 0;">No se encontró ningún calendario origen.</p>';
       return;
     }
 
-    const hoy = new Date();
+    // Construir lista de meses en el rango
+    const dFrom = new Date(fromVal);
+    const dTo   = new Date(toVal);
     const meses = [];
-    for (let i = 0; i < 4; i++) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
-      meses.push({ year: d.getFullYear(), month: d.getMonth() });
+    const cur = new Date(dFrom.getFullYear(), dFrom.getMonth(), 1);
+    while (cur <= dTo) {
+      meses.push({ year: cur.getFullYear(), month: cur.getMonth() });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    if (meses.length === 0) {
+      resultado.innerHTML = '<p style="color:var(--red);margin:1rem 0;">El rango de fechas no es válido.</p>';
+      return;
     }
 
     resultado.innerHTML = '<p class="month-loading" style="margin:1rem 0;">Descargando eventos…</p>';
 
-    // Descargar eventos de todos los calendarios para el rango completo
     const rangoMin = new Date(meses[0].year, meses[0].month, 1).toISOString();
-    const rangoMax = new Date(meses[3].year, meses[3].month + 1, 0, 23, 59, 59).toISOString();
+    const rangoMax = new Date(meses[meses.length-1].year, meses[meses.length-1].month + 1, 0, 23, 59, 59).toISOString();
 
     const [evsNormal, evsSDF, evsSaliente] = await Promise.all([
       calNormal   ? listEvents(calNormal.id,   rangoMin, rangoMax) : Promise.resolve([]),
@@ -668,47 +680,75 @@ async function calcularEfectos() {
       calSaliente ? listEvents(calSaliente.id, rangoMin, rangoMax) : Promise.resolve([])
     ]);
 
-    // Filtrar los que contienen "Ruben" en el título
-    const normalRuben   = evsNormal.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'));
-    const festivoRuben  = [
+    const normalRuben  = evsNormal.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'));
+    const festivoRuben = [
       ...evsSDF.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN')),
       ...evsSaliente.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'))
     ];
 
     function evMonth(ev) {
-      const s = ev.start?.dateTime || ev.start?.date || '';
-      const d = new Date(s);
+      const d = new Date(ev.start?.dateTime || ev.start?.date || '');
       return { year: d.getFullYear(), month: d.getMonth() };
     }
 
-    // Construir HTML de resultados
+    const hoy = new Date();
+    const mesActualY = hoy.getFullYear();
+    const mesActualM = hoy.getMonth();
+
+    // Total acumulado del periodo
+    let totalPeriodoNormal = 0, totalPeriodoFestivo = 0;
+    let totalGuardiasNormal = 0, totalGuardiasFestivo = 0;
+
     const grid = document.createElement('div');
     grid.className = 'month-grid';
 
-    meses.forEach((m, idx) => {
-      const normales  = normalRuben.filter(ev => { const em = evMonth(ev); return em.year === m.year && em.month === m.month; });
-      const festivos  = festivoRuben.filter(ev => { const em = evMonth(ev); return em.year === m.year && em.month === m.month; });
+    meses.forEach(m => {
+      const normales = normalRuben.filter(ev => { const em = evMonth(ev); return em.year === m.year && em.month === m.month; });
+      const festivos = festivoRuben.filter(ev => { const em = evMonth(ev); return em.year === m.year && em.month === m.month; });
 
-      const totalNormal  = normales.length  * importeNormal;
-      const totalFestivo = festivos.length  * importeFestivo;
+      const totalNormal  = normales.length * importeNormal;
+      const totalFestivo = festivos.length * importeFestivo;
       const total        = totalNormal + totalFestivo;
 
-      const card = document.createElement('div');
-      card.className = 'month-card' + (idx === 0 ? ' current' : '');
+      totalPeriodoNormal  += totalNormal;
+      totalPeriodoFestivo += totalFestivo;
+      totalGuardiasNormal  += normales.length;
+      totalGuardiasFestivo += festivos.length;
 
+      const esMesActual = m.year === mesActualY && m.month === mesActualM;
+      const card = document.createElement('div');
+      card.className = 'month-card' + (esMesActual ? ' current' : '');
       card.innerHTML = `
-        <div class="month-name">${MESES_ES[m.month]} ${m.year}${idx === 0 ? ' · mes actual' : ''}</div>
+        <div class="month-name">${MESES_ES[m.month]} ${m.year}${esMesActual ? ' · mes actual' : ''}</div>
         <div class="month-total">${total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</div>
         <div class="month-detail">
-          <span>${normales.length} guardia${normales.length !== 1 ? 's' : ''} normal${normales.length !== 1 ? 'es' : ''} × ${importeNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
-          <span>${festivos.length} guardia${festivos.length !== 1 ? 's' : ''} festiva${festivos.length !== 1 ? 's' : ''} × ${importeFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          <span>${normales.length} normal${normales.length !== 1 ? 'es' : ''} × ${importeNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          <span>${festivos.length} festiva${festivos.length !== 1 ? 's' : ''} × ${importeFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
         </div>
       `;
       grid.appendChild(card);
     });
 
-    resultado.innerHTML = '';
-    resultado.appendChild(grid);
+    // Tarjeta de total del periodo (solo si hay más de 1 mes)
+    if (meses.length > 1) {
+      const totalPeriodo = totalPeriodoNormal + totalPeriodoFestivo;
+      const resumen = document.createElement('div');
+      resumen.style.cssText = 'background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-top:12px;';
+      resumen.innerHTML = `
+        <div class="month-name" style="color:var(--text);">Total del periodo</div>
+        <div class="month-total" style="font-size:2rem;">${totalPeriodo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</div>
+        <div class="month-detail" style="margin-top:8px;">
+          <span>${totalGuardiasNormal} normales × ${importeNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalPeriodoNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          <span>${totalGuardiasFestivo} festivas × ${importeFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalPeriodoFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+        </div>
+      `;
+      resultado.innerHTML = '';
+      resultado.appendChild(grid);
+      resultado.appendChild(resumen);
+    } else {
+      resultado.innerHTML = '';
+      resultado.appendChild(grid);
+    }
 
   } catch(e) {
     resultado.innerHTML = `<p style="color:var(--red);margin:1rem 0;">✗ ${e.message}</p>`;
@@ -718,6 +758,15 @@ async function calcularEfectos() {
 // ── Init ──────────────────────────────────────
 initDates();
 loadImportes();
+
+// Fechas por defecto del panel eco: mes actual → 3 meses adelante
+(function initEcoDates() {
+  const hoy = new Date();
+  const from = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const to   = new Date(hoy.getFullYear(), hoy.getMonth() + 3, 0); // último día del mes +3
+  document.getElementById('ecoFrom').value = from.toISOString().slice(0, 10);
+  document.getElementById('ecoTo').value   = to.toISOString().slice(0, 10);
+})();
 </script>
 </body>
 </html>
