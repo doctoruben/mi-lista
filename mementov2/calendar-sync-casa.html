@@ -25,6 +25,9 @@
     --red-bg: #fee2e2;
     --yellow-bg: #fefce8;
     --yellow: #854d0e;
+    --amber: #92400e;
+    --amber-bg: #fffbeb;
+    --amber-border: #fcd34d;
     --radius: 10px;
     --radius-sm: 6px;
     --mono: 'Menlo', 'Consolas', monospace;
@@ -40,9 +43,30 @@
 
   .wrap { max-width: 680px; margin: 0 auto; }
 
-  header { margin-bottom: 2rem; }
+  header { margin-bottom: 1.5rem; }
   header h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
   header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+  .tab {
+    padding: 10px 20px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
 
   .card {
     background: var(--surface);
@@ -78,8 +102,8 @@
     border-radius: 99px;
     white-space: nowrap;
   }
-  .badge-src { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
-  .badge-dst { background: var(--teal-bg); color: var(--teal); border: 1px solid var(--teal-border); }
+  .badge-src  { background: var(--blue-bg);  color: var(--blue);  border: 1px solid var(--blue-border); }
+  .badge-dst  { background: var(--teal-bg);  color: var(--teal);  border: 1px solid var(--teal-border); }
   .badge-rule { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-family: var(--mono); font-size: 0.75rem; }
 
   .arrow { color: var(--muted); font-size: 0.9rem; }
@@ -103,7 +127,7 @@
   }
   .date-row input[type="date"]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
 
-  #btnSync {
+  .btn-primary {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -117,8 +141,25 @@
     cursor: pointer;
     transition: background 0.15s, opacity 0.15s;
   }
-  #btnSync:hover { background: #1648c4; }
-  #btnSync:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-primary:hover { background: #1648c4; }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .btn-amber {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #d97706;
+    color: #fff;
+    border: none;
+    padding: 9px 22px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-amber:hover { background: #b45309; }
+  .btn-amber:disabled { opacity: 0.55; cursor: not-allowed; }
 
   .metrics {
     display: grid;
@@ -136,7 +177,8 @@
   .metric-num { font-size: 1.8rem; font-weight: 600; line-height: 1; }
   .metric-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
   .metric-num.green { color: var(--teal); }
-  .metric-num.gray { color: var(--muted); }
+  .metric-num.gray  { color: var(--muted); }
+  .metric-num.red   { color: var(--red); }
 
   .log-wrap { padding: 0; }
   .log-box {
@@ -150,10 +192,10 @@
     line-height: 1.75;
     color: #a3a39e;
   }
-  .log-box .ok { color: #6ee7b7; }
-  .log-box .err { color: #fca5a5; }
+  .log-box .ok   { color: #6ee7b7; }
+  .log-box .err  { color: #fca5a5; }
   .log-box .info { color: #e2e2de; }
-  .log-box .dim { color: #6b6b65; }
+  .log-box .dim  { color: #6b6b65; }
 
   .notice {
     background: var(--yellow-bg);
@@ -167,10 +209,71 @@
   }
   .notice a { color: var(--blue); }
 
+  /* Efectos económicos */
+  .import-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .import-field { display: flex; flex-direction: column; gap: 5px; }
+  .import-field label { font-size: 0.82rem; color: var(--muted); font-weight: 500; }
+  .import-field input {
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    width: 140px;
+    outline: none;
+  }
+  .import-field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 1rem;
+  }
+  .month-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+  .month-card.current { border-color: var(--blue-border); background: var(--blue-bg); }
+  .month-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+  .month-card.current .month-name { color: var(--blue); }
+  .month-total {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .month-detail {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+  .month-detail span { display: block; }
+  .month-loading { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+
   svg.icon { width: 16px; height: 16px; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   @media (max-width: 480px) {
     .metrics { grid-template-columns: 1fr 1fr; }
+    .month-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -187,51 +290,86 @@
     <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Abrir Google Cloud Console →</a>
   </div>
 
-  <div class="card">
-    <div class="card-title">Reglas de copia</div>
-    <div class="rule">
-      <span class="badge badge-src">Calendario NORMAL</span>
-      <span class="badge badge-src">Calendario S,D y F</span>
-      <span class="arrow">→</span>
-      <span class="badge badge-dst">Casa</span>
-      <span class="badge badge-rule">título = "Ruben Marcos" → "Guardia"</span>
-    </div>
-    <div class="rule">
-      <span class="badge badge-src">VACACIONES</span>
-      <span class="arrow">→</span>
-      <span class="badge badge-dst">Casa</span>
-      <span class="badge badge-rule">contiene "RUBEN" → "Vacaciones Papa"</span>
-    </div>
+  <!-- Pestañas -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('sync', this)">Sincronización</button>
+    <button class="tab" onclick="switchTab('eco', this)">Efectos económicos</button>
   </div>
 
-  <div class="card">
-    <div class="card-title">Configuración</div>
-    <div class="date-row">
-      <label for="dateFrom">Desde</label>
-      <input type="date" id="dateFrom">
-      <label for="dateTo">Hasta</label>
-      <input type="date" id="dateTo">
+  <!-- Panel Sincronización -->
+  <div id="panel-sync" class="tab-panel active">
+
+    <div class="card">
+      <div class="card-title">Reglas de copia</div>
+      <div class="rule">
+        <span class="badge badge-src">Calendario NORMAL</span>
+        <span class="badge badge-src">Calendario S,D y F</span>
+        <span class="arrow">→</span>
+        <span class="badge badge-dst">Casa</span>
+        <span class="badge badge-rule">título = "Ruben Marcos" → "Guardia"</span>
+      </div>
+      <div class="rule">
+        <span class="badge badge-src">VACACIONES</span>
+        <span class="arrow">→</span>
+        <span class="badge badge-dst">Casa</span>
+        <span class="badge badge-rule">contiene "RUBEN" → "Vacaciones Papa"</span>
+      </div>
     </div>
-    <button id="btnSync" onclick="startSync()">
-      <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      Sincronizar ahora
-    </button>
+
+    <div class="card">
+      <div class="card-title">Configuración</div>
+      <div class="date-row">
+        <label for="dateFrom">Desde</label>
+        <input type="date" id="dateFrom">
+        <label for="dateTo">Hasta</label>
+        <input type="date" id="dateTo">
+      </div>
+      <button id="btnSync" class="btn-primary" onclick="startSync()">
+        <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Sincronizar ahora
+      </button>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-num" id="mTotal">—</div><div class="metric-lbl">Revisados</div></div>
+      <div class="metric"><div class="metric-num green" id="mCopied">—</div><div class="metric-lbl">Copiados</div></div>
+      <div class="metric"><div class="metric-num gray"  id="mSkipped">—</div><div class="metric-lbl">Ya existían</div></div>
+      <div class="metric"><div class="metric-num red"   id="mDeleted">—</div><div class="metric-lbl">Eliminados</div></div>
+    </div>
+
+    <div class="card log-wrap">
+      <div class="log-box" id="logBox"><span class="dim">Pulsa "Sincronizar ahora" para comenzar…</span></div>
+    </div>
+
   </div>
 
-  <div class="metrics">
-    <div class="metric"><div class="metric-num" id="mTotal">—</div><div class="metric-lbl">Revisados</div></div>
-    <div class="metric"><div class="metric-num green" id="mCopied">—</div><div class="metric-lbl">Copiados</div></div>
-    <div class="metric"><div class="metric-num gray" id="mSkipped">—</div><div class="metric-lbl">Ya existían</div></div>
-    <div class="metric"><div class="metric-num" style="color:#991b1b" id="mDeleted">—</div><div class="metric-lbl">Eliminados</div></div>
-  </div>
+  <!-- Panel Efectos económicos -->
+  <div id="panel-eco" class="tab-panel">
 
-  <div class="card log-wrap">
-    <div class="log-box" id="logBox"><span class="dim">Pulsa "Sincronizar ahora" para comenzar…</span></div>
+    <div class="card">
+      <div class="card-title">Importes por guardia</div>
+      <div class="import-row">
+        <div class="import-field">
+          <label for="importeNormal">Importe Normal (€)</label>
+          <input type="number" id="importeNormal" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
+        </div>
+        <div class="import-field">
+          <label for="importeFestivo">Importe Festivo (€)</label>
+          <input type="number" id="importeFestivo" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
+        </div>
+      </div>
+      <button class="btn-amber" onclick="calcularEfectos()">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Calcular efectos económicos
+      </button>
+    </div>
+
+    <div id="ecoResultado"></div>
+
   </div>
 
 </div>
 
-<!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
 // ─────────────────────────────────────────────
@@ -243,6 +381,27 @@ const BASE = 'https://www.googleapis.com/calendar/v3';
 let token = null;
 let rev = 0, cop = 0, ski = 0, del = 0;
 
+// ── Tabs ─────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Importes localStorage ─────────────────────
+function saveImportes() {
+  localStorage.setItem('calsync_normal',  document.getElementById('importeNormal').value);
+  localStorage.setItem('calsync_festivo', document.getElementById('importeFestivo').value);
+}
+function loadImportes() {
+  const n = localStorage.getItem('calsync_normal');
+  const f = localStorage.getItem('calsync_festivo');
+  if (n) document.getElementById('importeNormal').value  = n;
+  if (f) document.getElementById('importeFestivo').value = f;
+}
+
+// ── Fechas ────────────────────────────────────
 function initDates() {
   const t = new Date();
   const from = new Date(t.getFullYear(), t.getMonth() - 1, 1);
@@ -251,6 +410,7 @@ function initDates() {
   document.getElementById('dateTo').value   = to.toISOString().slice(0, 10);
 }
 
+// ── Log ───────────────────────────────────────
 function log(msg, cls = '') {
   const box = document.getElementById('logBox');
   if (box.querySelector('span.dim')) box.innerHTML = '';
@@ -268,6 +428,7 @@ function setMetrics() {
   document.getElementById('mDeleted').textContent = del;
 }
 
+// ── OAuth ─────────────────────────────────────
 function getToken() {
   return new Promise((resolve, reject) => {
     if (!window.google?.accounts?.oauth2) {
@@ -283,6 +444,7 @@ function getToken() {
   });
 }
 
+// ── API helper ────────────────────────────────
 async function api(path, opts = {}) {
   const res = await fetch(BASE + path, {
     ...opts,
@@ -323,11 +485,7 @@ async function listEvents(calId, timeMin, timeMax) {
 }
 
 async function createEvent(calId, ev) {
-  const body = {
-    summary: ev.summary,
-    start: ev.start,
-    end: ev.end
-  };
+  const body = { summary: ev.summary, start: ev.start, end: ev.end };
   if (ev.description) body.description = ev.description;
   if (ev.location)    body.location    = ev.location;
   return api(`/calendars/${encodeURIComponent(calId)}/events`, {
@@ -347,6 +505,7 @@ function evKey(ev) {
   return (ev.summary || '').trim().toLowerCase() + '|' + s.slice(0, 16);
 }
 
+// ── Sincronización ────────────────────────────
 async function startSync() {
   if (CLIENT_ID.includes('TU_CLIENT_ID')) {
     document.getElementById('notice').style.display = 'block';
@@ -382,7 +541,7 @@ async function startSync() {
     if (!calNormal) log('⚠ "Calendario NORMAL" no encontrado — omitido.', 'err');
     if (!calSDF)    log('⚠ "Calendario S,D y F" no encontrado — omitido.', 'err');
     if (!calVac)    log('⚠ "VACACIONES" no encontrado — omitido.', 'err');
-    log(`✓ "Casa" localizado.`, 'ok');
+    log('✓ "Casa" localizado.', 'ok');
 
     log('Cargando eventos existentes en "Casa"…', 'dim');
     const casaEvs  = await listEvents(calCasa.id, timeMin, timeMax);
@@ -392,9 +551,8 @@ async function startSync() {
     const rules = [];
     if (calNormal) rules.push({ cal: calNormal, mode: 'exact',    match: 'Ruben Marcos', destTitle: 'Guardia' });
     if (calSDF)    rules.push({ cal: calSDF,    mode: 'exact',    match: 'Ruben Marcos', destTitle: 'Guardia' });
-    if (calVac)    rules.push({ cal: calVac,    mode: 'contains', match: 'RUBEN',         destTitle: 'Vacaciones Papa' });
+    if (calVac)    rules.push({ cal: calVac,    mode: 'contains', match: 'RUBEN',        destTitle: 'Vacaciones Papa' });
 
-    // Construir conjunto de claves que DEBEN existir en Casa tras la sync
     const validKeys = new Set();
 
     for (const { cal, mode, match, destTitle } of rules) {
@@ -432,7 +590,6 @@ async function startSync() {
       }
     }
 
-    // Borrar de Casa los eventos "Guardia" y "Vacaciones Papa" que ya no existen en origen
     const managedTitles = new Set(['guardia', 'vacaciones papa']);
     const toDelete = casaEvs.filter(ev => {
       const title = (ev.summary || '').trim().toLowerCase();
@@ -462,10 +619,105 @@ async function startSync() {
   }
 
   btn.disabled = false;
-  btn.innerHTML = '<svg style="width:15px;height:15px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Sincronizar de nuevo';
+  btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Sincronizar de nuevo';
 }
 
+// ── Efectos económicos ────────────────────────
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+async function calcularEfectos() {
+  const importeNormal  = parseFloat(document.getElementById('importeNormal').value)  || 0;
+  const importeFestivo = parseFloat(document.getElementById('importeFestivo').value) || 0;
+
+  const resultado = document.getElementById('ecoResultado');
+  resultado.innerHTML = '<p class="month-loading" style="margin:1rem 0;">Calculando… obteniendo acceso a Calendar…</p>';
+
+  try {
+    if (!token) {
+      token = await getToken();
+    }
+
+    const cals = await listCalendars();
+    const find = name => cals.find(c => c.summary?.trim().toLowerCase() === name.trim().toLowerCase());
+
+    const calNormal    = find('Calendario NORMAL');
+    const calSDF       = find('Calendario S,D y F');
+    const calSaliente  = find('Saliente Guardia');
+
+    if (!calNormal && !calSDF && !calSaliente) {
+      resultado.innerHTML = '<p style="color:var(--red);margin:1rem 0;">No se encontró ningún calendario origen.</p>';
+      return;
+    }
+
+    const hoy = new Date();
+    const meses = [];
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+      meses.push({ year: d.getFullYear(), month: d.getMonth() });
+    }
+
+    resultado.innerHTML = '<p class="month-loading" style="margin:1rem 0;">Descargando eventos…</p>';
+
+    // Descargar eventos de todos los calendarios para el rango completo
+    const rangoMin = new Date(meses[0].year, meses[0].month, 1).toISOString();
+    const rangoMax = new Date(meses[3].year, meses[3].month + 1, 0, 23, 59, 59).toISOString();
+
+    const [evsNormal, evsSDF, evsSaliente] = await Promise.all([
+      calNormal   ? listEvents(calNormal.id,   rangoMin, rangoMax) : Promise.resolve([]),
+      calSDF      ? listEvents(calSDF.id,      rangoMin, rangoMax) : Promise.resolve([]),
+      calSaliente ? listEvents(calSaliente.id, rangoMin, rangoMax) : Promise.resolve([])
+    ]);
+
+    // Filtrar los que contienen "Ruben" en el título
+    const normalRuben   = evsNormal.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'));
+    const festivoRuben  = [
+      ...evsSDF.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN')),
+      ...evsSaliente.filter(ev => (ev.summary || '').toUpperCase().includes('RUBEN'))
+    ];
+
+    function evMonth(ev) {
+      const s = ev.start?.dateTime || ev.start?.date || '';
+      const d = new Date(s);
+      return { year: d.getFullYear(), month: d.getMonth() };
+    }
+
+    // Construir HTML de resultados
+    const grid = document.createElement('div');
+    grid.className = 'month-grid';
+
+    meses.forEach((m, idx) => {
+      const normales  = normalRuben.filter(ev => { const em = evMonth(ev); return em.year === m.year && em.month === m.month; });
+      const festivos  = festivoRuben.filter(ev => { const em = evMonth(ev); return em.year === m.year && em.month === m.month; });
+
+      const totalNormal  = normales.length  * importeNormal;
+      const totalFestivo = festivos.length  * importeFestivo;
+      const total        = totalNormal + totalFestivo;
+
+      const card = document.createElement('div');
+      card.className = 'month-card' + (idx === 0 ? ' current' : '');
+
+      card.innerHTML = `
+        <div class="month-name">${MESES_ES[m.month]} ${m.year}${idx === 0 ? ' · mes actual' : ''}</div>
+        <div class="month-total">${total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</div>
+        <div class="month-detail">
+          <span>${normales.length} guardia${normales.length !== 1 ? 's' : ''} normal${normales.length !== 1 ? 'es' : ''} × ${importeNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalNormal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+          <span>${festivos.length} guardia${festivos.length !== 1 ? 's' : ''} festiva${festivos.length !== 1 ? 's' : ''} × ${importeFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} = ${totalFestivo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    resultado.innerHTML = '';
+    resultado.appendChild(grid);
+
+  } catch(e) {
+    resultado.innerHTML = `<p style="color:var(--red);margin:1rem 0;">✗ ${e.message}</p>`;
+  }
+}
+
+// ── Init ──────────────────────────────────────
 initDates();
+loadImportes();
 </script>
 </body>
 </html>
