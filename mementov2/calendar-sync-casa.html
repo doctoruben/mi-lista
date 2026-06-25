@@ -1,0 +1,436 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CalSync — Copia eventos a Casa</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --border: #e2e2de;
+    --text: #1a1a18;
+    --muted: #7a7a74;
+    --blue: #1a56db;
+    --blue-bg: #eff4ff;
+    --blue-border: #c3d2f7;
+    --teal: #0e7673;
+    --teal-bg: #e6f5f4;
+    --teal-border: #a3d9d7;
+    --green: #166534;
+    --green-bg: #dcfce7;
+    --red: #991b1b;
+    --red-bg: #fee2e2;
+    --yellow-bg: #fefce8;
+    --yellow: #854d0e;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --mono: 'Menlo', 'Consolas', monospace;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .wrap { max-width: 680px; margin: 0 auto; }
+
+  header { margin-bottom: 2rem; }
+  header h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+  header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.9rem;
+  }
+
+  .rule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
+    font-size: 0.88rem;
+  }
+  .rule:last-child { margin-bottom: 0; }
+
+  .badge {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 2px 9px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .badge-src { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+  .badge-dst { background: var(--teal-bg); color: var(--teal); border: 1px solid var(--teal-border); }
+  .badge-rule { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; font-family: var(--mono); font-size: 0.75rem; }
+
+  .arrow { color: var(--muted); font-size: 0.9rem; }
+
+  .date-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .date-row label { font-size: 0.85rem; color: var(--muted); }
+  .date-row input[type="date"] {
+    font-size: 0.875rem;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  .date-row input[type="date"]:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,86,219,0.1); }
+
+  #btnSync {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 9px 22px;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  #btnSync:hover { background: #1648c4; }
+  #btnSync:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+  }
+  .metric-num { font-size: 1.8rem; font-weight: 600; line-height: 1; }
+  .metric-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 5px; }
+  .metric-num.green { color: var(--teal); }
+  .metric-num.gray { color: var(--muted); }
+
+  .log-wrap { padding: 0; }
+  .log-box {
+    background: #1a1a18;
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    max-height: 360px;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.75;
+    color: #a3a39e;
+  }
+  .log-box .ok { color: #6ee7b7; }
+  .log-box .err { color: #fca5a5; }
+  .log-box .info { color: #e2e2de; }
+  .log-box .dim { color: #6b6b65; }
+
+  .notice {
+    background: var(--yellow-bg);
+    border: 1px solid #fde68a;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 0.83rem;
+    color: var(--yellow);
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .notice a { color: var(--blue); }
+
+  svg.icon { width: 16px; height: 16px; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  @media (max-width: 480px) {
+    .metrics { grid-template-columns: 1fr 1fr; }
+    .metric:last-child { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>CalSync</h1>
+    <p>Copia eventos seleccionados al calendario "Casa"</p>
+  </header>
+
+  <div id="notice" class="notice">
+    ⚠ Edita el archivo y pon tu <strong>CLIENT_ID</strong> de Google OAuth en la constante al inicio del script.
+    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Abrir Google Cloud Console →</a>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Reglas de copia</div>
+    <div class="rule">
+      <span class="badge badge-src">Calendario NORMAL</span>
+      <span class="badge badge-src">Calendario S,D y F</span>
+      <span class="arrow">→</span>
+      <span class="badge badge-dst">Casa</span>
+      <span class="badge badge-rule">título = "Ruben Marcos"</span>
+    </div>
+    <div class="rule">
+      <span class="badge badge-src">VACACIONES</span>
+      <span class="arrow">→</span>
+      <span class="badge badge-dst">Casa</span>
+      <span class="badge badge-rule">título contiene "RUBEN"</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Configuración</div>
+    <div class="date-row">
+      <label for="dateFrom">Desde</label>
+      <input type="date" id="dateFrom">
+      <label for="dateTo">Hasta</label>
+      <input type="date" id="dateTo">
+    </div>
+    <button id="btnSync" onclick="startSync()">
+      <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Sincronizar ahora
+    </button>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-num" id="mTotal">—</div><div class="metric-lbl">Revisados</div></div>
+    <div class="metric"><div class="metric-num green" id="mCopied">—</div><div class="metric-lbl">Copiados</div></div>
+    <div class="metric"><div class="metric-num gray" id="mSkipped">—</div><div class="metric-lbl">Ya existían</div></div>
+  </div>
+
+  <div class="card log-wrap">
+    <div class="log-box" id="logBox"><span class="dim">Pulsa "Sincronizar ahora" para comenzar…</span></div>
+  </div>
+
+</div>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+// ─────────────────────────────────────────────
+// pon aquí tu Client ID de Google OAuth
+const CLIENT_ID = '241322134457-6tfui44gqcsavo5043h7son1e6tlppgi.apps.googleusercontent.com';
+// ─────────────────────────────────────────────
+
+const BASE = 'https://www.googleapis.com/calendar/v3';
+let token = null;
+let rev = 0, cop = 0, ski = 0;
+
+function initDates() {
+  const t = new Date();
+  const from = new Date(t.getFullYear(), t.getMonth() - 1, 1);
+  const to   = new Date(t.getFullYear() + 1, 11, 31);
+  document.getElementById('dateFrom').value = from.toISOString().slice(0, 10);
+  document.getElementById('dateTo').value   = to.toISOString().slice(0, 10);
+}
+
+function log(msg, cls = '') {
+  const box = document.getElementById('logBox');
+  if (box.querySelector('span.dim')) box.innerHTML = '';
+  const d = document.createElement('div');
+  d.textContent = msg;
+  if (cls) d.className = cls;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setMetrics() {
+  document.getElementById('mTotal').textContent   = rev;
+  document.getElementById('mCopied').textContent  = cop;
+  document.getElementById('mSkipped').textContent = ski;
+}
+
+function getToken() {
+  return new Promise((resolve, reject) => {
+    if (!window.google?.accounts?.oauth2) {
+      reject(new Error('Google Identity Services no cargó. Comprueba tu conexión.'));
+      return;
+    }
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar',
+      callback: r => r.error ? reject(new Error(r.error)) : resolve(r.access_token)
+    });
+    client.requestAccessToken();
+  });
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(BASE + path, {
+    ...opts,
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'application/json',
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error?.message || `HTTP ${res.status}`);
+  }
+  if (res.status === 204) return {};
+  return res.json();
+}
+
+async function listCalendars() {
+  const d = await api('/users/me/calendarList?maxResults=250');
+  return d.items || [];
+}
+
+async function listEvents(calId, timeMin, timeMax) {
+  let items = [], pageToken = null;
+  do {
+    const qs = new URLSearchParams({
+      timeMin, timeMax,
+      maxResults: 2500,
+      singleEvents: true,
+      orderBy: 'startTime',
+      ...(pageToken ? { pageToken } : {})
+    });
+    const d = await api(`/calendars/${encodeURIComponent(calId)}/events?${qs}`);
+    items = items.concat(d.items || []);
+    pageToken = d.nextPageToken || null;
+  } while (pageToken);
+  return items;
+}
+
+async function createEvent(calId, ev) {
+  const body = {
+    summary: ev.summary,
+    start: ev.start,
+    end: ev.end
+  };
+  if (ev.description) body.description = ev.description;
+  if (ev.location)    body.location    = ev.location;
+  return api(`/calendars/${encodeURIComponent(calId)}/events`, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+}
+
+function evKey(ev) {
+  const s = ev.start?.dateTime || ev.start?.date || '';
+  return (ev.summary || '').trim().toLowerCase() + '|' + s.slice(0, 16);
+}
+
+async function startSync() {
+  if (CLIENT_ID.includes('TU_CLIENT_ID')) {
+    document.getElementById('notice').style.display = 'block';
+    log('⚠ Edita el archivo y pon tu CLIENT_ID antes de continuar.', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('btnSync');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Sincronizando…';
+  document.getElementById('logBox').innerHTML = '';
+  rev = 0; cop = 0; ski = 0;
+  setMetrics();
+
+  const timeMin = new Date(document.getElementById('dateFrom').value).toISOString();
+  const timeMax = new Date(document.getElementById('dateTo').value + 'T23:59:59').toISOString();
+
+  try {
+    log('Solicitando acceso a Google Calendar…', 'dim');
+    token = await getToken();
+    log('✓ Acceso concedido.', 'ok');
+
+    log('Obteniendo lista de calendarios…', 'dim');
+    const cals = await listCalendars();
+    const find = name => cals.find(c => c.summary?.trim().toLowerCase() === name.trim().toLowerCase());
+
+    const calNormal = find('Calendario NORMAL');
+    const calSDF    = find('Calendario S,D y F');
+    const calVac    = find('VACACIONES');
+    const calCasa   = find('Casa');
+
+    if (!calCasa)   throw new Error('"Casa" no encontrado. Verifica el nombre exacto del calendario.');
+    if (!calNormal) log('⚠ "Calendario NORMAL" no encontrado — omitido.', 'err');
+    if (!calSDF)    log('⚠ "Calendario S,D y F" no encontrado — omitido.', 'err');
+    if (!calVac)    log('⚠ "VACACIONES" no encontrado — omitido.', 'err');
+    log(`✓ "Casa" localizado.`, 'ok');
+
+    log('Cargando eventos existentes en "Casa"…', 'dim');
+    const casaEvs  = await listEvents(calCasa.id, timeMin, timeMax);
+    const casaKeys = new Set(casaEvs.map(evKey));
+    log(`  → ${casaEvs.length} eventos ya en "Casa".`, 'dim');
+
+    const rules = [];
+    if (calNormal) rules.push({ cal: calNormal, mode: 'exact',    match: 'Ruben Marcos' });
+    if (calSDF)    rules.push({ cal: calSDF,    mode: 'exact',    match: 'Ruben Marcos' });
+    if (calVac)    rules.push({ cal: calVac,    mode: 'contains', match: 'RUBEN' });
+
+    for (const { cal, mode, match } of rules) {
+      log(`\nRevisando "${cal.summary}"…`, 'info');
+      const evs = await listEvents(cal.id, timeMin, timeMax);
+      const hits = evs.filter(ev => {
+        const t = (ev.summary || '').trim();
+        return mode === 'exact' ? t === match : t.toUpperCase().includes(match);
+      });
+      log(`  → ${hits.length} eventos coinciden.`, 'dim');
+
+      for (const ev of hits) {
+        rev++;
+        setMetrics();
+        const k    = evKey(ev);
+        const date = (ev.start?.dateTime || ev.start?.date || '').slice(0, 10);
+        if (casaKeys.has(k)) {
+          log(`  ↩ Ya existe: "${ev.summary}"  ${date}`, 'dim');
+          ski++;
+          setMetrics();
+          continue;
+        }
+        try {
+          await createEvent(calCasa.id, ev);
+          casaKeys.add(k);
+          log(`  ✓ Copiado: "${ev.summary}"  ${date}`, 'ok');
+          cop++;
+        } catch(e) {
+          log(`  ✗ Error en "${ev.summary}": ${e.message}`, 'err');
+        }
+        setMetrics();
+        await new Promise(r => setTimeout(r, 180));
+      }
+    }
+
+    log(`\n✅ Sincronización completada. Copiados: ${cop} | Ya existían: ${ski} | Revisados: ${rev}`, 'ok');
+
+  } catch(e) {
+    log(`\n✗ ${e.message}`, 'err');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg style="width:15px;height:15px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Sincronizar de nuevo';
+}
+
+initDates();
+</script>
+</body>
+</html>
