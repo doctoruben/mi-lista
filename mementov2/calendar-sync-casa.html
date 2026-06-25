@@ -271,6 +271,119 @@
 
   svg.icon { width: 16px; height: 16px; vertical-align: middle; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
+  /* Modal */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    position: relative;
+  }
+  .modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+  }
+  .modal-subtitle {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+  }
+  .modal-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: none; border: none;
+    font-size: 1.25rem; cursor: pointer;
+    color: var(--muted); line-height: 1;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+  }
+  .modal-close:hover { background: var(--bg); color: var(--text); }
+
+  /* Calendario mini */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 1rem;
+  }
+  .cal-dow {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 4px 0;
+    text-transform: uppercase;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    position: relative;
+  }
+  .cal-day.empty { }
+  .cal-day.guardia-normal {
+    background: #fee2e2;
+    color: #991b1b;
+    font-weight: 700;
+  }
+  .cal-day.guardia-segunda {
+    background: #fef9c3;
+    color: #854d0e;
+    font-weight: 700;
+  }
+  .cal-day.guardia-especial {
+    background: #ffedd5;
+    color: #9a3412;
+    font-weight: 700;
+    outline: 2px solid #f97316;
+    outline-offset: -2px;
+  }
+  .cal-day.today {
+    box-shadow: 0 0 0 2px var(--blue);
+  }
+  /* Leyenda modal */
+  .modal-legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .month-card { cursor: pointer; transition: box-shadow 0.15s, transform 0.1s; }
+  .month-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
+
   @media (max-width: 480px) {
     .metrics { grid-template-columns: 1fr 1fr; }
     .month-grid { grid-template-columns: 1fr; }
@@ -770,6 +883,11 @@ async function calcularEfectos() {
       const esMesActual = m.year === mesActualY && m.month === mesActualM;
       const card = document.createElement('div');
       card.className = 'month-card' + (esMesActual ? ' current' : '');
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.title = 'Ver calendario del mes';
+      card.onclick = () => abrirModal(m.year, m.month, evNormalBase, evSDFBase, evSegBase, evNormalEsp, evSDFEsp, evSegEsp);
+      card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') card.onclick(); };
 
       const filas = [
         fila('normal' + (nNormal !== 1 ? 'es' : ''),                nNormal,   importeNormal,   tNormal,   '#0e7673'),
@@ -823,6 +941,107 @@ loadImportes();
   document.getElementById('ecoFrom').value = fmt(new Date(hoy.getFullYear(), hoy.getMonth(), 1));
   document.getElementById('ecoTo').value   = fmt(new Date(hoy.getFullYear(), hoy.getMonth() + 3, 1));
 })();
+
+// ── Modal calendario mensual ──────────────────
+// Almacena los eventos del último cálculo indexados por "YYYY-M"
+let _evCache = {};
+
+function abrirModal(year, month, evNormalBase, evSDFBase, evSegBase, evNormalEsp, evSDFEsp, evSegEsp) {
+  const hoy = new Date();
+  const titulo = `${MESES_ES[month]} ${year}`;
+  document.getElementById('modalTitulo').textContent = titulo;
+
+  // Contar guardias para el subtítulo
+  function inM(ev) {
+    const d = new Date(ev.start?.dateTime || ev.start?.date || '');
+    return d.getFullYear() === year && d.getMonth() === month;
+  }
+  const nN = evNormalBase.filter(inM).length;
+  const nF = evSDFBase.filter(inM).length;
+  const nS = evSegBase.filter(inM).length;
+  const nE = [...evNormalEsp, ...evSDFEsp, ...evSegEsp].filter(inM).length;
+  const partes = [];
+  if (nN) partes.push(`${nN} normal${nN>1?'es':''}`);
+  if (nF) partes.push(`${nF} festivo${nF>1?'s':''}`);
+  if (nS) partes.push(`${nS} 2ª guardia${nS>1?'s':''}`);
+  if (nE) partes.push(`${nE} especial${nE>1?'es':''}`);
+  document.getElementById('modalSubtitulo').textContent = partes.length ? partes.join(' · ') : 'Sin guardias este mes';
+
+  // Construir set de días con su tipo (especial > segunda > normal/festivo)
+  const dias = {}; // dia -> tipo: 'especial' | 'segunda' | 'guardia'
+  function marcar(evs, tipo) {
+    evs.filter(inM).forEach(ev => {
+      const d = new Date(ev.start?.dateTime || ev.start?.date || '').getDate();
+      if (!dias[d] || tipo === 'especial' || (tipo === 'segunda' && dias[d] === 'guardia')) {
+        dias[d] = tipo;
+      }
+    });
+  }
+  marcar([...evNormalBase, ...evSDFBase], 'guardia');
+  marcar(evSegBase, 'segunda');
+  marcar([...evNormalEsp, ...evSDFEsp, ...evSegEsp], 'especial');
+
+  // Renderizar calendario
+  const cal = document.getElementById('modalCal');
+  cal.innerHTML = '';
+  const DOWS = ['L','M','X','J','V','S','D'];
+  DOWS.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow';
+    el.textContent = d;
+    cal.appendChild(el);
+  });
+
+  // Primer día del mes (0=Dom, ajustar a Lunes=0)
+  const primerDia = new Date(year, month, 1).getDay();
+  const offset = (primerDia + 6) % 7; // Lunes como inicio
+  const diasEnMes = new Date(year, month + 1, 0).getDate();
+
+  for (let i = 0; i < offset; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    cal.appendChild(el);
+  }
+  for (let d = 1; d <= diasEnMes; d++) {
+    const el = document.createElement('div');
+    const tipo = dias[d];
+    let cls = 'cal-day';
+    if (tipo === 'especial') cls += ' guardia-especial';
+    else if (tipo === 'segunda') cls += ' guardia-segunda';
+    else if (tipo === 'guardia') cls += ' guardia-normal';
+    if (d === hoy.getDate() && month === hoy.getMonth() && year === hoy.getFullYear()) cls += ' today';
+    el.className = cls;
+    el.textContent = d;
+    cal.appendChild(el);
+  }
+
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalBtn() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function cerrarModal(e) {
+  if (e.target === document.getElementById('modalBackdrop')) cerrarModalBtn();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModalBtn(); });
 </script>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="cerrarModal(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <button class="modal-close" onclick="cerrarModalBtn()" aria-label="Cerrar">✕</button>
+    <div class="modal-title" id="modalTitulo"></div>
+    <div class="modal-subtitle" id="modalSubtitulo"></div>
+    <div class="cal-grid" id="modalCal"></div>
+    <div class="modal-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Normal / Festivo</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>2ª Guardia</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;outline:2px solid #f97316;"></div>Festivo especial</div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
