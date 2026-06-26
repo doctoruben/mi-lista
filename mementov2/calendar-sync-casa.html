@@ -463,11 +463,11 @@
       <div class="card-title">Importes por tipo de guardia</div>
       <div class="import-row">
         <div class="import-field">
-          <label for="importeNormal">Normal (€)</label>
+          <label for="importeNormal">Laboral (€)</label>
           <input type="number" id="importeNormal" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
         </div>
         <div class="import-field">
-          <label for="importeFestivo">Festivo / 2ª Guardia (€)</label>
+          <label for="importeFestivo">Festivo (€)</label>
           <input type="number" id="importeFestivo" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
         </div>
         <div class="import-field">
@@ -486,7 +486,7 @@
       </div>
       <button class="btn-amber" onclick="calcularEfectos()">
         <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Calcular efectos económicos
+        Calcular efectos económicos €
       </button>
     </div>
 
@@ -890,10 +890,10 @@ async function calcularEfectos() {
       card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') card.onclick(); };
 
       const filas = [
-        fila('normal' + (nNormal !== 1 ? 'es' : ''),                nNormal,   importeNormal,   tNormal,   '#0e7673'),
-        fila('festivo' + (nFestivo !== 1 ? 's' : '') + ' (S,D,F)',  nFestivo,  importeFestivo,  tFestivo,  '#1a56db'),
-        fila('2ª guardia' + (nSegunda !== 1 ? 's' : ''),            nSegunda,  importeFestivo,  tSegunda,  '#7c3aed'),
-        fila('festivo' + (nEspecial !== 1 ? 's' : '') + ' especial' + (nEspecial !== 1 ? 'es' : ''), nEspecial, importeEspecial, tEspecial, '#b45309'),
+        fila('Laboral' + (nNormal !== 1 ? 'es' : ''),                nNormal,   importeNormal,   tNormal,   '#0e7673'),
+        fila('Festivo' + (nFestivo !== 1 ? 's' : '') + ' (S,D,F)',  nFestivo,  importeFestivo,  tFestivo,  '#1a56db'),
+        fila('Inyectada' + (nSegunda !== 1 ? 's' : ''),            nSegunda,  importeFestivo,  tSegunda,  '#7c3aed'),
+        fila('Festivo' + (nEspecial !== 1 ? 's' : '') + ' especial' + (nEspecial !== 1 ? 'es' : ''), nEspecial, importeEspecial, tEspecial, '#b45309'),
       ].filter(Boolean).join('');
 
       card.innerHTML = `
@@ -912,10 +912,10 @@ async function calcularEfectos() {
       const resumen = document.createElement('div');
       resumen.style.cssText = 'background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-top:12px;';
       const filasP = [
-        fila('normal' + (cntP.normal !== 1 ? 'es' : ''),                     cntP.normal,   importeNormal,   totP.normal,   '#0e7673'),
-        fila('festivo' + (cntP.festivo !== 1 ? 's' : '') + ' (S,D,F)',        cntP.festivo,  importeFestivo,  totP.festivo,  '#1a56db'),
-        fila('2ª guardia' + (cntP.segunda !== 1 ? 's' : ''),                  cntP.segunda,  importeFestivo,  totP.segunda,  '#7c3aed'),
-        fila('festivo' + (cntP.especial !== 1 ? 's' : '') + ' especial' + (cntP.especial !== 1 ? 'es' : ''), cntP.especial, importeEspecial, totP.especial, '#b45309'),
+        fila('Laboral' + (cntP.normal !== 1 ? 'es' : ''),                     cntP.normal,   importeNormal,   totP.normal,   '#0e7673'),
+        fila('Festivo' + (cntP.festivo !== 1 ? 's' : '') + ' (S,D,F)',        cntP.festivo,  importeFestivo,  totP.festivo,  '#1a56db'),
+        fila('Inyectada' + (cntP.segunda !== 1 ? 's' : ''),                  cntP.segunda,  importeFestivo,  totP.segunda,  '#7c3aed'),
+        fila('Festivo' + (cntP.especial !== 1 ? 's' : '') + ' especial' + (cntP.especial !== 1 ? 'es' : ''), cntP.especial, importeEspecial, totP.especial, '#b45309'),
       ].filter(Boolean).join('');
       resumen.innerHTML = `
         <div class="month-name" style="color:var(--text);">Total del periodo</div>
@@ -961,10 +961,10 @@ function abrirModal(year, month, evNormalBase, evSDFBase, evSegBase, evNormalEsp
   const nS = evSegBase.filter(inM).length;
   const nE = [...evNormalEsp, ...evSDFEsp, ...evSegEsp].filter(inM).length;
   const partes = [];
-  if (nN) partes.push(`${nN} normal${nN>1?'es':''}`);
-  if (nF) partes.push(`${nF} festivo${nF>1?'s':''}`);
-  if (nS) partes.push(`${nS} 2ª guardia${nS>1?'s':''}`);
-  if (nE) partes.push(`${nE} especial${nE>1?'es':''}`);
+  if (nN) partes.push(`${nN} Laboral${nN>1?'es':''}`);
+  if (nF) partes.push(`${nF} Festivo${nF>1?'s':''}`);
+  if (nS) partes.push(`${nS} Inyectada${nS>1?'s':''}`);
+  if (nE) partes.push(`${nE} Especial${nE>1?'es':''}`);
   document.getElementById('modalSubtitulo').textContent = partes.length ? partes.join(' · ') : 'Sin guardias este mes';
 
   // Construir set de días con su tipo (especial > segunda > normal/festivo)
@@ -1037,8 +1037,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModalB
     <div class="modal-subtitle" id="modalSubtitulo"></div>
     <div class="cal-grid" id="modalCal"></div>
     <div class="modal-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Normal / Festivo</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>2ª Guardia</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Laboral / Festivo</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>Inyectada</div>
       <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;outline:2px solid #f97316;"></div>Festivo especial</div>
     </div>
   </div>
