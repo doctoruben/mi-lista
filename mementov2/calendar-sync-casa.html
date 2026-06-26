@@ -463,11 +463,11 @@
       <div class="card-title">Importes por tipo de guardia</div>
       <div class="import-row">
         <div class="import-field">
-          <label for="importeNormal">Normal (€)</label>
+          <label for="importeNormal">Laboral (€)</label>
           <input type="number" id="importeNormal" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
         </div>
         <div class="import-field">
-          <label for="importeFestivo">Festivo / 2ª Guardia (€)</label>
+          <label for="importeFestivo">Festivo (€)</label>
           <input type="number" id="importeFestivo" min="0" step="0.01" placeholder="0.00" oninput="saveImportes()">
         </div>
         <div class="import-field">
@@ -486,7 +486,7 @@
       </div>
       <button class="btn-amber" onclick="calcularEfectos()">
         <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        Calcular efectos económicos
+        Calcular efectos económicos €
       </button>
     </div>
 
@@ -890,10 +890,10 @@ async function calcularEfectos() {
       card.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') card.onclick(); };
 
       const filas = [
-        fila('normal' + (nNormal !== 1 ? 'es' : ''),                nNormal,   importeNormal,   tNormal,   '#0e7673'),
-        fila('festivo' + (nFestivo !== 1 ? 's' : '') + ' (S,D,F)',  nFestivo,  importeFestivo,  tFestivo,  '#1a56db'),
-        fila('2ª guardia' + (nSegunda !== 1 ? 's' : ''),            nSegunda,  importeFestivo,  tSegunda,  '#7c3aed'),
-        fila('festivo' + (nEspecial !== 1 ? 's' : '') + ' especial' + (nEspecial !== 1 ? 'es' : ''), nEspecial, importeEspecial, tEspecial, '#b45309'),
+        fila('Laboral' + (nNormal !== 1 ? 'es' : ''),                nNormal,   importeNormal,   tNormal,   '#0e7673'),
+        fila('Festivo' + (nFestivo !== 1 ? 's' : '') + ' (S,D,F)',  nFestivo,  importeFestivo,  tFestivo,  '#1a56db'),
+        fila('Inyectada' + (nSegunda !== 1 ? 's' : ''),            nSegunda,  importeFestivo,  tSegunda,  '#7c3aed'),
+        fila('Festivo' + (nEspecial !== 1 ? 's' : '') + ' especial' + (nEspecial !== 1 ? 'es' : ''), nEspecial, importeEspecial, tEspecial, '#b45309'),
       ].filter(Boolean).join('');
 
       card.innerHTML = `
@@ -912,10 +912,10 @@ async function calcularEfectos() {
       const resumen = document.createElement('div');
       resumen.style.cssText = 'background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-top:12px;';
       const filasP = [
-        fila('normal' + (cntP.normal !== 1 ? 'es' : ''),                     cntP.normal,   importeNormal,   totP.normal,   '#0e7673'),
-        fila('festivo' + (cntP.festivo !== 1 ? 's' : '') + ' (S,D,F)',        cntP.festivo,  importeFestivo,  totP.festivo,  '#1a56db'),
-        fila('2ª guardia' + (cntP.segunda !== 1 ? 's' : ''),                  cntP.segunda,  importeFestivo,  totP.segunda,  '#7c3aed'),
-        fila('festivo' + (cntP.especial !== 1 ? 's' : '') + ' especial' + (cntP.especial !== 1 ? 'es' : ''), cntP.especial, importeEspecial, totP.especial, '#b45309'),
+        fila('Laboral' + (cntP.normal !== 1 ? 'es' : ''),                     cntP.normal,   importeNormal,   totP.normal,   '#0e7673'),
+        fila('Festivo' + (cntP.festivo !== 1 ? 's' : '') + ' (S,D,F)',        cntP.festivo,  importeFestivo,  totP.festivo,  '#1a56db'),
+        fila('Inyectada' + (cntP.segunda !== 1 ? 's' : ''),                   cntP.segunda,  importeFestivo,  totP.segunda,  '#7c3aed'),
+        fila('Festivo' + (cntP.especial !== 1 ? 's' : '') + ' especial' + (cntP.especial !== 1 ? 'es' : ''), cntP.especial, importeEspecial, totP.especial, '#b45309'),
       ].filter(Boolean).join('');
       resumen.innerHTML = `
         <div class="month-name" style="color:var(--text);">Total del periodo</div>
@@ -926,36 +926,33 @@ async function calcularEfectos() {
     }
 
     // ── Cálculo precio antiguo ─────────────────────────────────────────
-    // Tarifas fijas antiguas
     const TA = {
-      normal:          114.38,
-      sdfSabado:       259.27,
-      sdfResto:        236.39,
+      laboral:         114.38,
+      sabado:          259.27,
+      festivo:         236.39,
       espLunesViernes: 228.76,
       espSabado:       518.54,
       espDomingo:      472.78
     };
 
-    // día de semana: 0=Dom,1=Lun…6=Sáb
     function diaSemana(ev) {
       return new Date(ev.start?.dateTime || ev.start?.date || '').getDay();
     }
 
-    let totalAntiguo = 0;
-    let cntAnt = { normal: 0, sdfSab: 0, sdfResto: 0, espLV: 0, espSab: 0, espDom: 0 };
-    let totAnt  = { normal: 0, sdfSab: 0, sdfResto: 0, espLV: 0, espSab: 0, espDom: 0 };
+    let cntAnt = { laboral: 0, sabado: 0, festivo: 0, espLV: 0, espSab: 0, espDom: 0 };
+    let totAnt  = { laboral: 0, sabado: 0, festivo: 0, espLV: 0, espSab: 0, espDom: 0 };
 
-    // Normales (Calendario NORMAL sin especiales)
+    // Laborales (Calendario NORMAL sin especiales)
     evNormalBase.forEach(() => {
-      cntAnt.normal++;
-      totAnt.normal += TA.normal;
+      cntAnt.laboral++;
+      totAnt.laboral += TA.laboral;
     });
 
-    // SDF sin especiales — sábado o resto
+    // SDF sin especiales — sábado o resto (festivo)
     evSDFBase.forEach(ev => {
       const dow = diaSemana(ev);
-      if (dow === 6) { cntAnt.sdfSab++;   totAnt.sdfSab   += TA.sdfSabado; }
-      else           { cntAnt.sdfResto++; totAnt.sdfResto += TA.sdfResto;  }
+      if (dow === 6) { cntAnt.sabado++;  totAnt.sabado  += TA.sabado;  }
+      else           { cntAnt.festivo++; totAnt.festivo += TA.festivo; }
     });
 
     // Especiales (todos los calendarios) — L-V, Sáb, Dom
@@ -967,17 +964,16 @@ async function calcularEfectos() {
       else                { cntAnt.espLV++;  totAnt.espLV  += TA.espLunesViernes; }
     });
 
-    totalAntiguo = totAnt.normal + totAnt.sdfSab + totAnt.sdfResto + totAnt.espLV + totAnt.espSab + totAnt.espDom;
-
-    const totalPeriodoNuevo = totP.normal + totP.festivo + totP.segunda + totP.especial;
-    const diferencia = totalPeriodoNuevo - totalAntiguo;
-    const difColor = diferencia >= 0 ? '#166534' : '#991b1b';
-    const difPrefijo = diferencia >= 0 ? '+' : '';
+    const totalAntiguo = totAnt.laboral + totAnt.sabado + totAnt.festivo + totAnt.espLV + totAnt.espSab + totAnt.espDom;
+    const totalNuevo   = totP.normal + totP.festivo + totP.segunda + totP.especial;
+    const diferencia   = totalNuevo - totalAntiguo;
+    const difColor     = diferencia >= 0 ? '#166534' : '#991b1b';
+    const difPrefijo   = diferencia >= 0 ? '+' : '';
 
     const filasAnt = [
-      cntAnt.normal   > 0 ? `<span style="color:#0e7673;">▸ ${cntAnt.normal} normal${cntAnt.normal!==1?'es':''} × ${fmt(TA.normal)} = ${fmt(totAnt.normal)}</span>` : '',
-      cntAnt.sdfSab   > 0 ? `<span style="color:#1a56db;">▸ ${cntAnt.sdfSab} S,D,F sábado${cntAnt.sdfSab!==1?'s':''} × ${fmt(TA.sdfSabado)} = ${fmt(totAnt.sdfSab)}</span>` : '',
-      cntAnt.sdfResto > 0 ? `<span style="color:#1a56db;">▸ ${cntAnt.sdfResto} S,D,F resto × ${fmt(TA.sdfResto)} = ${fmt(totAnt.sdfResto)}</span>` : '',
+      cntAnt.laboral  > 0 ? `<span style="color:#0e7673;">▸ ${cntAnt.laboral} laboral${cntAnt.laboral!==1?'es':''} × ${fmt(TA.laboral)} = ${fmt(totAnt.laboral)}</span>` : '',
+      cntAnt.sabado   > 0 ? `<span style="color:#1a56db;">▸ ${cntAnt.sabado} sábado${cntAnt.sabado!==1?'s':''} × ${fmt(TA.sabado)} = ${fmt(totAnt.sabado)}</span>` : '',
+      cntAnt.festivo  > 0 ? `<span style="color:#1a56db;">▸ ${cntAnt.festivo} festivo${cntAnt.festivo!==1?'s':''} × ${fmt(TA.festivo)} = ${fmt(totAnt.festivo)}</span>` : '',
       cntAnt.espLV    > 0 ? `<span style="color:#b45309;">▸ ${cntAnt.espLV} especial L-V × ${fmt(TA.espLunesViernes)} = ${fmt(totAnt.espLV)}</span>` : '',
       cntAnt.espSab   > 0 ? `<span style="color:#b45309;">▸ ${cntAnt.espSab} especial sáb × ${fmt(TA.espSabado)} = ${fmt(totAnt.espSab)}</span>` : '',
       cntAnt.espDom   > 0 ? `<span style="color:#b45309;">▸ ${cntAnt.espDom} especial dom × ${fmt(TA.espDomingo)} = ${fmt(totAnt.espDom)}</span>` : '',
@@ -989,7 +985,7 @@ async function calcularEfectos() {
       <div class="month-name" style="color:var(--muted);">Total del periodo · precio antiguo</div>
       <div class="month-total" style="font-size:2rem;color:var(--muted);">${fmt(totalAntiguo)}</div>
       <div class="month-detail" style="margin-top:8px;">${filasAnt || '<span>Sin guardias</span>'}</div>
-      <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;align-items:baseline;gap:10px;">
+      <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <span style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">Diferencia</span>
         <span style="font-size:1.5rem;font-weight:700;color:${difColor};">${difPrefijo}${fmt(diferencia)}</span>
         <span style="font-size:0.8rem;color:${difColor};">${diferencia >= 0 ? 'a tu favor con el precio nuevo' : 'mejor con el precio antiguo'}</span>
@@ -1033,10 +1029,10 @@ function abrirModal(year, month, evNormalBase, evSDFBase, evSegBase, evNormalEsp
   const nS = evSegBase.filter(inM).length;
   const nE = [...evNormalEsp, ...evSDFEsp, ...evSegEsp].filter(inM).length;
   const partes = [];
-  if (nN) partes.push(`${nN} normal${nN>1?'es':''}`);
-  if (nF) partes.push(`${nF} festivo${nF>1?'s':''}`);
-  if (nS) partes.push(`${nS} 2ª guardia${nS>1?'s':''}`);
-  if (nE) partes.push(`${nE} especial${nE>1?'es':''}`);
+  if (nN) partes.push(`${nN} Laboral${nN>1?'es':''}`);
+  if (nF) partes.push(`${nF} Festivo${nF>1?'s':''}`);
+  if (nS) partes.push(`${nS} Inyectada${nS>1?'s':''}`);
+  if (nE) partes.push(`${nE} Especial${nE>1?'es':''}`);
   document.getElementById('modalSubtitulo').textContent = partes.length ? partes.join(' · ') : 'Sin guardias este mes';
 
   // Construir set de días con su tipo (especial > segunda > normal/festivo)
@@ -1109,8 +1105,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModalB
     <div class="modal-subtitle" id="modalSubtitulo"></div>
     <div class="cal-grid" id="modalCal"></div>
     <div class="modal-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Normal / Festivo</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>2ª Guardia</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Laboral / Festivo</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>Inyectada</div>
       <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;outline:2px solid #f97316;"></div>Festivo especial</div>
     </div>
   </div>
