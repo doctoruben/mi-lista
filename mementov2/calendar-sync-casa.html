@@ -384,6 +384,99 @@
   .month-card { cursor: pointer; transition: box-shadow 0.15s, transform 0.1s; }
   .month-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); transform: translateY(-1px); }
 
+  /* Panel Ver guardias */
+  .vg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .vg-mes {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .vg-nav {
+    display: flex;
+    gap: 6px;
+  }
+  .vg-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1rem; color: var(--text);
+    transition: background 0.12s;
+  }
+  .vg-nav button:hover { background: var(--bg); }
+  .vg-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 1rem;
+  }
+  .vg-dow {
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 4px 0;
+    text-transform: uppercase;
+  }
+  .vg-day {
+    border-radius: var(--radius-sm);
+    padding: 6px 4px 5px;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.82rem;
+  }
+  .vg-day .vg-num {
+    font-weight: 500;
+    line-height: 1;
+  }
+  .vg-day.today .vg-num {
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+  }
+  .vg-day.guardia-normal  { background: #fee2e2; }
+  .vg-day.guardia-segunda { background: #fef9c3; }
+  .vg-day.guardia-especial { background: #ffedd5; outline: 2px solid #f97316; outline-offset: -2px; }
+  .vg-day .vg-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #991b1b;
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+    max-width: 100%;
+  }
+  .vg-day.guardia-segunda .vg-label { color: #854d0e; }
+  .vg-day.guardia-especial .vg-label { color: #9a3412; }
+  .vg-nivel1-label {
+    font-size: 0.6rem;
+    color: #374151;
+    background: #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 4px;
+    text-align: center;
+    line-height: 1.3;
+    max-width: 100%;
+    word-break: break-word;
+  }
+  .vg-loading { color: var(--muted); font-size: 0.85rem; font-style: italic; text-align: center; padding: 2rem 0; }
+  .vg-legend {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    padding-top: 0.75rem; border-top: 1px solid var(--border);
+  }
+
   @media (max-width: 480px) {
     .metrics { grid-template-columns: 1fr 1fr; }
     .month-grid { grid-template-columns: 1fr; }
@@ -403,14 +496,44 @@
     <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Abrir Google Cloud Console →</a>
   </div>
 
+  <!-- Auth bar -->
+  <div id="authBar" style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);margin-bottom:1rem;font-size:0.83rem;">
+    <div id="authDot" style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></div>
+    <span id="authLabel" style="color:var(--muted);">Conectando con Google…</span>
+  </div>
+
   <!-- Pestañas -->
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('sync', this)">Sincronización</button>
+    <button class="tab active" onclick="switchTab('guardias', this)">Ver guardias</button>
+    <button class="tab" onclick="switchTab('sync', this)">Sincronización</button>
     <button class="tab" onclick="switchTab('eco', this)">Efectos económicos</button>
   </div>
 
+  <!-- Panel Ver guardias -->
+  <div id="panel-guardias" class="tab-panel active">
+    <div class="card">
+      <div class="vg-header">
+        <div class="vg-mes" id="vgMesTitle">—</div>
+        <div class="vg-nav">
+          <button onclick="vgNavegar(-1)" title="Mes anterior">&#8592;</button>
+          <button onclick="vgNavegar(0)"  title="Mes actual" style="font-size:0.75rem;width:auto;padding:0 10px;">Hoy</button>
+          <button onclick="vgNavegar(1)"  title="Mes siguiente">&#8594;</button>
+        </div>
+      </div>
+      <div class="vg-cal-grid" id="vgCal">
+        <div class="vg-loading">Esperando conexión con Google…</div>
+      </div>
+      <div class="vg-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Laboral / Festivo</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>Inyectada</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;outline:2px solid #f97316;"></div>Festivo especial</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e5e7eb;"></div>Nivel 1 Tardes</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Panel Sincronización -->
-  <div id="panel-sync" class="tab-panel active">
+  <div id="panel-sync" class="tab-panel">
 
     <div class="card">
       <div class="card-title">Reglas de copia</div>
@@ -513,6 +636,7 @@ function switchTab(name, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   el.classList.add('active');
+  if (name === 'guardias' && token) vgRenderizar();
 }
 
 // ── Importes localStorage ─────────────────────
@@ -558,19 +682,207 @@ function setMetrics() {
 }
 
 // ── OAuth ─────────────────────────────────────
-function getToken() {
-  return new Promise((resolve, reject) => {
-    if (!window.google?.accounts?.oauth2) {
-      reject(new Error('Google Identity Services no cargó. Comprueba tu conexión.'));
-      return;
+let gisReady = false;
+window.addEventListener('load', () => {
+  // Esperar a que GIS cargue y hacer login automático
+  const waitGIS = setInterval(() => {
+    if (window.google?.accounts?.oauth2) {
+      clearInterval(waitGIS);
+      gisReady = true;
+      doAutoLogin();
     }
+  }, 100);
+  // Timeout por si GIS no carga
+  setTimeout(() => { clearInterval(waitGIS); if (!gisReady) setAuthStatus('error'); }, 8000);
+});
+
+function setAuthStatus(state, email) {
+  const dot   = document.getElementById('authDot');
+  const label = document.getElementById('authLabel');
+  if (state === 'ok') {
+    dot.style.background = '#22c55e';
+    label.style.color    = 'var(--text)';
+    label.textContent    = '✓ Conectado' + (email ? ' como ' + email : '');
+  } else if (state === 'error') {
+    dot.style.background = '#ef4444';
+    label.style.color    = 'var(--red)';
+    label.textContent    = 'Error al conectar con Google. Recarga la página.';
+  } else {
+    dot.style.background = '#94a3b8';
+    label.style.color    = 'var(--muted)';
+    label.textContent    = 'Conectando con Google…';
+  }
+}
+
+function doAutoLogin() {
+  return new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/calendar',
-      callback: r => r.error ? reject(new Error(r.error)) : resolve(r.access_token)
+      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email',
+      callback: async r => {
+        if (r.error) { setAuthStatus('error'); reject(new Error(r.error)); return; }
+        token = r.access_token;
+        // Obtener email
+        try {
+          const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
+          const info = await res.json();
+          setAuthStatus('ok', info.email);
+        } catch { setAuthStatus('ok'); }
+        resolve(token);
+        // Cargar panel guardias
+        vgRenderizar();
+      }
+    });
+    client.requestAccessToken({ prompt: 'none' }); // silencioso si ya hay sesión
+  }).catch(() => {
+    // Si falla en silencio (no hay sesión previa) pedir login normal
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email',
+      callback: async r => {
+        if (r.error) { setAuthStatus('error'); return; }
+        token = r.access_token;
+        try {
+          const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
+          const info = await res.json();
+          setAuthStatus('ok', info.email);
+        } catch { setAuthStatus('ok'); }
+        vgRenderizar();
+      }
     });
     client.requestAccessToken();
   });
+}
+
+function getToken() {
+  if (token) return Promise.resolve(token);
+  return doAutoLogin();
+}
+
+// ── Ver guardias ──────────────────────────────
+const MESES_ES_VG = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const FESTIVOS_ESP_VG = { 11: [24,25,31], 0: [1,5,6] };
+let vgYear  = new Date().getFullYear();
+let vgMonth = new Date().getMonth();
+
+function vgNavegar(dir) {
+  if (dir === 0) { vgYear = new Date().getFullYear(); vgMonth = new Date().getMonth(); }
+  else { vgMonth += dir; if (vgMonth > 11) { vgMonth = 0; vgYear++; } else if (vgMonth < 0) { vgMonth = 11; vgYear--; } }
+  vgRenderizar();
+}
+
+async function vgRenderizar() {
+  document.getElementById('vgMesTitle').textContent = `${MESES_ES_VG[vgMonth]} ${vgYear}`;
+  const cal = document.getElementById('vgCal');
+  cal.innerHTML = '<div class="vg-loading" style="grid-column:1/-1;">Cargando eventos…</div>';
+
+  if (!token) return; // esperar a que haya token
+
+  try {
+    const cals = await listCalendars();
+    const find = name => cals.find(c => c.summary?.trim().toLowerCase() === name.trim().toLowerCase());
+    const calNormal  = find('Calendario NORMAL');
+    const calSDF     = find('Calendario S,D y F');
+    const calSegunda = find('Segunda Guardia');
+    const calNivel1  = find('Nivel 1. Tardes');
+
+    const rMin = new Date(vgYear, vgMonth, 1).toISOString();
+    const rMax = new Date(vgYear, vgMonth + 1, 0, 23, 59, 59).toISOString();
+
+    const [eN, eF, eS, eL] = await Promise.all([
+      calNormal  ? listEvents(calNormal.id,  rMin, rMax) : Promise.resolve([]),
+      calSDF     ? listEvents(calSDF.id,     rMin, rMax) : Promise.resolve([]),
+      calSegunda ? listEvents(calSegunda.id, rMin, rMax) : Promise.resolve([]),
+      calNivel1  ? listEvents(calNivel1.id,  rMin, rMax) : Promise.resolve([])
+    ]);
+
+    const matchRuben = ev => (ev.summary || '').toUpperCase().includes('RUBEN');
+    const esFespEsp  = ev => { const d = new Date(ev.start?.dateTime||ev.start?.date||''); return (FESTIVOS_ESP_VG[d.getMonth()]||[]).includes(d.getDate()); };
+
+    const normAll = eN.filter(matchRuben);
+    const sdfAll  = eF.filter(matchRuben);
+    const segAll  = eS.filter(matchRuben);
+
+    // día → tipo de guardia
+    const tiposDia = {};   // dia -> 'especial' | 'segunda' | 'guardia'
+    const labelDia = {};   // dia -> texto del evento guardia
+    const nivel1Dia = {};  // dia -> texto evento Nivel1
+
+    function marcar(evs, tipo) {
+      evs.forEach(ev => {
+        const d   = new Date(ev.start?.dateTime||ev.start?.date||'').getDate();
+        const esp = esFespEsp(ev);
+        const t   = esp ? 'especial' : tipo;
+        if (!tiposDia[d] || t === 'especial' || (t === 'segunda' && tiposDia[d] === 'guardia')) {
+          tiposDia[d] = t;
+          labelDia[d] = ev.summary || '';
+        }
+      });
+    }
+    marcar([...normAll, ...sdfAll], 'guardia');
+    marcar(segAll, 'segunda');
+    // Nivel1
+    eL.forEach(ev => {
+      const d = new Date(ev.start?.dateTime||ev.start?.date||'').getDate();
+      nivel1Dia[d] = ev.summary || '';
+    });
+
+    // Render
+    cal.innerHTML = '';
+    const DOWS = ['L','M','X','J','V','S','D'];
+    DOWS.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'vg-dow';
+      el.textContent = d;
+      cal.appendChild(el);
+    });
+
+    const offset    = (new Date(vgYear, vgMonth, 1).getDay() + 6) % 7;
+    const diasEnMes = new Date(vgYear, vgMonth + 1, 0).getDate();
+    const hoy       = new Date();
+
+    for (let i = 0; i < offset; i++) {
+      const el = document.createElement('div');
+      el.className = 'vg-day';
+      cal.appendChild(el);
+    }
+
+    for (let d = 1; d <= diasEnMes; d++) {
+      const el   = document.createElement('div');
+      const tipo = tiposDia[d];
+      let cls    = 'vg-day';
+      if (tipo === 'especial') cls += ' guardia-especial';
+      else if (tipo === 'segunda') cls += ' guardia-segunda';
+      else if (tipo === 'guardia') cls += ' guardia-normal';
+      const esHoy = d === hoy.getDate() && vgMonth === hoy.getMonth() && vgYear === hoy.getFullYear();
+      if (esHoy) cls += ' today';
+      el.className = cls;
+
+      const numEl = document.createElement('div');
+      numEl.className = 'vg-num';
+      numEl.textContent = d;
+      el.appendChild(numEl);
+
+      if (tipo) {
+        const lbl = document.createElement('div');
+        lbl.className = 'vg-label';
+        lbl.textContent = labelDia[d] || '';
+        el.appendChild(lbl);
+      }
+
+      if (nivel1Dia[d]) {
+        const lbl2 = document.createElement('div');
+        lbl2.className = 'vg-nivel1-label';
+        lbl2.textContent = nivel1Dia[d];
+        el.appendChild(lbl2);
+      }
+
+      cal.appendChild(el);
+    }
+
+  } catch(e) {
+    cal.innerHTML = `<div class="vg-loading" style="grid-column:1/-1;color:var(--red);">Error: ${e.message}</div>`;
+  }
 }
 
 // ── API helper ────────────────────────────────
@@ -1002,7 +1314,6 @@ async function calcularEfectos() {
 initDates();
 loadImportes();
 
-// Fechas por defecto del panel eco: mes actual → 3 meses adelante
 (function initEcoDates() {
   const hoy = new Date();
   const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
