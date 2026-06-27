@@ -499,7 +499,8 @@
   <!-- Auth bar -->
   <div id="authBar" style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);margin-bottom:1rem;font-size:0.83rem;">
     <div id="authDot" style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></div>
-    <span id="authLabel" style="color:var(--muted);">Conectando con Google…</span>
+    <span id="authLabel" style="color:var(--muted);flex:1;">No conectado a Google Calendar</span>
+    <button id="btnConectar" class="btn-primary" style="padding:6px 16px;font-size:0.82rem;" onclick="doLogin()">Conectar con Google</button>
   </div>
 
   <!-- Pestañas -->
@@ -682,81 +683,47 @@ function setMetrics() {
 }
 
 // ── OAuth ─────────────────────────────────────
-let gisReady = false;
-window.addEventListener('load', () => {
-  // Esperar a que GIS cargue y hacer login automático
-  const waitGIS = setInterval(() => {
-    if (window.google?.accounts?.oauth2) {
-      clearInterval(waitGIS);
-      gisReady = true;
-      doAutoLogin();
-    }
-  }, 100);
-  // Timeout por si GIS no carga
-  setTimeout(() => { clearInterval(waitGIS); if (!gisReady) setAuthStatus('error'); }, 8000);
-});
-
 function setAuthStatus(state, email) {
   const dot   = document.getElementById('authDot');
   const label = document.getElementById('authLabel');
+  const btn   = document.getElementById('btnConectar');
   if (state === 'ok') {
     dot.style.background = '#22c55e';
     label.style.color    = 'var(--text)';
     label.textContent    = '✓ Conectado' + (email ? ' como ' + email : '');
+    btn.textContent      = 'Reconectar';
   } else if (state === 'error') {
     dot.style.background = '#ef4444';
     label.style.color    = 'var(--red)';
-    label.textContent    = 'Error al conectar con Google. Recarga la página.';
-  } else {
-    dot.style.background = '#94a3b8';
-    label.style.color    = 'var(--muted)';
-    label.textContent    = 'Conectando con Google…';
+    label.textContent    = 'Error al conectar. Inténtalo de nuevo.';
   }
 }
 
-function doAutoLogin() {
-  return new Promise((resolve, reject) => {
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email',
-      callback: async r => {
-        if (r.error) { setAuthStatus('error'); reject(new Error(r.error)); return; }
-        token = r.access_token;
-        // Obtener email
-        try {
-          const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
-          const info = await res.json();
-          setAuthStatus('ok', info.email);
-        } catch { setAuthStatus('ok'); }
-        resolve(token);
-        // Cargar panel guardias
-        vgRenderizar();
-      }
-    });
-    client.requestAccessToken({ prompt: 'none' }); // silencioso si ya hay sesión
-  }).catch(() => {
-    // Si falla en silencio (no hay sesión previa) pedir login normal
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email',
-      callback: async r => {
-        if (r.error) { setAuthStatus('error'); return; }
-        token = r.access_token;
-        try {
-          const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
-          const info = await res.json();
-          setAuthStatus('ok', info.email);
-        } catch { setAuthStatus('ok'); }
-        vgRenderizar();
-      }
-    });
-    client.requestAccessToken();
+function doLogin() {
+  if (!window.google?.accounts?.oauth2) {
+    alert('Google Identity Services aún no ha cargado. Espera un momento y vuelve a intentarlo.');
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email',
+    callback: async r => {
+      if (r.error) { setAuthStatus('error'); return; }
+      token = r.access_token;
+      try {
+        const res  = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } });
+        const info = await res.json();
+        setAuthStatus('ok', info.email);
+      } catch { setAuthStatus('ok'); }
+      vgRenderizar();
+    }
   });
+  client.requestAccessToken();
 }
 
 function getToken() {
   if (token) return Promise.resolve(token);
-  return doAutoLogin();
+  return new Promise((_, reject) => reject(new Error('No conectado. Pulsa "Conectar con Google".')));
 }
 
 // ── Ver guardias ──────────────────────────────
