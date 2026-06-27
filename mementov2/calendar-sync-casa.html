@@ -413,29 +413,30 @@
   .vg-cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 4px;
     margin-bottom: 1rem;
   }
   .vg-dow {
     text-align: center;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 600;
     color: var(--muted);
-    padding: 4px 0;
+    padding: 3px 0;
     text-transform: uppercase;
   }
   .vg-day {
     border-radius: var(--radius-sm);
-    padding: 6px 4px 5px;
-    min-height: 48px;
+    aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    justify-content: center;
+    gap: 2px;
     font-size: 0.82rem;
   }
   .vg-day .vg-num {
     font-weight: 500;
+    font-size: 0.8rem;
     line-height: 1;
   }
   .vg-day.today .vg-num {
@@ -444,32 +445,16 @@
     border-radius: 50%;
     width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
   }
-  .vg-day.guardia-normal  { background: #fee2e2; }
-  .vg-day.guardia-segunda { background: #fef9c3; }
+  .vg-day.guardia-normal   { background: #fee2e2; }
+  .vg-day.guardia-segunda  { background: #fef9c3; }
   .vg-day.guardia-especial { background: #ffedd5; outline: 2px solid #f97316; outline-offset: -2px; }
-  .vg-day .vg-label {
-    font-size: 0.62rem;
-    font-weight: 600;
-    color: #991b1b;
-    text-align: center;
-    line-height: 1.2;
-    word-break: break-word;
-    max-width: 100%;
-  }
-  .vg-day.guardia-segunda .vg-label { color: #854d0e; }
-  .vg-day.guardia-especial .vg-label { color: #9a3412; }
-  .vg-nivel1-label {
-    font-size: 0.6rem;
-    color: #374151;
-    background: #e5e7eb;
-    border-radius: 3px;
-    padding: 1px 4px;
-    text-align: center;
-    line-height: 1.3;
-    max-width: 100%;
-    word-break: break-word;
+  .vg-nivel1-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #6b7280;
+    flex-shrink: 0;
   }
   .vg-loading { color: var(--muted); font-size: 0.85rem; font-style: italic; text-align: center; padding: 2rem 0; }
   .vg-legend {
@@ -478,8 +463,25 @@
   }
 
   @media (max-width: 480px) {
+    body { padding: 1rem 0.75rem; }
+    .wrap { max-width: 100%; }
+    .card { padding: 1rem; }
     .metrics { grid-template-columns: 1fr 1fr; }
     .month-grid { grid-template-columns: 1fr; }
+    .import-row { flex-direction: column; gap: 10px; }
+    .import-field input { max-width: 100%; width: 100%; }
+    .date-row { gap: 8px; }
+    .date-row input[type="date"],
+    .date-row input[type="month"] { font-size: 0.8rem; padding: 5px 8px; }
+    .tabs { overflow-x: auto; white-space: nowrap; }
+    .tab { padding: 8px 14px; font-size: 0.82rem; }
+    .vg-cal-grid { gap: 3px; }
+    .vg-dow { font-size: 0.6rem; }
+    .vg-day .vg-num { font-size: 0.72rem; }
+    .vg-day.today .vg-num { width: 19px; height: 19px; font-size: 0.68rem; }
+    .month-total { font-size: 1.4rem; }
+    .log-box { font-size: 0.72rem; }
+    header h1 { font-size: 1.2rem; }
   }
 </style>
 </head>
@@ -528,7 +530,7 @@
         <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;outline:1px solid #fca5a5;"></div>Laboral / Festivo</div>
         <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;outline:1px solid #fde047;"></div>Inyectada</div>
         <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;outline:2px solid #f97316;"></div>Festivo especial</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#e5e7eb;"></div>Nivel 1 Tardes</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6b7280;border-radius:50%;width:8px;height:8px;"></div>Nivel 1 Tardes</div>
       </div>
     </div>
   </div>
@@ -830,18 +832,10 @@ async function vgRenderizar() {
       numEl.textContent = d;
       el.appendChild(numEl);
 
-      if (tipo) {
-        const lbl = document.createElement('div');
-        lbl.className = 'vg-label';
-        lbl.textContent = labelDia[d] || '';
-        el.appendChild(lbl);
-      }
-
       if (nivel1Dia[d]) {
-        const lbl2 = document.createElement('div');
-        lbl2.className = 'vg-nivel1-label';
-        lbl2.textContent = nivel1Dia[d];
-        el.appendChild(lbl2);
+        const dot = document.createElement('div');
+        dot.className = 'vg-nivel1-dot';
+        el.appendChild(dot);
       }
 
       cal.appendChild(el);
