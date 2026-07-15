@@ -352,6 +352,7 @@ let pendingPrefMuni  = null;
 let userLat          = null;   // coordenadas del usuario (si las concedió)
 let userLon          = null;
 let sortMode         = 'price'; // 'price' | 'dist'
+let geoProvince      = null;   // provincia detectada por Nominatim
 
 const statusEl    = document.getElementById('status');
 const resultsEl   = document.getElementById('results');
@@ -470,28 +471,50 @@ async function buscar() {
 
 /* ── Geolocation ── */
 async function resolveUbicacion(latitude, longitude) {
+  // Paso 1: Nominatim reverse geocoding
+  // Pedimos zoom=10 para obtener nivel municipio directamente
   try {
     const geoRes = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es`,
+      `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=es&zoom=10`,
       { headers: { 'User-Agent': 'BestGasApp/1.0' } }
     );
     const geo = await geoRes.json();
     const addr = geo.address || {};
-    const candidates = [addr.city, addr.town, addr.village, addr.municipality, addr.suburb, addr.county].filter(Boolean);
+
+    // Candidatos en orden estricto de precisión municipal (sin barrios ni comarcas)
+    const candidates = [
+      addr.municipality,
+      addr.city,
+      addr.town,
+      addr.village,
+      addr.city_district,
+    ].filter(Boolean);
+
     for (const c of candidates) {
       const v = normalize(c);
-      let m = allMunicipios.find(x => normalize(x.Municipio) === v);
-      if (!m) m = allMunicipios.find(x => normalize(x.Municipio).startsWith(v.slice(0,6)) || v.startsWith(normalize(x.Municipio).slice(0,6)));
+      // Solo match exacto — evita falsos positivos por prefijo corto
+      const m = allMunicipios.find(x => normalize(x.Municipio) === v);
       if (m) return m;
     }
-  } catch(e) {}
 
-  // Fallback: nearest station
+    // Si no hay exacto, intentar con la provincia para acotar el fallback
+    geoProvince = addr.state || addr.province || null;
+  } catch(e) { geoProvince = null; }
+
+  // Paso 2: Fallback — estación más cercana, filtrada por provincia si la conocemos
   statusEl.textContent = 'Calculando municipio más cercano...';
   try {
     const r = await fetch('https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/');
     const data = await r.json();
-    const estaciones = data.ListaEESSPrecio || [];
+    let estaciones = data.ListaEESSPrecio || [];
+
+    // Filtrar por provincia si Nominatim nos la dio — evita matchear Canarias con Península
+    if (geoProvince) {
+      const vProv = normalize(geoProvince);
+      const filtered = estaciones.filter(s => normalize(s['Provincia'] || '').includes(vProv) || vProv.includes(normalize(s['Provincia'] || '').slice(0, 5)));
+      if (filtered.length > 0) estaciones = filtered;
+    }
+
     let bestDist = Infinity, bestMuniId = null, bestMuniName = null;
     for (const s of estaciones) {
       const lat = parseFloat((s['Latitud'] || '').replace(',', '.'));
