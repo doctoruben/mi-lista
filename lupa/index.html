@@ -16,6 +16,7 @@
     --text-dim:#94a3b8;
     --danger:#f87171;
     --radius:16px;
+    --extra-filter: ;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{
@@ -42,14 +43,16 @@
     min-width:100%; min-height:100%;
     transform-origin:center center;
     transform:translate(-50%,-50%) scale(var(--zoom,1));
-    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter,none);
+    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter);
     transition:filter .15s ease;
   }
   canvas#frozenCanvas{
     position:absolute; top:0; left:0; width:100%; height:100%;
     object-fit:cover;
     display:none;
-    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter,none);
+    transform-origin:center center;
+    transform:scale(var(--zoom,1));
+    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter);
   }
   #startOverlay{
     position:absolute; inset:0;
@@ -228,9 +231,6 @@
       startOverlay.classList.add('hidden');
       errorBox.style.display = 'none';
       controls.classList.remove('hidden');
-
-      const caps = track.getCapabilities ? track.getCapabilities() : {};
-      torchBtn.disabled = !(caps && caps.torch);
     }catch(err){
       startOverlay.classList.add('hidden');
       errorBox.style.display = 'flex';
@@ -310,14 +310,14 @@
 
   // Linterna / torch
   torchBtn.addEventListener('click', async ()=>{
-    if(!track) return;
+    if(!track){ return; }
+    const next = !torchOn;
     try{
-      torchOn = !torchOn;
-      await track.applyConstraints({ advanced:[{ torch: torchOn }] });
+      await track.applyConstraints({ advanced:[{ torch: next }] });
+      torchOn = next;
       torchBtn.classList.toggle('active', torchOn);
     }catch(e){
-      torchOn = false;
-      alert('Este dispositivo no permite controlar la linterna desde el navegador.');
+      alert('Este móvil/navegador no permite controlar la linterna desde la web. En iPhone (Safari) no está soportado por Apple; en Android prueba con Chrome.');
     }
   });
 
@@ -325,13 +325,13 @@
   contrastModeBtn.addEventListener('click', ()=>{
     bwMode = !bwMode;
     contrastModeBtn.classList.toggle('active', bwMode);
-    setVar('--extra-filter', bwMode ? 'grayscale(1) contrast(1.6)' : 'none');
+    setVar('--extra-filter', bwMode ? 'grayscale(1) contrast(1.6)' : '');
   });
 
   // Reset
   resetBtn.addEventListener('click', ()=>{
     zoomSlider.value = 1; brightSlider.value = 1; contrastSlider.value = 1;
-    setVar('--zoom',1); setVar('--bright',1); setVar('--contrast',1); setVar('--extra-filter','none');
+    setVar('--zoom',1); setVar('--bright',1); setVar('--contrast',1); setVar('--extra-filter','');
     zoomBadge.textContent = '1.0×';
     if(bwMode){ bwMode=false; contrastModeBtn.classList.remove('active'); }
     if(torchOn && track){ track.applyConstraints({advanced:[{torch:false}]}).catch(()=>{}); torchOn=false; torchBtn.classList.remove('active'); }
