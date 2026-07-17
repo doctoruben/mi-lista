@@ -1,283 +1,603 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lupa Digital Pro</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #000;
-            color: #fff;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .camera-container {
-            flex: 1;
-            position: relative;
-            width: 100%;
-            background: #111;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        video, canvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        canvas {
-            display: none;
-            z-index: 2;
-        }
-        .controls {
-            background: rgba(20, 20, 20, 0.95);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 10;
-            border-top: 1px solid #333;
-        }
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .slider-container label {
-            min-width: 60px;
-            font-size: 14px;
-            font-weight: bold;
-        }
-        input[type="range"] {
-            flex: 1;
-            height: 8px;
-            border-radius: 4px;
-            background: #444;
-            outline: none;
-        }
-        .btn-container {
-            display: flex;
-            justify-content: space-around;
-            gap: 10px;
-        }
-        button {
-            flex: 1;
-            padding: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            background: #007bff;
-            color: white;
-            transition: background 0.2s;
-        }
-        button:active {
-            background: #0056b3;
-        }
-        button.active {
-            background: #dc3545;
-        }
-        #infoLog {
-            font-size: 11px;
-            color: #aaa;
-            text-align: center;
-            max-height: 40px;
-            overflow-y: auto;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e293b">
+<title>Lupa Digital</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --bg:#1e293b;
+    --bg-panel:#0f172a;
+    --accent:#38bdf8;
+    --accent-warn:#facc15;
+    --text:#f1f5f9;
+    --text-dim:#94a3b8;
+    --danger:#f87171;
+    --radius:16px;
+    --extra-filter: ;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; overflow:hidden;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    user-select:none;
+  }
+  #app{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---- Zona de cámara ---- */
+  #viewport{
+    position:relative;
+    flex:1;
+    overflow:hidden;
+    background:#000;
+    touch-action:none;
+  }
+  video{
+    position:absolute; top:50%; left:50%;
+    min-width:100%; min-height:100%;
+    transform-origin:center center;
+    transform:translate(-50%,-50%) scale(var(--zoom,1));
+    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter);
+    transition:filter .15s ease;
+  }
+  canvas#frozenCanvas{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    display:none;
+    transform-origin:center center;
+    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter);
+  }
+  #startOverlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:24px; padding:32px; text-align:center; background:var(--bg);
+    z-index:20;
+  }
+  #startOverlay h1{ font-size:clamp(24px,7vw,34px); margin:0; }
+  #startOverlay p{ font-size:clamp(16px,4.5vw,20px); color:var(--text-dim); margin:0; max-width:420px; line-height:1.4;}
+  #errorBox{
+    position:absolute; inset:0; display:none; z-index:30;
+    align-items:center; justify-content:center; padding:32px; text-align:center;
+    background:var(--bg);
+  }
+  #errorBox p{ font-size:clamp(16px,4.5vw,20px); color:var(--text); max-width:420px; line-height:1.5; }
+
+  .bigBtn{
+    background:var(--accent); color:#0f172a; border:none;
+    font-size:clamp(18px,5vw,22px); font-weight:700;
+    padding:18px 32px; border-radius:999px;
+    display:flex; align-items:center; gap:10px;
+    cursor:pointer;
+  }
+  .bigBtn:active{ filter:brightness(.9); }
+
+  /* ---- Indicador de zoom flotante ---- */
+  #zoomBadge{
+    position:absolute; top:16px; right:16px;
+    background:rgba(15,23,42,.75);
+    padding:8px 16px; border-radius:999px;
+    font-size:20px; font-weight:700;
+    z-index:10; pointer-events:none;
+  }
+  #focusHint{
+    margin:-4px 0 0; text-align:center;
+    font-size:12px; color:var(--text-dim);
+  }
+
+  /* ---- Barra inferior de controles ---- */
+  #controls{
+    background:var(--bg-panel);
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:14px;
+    z-index:15;
+  }
+  .sliderRow{
+    display:flex; align-items:center; gap:12px;
+  }
+  .sliderRow label{
+    width:34px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  }
+  .sliderRow input[type=range]{
+    flex:1; height:44px;
+    -webkit-appearance:none; appearance:none;
+    background:transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:8px; border-radius:4px; background:#334155;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:30px; height:30px; margin-top:-11px;
+    border-radius:50%; background:var(--accent); border:3px solid var(--bg-panel);
+  }
+
+  #actionRow{
+    display:flex; gap:10px; justify-content:space-between;
+  }
+  .actionBtn{
+    flex:1;
+    background:#1e293b; color:var(--text); border:2px solid #334155;
+    border-radius:14px; padding:8px 6px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+  }
+  .actionBtn.active{ background:var(--accent); color:#0f172a; border-color:var(--accent); }
+  .actionBtn.freeze.active{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  .actionBtn:disabled{ opacity:.35; }
+  .actionBtn svg{ width:26px; height:26px; }
+
+  .actionBtn.freeze{
+    flex:2;
+    padding:12px 10px;
+    font-size:16px;
+    border-width:3px;
+  }
+  .actionBtn.freeze svg{ width:32px; height:32px; }
+
+  .hidden{ display:none !important; }
+
+  /* ---- Modal de ajustes ---- */
+  #settingsModal{
+    position:fixed; inset:0; z-index:40;
+    background:rgba(0,0,0,.55);
+    display:flex; align-items:flex-end;
+  }
+  #settingsSheet{
+    width:100%;
+    background:var(--bg-panel);
+    border-radius:24px 24px 0 0;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:18px;
+  }
+  #settingsHeader{
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  #settingsHeader h2{
+    margin:0; font-size:20px;
+  }
+  #closeSettingsBtn{
+    background:#334155; color:var(--text); border:none;
+    width:36px; height:36px; border-radius:50%;
+    font-size:18px; cursor:pointer;
+  }
+  #capInfo{
+    font-size:13px; color:var(--text-dim); margin:-6px 0 0; line-height:1.4;
+  }
+  #camLabel{
+    font-size:13px; color:var(--text-dim); margin:0 0 8px;
+  }
+  #camButtons{
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .camBtn{
+    background:#1e293b; color:var(--text); border:2px solid #334155;
+    border-radius:999px; padding:10px 16px;
+    font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .camBtn.active{ background:var(--accent); color:#0f172a; border-color:var(--accent); }
+</style>
 </head>
 <body>
+<div id="app">
 
-    <div class="camera-container">
-        <video id="video" autoplay playsinline muted></video>
-        <canvas id="canvas"></canvas>
+  <div id="viewport">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="frozenCanvas"></canvas>
+    <div id="zoomBadge">1.0×</div>
+
+    <div id="startOverlay">
+      <h1>🔍 Lupa Digital</h1>
+      <p id="startText">Iniciando cámara…</p>
     </div>
 
-    <div class="controls">
-        <div class="slider-container">
-            <label id="zoomLabel">Zoom: 1x</label>
-            <input type="range" id="zoomSlider" min="1" max="4" step="0.1" value="1">
-        </div>
-
-        <div class="btn-container">
-            <button id="freezeBtn">Congelar Imagen</button>
-            <button id="resetBtn" style="display: none; background: #6c757d;">Reanudar</button>
-        </div>
-        
-        <div id="infoLog">Iniciando cámara...</div>
+    <div id="errorBox">
+      <p id="errorText">No se ha podido acceder a la cámara.</p>
+      <button class="bigBtn" id="retryBtn">Reintentar</button>
     </div>
+  </div>
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const zoomLabel = document.getElementById('zoomLabel');
-        const freezeBtn = document.getElementById('freezeBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const infoLog = document.getElementById('infoLog');
+  <div id="controls" class="hidden">
+    <div class="sliderRow">
+      <label>➖</label>
+      <input type="range" id="zoomSlider" min="1" max="6" step="0.1" value="1">
+      <label>➕</label>
+    </div>
+    <p id="focusHint">Toca la pantalla si no está enfocando bien</p>
 
-        let videoTrack = null;
-        let hasHardwareZoom = false;
-        let isFrozen = false;
+    <div id="actionRow">
+      <button class="actionBtn" id="settingsBtn" title="Ajustes de brillo y contraste">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        Ajustes
+      </button>
+      <button class="actionBtn freeze" id="freezeBtn" title="Congelar imagen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M12 2l-2.5 2M12 2l2.5 2M12 22l-2.5-2M12 22l2.5-2M3 7l18 10M3 7l3 .3M3 7l1 3M21 17l-3-.3M21 17l-1-3M21 7L3 17M21 7l-3 .3M21 7l-1 3M3 17l3-.3M3 17l1-3"/></svg>
+        <span id="freezeLabel">Congelar</span>
+      </button>
+      <button class="actionBtn" id="contrastModeBtn" title="Alto contraste (blanco/negro)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor"/></svg>
+        B/N
+      </button>
+    </div>
+  </div>
 
-        function log(msg) {
-            infoLog.innerText = msg;
-            console.log(msg);
-        }
+  <div id="settingsModal" class="hidden">
+    <div id="settingsSheet">
+      <div id="settingsHeader">
+        <h2>Ajustes de imagen</h2>
+        <button id="closeSettingsBtn" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="camRow" class="hidden">
+        <p id="camLabel">Objetivo de cámara</p>
+        <div id="camButtons"></div>
+      </div>
+      <div class="sliderRow">
+        <label>☀️</label>
+        <input type="range" id="brightSlider" min="0.6" max="2" step="0.05" value="1">
+      </div>
+      <div class="sliderRow">
+        <label>◐</label>
+        <input type="range" id="contrastSlider" min="0.6" max="2.5" step="0.05" value="1">
+      </div>
+      <p id="capInfo">Comprobando capacidades de la cámara…</p>
+      <button class="actionBtn" id="resetBtn" title="Restablecer" style="width:100%; flex-direction:row; gap:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        Restablecer todo
+      </button>
+    </div>
+  </div>
 
-        // 1. Inicializar Cámara y aplicar configuraciones de Hardware
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: { ideal: "environment" },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                });
+</div>
 
-                video.srcObject = stream;
-                videoTrack = stream.getVideoTracks()[0];
-                
-                // Esperar a que el track esté activo para leer capacidades
-                videoTrack.onended = () => log("Cámara desconectada");
-                
-                setTimeout(applyHardwareCapabilities, 1000);
+<script>
+(function(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('frozenCanvas');
+  const ctx = canvas.getContext('2d');
+  const startOverlay = document.getElementById('startOverlay');
+  const errorBox = document.getElementById('errorBox');
+  const errorText = document.getElementById('errorText');
+  const retryBtn = document.getElementById('retryBtn');
+  const controls = document.getElementById('controls');
+  const zoomSlider = document.getElementById('zoomSlider');
+  const brightSlider = document.getElementById('brightSlider');
+  const contrastSlider = document.getElementById('contrastSlider');
+  const zoomBadge = document.getElementById('zoomBadge');
+  const freezeBtn = document.getElementById('freezeBtn');
+  const freezeLabel = document.getElementById('freezeLabel');
+  const contrastModeBtn = document.getElementById('contrastModeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsModal = document.getElementById('settingsModal');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const viewport = document.getElementById('viewport');
 
-            } catch (err) {
-                log("Error al acceder a la cámara: " + err.message);
-            }
-        }
+  let stream = null;
+  let track = null;
+  let frozen = false;
+  let bwMode = false;
+  let hwZoomSupported = false;
+  let hwZoomMax = 1;
+  let hwZoomMin = 1;
+  let currentSwZoom = 1; // parte de zoom que se aplica por CSS (no por hardware)
+  let currentDeviceId = null;
+  let camListBuilt = false;
+  const PREF_CAM_KEY = 'lupa_pref_camera_label';
 
-        async function applyHardwareCapabilities() {
-            if (!videoTrack || typeof videoTrack.getCapabilities !== 'function') {
-                log("El navegador no soporta lectura de capacidades de hardware.");
-                return;
-            }
+  function setVar(name, value){
+    document.documentElement.style.setProperty(name, value);
+  }
 
-            const caps = videoTrack.getCapabilities();
-            const constraints = { advanced: [] };
-            const advancedConstraints = {};
+  async function startCamera(){
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 }, height:{ ideal:1080 }, focusMode:{ ideal:'continuous' } },
+        audio:false
+      });
+      video.srcObject = stream;
+      track = stream.getVideoTracks()[0];
+      currentDeviceId = track.getSettings ? track.getSettings().deviceId : null;
 
-            // Forzar Enfoque Continuo por Hardware
-            if (caps.focusMode && caps.focusMode.includes('continuous')) {
-                advancedConstraints.focusMode = 'continuous';
-                log("Enfoque continuo activado por hardware.");
-            } else {
-                log("Enfoque continuo no soportado. Usando modo automático del sistema.");
-            }
+      startOverlay.classList.add('hidden');
+      errorBox.style.display = 'none';
+      controls.classList.remove('hidden');
 
-            // Comprobar Soporte de Zoom Nativo
-            if (caps.zoom) {
-                hasHardwareZoom = true;
-                zoomSlider.min = caps.zoom.min || 1;
-                zoomSlider.max = caps.zoom.max || 4;
-                zoomSlider.step = caps.zoom.step || 0.1;
-                log(`Zoom nativo detectado (Rango: ${zoomSlider.min}x - ${zoomSlider.max}x)`);
-            } else {
-                hasHardwareZoom = false;
-                log("Zoom nativo no soportado. Se usará zoom digital por software.");
-            }
+      setupFocus();
+      setupCameraList();
+    }catch(err){
+      startOverlay.classList.add('hidden');
+      errorBox.style.display = 'flex';
+      if(err.name === 'NotAllowedError'){
+        errorText.textContent = 'Permiso de cámara denegado. Actívalo en los ajustes del navegador para usar la lupa.';
+      }else if(err.name === 'NotFoundError'){
+        errorText.textContent = 'No se ha encontrado ninguna cámara en este dispositivo.';
+      }else{
+        errorText.textContent = 'No se ha podido acceder a la cámara: ' + err.message;
+      }
+    }
+  }
 
-            // Aplicar las restricciones iniciales al track
-            if (Object.keys(advancedConstraints).length > 0) {
-                try {
-                    constraints.advanced.push(advancedConstraints);
-                    await videoTrack.applyConstraints(constraints);
-                } catch (e) {
-                    console.error("Error aplicando constraints iniciales:", e);
-                }
-            }
-        }
+  retryBtn.addEventListener('click', startCamera);
+  // Arranca la cámara automáticamente al abrir la app (solo pedirá
+  // permiso la primera vez; las siguientes veces entra directo).
+  startCamera();
 
-        // 2. Controlar cambios en el Slider de Zoom
-        zoomSlider.addEventListener('input', async (e) => {
-            const value = parseFloat(e.target.value);
-            zoomLabel.innerText = `Zoom: ${value.toFixed(1)}x`;
+  // Zoom (aplica al vídeo en vivo, o a la imagen congelada si estamos en pausa)
+  let zoomAtFreeze = 1;
+  function applyZoom(z){
+    const sliderMin = parseFloat(zoomSlider.min) || 1;
+    const sliderMax = parseFloat(zoomSlider.max) || 6;
+    z = Math.min(sliderMax, Math.max(sliderMin, z));
+    zoomSlider.value = z.toFixed(2);
+    zoomBadge.textContent = z.toFixed(1) + '×';
 
-            if (hasHardwareZoom && videoTrack) {
-                try {
-                    await videoTrack.applyConstraints({
-                        advanced: [{ zoom: value }]
-                    });
-                } catch (err) {
-                    console.error("Error aplicando zoom de hardware:", err);
-                }
-            } else {
-                // Fallback por CSS para la vista previa si el móvil no tiene zoom nativo
-                video.style.transform = `scale(${value})`;
-            }
+    if(frozen){
+      const rel = z / zoomAtFreeze;
+      canvas.style.transform = 'scale(' + rel + ')';
+      return;
+    }
+
+    if(hwZoomSupported){
+      // Usamos el zoom real de la cámara (mejor nitidez y enfoque correcto,
+      // y por debajo de 1x suele activar el ultra gran angular).
+      const hwZ = Math.min(Math.max(z, hwZoomMin), hwZoomMax);
+      currentSwZoom = z / hwZ;
+      track.applyConstraints({ advanced:[{ zoom: hwZ }] }).catch(()=>{});
+    }else{
+      currentSwZoom = z;
+    }
+    setVar('--zoom', currentSwZoom);
+  }
+  zoomSlider.addEventListener('input', ()=> applyZoom(parseFloat(zoomSlider.value)));
+
+  // Pellizcar para zoom (pinch)
+  let startDist = null, startZoom = 1;
+  function dist(t){
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+  viewport.addEventListener('touchstart', e=>{
+    if(e.touches.length === 2){
+      startDist = dist(e.touches);
+      startZoom = parseFloat(zoomSlider.value);
+    }
+  }, {passive:true});
+  viewport.addEventListener('touchmove', e=>{
+    if(e.touches.length === 2 && startDist){
+      const scale = dist(e.touches) / startDist;
+      applyZoom(startZoom * scale);
+    }
+  }, {passive:true});
+  viewport.addEventListener('touchend', ()=>{ startDist = null; });
+
+  // ---- Enfoque ----
+  // Toque simple: intenta reenfocar (continuo o de un disparo, según soporte).
+  // Si el móvil expone control manual de distancia de enfoque, se muestra
+  // un deslizador extra en Ajustes para fijar el foco en modo macro.
+  async function refocus(){
+    if(!track) return;
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if(!caps.focusMode) return;
+    try{
+      if(caps.focusMode.includes('single-shot')){
+        await track.applyConstraints({ advanced:[{ focusMode:'single-shot' }] });
+      }else if(caps.focusMode.includes('continuous')){
+        await track.applyConstraints({ advanced:[{ focusMode:'continuous' }] });
+      }
+    }catch(e){}
+  }
+  viewport.addEventListener('click', ()=>{ if(!frozen) refocus(); });
+
+  function setupFocus(){
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    refocus();
+
+    // Zoom real del hardware (óptico o híbrido), si el navegador lo expone
+    const capInfo = document.getElementById('capInfo');
+    const parts = [];
+    if(caps.zoom && caps.zoom.max > 1){
+      hwZoomSupported = true;
+      hwZoomMax = Math.min(caps.zoom.max, 8);
+      hwZoomMin = caps.zoom.min || 1;
+      zoomSlider.min = hwZoomMin.toFixed(2);
+      zoomSlider.max = Math.max(6, hwZoomMax).toFixed(1);
+      zoomSlider.step = (caps.zoom.step && caps.zoom.step > 0) ? caps.zoom.step : 0.1;
+      zoomSlider.value = Math.max(1, hwZoomMin).toFixed(2);
+      if(hwZoomMin < 1){
+        parts.push('Zoom real disponible desde ' + hwZoomMin.toFixed(1) + '× (gran angular) hasta ' + hwZoomMax.toFixed(1) + '×. Baja el zoom por debajo de 1× para el ultra gran angular, suele enfocar mejor de cerca');
+      }else{
+        parts.push('Zoom real del móvil disponible hasta ' + hwZoomMax.toFixed(1) + '× (mejor nitidez)');
+      }
+      applyZoom(parseFloat(zoomSlider.value));
+    }else{
+      parts.push('Este móvil no permite zoom real por la web: se usa zoom digital (menos nítido cuanto más se amplía)');
+    }
+
+    if(caps.focusDistance){
+      parts.push('Enfoque manual disponible');
+    }else if(caps.focusMode && caps.focusMode.length){
+      parts.push('Solo autoenfoque automático (' + caps.focusMode.join(', ') + ')');
+    }else{
+      parts.push('Este navegador no permite controlar el enfoque; depende del autoenfoque del móvil');
+    }
+    if(capInfo) capInfo.textContent = parts.join('. ') + '.';
+
+    if(caps.focusDistance && !document.getElementById('focusRow')){
+      const row = document.createElement('div');
+      row.className = 'sliderRow';
+      row.id = 'focusRow';
+      row.innerHTML = '<label>🔎</label><input type="range" id="focusSlider">';
+      const settingsSheet = document.getElementById('settingsSheet');
+      settingsSheet.insertBefore(row, resetBtn);
+      const focusSlider = row.querySelector('#focusSlider');
+      focusSlider.min = caps.focusDistance.min;
+      focusSlider.max = caps.focusDistance.max;
+      focusSlider.step = caps.focusDistance.step || 0.01;
+      focusSlider.value = caps.focusDistance.min;
+      focusSlider.addEventListener('input', async ()=>{
+        try{
+          await track.applyConstraints({ advanced:[{ focusMode:'manual', focusDistance: parseFloat(focusSlider.value) }] });
+        }catch(e){}
+      });
+    }
+  }
+
+  // ---- Selección de objetivo (lente) trasero ----
+  // El navegador suele elegir por defecto el gran angular principal, que en
+  // muchos móviles (p.ej. Samsung) no es el que mejor enfoca de cerca.
+  // El propio modo "macro" de la cámara nativa suele usar el ultra gran
+  // angular, así que dejamos elegir manualmente el objetivo.
+  async function setupCameraList(){
+    if(camListBuilt) return;
+    try{
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const rearCams = devices.filter(d => d.kind === 'videoinput' && !/front|frontal/i.test(d.label));
+      const camRow = document.getElementById('camRow');
+      const camButtons = document.getElementById('camButtons');
+      if(rearCams.length > 1){
+        camListBuilt = true;
+        camRow.classList.remove('hidden');
+        camButtons.innerHTML = '';
+        rearCams.forEach((cam, i)=>{
+          const btn = document.createElement('button');
+          btn.className = 'camBtn';
+          btn.textContent = 'Objetivo ' + (i + 1);
+          btn.title = cam.label || '';
+          if(cam.deviceId === currentDeviceId) btn.classList.add('active');
+          btn.addEventListener('click', ()=> switchCamera(cam.deviceId, btn, cam.label));
+          camButtons.appendChild(btn);
         });
+        const hint = document.createElement('p');
+        hint.style.cssText = 'font-size:12px;color:var(--text-dim);margin:8px 0 0;';
+        hint.textContent = 'Prueba cada objetivo: el gran angular normal suele enfocar mal muy de cerca; el ultra gran angular (a veces el modo "macro" del móvil) suele acercarse mejor.';
+        camRow.appendChild(hint);
 
-        // 3. Función de Congelar Imagen Corregida (Dibuja la región exacta)
-        freezeBtn.addEventListener('click', () => {
-            if (isFrozen) return;
+        // Si ya habías elegido un objetivo preferido, lo aplicamos solo
+        const preferred = localStorage.getItem(PREF_CAM_KEY);
+        if(preferred){
+          const match = rearCams.find(c => c.label === preferred);
+          if(match && match.deviceId !== currentDeviceId){
+            const idx = rearCams.indexOf(match);
+            const matchBtn = camButtons.children[idx];
+            switchCamera(match.deviceId, matchBtn, match.label);
+          }
+        }
+      }
+    }catch(e){}
+  }
 
-            const ctx = canvas.getContext('2d');
-            
-            // Forzamos al canvas a tener la resolución real del flujo de vídeo
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+  async function switchCamera(deviceId, btn, label){
+    if(deviceId === currentDeviceId) return;
+    try{
+      if(stream){ stream.getTracks().forEach(t => t.stop()); }
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ deviceId:{ exact: deviceId }, width:{ ideal:1920 }, height:{ ideal:1080 }, focusMode:{ ideal:'continuous' } },
+        audio:false
+      });
+      video.srcObject = stream;
+      track = stream.getVideoTracks()[0];
+      currentDeviceId = track.getSettings ? track.getSettings().deviceId : deviceId;
+      if(label) localStorage.setItem(PREF_CAM_KEY, label);
 
-            const currentZoom = parseFloat(zoomSlider.value);
+      // Reiniciamos el estado de zoom/enfoque: cada objetivo tiene sus propias capacidades
+      hwZoomSupported = false; hwZoomMax = 1; hwZoomMin = 1; currentSwZoom = 1;
+      zoomSlider.min = 1;
+      zoomSlider.max = 6;
+      applyZoom(1);
+      const oldFocusRow = document.getElementById('focusRow');
+      if(oldFocusRow) oldFocusRow.remove();
+      setupFocus();
 
-            if (hasHardwareZoom) {
-                // Si hay zoom por hardware, el elemento <video> ya está recibiendo la imagen ampliada.
-                // Capturamos el lienzo completo.
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            } else {
-                // Fallback matemático: Si hacíamos zoom por CSS, calculamos el recorte central exacto
-                const sw = video.videoWidth / currentZoom;
-                const sh = video.videoHeight / currentZoom;
-                const sx = (video.videoWidth - sw) / 2;
-                const sy = (video.videoHeight - sh) / 2;
+      document.querySelectorAll('.camBtn').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+    }catch(e){
+      alert('No se ha podido cambiar de objetivo: ' + e.message);
+    }
+  }
 
-                // Limpiamos transformaciones previas en el canvas si las hubiera
-                video.style.transform = "scale(1)"; 
 
-                ctx.drawImage(
-                    video,
-                    sx, sy, sw, sh,        // Origen: Recorte proporcional del centro del vídeo
-                    0, 0, canvas.width, canvas.height // Destino: Estirado perfecto en el lienzo
-                );
-            }
+  brightSlider.addEventListener('input', ()=> setVar('--bright', brightSlider.value));
+  contrastSlider.addEventListener('input', ()=> setVar('--contrast', contrastSlider.value));
 
-            // Cambiar estados visuales
-            canvas.style.display = 'block';
-            video.style.display = 'none';
-            freezeBtn.style.display = 'none';
-            resetBtn.style.display = 'inline-block';
-            isFrozen = true;
-        });
+  // Congelar imagen: recorta el fotograma exactamente igual a lo que
+  // se ve en pantalla (con el mismo encuadre y zoom), no la imagen entera.
+  function captureFrame(){
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const rect = viewport.getBoundingClientRect();
+    const cw = rect.width, ch = rect.height;
+    if(!vw || !vh || !cw || !ch) return;
 
-        // 4. Reanudar el flujo de vídeo
-        resetBtn.addEventListener('click', () => {
-            canvas.style.display = 'none';
-            video.style.display = 'block';
-            freezeBtn.style.display = 'inline-block';
-            resetBtn.style.display = 'none';
-            isFrozen = false;
+    // El vídeo se muestra en modo "cover": se escala para cubrir el
+    // contenedor y se recorta por igual en los bordes sobrantes.
+    const coverScale = Math.max(cw / vw, ch / vh);
+    zoomAtFreeze = parseFloat(zoomSlider.value);
 
-            // Si estábamos usando el fallback por software, restauramos el comportamiento visual en el vídeo
-            if (!hasHardwareZoom) {
-                video.style.transform = `scale(${zoomSlider.value})`;
-            }
-        });
+    const cropW = (cw / coverScale) / currentSwZoom;
+    const cropH = (ch / coverScale) / currentSwZoom;
+    const sx = vw / 2 - cropW / 2;
+    const sy = vh / 2 - cropH / 2;
 
-        // Iniciar al cargar la página
-        window.addEventListener('DOMContentLoaded', startCamera);
-    </script>
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(ch * dpr);
+    canvas.style.transform = 'scale(1)';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height);
+  }
+
+  freezeBtn.addEventListener('click', ()=>{
+    frozen = !frozen;
+    freezeBtn.classList.toggle('active', frozen);
+    if(frozen){
+      captureFrame();
+      canvas.style.display = 'block';
+      video.style.visibility = 'hidden';
+      freezeLabel.textContent = 'Reanudar';
+    }else{
+      canvas.style.display = 'none';
+      canvas.style.transform = 'scale(1)';
+      video.style.visibility = 'visible';
+      freezeLabel.textContent = 'Congelar';
+    }
+  });
+
+  // Modal de ajustes
+  settingsBtn.addEventListener('click', ()=> settingsModal.classList.remove('hidden'));
+  closeSettingsBtn.addEventListener('click', ()=> settingsModal.classList.add('hidden'));
+  settingsModal.addEventListener('click', e=>{
+    if(e.target === settingsModal) settingsModal.classList.add('hidden');
+  });
+
+  // Modo alto contraste blanco/negro
+  contrastModeBtn.addEventListener('click', ()=>{
+    bwMode = !bwMode;
+    contrastModeBtn.classList.toggle('active', bwMode);
+    setVar('--extra-filter', bwMode ? 'grayscale(1) contrast(1.6)' : '');
+  });
+
+  // Reset
+  resetBtn.addEventListener('click', ()=>{
+    if(frozen){ freezeBtn.click(); }
+    applyZoom(1);
+    brightSlider.value = 1; contrastSlider.value = 1;
+    setVar('--bright',1); setVar('--contrast',1); setVar('--extra-filter','');
+    if(bwMode){ bwMode=false; contrastModeBtn.classList.remove('active'); }
+    settingsModal.classList.add('hidden');
+  });
+
+  // Registrar service worker (uso offline como PWA)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+})();
+</script>
 </body>
 </html>
