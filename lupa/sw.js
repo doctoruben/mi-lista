@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lupa-v1';
+const CACHE_NAME = 'lupa-v2';
 const FILES = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e=>{
