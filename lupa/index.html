@@ -130,6 +130,14 @@
   .actionBtn:disabled{ opacity:.35; }
   .actionBtn svg{ width:26px; height:26px; }
 
+  .actionBtn.freeze{
+    flex:2;
+    padding:20px 10px;
+    font-size:17px;
+    border-width:3px;
+  }
+  .actionBtn.freeze svg{ width:38px; height:38px; }
+
   .hidden{ display:none !important; }
 </style>
 </head>
@@ -143,12 +151,12 @@
 
     <div id="startOverlay">
       <h1>🔍 Lupa Digital</h1>
-      <p>Usa la cámara de tu móvil para ampliar letras pequeñas: etiquetas, prospectos, menús, contratos...</p>
-      <button class="bigBtn" id="startBtn">Activar cámara</button>
+      <p id="startText">Iniciando cámara…</p>
     </div>
 
     <div id="errorBox">
       <p id="errorText">No se ha podido acceder a la cámara.</p>
+      <button class="bigBtn" id="retryBtn">Reintentar</button>
     </div>
   </div>
 
@@ -168,17 +176,13 @@
     </div>
 
     <div id="actionRow">
-      <button class="actionBtn freeze" id="freezeBtn" title="Congelar imagen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
-        Congelar
-      </button>
-      <button class="actionBtn" id="torchBtn" title="Linterna">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a5 5 0 0 0-3 9c1 .8 1 1.5 1 2h4c0-.5 0-1.2 1-2a5 5 0 0 0-3-9Z"/></svg>
-        Luz
-      </button>
       <button class="actionBtn" id="contrastModeBtn" title="Alto contraste (blanco/negro)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor"/></svg>
         B/N
+      </button>
+      <button class="actionBtn freeze" id="freezeBtn" title="Congelar imagen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+        <span id="freezeLabel">Congelar</span>
       </button>
       <button class="actionBtn" id="resetBtn" title="Restablecer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
@@ -195,16 +199,16 @@
   const canvas = document.getElementById('frozenCanvas');
   const ctx = canvas.getContext('2d');
   const startOverlay = document.getElementById('startOverlay');
-  const startBtn = document.getElementById('startBtn');
   const errorBox = document.getElementById('errorBox');
   const errorText = document.getElementById('errorText');
+  const retryBtn = document.getElementById('retryBtn');
   const controls = document.getElementById('controls');
   const zoomSlider = document.getElementById('zoomSlider');
   const brightSlider = document.getElementById('brightSlider');
   const contrastSlider = document.getElementById('contrastSlider');
   const zoomBadge = document.getElementById('zoomBadge');
   const freezeBtn = document.getElementById('freezeBtn');
-  const torchBtn = document.getElementById('torchBtn');
+  const freezeLabel = document.getElementById('freezeLabel');
   const contrastModeBtn = document.getElementById('contrastModeBtn');
   const resetBtn = document.getElementById('resetBtn');
   const viewport = document.getElementById('viewport');
@@ -212,7 +216,6 @@
   let stream = null;
   let track = null;
   let frozen = false;
-  let torchOn = false;
   let bwMode = false;
 
   function setVar(name, value){
@@ -244,7 +247,10 @@
     }
   }
 
-  startBtn.addEventListener('click', startCamera);
+  retryBtn.addEventListener('click', startCamera);
+  // Arranca la cámara automáticamente al abrir la app (solo pedirá
+  // permiso la primera vez; las siguientes veces entra directo).
+  startCamera();
 
   // Zoom
   zoomSlider.addEventListener('input', ()=>{
@@ -300,24 +306,11 @@
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       canvas.style.display = 'block';
       video.style.visibility = 'hidden';
-      freezeBtn.lastChild.textContent = ' Reanudar';
+      freezeLabel.textContent = 'Reanudar';
     }else{
       canvas.style.display = 'none';
       video.style.visibility = 'visible';
-      freezeBtn.lastChild.textContent = ' Congelar';
-    }
-  });
-
-  // Linterna / torch
-  torchBtn.addEventListener('click', async ()=>{
-    if(!track){ return; }
-    const next = !torchOn;
-    try{
-      await track.applyConstraints({ advanced:[{ torch: next }] });
-      torchOn = next;
-      torchBtn.classList.toggle('active', torchOn);
-    }catch(e){
-      alert('Este móvil/navegador no permite controlar la linterna desde la web. En iPhone (Safari) no está soportado por Apple; en Android prueba con Chrome.');
+      freezeLabel.textContent = 'Congelar';
     }
   });
 
@@ -334,7 +327,6 @@
     setVar('--zoom',1); setVar('--bright',1); setVar('--contrast',1); setVar('--extra-filter','');
     zoomBadge.textContent = '1.0×';
     if(bwMode){ bwMode=false; contrastModeBtn.classList.remove('active'); }
-    if(torchOn && track){ track.applyConstraints({advanced:[{torch:false}]}).catch(()=>{}); torchOn=false; torchBtn.classList.remove('active'); }
     if(frozen){ freezeBtn.click(); }
   });
 
