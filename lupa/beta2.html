@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -167,6 +166,9 @@
     width:36px; height:36px; border-radius:50%;
     font-size:18px; cursor:pointer;
   }
+  #capInfo{
+    font-size:13px; color:var(--text-dim); margin:-6px 0 0; line-height:1.4;
+  }
 </style>
 </head>
 <body>
@@ -226,6 +228,7 @@
         <label>◐</label>
         <input type="range" id="contrastSlider" min="0.6" max="2.5" step="0.05" value="1">
       </div>
+      <p id="capInfo">Comprobando capacidades de la cámara…</p>
       <button class="actionBtn" id="resetBtn" title="Restablecer" style="width:100%; flex-direction:row; gap:8px;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
         Restablecer todo
@@ -262,6 +265,9 @@
   let track = null;
   let frozen = false;
   let bwMode = false;
+  let hwZoomSupported = false;
+  let hwZoomMax = 1;
+  let currentSwZoom = 1; // parte de zoom que se aplica por CSS (no por hardware)
 
   function setVar(name, value){
     document.documentElement.style.setProperty(name, value);
@@ -302,15 +308,27 @@
   // Zoom (aplica al vídeo en vivo, o a la imagen congelada si estamos en pausa)
   let zoomAtFreeze = 1;
   function applyZoom(z){
-    z = Math.min(6, Math.max(1, z));
+    const sliderMax = parseFloat(zoomSlider.max) || 6;
+    z = Math.min(sliderMax, Math.max(1, z));
     zoomSlider.value = z.toFixed(1);
     zoomBadge.textContent = z.toFixed(1) + '×';
+
     if(frozen){
       const rel = z / zoomAtFreeze;
       canvas.style.transform = 'scale(' + rel + ')';
-    }else{
-      setVar('--zoom', z);
+      return;
     }
+
+    if(hwZoomSupported){
+      // Usamos el zoom real de la cámara (mejor nitidez y enfoque correcto)
+      // y solo recurrimos a CSS para lo que sobrepase el máximo del hardware.
+      const hwZ = Math.min(z, hwZoomMax);
+      currentSwZoom = z / hwZ;
+      track.applyConstraints({ advanced:[{ zoom: hwZ }] }).catch(()=>{});
+    }else{
+      currentSwZoom = z;
+    }
+    setVar('--zoom', currentSwZoom);
   }
   zoomSlider.addEventListener('input', ()=> applyZoom(parseFloat(zoomSlider.value)));
 
@@ -356,6 +374,28 @@
   function setupFocus(){
     const caps = track.getCapabilities ? track.getCapabilities() : {};
     refocus();
+
+    // Zoom real del hardware (óptico o híbrido), si el navegador lo expone
+    const capInfo = document.getElementById('capInfo');
+    const parts = [];
+    if(caps.zoom && caps.zoom.max > 1){
+      hwZoomSupported = true;
+      hwZoomMax = Math.min(caps.zoom.max, 8);
+      zoomSlider.max = Math.max(6, hwZoomMax).toFixed(1);
+      parts.push('Zoom real del móvil disponible hasta ' + hwZoomMax.toFixed(1) + '× (mejor nitidez)');
+    }else{
+      parts.push('Este móvil no permite zoom real por la web: se usa zoom digital (menos nítido cuanto más se amplía)');
+    }
+
+    if(caps.focusDistance){
+      parts.push('Enfoque manual disponible');
+    }else if(caps.focusMode && caps.focusMode.length){
+      parts.push('Solo autoenfoque automático (' + caps.focusMode.join(', ') + ')');
+    }else{
+      parts.push('Este navegador no permite controlar el enfoque; depende del autoenfoque del móvil');
+    }
+    if(capInfo) capInfo.textContent = parts.join('. ') + '.';
+
     if(caps.focusDistance && !document.getElementById('focusRow')){
       const row = document.createElement('div');
       row.className = 'sliderRow';
@@ -373,10 +413,6 @@
           await track.applyConstraints({ advanced:[{ focusMode:'manual', focusDistance: parseFloat(focusSlider.value) }] });
         }catch(e){}
       });
-      const hint = document.createElement('p');
-      hint.style.cssText = 'font-size:13px;color:var(--text-dim);margin:-8px 0 0;';
-      hint.textContent = 'Enfoque manual: mueve el deslizador para ajustar el foco de cerca (macro) a lejos.';
-      settingsSheet.insertBefore(hint, resetBtn);
     }
   }
 
@@ -395,11 +431,10 @@
     // El vídeo se muestra en modo "cover": se escala para cubrir el
     // contenedor y se recorta por igual en los bordes sobrantes.
     const coverScale = Math.max(cw / vw, ch / vh);
-    const curZoom = parseFloat(zoomSlider.value);
-    zoomAtFreeze = curZoom;
+    zoomAtFreeze = parseFloat(zoomSlider.value);
 
-    const cropW = (cw / coverScale) / curZoom;
-    const cropH = (ch / coverScale) / curZoom;
+    const cropW = (cw / coverScale) / currentSwZoom;
+    const cropH = (ch / coverScale) / currentSwZoom;
     const sx = vw / 2 - cropW / 2;
     const sy = vh / 2 - cropH / 2;
 
