@@ -169,6 +169,18 @@
   #capInfo{
     font-size:13px; color:var(--text-dim); margin:-6px 0 0; line-height:1.4;
   }
+  #camLabel{
+    font-size:13px; color:var(--text-dim); margin:0 0 8px;
+  }
+  #camButtons{
+    display:flex; gap:8px; flex-wrap:wrap;
+  }
+  .camBtn{
+    background:#1e293b; color:var(--text); border:2px solid #334155;
+    border-radius:999px; padding:10px 16px;
+    font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .camBtn.active{ background:var(--accent); color:#0f172a; border-color:var(--accent); }
 </style>
 </head>
 <body>
@@ -220,6 +232,10 @@
         <h2>Ajustes de imagen</h2>
         <button id="closeSettingsBtn" aria-label="Cerrar">✕</button>
       </div>
+      <div id="camRow" class="hidden">
+        <p id="camLabel">Objetivo de cámara</p>
+        <div id="camButtons"></div>
+      </div>
       <div class="sliderRow">
         <label>☀️</label>
         <input type="range" id="brightSlider" min="0.6" max="2" step="0.05" value="1">
@@ -267,7 +283,10 @@
   let bwMode = false;
   let hwZoomSupported = false;
   let hwZoomMax = 1;
+  let hwZoomMin = 1;
   let currentSwZoom = 1; // parte de zoom que se aplica por CSS (no por hardware)
+  let currentDeviceId = null;
+  let camListBuilt = false;
 
   function setVar(name, value){
     document.documentElement.style.setProperty(name, value);
@@ -281,12 +300,14 @@
       });
       video.srcObject = stream;
       track = stream.getVideoTracks()[0];
+      currentDeviceId = track.getSettings ? track.getSettings().deviceId : null;
 
       startOverlay.classList.add('hidden');
       errorBox.style.display = 'none';
       controls.classList.remove('hidden');
 
       setupFocus();
+      setupCameraList();
     }catch(err){
       startOverlay.classList.add('hidden');
       errorBox.style.display = 'flex';
@@ -308,9 +329,10 @@
   // Zoom (aplica al vídeo en vivo, o a la imagen congelada si estamos en pausa)
   let zoomAtFreeze = 1;
   function applyZoom(z){
+    const sliderMin = parseFloat(zoomSlider.min) || 1;
     const sliderMax = parseFloat(zoomSlider.max) || 6;
-    z = Math.min(sliderMax, Math.max(1, z));
-    zoomSlider.value = z.toFixed(1);
+    z = Math.min(sliderMax, Math.max(sliderMin, z));
+    zoomSlider.value = z.toFixed(2);
     zoomBadge.textContent = z.toFixed(1) + '×';
 
     if(frozen){
@@ -320,9 +342,9 @@
     }
 
     if(hwZoomSupported){
-      // Usamos el zoom real de la cámara (mejor nitidez y enfoque correcto)
-      // y solo recurrimos a CSS para lo que sobrepase el máximo del hardware.
-      const hwZ = Math.min(z, hwZoomMax);
+      // Usamos el zoom real de la cámara (mejor nitidez y enfoque correcto,
+      // y por debajo de 1x suele activar el ultra gran angular).
+      const hwZ = Math.min(Math.max(z, hwZoomMin), hwZoomMax);
       currentSwZoom = z / hwZ;
       track.applyConstraints({ advanced:[{ zoom: hwZ }] }).catch(()=>{});
     }else{
@@ -381,8 +403,17 @@
     if(caps.zoom && caps.zoom.max > 1){
       hwZoomSupported = true;
       hwZoomMax = Math.min(caps.zoom.max, 8);
+      hwZoomMin = caps.zoom.min || 1;
+      zoomSlider.min = hwZoomMin.toFixed(2);
       zoomSlider.max = Math.max(6, hwZoomMax).toFixed(1);
-      parts.push('Zoom real del móvil disponible hasta ' + hwZoomMax.toFixed(1) + '× (mejor nitidez)');
+      zoomSlider.step = (caps.zoom.step && caps.zoom.step > 0) ? caps.zoom.step : 0.1;
+      zoomSlider.value = Math.max(1, hwZoomMin).toFixed(2);
+      if(hwZoomMin < 1){
+        parts.push('Zoom real disponible desde ' + hwZoomMin.toFixed(1) + '× (gran angular) hasta ' + hwZoomMax.toFixed(1) + '×. Baja el zoom por debajo de 1× para el ultra gran angular, suele enfocar mejor de cerca');
+      }else{
+        parts.push('Zoom real del móvil disponible hasta ' + hwZoomMax.toFixed(1) + '× (mejor nitidez)');
+      }
+      applyZoom(parseFloat(zoomSlider.value));
     }else{
       parts.push('Este móvil no permite zoom real por la web: se usa zoom digital (menos nítido cuanto más se amplía)');
     }
@@ -416,7 +447,68 @@
     }
   }
 
-  // Brillo / Contraste
+  // ---- Selección de objetivo (lente) trasero ----
+  // El navegador suele elegir por defecto el gran angular principal, que en
+  // muchos móviles (p.ej. Samsung) no es el que mejor enfoca de cerca.
+  // El propio modo "macro" de la cámara nativa suele usar el ultra gran
+  // angular, así que dejamos elegir manualmente el objetivo.
+  async function setupCameraList(){
+    if(camListBuilt) return;
+    try{
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const rearCams = devices.filter(d => d.kind === 'videoinput' && !/front|frontal/i.test(d.label));
+      const camRow = document.getElementById('camRow');
+      const camButtons = document.getElementById('camButtons');
+      if(rearCams.length > 1){
+        camListBuilt = true;
+        camRow.classList.remove('hidden');
+        camButtons.innerHTML = '';
+        rearCams.forEach((cam, i)=>{
+          const btn = document.createElement('button');
+          btn.className = 'camBtn';
+          btn.textContent = 'Objetivo ' + (i + 1);
+          btn.title = cam.label || '';
+          if(cam.deviceId === currentDeviceId) btn.classList.add('active');
+          btn.addEventListener('click', ()=> switchCamera(cam.deviceId, btn));
+          camButtons.appendChild(btn);
+        });
+        const hint = document.createElement('p');
+        hint.style.cssText = 'font-size:12px;color:var(--text-dim);margin:8px 0 0;';
+        hint.textContent = 'Prueba cada objetivo: el gran angular normal suele enfocar mal muy de cerca; el ultra gran angular (a veces el modo "macro" del móvil) suele acercarse mejor.';
+        camRow.appendChild(hint);
+      }
+    }catch(e){}
+  }
+
+  async function switchCamera(deviceId, btn){
+    if(deviceId === currentDeviceId) return;
+    try{
+      if(stream){ stream.getTracks().forEach(t => t.stop()); }
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ deviceId:{ exact: deviceId }, width:{ ideal:1920 }, height:{ ideal:1080 }, focusMode:{ ideal:'continuous' } },
+        audio:false
+      });
+      video.srcObject = stream;
+      track = stream.getVideoTracks()[0];
+      currentDeviceId = track.getSettings ? track.getSettings().deviceId : deviceId;
+
+      // Reiniciamos el estado de zoom/enfoque: cada objetivo tiene sus propias capacidades
+      hwZoomSupported = false; hwZoomMax = 1; hwZoomMin = 1; currentSwZoom = 1;
+      zoomSlider.min = 1;
+      zoomSlider.max = 6;
+      applyZoom(1);
+      const oldFocusRow = document.getElementById('focusRow');
+      if(oldFocusRow) oldFocusRow.remove();
+      setupFocus();
+
+      document.querySelectorAll('.camBtn').forEach(b => b.classList.remove('active'));
+      if(btn) btn.classList.add('active');
+    }catch(e){
+      alert('No se ha podido cambiar de objetivo: ' + e.message);
+    }
+  }
+
+
   brightSlider.addEventListener('input', ()=> setVar('--bright', brightSlider.value));
   contrastSlider.addEventListener('input', ()=> setVar('--contrast', contrastSlider.value));
 
