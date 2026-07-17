@@ -119,165 +119,195 @@
     </div>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const zoomSlider = document.getElementById('zoomSlider');
-        const zoomLabel = document.getElementById('zoomLabel');
-        const freezeBtn = document.getElementById('freezeBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const infoLog = document.getElementById('infoLog');
+       const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const zoomSlider = document.getElementById('zoomSlider');
+const zoomLabel = document.getElementById('zoomLabel');
+const freezeBtn = document.getElementById('freezeBtn');
+const resetBtn = document.getElementById('resetBtn');
+const infoLog = document.getElementById('infoLog');
 
-        let videoTrack = null;
-        let hasHardwareZoom = false;
-        let isFrozen = false;
+let videoTrack = null;
+let hasHardwareZoom = false;
+let isFrozen = false;
 
-        function log(msg) {
-            infoLog.innerText = msg;
-            console.log(msg);
-        }
+function log(msg) {
+    infoLog.innerText = msg;
+    console.log(msg);
+}
 
-        // 1. Inicializar Cámara y aplicar configuraciones de Hardware
-        async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: { ideal: "environment" },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                });
+// 1. Inicializar Cámara buscando la lente trasera CORRECTA (Evitando Ultra-Wide)
+async function startCamera() {
+    try {
+        log("Buscando lentes traseras...");
+        
+        // Primero pedimos un permiso genérico rápido para poder listar los nombres reales de las cámaras
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        tempStream.getTracks().forEach(track => track.stop()); // Apagamos la cámara temporal inmediatamente
 
-                video.srcObject = stream;
-                videoTrack = stream.getVideoTracks()[0];
-                
-                // Esperar a que el track esté activo para leer capacidades
-                videoTrack.onended = () => log("Cámara desconectada");
-                
-                setTimeout(applyHardwareCapabilities, 1000);
+        // Listamos todos los dispositivos de entrada multimedia
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-            } catch (err) {
-                log("Error al acceder a la cámara: " + err.message);
-            }
-        }
+        let targetDeviceId = null;
 
-        async function applyHardwareCapabilities() {
-            if (!videoTrack || typeof videoTrack.getCapabilities !== 'function') {
-                log("El navegador no soporta lectura de capacidades de hardware.");
-                return;
-            }
-
-            const caps = videoTrack.getCapabilities();
-            const constraints = { advanced: [] };
-            const advancedConstraints = {};
-
-            // Forzar Enfoque Continuo por Hardware
-            if (caps.focusMode && caps.focusMode.includes('continuous')) {
-                advancedConstraints.focusMode = 'continuous';
-                log("Enfoque continuo activado por hardware.");
-            } else {
-                log("Enfoque continuo no soportado. Usando modo automático del sistema.");
-            }
-
-            // Comprobar Soporte de Zoom Nativo
-            if (caps.zoom) {
-                hasHardwareZoom = true;
-                zoomSlider.min = caps.zoom.min || 1;
-                zoomSlider.max = caps.zoom.max || 4;
-                zoomSlider.step = caps.zoom.step || 0.1;
-                log(`Zoom nativo detectado (Rango: ${zoomSlider.min}x - ${zoomSlider.max}x)`);
-            } else {
-                hasHardwareZoom = false;
-                log("Zoom nativo no soportado. Se usará zoom digital por software.");
-            }
-
-            // Aplicar las restricciones iniciales al track
-            if (Object.keys(advancedConstraints).length > 0) {
-                try {
-                    constraints.advanced.push(advancedConstraints);
-                    await videoTrack.applyConstraints(constraints);
-                } catch (e) {
-                    console.error("Error aplicando constraints iniciales:", e);
-                }
-            }
-        }
-
-        // 2. Controlar cambios en el Slider de Zoom
-        zoomSlider.addEventListener('input', async (e) => {
-            const value = parseFloat(e.target.value);
-            zoomLabel.innerText = `Zoom: ${value.toFixed(1)}x`;
-
-            if (hasHardwareZoom && videoTrack) {
-                try {
-                    await videoTrack.applyConstraints({
-                        advanced: [{ zoom: value }]
-                    });
-                } catch (err) {
-                    console.error("Error aplicando zoom de hardware:", err);
-                }
-            } else {
-                // Fallback por CSS para la vista previa si el móvil no tiene zoom nativo
-                video.style.transform = `scale(${value})`;
-            }
+        // Filtramos las cámaras traseras
+        // En muchos Android, la lente principal se llama "cámara trasera 0", "main", o simplemente "back" sin "wide"
+        const backCameras = videoDevices.filter(d => {
+            const label = d.label.toLowerCase();
+            return label.includes('back') || label.includes('trasera') || label.includes('environment');
         });
 
-        // 3. Función de Congelar Imagen Corregida (Dibuja la región exacta)
-        freezeBtn.addEventListener('click', () => {
-            if (isFrozen) return;
+        if (backCameras.length > 0) {
+            // Intentamos descartar las que digan "wide", "ultra", "panoramica" o "macro" secundaria
+            const mainCamera = backCameras.find(d => {
+                const label = d.label.toLowerCase();
+                return !label.includes('wide') && !label.includes('ultra') && !label.includes('0, facing back'); 
+            });
 
-            const ctx = canvas.getContext('2d');
-            
-            // Forzamos al canvas a tener la resolución real del flujo de vídeo
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Si encontramos la lente principal limpia, la usamos. Si no, cogemos la primera trasera de la lista.
+            targetDeviceId = mainCamera ? mainCamera.deviceId : backCameras[0].deviceId;
+            log(`Lente seleccionada: ${mainCamera ? mainCamera.label : backCameras[0].label}`);
+        }
 
-            const currentZoom = parseFloat(zoomSlider.value);
-
-            if (hasHardwareZoom) {
-                // Si hay zoom por hardware, el elemento <video> ya está recibiendo la imagen ampliada.
-                // Capturamos el lienzo completo.
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            } else {
-                // Fallback matemático: Si hacíamos zoom por CSS, calculamos el recorte central exacto
-                const sw = video.videoWidth / currentZoom;
-                const sh = video.videoHeight / currentZoom;
-                const sx = (video.videoWidth - sw) / 2;
-                const sy = (video.videoHeight - sh) / 2;
-
-                // Limpiamos transformaciones previas en el canvas si las hubiera
-                video.style.transform = "scale(1)"; 
-
-                ctx.drawImage(
-                    video,
-                    sx, sy, sw, sh,        // Origen: Recorte proporcional del centro del vídeo
-                    0, 0, canvas.width, canvas.height // Destino: Estirado perfecto en el lienzo
-                );
+        // Configuración de arranque estricta con el dispositivo elegido
+        const constraints = {
+            audio: false,
+            video: {
+                deviceId: targetDeviceId ? { exact: targetDeviceId } : undefined,
+                facingMode: targetDeviceId ? undefined : { ideal: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
             }
+        };
 
-            // Cambiar estados visuales
-            canvas.style.display = 'block';
-            video.style.display = 'none';
-            freezeBtn.style.display = 'none';
-            resetBtn.style.display = 'inline-block';
-            isFrozen = true;
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        videoTrack = stream.getVideoTracks()[0];
+        
+        // Esperamos un segundo a que el hardware de la lente se estabilice para aplicar los enfoques
+        setTimeout(applyHardwareCapabilities, 1000);
+
+    } catch (err) {
+        log("Error al acceder a la cámara: " + err.message);
+        // Si falla el filtro estricto por ID, intentamos un último método de emergencia genérico
+        fallbackGenericCamera();
+    }
+}
+
+// Último recurso por si el filtrado por ID falla en algún navegador antiguo
+async function fallbackGenericCamera() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false
         });
+        video.srcObject = stream;
+        videoTrack = stream.getVideoTracks()[0];
+        setTimeout(applyHardwareCapabilities, 1000);
+    } catch(e) {
+        log("Fallo absoluto al abrir cualquier cámara: " + e.message);
+    }
+}
 
-        // 4. Reanudar el flujo de vídeo
-        resetBtn.addEventListener('click', () => {
-            canvas.style.display = 'none';
-            video.style.display = 'block';
-            freezeBtn.style.display = 'inline-block';
-            resetBtn.style.display = 'none';
-            isFrozen = false;
+async function applyHardwareCapabilities() {
+    if (!videoTrack || typeof videoTrack.getCapabilities !== 'function') {
+        log("El navegador no lee capacidades. Usando software.");
+        return;
+    }
 
-            // Si estábamos usando el fallback por software, restauramos el comportamiento visual en el vídeo
-            if (!hasHardwareZoom) {
-                video.style.transform = `scale(${zoomSlider.value})`;
-            }
-        });
+    const caps = videoTrack.getCapabilities();
+    const constraints = { advanced: [] };
+    const advancedConstraints = {};
 
-        // Iniciar al cargar la página
-        window.addEventListener('DOMContentLoaded', startCamera);
+    // Forzar Enfoque Continuo (Crucial para que enfoque de cerca al mover el móvil)
+    if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        advancedConstraints.focusMode = 'continuous';
+        log("Enfoque continuo activo.");
+    }
+
+    // Comprobar Soporte de Zoom Nativo
+    if (caps.zoom) {
+        hasHardwareZoom = true;
+        zoomSlider.min = caps.zoom.min || 1;
+        zoomSlider.max = caps.zoom.max || 4;
+        zoomSlider.step = caps.zoom.step || 0.1;
+    } else {
+        hasHardwareZoom = false;
+    }
+
+    if (Object.keys(advancedConstraints).length > 0) {
+        try {
+            constraints.advanced.push(advancedConstraints);
+            await videoTrack.applyConstraints(constraints);
+        } catch (e) {
+            console.error("Error aplicando focusMode:", e);
+        }
+    }
+}
+
+// 2. Controlar cambios en el Slider de Zoom
+zoomSlider.addEventListener('input', async (e) => {
+    const value = parseFloat(e.target.value);
+    zoomLabel.innerText = `Zoom: ${value.toFixed(1)}x`;
+
+    if (hasHardwareZoom && videoTrack) {
+        try {
+            await videoTrack.applyConstraints({
+                advanced: [{ zoom: value }]
+            });
+        } catch (err) {
+            console.error("Error aplicando zoom de hardware:", err);
+        }
+    } else {
+        video.style.transform = `scale(${value})`;
+    }
+});
+
+// 3. Función de Congelar Imagen Corregida
+freezeBtn.addEventListener('click', () => {
+    if (isFrozen) return;
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const currentZoom = parseFloat(zoomSlider.value);
+
+    if (hasHardwareZoom) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } else {
+        const sw = video.videoWidth / currentZoom;
+        const sh = video.videoHeight / currentZoom;
+        const sx = (video.videoWidth - sw) / 2;
+        const sy = (video.videoHeight - sh) / 2;
+
+        video.style.transform = "scale(1)"; 
+
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.style.display = 'block';
+    video.style.display = 'none';
+    freezeBtn.style.display = 'none';
+    resetBtn.style.display = 'inline-block';
+    isFrozen = true;
+});
+
+// 4. Reanudar el flujo de vídeo
+resetBtn.addEventListener('click', () => {
+    canvas.style.display = 'none';
+    video.style.display = 'block';
+    freezeBtn.style.display = 'inline-block';
+    resetBtn.style.display = 'none';
+    isFrozen = false;
+
+    if (!hasHardwareZoom) {
+        video.style.transform = `scale(${zoomSlider.value})`;
+    }
+});
+
+window.addEventListener('DOMContentLoaded', startCamera);
     </script>
 </body>
 </html>
