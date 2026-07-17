@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e293b">
+<title>Lupa Digital</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{
+    --bg:#1e293b;
+    --bg-panel:#0f172a;
+    --accent:#38bdf8;
+    --accent-warn:#facc15;
+    --text:#f1f5f9;
+    --text-dim:#94a3b8;
+    --danger:#f87171;
+    --radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; overflow:hidden;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    user-select:none;
+  }
+  #app{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---- Zona de cámara ---- */
+  #viewport{
+    position:relative;
+    flex:1;
+    overflow:hidden;
+    background:#000;
+    touch-action:none;
+  }
+  video{
+    position:absolute; top:50%; left:50%;
+    min-width:100%; min-height:100%;
+    transform-origin:center center;
+    transform:translate(-50%,-50%) scale(var(--zoom,1));
+    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter,none);
+    transition:filter .15s ease;
+  }
+  canvas#frozenCanvas{
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    object-fit:cover;
+    display:none;
+    filter:brightness(var(--bright,1)) contrast(var(--contrast,1)) var(--extra-filter,none);
+  }
+  #startOverlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:24px; padding:32px; text-align:center; background:var(--bg);
+    z-index:20;
+  }
+  #startOverlay h1{ font-size:clamp(24px,7vw,34px); margin:0; }
+  #startOverlay p{ font-size:clamp(16px,4.5vw,20px); color:var(--text-dim); margin:0; max-width:420px; line-height:1.4;}
+  #errorBox{
+    position:absolute; inset:0; display:none; z-index:30;
+    align-items:center; justify-content:center; padding:32px; text-align:center;
+    background:var(--bg);
+  }
+  #errorBox p{ font-size:clamp(16px,4.5vw,20px); color:var(--text); max-width:420px; line-height:1.5; }
+
+  .bigBtn{
+    background:var(--accent); color:#0f172a; border:none;
+    font-size:clamp(18px,5vw,22px); font-weight:700;
+    padding:18px 32px; border-radius:999px;
+    display:flex; align-items:center; gap:10px;
+    cursor:pointer;
+  }
+  .bigBtn:active{ filter:brightness(.9); }
+
+  /* ---- Indicador de zoom flotante ---- */
+  #zoomBadge{
+    position:absolute; top:16px; right:16px;
+    background:rgba(15,23,42,.75);
+    padding:8px 16px; border-radius:999px;
+    font-size:20px; font-weight:700;
+    z-index:10; pointer-events:none;
+  }
+
+  /* ---- Barra inferior de controles ---- */
+  #controls{
+    background:var(--bg-panel);
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    display:flex; flex-direction:column; gap:14px;
+    z-index:15;
+  }
+  .sliderRow{
+    display:flex; align-items:center; gap:12px;
+  }
+  .sliderRow label{
+    width:34px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  }
+  .sliderRow input[type=range]{
+    flex:1; height:44px;
+    -webkit-appearance:none; appearance:none;
+    background:transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:8px; border-radius:4px; background:#334155;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:30px; height:30px; margin-top:-11px;
+    border-radius:50%; background:var(--accent); border:3px solid var(--bg-panel);
+  }
+
+  #actionRow{
+    display:flex; gap:10px; justify-content:space-between;
+  }
+  .actionBtn{
+    flex:1;
+    background:#1e293b; color:var(--text); border:2px solid #334155;
+    border-radius:14px; padding:12px 6px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+  }
+  .actionBtn.active{ background:var(--accent); color:#0f172a; border-color:var(--accent); }
+  .actionBtn.freeze.active{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  .actionBtn:disabled{ opacity:.35; }
+  .actionBtn svg{ width:26px; height:26px; }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="viewport">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="frozenCanvas"></canvas>
+    <div id="zoomBadge">1.0×</div>
+
+    <div id="startOverlay">
+      <h1>🔍 Lupa Digital</h1>
+      <p>Usa la cámara de tu móvil para ampliar letras pequeñas: etiquetas, prospectos, menús, contratos...</p>
+      <button class="bigBtn" id="startBtn">Activar cámara</button>
+    </div>
+
+    <div id="errorBox">
+      <p id="errorText">No se ha podido acceder a la cámara.</p>
+    </div>
+  </div>
+
+  <div id="controls" class="hidden">
+    <div class="sliderRow">
+      <label>➖</label>
+      <input type="range" id="zoomSlider" min="1" max="6" step="0.1" value="1">
+      <label>➕</label>
+    </div>
+    <div class="sliderRow">
+      <label>☀️</label>
+      <input type="range" id="brightSlider" min="0.6" max="2" step="0.05" value="1">
+    </div>
+    <div class="sliderRow">
+      <label>◐</label>
+      <input type="range" id="contrastSlider" min="0.6" max="2.5" step="0.05" value="1">
+    </div>
+
+    <div id="actionRow">
+      <button class="actionBtn freeze" id="freezeBtn" title="Congelar imagen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+        Congelar
+      </button>
+      <button class="actionBtn" id="torchBtn" title="Linterna">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a5 5 0 0 0-3 9c1 .8 1 1.5 1 2h4c0-.5 0-1.2 1-2a5 5 0 0 0-3-9Z"/></svg>
+        Luz
+      </button>
+      <button class="actionBtn" id="contrastModeBtn" title="Alto contraste (blanco/negro)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18Z" fill="currentColor"/></svg>
+        B/N
+      </button>
+      <button class="actionBtn" id="resetBtn" title="Restablecer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+        Reset
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('frozenCanvas');
+  const ctx = canvas.getContext('2d');
+  const startOverlay = document.getElementById('startOverlay');
+  const startBtn = document.getElementById('startBtn');
+  const errorBox = document.getElementById('errorBox');
+  const errorText = document.getElementById('errorText');
+  const controls = document.getElementById('controls');
+  const zoomSlider = document.getElementById('zoomSlider');
+  const brightSlider = document.getElementById('brightSlider');
+  const contrastSlider = document.getElementById('contrastSlider');
+  const zoomBadge = document.getElementById('zoomBadge');
+  const freezeBtn = document.getElementById('freezeBtn');
+  const torchBtn = document.getElementById('torchBtn');
+  const contrastModeBtn = document.getElementById('contrastModeBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const viewport = document.getElementById('viewport');
+
+  let stream = null;
+  let track = null;
+  let frozen = false;
+  let torchOn = false;
+  let bwMode = false;
+
+  function setVar(name, value){
+    document.documentElement.style.setProperty(name, value);
+  }
+
+  async function startCamera(){
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 }, height:{ ideal:1080 } },
+        audio:false
+      });
+      video.srcObject = stream;
+      track = stream.getVideoTracks()[0];
+
+      startOverlay.classList.add('hidden');
+      errorBox.style.display = 'none';
+      controls.classList.remove('hidden');
+
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
+      torchBtn.disabled = !(caps && caps.torch);
+    }catch(err){
+      startOverlay.classList.add('hidden');
+      errorBox.style.display = 'flex';
+      if(err.name === 'NotAllowedError'){
+        errorText.textContent = 'Permiso de cámara denegado. Actívalo en los ajustes del navegador para usar la lupa.';
+      }else if(err.name === 'NotFoundError'){
+        errorText.textContent = 'No se ha encontrado ninguna cámara en este dispositivo.';
+      }else{
+        errorText.textContent = 'No se ha podido acceder a la cámara: ' + err.message;
+      }
+    }
+  }
+
+  startBtn.addEventListener('click', startCamera);
+
+  // Zoom
+  zoomSlider.addEventListener('input', ()=>{
+    const z = parseFloat(zoomSlider.value);
+    setVar('--zoom', z);
+    zoomBadge.textContent = z.toFixed(1) + '×';
+  });
+
+  // Pellizcar para zoom (pinch)
+  let startDist = null, startZoom = 1;
+  function dist(t){
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.hypot(dx, dy);
+  }
+  viewport.addEventListener('touchstart', e=>{
+    if(e.touches.length === 2){
+      startDist = dist(e.touches);
+      startZoom = parseFloat(zoomSlider.value);
+    }
+  }, {passive:true});
+  viewport.addEventListener('touchmove', e=>{
+    if(e.touches.length === 2 && startDist){
+      const scale = dist(e.touches) / startDist;
+      let z = Math.min(6, Math.max(1, startZoom * scale));
+      zoomSlider.value = z.toFixed(1);
+      setVar('--zoom', z);
+      zoomBadge.textContent = z.toFixed(1) + '×';
+    }
+  }, {passive:true});
+  viewport.addEventListener('touchend', ()=>{ startDist = null; });
+
+  // Doble toque para enfocar (best effort)
+  viewport.addEventListener('dblclick', async ()=>{
+    if(!track) return;
+    const caps = track.getCapabilities ? track.getCapabilities() : {};
+    if(caps.focusMode && caps.focusMode.includes('single-shot')){
+      try{ await track.applyConstraints({ advanced:[{ focusMode:'single-shot' }] }); }catch(e){}
+    }
+  });
+
+  // Brillo / Contraste
+  brightSlider.addEventListener('input', ()=> setVar('--bright', brightSlider.value));
+  contrastSlider.addEventListener('input', ()=> setVar('--contrast', contrastSlider.value));
+
+  // Congelar imagen
+  freezeBtn.addEventListener('click', ()=>{
+    frozen = !frozen;
+    freezeBtn.classList.toggle('active', frozen);
+    if(frozen){
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'block';
+      video.style.visibility = 'hidden';
+      freezeBtn.lastChild.textContent = ' Reanudar';
+    }else{
+      canvas.style.display = 'none';
+      video.style.visibility = 'visible';
+      freezeBtn.lastChild.textContent = ' Congelar';
+    }
+  });
+
+  // Linterna / torch
+  torchBtn.addEventListener('click', async ()=>{
+    if(!track) return;
+    try{
+      torchOn = !torchOn;
+      await track.applyConstraints({ advanced:[{ torch: torchOn }] });
+      torchBtn.classList.toggle('active', torchOn);
+    }catch(e){
+      torchOn = false;
+      alert('Este dispositivo no permite controlar la linterna desde el navegador.');
+    }
+  });
+
+  // Modo alto contraste blanco/negro
+  contrastModeBtn.addEventListener('click', ()=>{
+    bwMode = !bwMode;
+    contrastModeBtn.classList.toggle('active', bwMode);
+    setVar('--extra-filter', bwMode ? 'grayscale(1) contrast(1.6)' : 'none');
+  });
+
+  // Reset
+  resetBtn.addEventListener('click', ()=>{
+    zoomSlider.value = 1; brightSlider.value = 1; contrastSlider.value = 1;
+    setVar('--zoom',1); setVar('--bright',1); setVar('--contrast',1); setVar('--extra-filter','none');
+    zoomBadge.textContent = '1.0×';
+    if(bwMode){ bwMode=false; contrastModeBtn.classList.remove('active'); }
+    if(torchOn && track){ track.applyConstraints({advanced:[{torch:false}]}).catch(()=>{}); torchOn=false; torchBtn.classList.remove('active'); }
+    if(frozen){ freezeBtn.click(); }
+  });
+
+  // Registrar service worker (uso offline como PWA)
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+})();
+</script>
+</body>
+</html>
