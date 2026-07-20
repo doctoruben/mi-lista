@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>HIIT Running</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --card-2:#233047;
+    --text:#e2e8f0;
+    --muted:#7c8aa5;
+    --warmup:#38bdf8;
+    --intensity:#f43f5e;
+    --recovery:#34d399;
+    --cooldown:#38bdf8;
+    --end:#facc15;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:20px;
+  }
+  .app{
+    width:100%;
+    max-width:420px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    text-align:center;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:34px;
+    letter-spacing:.03em;
+    text-align:center;
+    margin:0 0 22px;
+    color:var(--text);
+  }
+  .card{
+    background:var(--card);
+    border-radius:20px;
+    padding:26px 22px 22px;
+    box-shadow:0 20px 40px -20px rgba(0,0,0,.6);
+    border:1px solid rgba(255,255,255,.04);
+  }
+  .phase-label{
+    text-align:center;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--phase-color, var(--muted));
+    margin-bottom:2px;
+    transition:color .3s ease;
+  }
+  .round-label{
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+    min-height:18px;
+    margin-bottom:6px;
+  }
+  .timer{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:78px;
+    text-align:center;
+    line-height:1;
+    letter-spacing:-.02em;
+    color:var(--phase-color, var(--text));
+    transition:color .3s ease;
+    margin:8px 0 18px;
+    font-variant-numeric:tabular-nums;
+  }
+  .segments{
+    display:flex;
+    gap:3px;
+    margin-bottom:22px;
+    height:8px;
+  }
+  .seg{
+    flex:1;
+    background:var(--card-2);
+    border-radius:3px;
+    overflow:hidden;
+    position:relative;
+  }
+  .seg.warmup, .seg.cooldown{flex-grow:2;}
+  .seg .fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:0%;
+    border-radius:3px;
+  }
+  .seg.warmup .fill, .seg.cooldown .fill{background:var(--warmup);}
+  .seg.intensity .fill{background:var(--intensity);}
+  .seg.recovery .fill{background:var(--recovery);}
+  .seg.completed .fill{width:100% !important;}
+
+  .controls{
+    display:flex;
+    gap:10px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    border:none;
+    border-radius:12px;
+    padding:15px 0;
+    flex:1;
+    cursor:pointer;
+    transition:transform .1s ease, opacity .2s ease;
+  }
+  button:active{transform:scale(.97);}
+  #startBtn{background:var(--recovery); color:#04231a;}
+  #pauseBtn{background:var(--card-2); color:var(--text);}
+  #resetBtn{background:var(--card-2); color:var(--text);}
+  button:disabled{opacity:.35; cursor:default;}
+  .testrow{
+    text-align:center;
+    margin-top:14px;
+  }
+  .testrow button{
+    background:none;
+    color:var(--muted);
+    font-size:12px;
+    padding:6px 10px;
+    text-decoration:underline;
+    flex:none;
+  }
+  .note{
+    margin-top:18px;
+    font-size:11.5px;
+    line-height:1.5;
+    color:var(--muted);
+    text-align:center;
+    padding:0 6px;
+  }
+  .plan{
+    margin-top:16px;
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:center;
+  }
+  .wake-warning{
+    display:none;
+    margin-top:10px;
+    font-size:11.5px;
+    color:#fbbf24;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="eyebrow">Sesión de carrera</div>
+  <h1>HIIT · 8 series</h1>
+
+  <div class="card">
+    <div class="phase-label" id="phaseLabel">Preparado</div>
+    <div class="round-label" id="roundLabel">10' calentamiento · 8×(30"/90") · 10' trote suave</div>
+    <div class="timer" id="timer">36:00</div>
+
+    <div class="segments" id="segments"></div>
+
+    <div class="controls">
+      <button id="startBtn">Empezar</button>
+      <button id="pauseBtn" disabled>Pausa</button>
+      <button id="resetBtn" disabled>Reiniciar</button>
+    </div>
+
+    <div class="testrow">
+      <button id="testBtn">Probar voz y sonido</button>
+    </div>
+
+    <div class="wake-warning" id="wakeWarning">
+      ⚠️ Tu navegador no admite mantener la pantalla activa. Deja el móvil con la pantalla encendida durante la sesión.
+    </div>
+  </div>
+
+  <div class="note">
+    Consejo: no bloquees el móvil con el botón de encendido durante la sesión — algunos navegadores (sobre todo iOS)
+    pausan el audio y el cronómetro cuando la pantalla se apaga del todo. Basta con dejar la pantalla encendida
+    (puedes bajar el brillo al mínimo) y guardarlo en el brazalete o bolsillo con la pantalla hacia ti.
+  </div>
+</div>
+
+<script>
+// ---------- Silent keep-alive audio (helps some browsers keep the tab active) ----------
+const silentAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
+silentAudio.loop = true;
+
+// ---------- Build the workout plan ----------
+function buildPhases(){
+  const phases = [];
+  phases.push({type:'warmup', duration:600, label:'Calentamiento', say:'Empezando calentamiento'});
+  for(let i=1;i<=8;i++){
+    phases.push({type:'intensity', duration:30, label:'Intensidad máxima', round:i, say:`Serie ${i} de 8. Intensidad máxima.`});
+    phases.push({type:'recovery', duration:90, label:'Recuperación', round:i, say:'Recuperación.'});
+  }
+  phases.push({type:'cooldown', duration:600, label:'Trote suave', say:'Trote suave.'});
+  phases.push({type:'end', duration:0, label:'Fin de sesión', say:'Fin de sesión. Buen trabajo.'});
+  return phases;
+}
+const PHASES = buildPhases();
+const TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
+
+// ---------- DOM refs ----------
+const phaseLabelEl = document.getElementById('phaseLabel');
+const roundLabelEl = document.getElementById('roundLabel');
+const timerEl = document.getElementById('timer');
+const segmentsEl = document.getElementById('segments');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const testBtn = document.getElementById('testBtn');
+const wakeWarning = document.getElementById('wakeWarning');
+
+// build segment bars
+PHASES.filter(p=>p.type!=='end').forEach((p,idx)=>{
+  const seg = document.createElement('div');
+  seg.className = 'seg ' + p.type;
+  seg.dataset.index = PHASES.indexOf(p);
+  const fill = document.createElement('div');
+  fill.className = 'fill';
+  seg.appendChild(fill);
+  segmentsEl.appendChild(seg);
+});
+
+// ---------- State ----------
+let phaseIndex = -1;
+let phaseEndsAt = 0;
+let remainingAtPause = null;
+let tickHandle = null;
+let running = false;
+let wakeLock = null;
+let beepedSecond = null;
+
+function fmt(sec){
+  sec = Math.max(0, Math.ceil(sec));
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+function totalRemainingFromPhase(idx, remainInPhase){
+  let rem = remainInPhase;
+  for(let i=idx+1;i<PHASES.length;i++) rem += PHASES[i].duration;
+  return rem;
+}
+
+// ---------- Speech ----------
+let voicesReady = false;
+let esVoice = null;
+function pickVoice(){
+  const voices = speechSynthesis.getVoices();
+  esVoice = voices.find(v=>v.lang && v.lang.toLowerCase().startsWith('es')) || null;
+  voicesReady = true;
+}
+if('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = pickVoice;
+  pickVoice();
+}
+function say(text){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'es-ES';
+  if(esVoice) u.voice = esVoice;
+  u.rate = 1;
+  u.pitch = 1;
+  speechSynthesis.speak(u);
+}
+
+// ---------- Beep (Web Audio, for last-3-seconds cue) ----------
+let audioCtx = null;
+function beep(freq=880, duration=0.12){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }catch(e){}
+}
+
+// ---------- Vibration ----------
+function vibrate(pattern){
+  if(navigator.vibrate) navigator.vibrate(pattern);
+}
+
+// ---------- Wake Lock ----------
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeWarning.style.display = 'none';
+    } else {
+      wakeWarning.style.display = 'block';
+    }
+  }catch(e){
+    wakeWarning.style.display = 'block';
+  }
+}
+document.addEventListener('visibilitychange', async ()=>{
+  if(running && document.visibilityState === 'visible' && (!wakeLock || wakeLock.released)){
+    await requestWakeLock();
+  }
+});
+
+// ---------- UI update ----------
+function updateSegmentsUI(){
+  const segEls = segmentsEl.querySelectorAll('.seg');
+  segEls.forEach(seg=>{
+    const idx = parseInt(seg.dataset.index,10);
+    const fill = seg.querySelector('.fill');
+    if(idx < phaseIndex){
+      seg.classList.add('completed');
+      fill.style.width = '100%';
+    } else if(idx === phaseIndex){
+      seg.classList.remove('completed');
+      const p = PHASES[idx];
+      const remain = (phaseEndsAt - Date.now())/1000;
+      const pct = p.duration ? Math.min(100, Math.max(0, (1 - remain/p.duration) * 100)) : 100;
+      fill.style.width = pct + '%';
+    } else {
+      seg.classList.remove('completed');
+      fill.style.width = '0%';
+    }
+  });
+}
+
+function colorFor(type){
+  return {warmup:'var(--warmup)', intensity:'var(--intensity)', recovery:'var(--recovery)',
+          cooldown:'var(--cooldown)', end:'var(--end)'}[type] || 'var(--text)';
+}
+
+function renderPhase(){
+  const p = PHASES[phaseIndex];
+  document.documentElement.style.setProperty('--phase-color', colorFor(p.type));
+  phaseLabelEl.textContent = p.label;
+  phaseLabelEl.style.setProperty('color', colorFor(p.type));
+  timerEl.style.setProperty('color', colorFor(p.type));
+  roundLabelEl.textContent = p.round ? `Serie ${p.round} de 8` : (p.type==='end' ? 'Sesión completada' : '');
+}
+
+// ---------- Phase transitions ----------
+function startPhase(idx){
+  phaseIndex = idx;
+  const p = PHASES[phaseIndex];
+  renderPhase();
+  say(p.say);
+  vibrate(p.type === 'intensity' ? [200,80,200] : p.type === 'recovery' ? [120] : [80]);
+  beepedSecond = null;
+
+  if(p.type === 'end'){
+    timerEl.textContent = '00:00';
+    updateSegmentsUI();
+    stop(true);
+    return;
+  }
+  phaseEndsAt = Date.now() + p.duration*1000;
+  if(!tickHandle) tickHandle = setInterval(tick, 200);
+}
+
+function tick(){
+  const p = PHASES[phaseIndex];
+  const remain = (phaseEndsAt - Date.now())/1000;
+  timerEl.textContent = fmt(remain);
+  updateSegmentsUI();
+
+  const remainInt = Math.ceil(remain);
+  if(remainInt <= 3 && remainInt >= 1 && remainInt !== beepedSecond && p.type !== 'end'){
+    beepedSecond = remainInt;
+    beep(remainInt === 1 ? 1100 : 700);
+  }
+
+  if(remain <= 0){
+    if(phaseIndex + 1 < PHASES.length){
+      startPhase(phaseIndex + 1);
+    } else {
+      stop(true);
+    }
+  }
+}
+
+// ---------- Controls ----------
+async function start(){
+  if(phaseIndex === -1){
+    running = true;
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    resetBtn.disabled = false;
+    silentAudio.play().catch(()=>{});
+    await requestWakeLock();
+    startPhase(0);
+  } else if(remainingAtPause !== null){
+    // resume
+    running = true;
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    phaseEndsAt = Date.now() + remainingAtPause*1000;
+    remainingAtPause = null;
+    if(!tickHandle) tickHandle = setInterval(tick, 200);
+    say('Reanudando');
+    await requestWakeLock();
+  }
+}
+
+function pause(){
+  if(!running || phaseIndex === -1) return;
+  running = false;
+  remainingAtPause = (phaseEndsAt - Date.now())/1000;
+  clearInterval(tickHandle);
+  tickHandle = null;
+  speechSynthesis.cancel();
+  startBtn.disabled = false;
+  startBtn.textContent = 'Reanudar';
+  pauseBtn.disabled = true;
+}
+
+function stop(finished){
+  running = false;
+  clearInterval(tickHandle);
+  tickHandle = null;
+  silentAudio.pause();
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
+  startBtn.disabled = finished ? true : false;
+  pauseBtn.disabled = true;
+  if(finished){
+    phaseLabelEl.textContent = 'Fin de sesión';
+    roundLabelEl.textContent = '¡Sesión completada!';
+  }
+}
+
+function reset(){
+  clearInterval(tickHandle);
+  tickHandle = null;
+  speechSynthesis.cancel();
+  silentAudio.pause();
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
+  phaseIndex = -1;
+  remainingAtPause = null;
+  running = false;
+  startBtn.disabled = false;
+  startBtn.textContent = 'Empezar';
+  pauseBtn.disabled = true;
+  resetBtn.disabled = true;
+  document.documentElement.style.removeProperty('--phase-color');
+  phaseLabelEl.textContent = 'Preparado';
+  phaseLabelEl.style.color = '';
+  roundLabelEl.textContent = "10' calentamiento · 8×(30\"/90\") · 10' trote suave";
+  timerEl.textContent = fmt(TOTAL_SECONDS);
+  timerEl.style.color = '';
+  segmentsEl.querySelectorAll('.seg').forEach(seg=>{
+    seg.classList.remove('completed');
+    seg.querySelector('.fill').style.width = '0%';
+  });
+}
+
+startBtn.addEventListener('click', start);
+pauseBtn.addEventListener('click', pause);
+resetBtn.addEventListener('click', reset);
+testBtn.addEventListener('click', ()=>{
+  say('Prueba de voz. Todo listo para correr.');
+  beep(880);
+  vibrate(150);
+  silentAudio.play().then(()=>silentAudio.pause()).catch(()=>{});
+});
+
+// initial render
+timerEl.textContent = fmt(TOTAL_SECONDS);
+</script>
+</body>
+</html>
