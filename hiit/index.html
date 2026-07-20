@@ -6,7 +6,6 @@
 <title>HIIT Running Pro</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f172a">
-<!-- Meta para iOS full screen -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -27,7 +26,7 @@
     --end:#facc15;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{height:100%; overflow: hidden; /* Evita scroll en iOS al bloquear */}
+  html,body{height:100%; overflow: hidden;}
   body{
     margin:0;
     background:var(--bg);
@@ -37,21 +36,20 @@
     align-items:center;
     justify-content:center;
     min-height:100vh;
-    /* Padding inferior para botones del sistema en standalone mode */
     padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
     position: relative;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none; /* Desactiva gestos globales del navegador */
+    touch-action: none;
   }
   .app{
     width:100%;
     max-width:420px;
     position: relative;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, filter 0.3s ease;
   }
   .app.blur-bg {
-    opacity: 0.1; /* Difumina el fondo al bloquear para centrar la vista */
+    opacity: 0.1;
     filter: blur(5px);
   }
   .header-bar {
@@ -60,6 +58,10 @@
     align-items: center;
     margin-bottom: 6px;
   }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
   .eyebrow{
     font-size:12px;
     letter-spacing:.14em;
@@ -67,11 +69,11 @@
     color:var(--muted);
     margin: 0;
   }
-  .lock-toggle-btn {
+  .icon-btn {
     background: var(--card-2);
     border: 1px solid rgba(255,255,255,0.1);
     color: var(--text);
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: 20px;
     font-size: 13px;
     cursor: pointer;
@@ -87,13 +89,13 @@
     font-size:38px;
     letter-spacing:.03em;
     text-align:center;
-    margin:0 0 20px;
+    margin:0 0 16px;
     color:var(--text);
   }
   .card{
     background:var(--card);
     border-radius:24px;
-    padding:30px 24px 24px;
+    padding:24px 20px 20px;
     box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);
     border:1px solid rgba(255,255,255,.04);
   }
@@ -104,32 +106,58 @@
     letter-spacing:.06em;
     text-transform:uppercase;
     color:var(--phase-color, var(--muted));
-    margin-bottom:4px;
+    margin-bottom:2px;
     transition:color .3s ease;
   }
   .round-label{
     text-align:center;
-    font-size:14px;
+    font-size:13px;
     color:var(--muted);
-    min-height:20px;
-    margin-bottom:8px;
+    min-height:18px;
+    margin-bottom:4px;
   }
   .timer{
     font-family:'Space Mono',monospace;
     font-weight:700;
-    font-size:84px;
+    font-size:76px;
     text-align:center;
     line-height:1;
     letter-spacing:-.03em;
     color:var(--phase-color, var(--text));
     transition:color .3s ease;
-    margin:10px 0 22px;
+    margin:6px 0 12px;
     font-variant-numeric:tabular-nums;
   }
+  
+  /* Widget de Calorías */
+  .calories-widget {
+    background: var(--card-2);
+    border-radius: 12px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(255,255,255,0.03);
+  }
+  .calories-widget .cal-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f97316;
+  }
+  .calories-widget .cal-unit {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
   .segments{
     display:flex;
     gap:4px;
-    margin-bottom:26px;
+    margin-bottom:22px;
     height:10px;
   }
   .seg{
@@ -153,18 +181,18 @@
 
   .controls{
     display:flex;
-    gap:12px;
+    gap:10px;
   }
   button.ctrl-btn{
     font-family:'Inter',sans-serif;
     font-weight:700;
-    font-size:16px;
+    font-size:15px;
     border:none;
     border-radius:14px;
-    padding:18px 0;
+    padding:16px 0;
     flex:1;
     cursor:pointer;
-    transition:transform .1s ease, opacity .2s ease, background-color 0.2s ease;
+    transition:transform .1s ease, opacity .2s ease;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -172,63 +200,154 @@
   }
   button.ctrl-btn:active{transform:scale(.96);}
   #startBtn{background:var(--recovery); color:#04231a;}
-  #startBtn:hover{background:#45e0a8;}
   #pauseBtn{background:var(--card-2); color:var(--text); border: 1px solid rgba(255,255,255,0.05);}
-  #pauseBtn:hover{background:#2a3a54;}
   #resetBtn{background:var(--card-2); color:var(--text); border: 1px solid rgba(255,255,255,0.05);}
-  #resetBtn:hover{background:#2a3a54;}
   button:disabled{opacity:0.3 !important; cursor:default; pointer-events: none;}
   
   .testrow{
     text-align:center;
-    margin-top:18px;
+    margin-top:14px;
   }
   .testrow button{
     background:none;
     border: none;
     color:var(--muted);
-    font-size:13px;
-    padding:8px 12px;
+    font-size:12px;
+    padding:6px 10px;
     text-decoration:underline;
-    flex:none;
     cursor: pointer;
   }
   
-  /* Overlay de bloqueo de pantalla - MEJORADO */
+  /* MODAL DE CONFIGURACIÓN */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 24px;
+    width: 100%;
+    max-width: 380px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .modal h2 {
+    margin: 0 0 18px;
+    font-size: 20px;
+    text-align: center;
+  }
+  .cfg-group {
+    margin-bottom: 14px;
+  }
+  .cfg-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .cfg-row {
+    display: flex;
+    gap: 10px;
+  }
+  .cfg-input-wrap {
+    flex: 1;
+    position: relative;
+  }
+  .cfg-input-wrap input {
+    width: 100%;
+    background: var(--card-2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 10px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    outline: none;
+  }
+  .cfg-input-wrap span {
+    position: absolute;
+    right: 10px;
+    top: 12px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .save-cfg-btn {
+    background: var(--recovery);
+    color: #04231a;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    flex: 1;
+    cursor: pointer;
+  }
+  .cancel-cfg-btn {
+    background: var(--card-2);
+    color: var(--text);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    flex: 1;
+    cursor: pointer;
+  }
+
+  /* Overlay de bloqueo de pantalla */
   .lock-overlay {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--bg); /* Opaco para ocultar contenido */
-    z-index: 99999; /* Máximo posible */
+    background: var(--bg);
+    z-index: 99999;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 40px 20px;
     text-align: center;
-    touch-action: none; /* Bloquea gestos del navegador en el overlay */
+    touch-action: none;
   }
-  .lock-overlay.active {
-    display: flex;
-  }
+  .lock-overlay.active { display: flex; }
   
-  /* Gran temporizador visible en bloqueo */
   #lockTimerDisplay {
     font-family:'Space Mono',monospace;
     font-weight:700;
-    font-size:100px;
+    font-size:88px;
     color: var(--phase-color, var(--text));
     line-height: 1;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     font-variant-numeric:tabular-nums;
   }
   #lockPhaseDisplay {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     text-transform: uppercase;
     color: var(--phase-color, var(--muted));
     letter-spacing: 0.1em;
-    margin-bottom: auto; /* Empuja el botón hacia abajo */
+    margin-bottom: 8px;
+  }
+  #lockCalDisplay {
+    font-size: 16px;
+    color: #f97316;
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    margin-bottom: auto;
   }
 
   .unlock-zone {
@@ -237,59 +356,42 @@
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
   }
-
   .status-text {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--muted);
     letter-spacing: 0.05em;
   }
-
   .unlock-btn {
     background: var(--card);
     border: 3px solid var(--muted);
     color: var(--text);
-    width: 150px;
-    height: 150px;
+    width: 140px;
+    height: 140px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    gap: 10px;
+    font-size: 13px;
+    gap: 8px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
     touch-action: none;
     user-select: none;
-    -webkit-user-select: none;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transition: border-color 0.2s ease, transform 0.1s ease;
   }
-  .unlock-btn:active {
-    transform: scale(0.97);
-  }
-  .unlock-btn.pressing {
-    border-color: var(--warmup);
-  }
-  .unlock-btn svg {
-    width: 40px;
-    height: 40px;
-    fill: currentColor;
-    transition: color 0.2s ease;
-  }
-  .unlock-btn.pressing svg {
-    color: var(--warmup);
-  }
+  .unlock-btn.pressing { border-color: var(--warmup); }
+  .unlock-btn svg { width: 36px; height: 36px; fill: currentColor; }
+  .unlock-btn.pressing svg { color: var(--warmup); }
   .unlock-progress {
     position: absolute;
     bottom: 0; left: 0; right: 0;
     background: var(--warmup);
     height: 0%;
     opacity: 0.25;
-    transition: height 0.05s linear;
     pointer-events: none;
   }
 </style>
@@ -299,32 +401,39 @@
 <div class="app" id="appContent">
   <div class="header-bar">
     <div class="eyebrow">HIIT Running</div>
-    <button class="lock-toggle-btn" id="lockBtn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-        Bloquear Puntos
-    </button>
+    <div class="header-actions">
+      <button class="icon-btn" id="configBtn" title="Configurar">⚙️ Config</button>
+      <button class="icon-btn" id="lockBtn">🔒 Bloquear</button>
+    </div>
   </div>
   
-  <h1>8 series intensas</h1>
+  <h1 id="workoutTitle">8 series intensas</h1>
 
   <div class="card">
     <div class="phase-label" id="phaseLabel">Preparado</div>
-    <div class="round-label" id="roundLabel">10' calentamiento · 8×(30"/90") · 10' trote</div>
-    <div class="timer" id="timer">36:00</div>
+    <div class="round-label" id="roundLabel">---</div>
+    <div class="timer" id="timer">00:00</div>
+
+    <!-- Widget de Calorías -->
+    <div class="calories-widget">
+      <span>🔥</span>
+      <span class="cal-val" id="calDisplay">0</span>
+      <span class="cal-unit">kcal quemadas</span>
+    </div>
 
     <div class="segments" id="segments"></div>
 
     <div class="controls">
       <button id="startBtn" class="ctrl-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         Empezar
       </button>
       <button id="pauseBtn" class="ctrl-btn" disabled>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
         Pausa
       </button>
       <button id="resetBtn" class="ctrl-btn" disabled>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
         Reiniciar
       </button>
     </div>
@@ -332,20 +441,65 @@
     <div class="testrow">
       <button id="testBtn">Probar sonido y voz</button>
     </div>
+  </div>
+</div>
 
-    <div class="wake-warning" id="wakeWarning">
-      ⚠️ Tu navegador no admite Wake Lock. Mantén la pantalla encendida manualmente.
+<!-- MODAL DE CONFIGURACIÓN -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <h2>Ajustes de Sesión</h2>
+    <div class="cfg-group">
+      <label>Tu Peso (Para cálculo de Kcal)</label>
+      <div class="cfg-input-wrap">
+        <input type="number" id="cfgWeight" step="0.5" value="70">
+        <span>kg</span>
+      </div>
+    </div>
+    <div class="cfg-group">
+      <label>Series Totales</label>
+      <div class="cfg-input-wrap">
+        <input type="number" id="cfgRounds" value="8">
+        <span>series</span>
+      </div>
+    </div>
+    <div class="cfg-group">
+      <label>Tiempos del Entrenamiento (Segundos)</label>
+      <div class="cfg-row">
+        <div class="cfg-input-wrap">
+          <input type="number" id="cfgWarmup" placeholder="Calent." value="600">
+          <span>cal. (s)</span>
+        </div>
+        <div class="cfg-input-wrap">
+          <input type="number" id="cfgIntensity" placeholder="HIIT" value="30">
+          <span>hiit (s)</span>
+        </div>
+      </div>
+      <div class="cfg-row" style="margin-top: 8px;">
+        <div class="cfg-input-wrap">
+          <input type="number" id="cfgRecovery" placeholder="Recup." value="90">
+          <span>rec. (s)</span>
+        </div>
+        <div class="cfg-input-wrap">
+          <input type="number" id="cfgCooldown" placeholder="Enfriam." value="600">
+          <span>enfr. (s)</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="cancel-cfg-btn" id="cancelCfgBtn">Cancelar</button>
+      <button class="save-cfg-btn" id="saveCfgBtn">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- CAPA DE BLOQUEO DE PANTALLA - MEJORADA -->
+<!-- CAPA DE BLOQUEO DE PANTALLA -->
 <div class="lock-overlay" id="lockOverlay">
-  <div id="lockTimerDisplay">36:00</div>
+  <div id="lockTimerDisplay">00:00</div>
   <div id="lockPhaseDisplay">Preparado</div>
+  <div id="lockCalDisplay">🔥 0 kcal</div>
   
   <div class="unlock-zone">
-    <div class="status-text">PANTALLA BLOQUEADA ANTITOQUES</div>
+    <div class="status-text">PANTALLA BLOQUEADA</div>
     <div class="unlock-btn" id="unlockBtn">
         <svg viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM8.9 6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2H8.9V6zM18 20H6V10h12v10z"/></svg>
         <span>Mantén pulsado</span>
@@ -358,67 +512,98 @@
 // ---------- Registrar Service Worker ----------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/mi-lista/hiit/sw.js')
-      .then(reg => console.log('SW OK'))
-      .catch(err => console.log('SW Error', err));
+    navigator.serviceWorker.register('/mi-lista/hiit/sw.js');
   });
 }
 
-// ---------- Prevent accidental close ----------
-window.addEventListener('beforeunload', (e) => {
-  if (running && phaseIndex !== -1) {
-    e.preventDefault();
-    e.returnValue = ''; // Muestra diálogo de confirmación estándar
-  }
-});
+// ---------- Configuración por defecto / LocalStorage ----------
+const DEFAULT_CONFIG = {
+  weight: 75,
+  rounds: 8,
+  warmup: 600,
+  intensity: 30,
+  recovery: 90,
+  cooldown: 600
+};
 
-// ---------- Silent keep-alive audio ----------
+let userConfig = JSON.parse(localStorage.getItem('hiit_config')) || DEFAULT_CONFIG;
+
+// METs según la fase para cálculo de calorías
+const METS = {
+  warmup: 7.0,
+  intensity: 12.5,
+  recovery: 4.0,
+  cooldown: 6.0
+};
+
+// ---------- Audio / Keep-Alive ----------
 const silentAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
 silentAudio.loop = true;
 
-// ---------- Build the workout plan ----------
+// ---------- Build Workout Plan ----------
+let PHASES = [];
+let TOTAL_SECONDS = 0;
+
 function buildPhases(){
   const phases = [];
-  phases.push({type:'warmup', duration:600, label:'Calentamiento', say:'Empezando calentamiento'});
-  for(let i=1;i<=8;i++){
-    phases.push({type:'intensity', duration:30, label:'Intensidad máx.', round:i, say:`Serie ${i}. ¡Rápido!`});
-    phases.push({type:'recovery', duration:90, label:'Recuperación', round:i, say:'Recupera.'});
+  if(userConfig.warmup > 0) {
+    phases.push({type:'warmup', duration:userConfig.warmup, label:'Calentamiento', say:'Empezando calentamiento'});
   }
-  phases.push({type:'cooldown', duration:600, label:'Trote suave', say:'Trote suave final.'});
+  for(let i=1; i<=userConfig.rounds; i++){
+    phases.push({type:'intensity', duration:userConfig.intensity, label:'Intensidad máx.', round:i, say:`Serie ${i}. ¡Rápido!`});
+    phases.push({type:'recovery', duration:userConfig.recovery, label:'Recuperación', round:i, say:'Recupera.'});
+  }
+  if(userConfig.cooldown > 0) {
+    phases.push({type:'cooldown', duration:userConfig.cooldown, label:'Trote suave', say:'Trote suave final.'});
+  }
   phases.push({type:'end', duration:0, label:'Fin', say:'Entrenamiento completado.'});
   return phases;
 }
-const PHASES = buildPhases();
-const TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
+
+function initWorkoutPlan() {
+  PHASES = buildPhases();
+  TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
+  document.getElementById('workoutTitle').textContent = `${userConfig.rounds} series intensas`;
+  
+  // Reconstruir segmentos visuales
+  segmentsEl.innerHTML = '';
+  PHASES.filter(p=>p.type!=='end').forEach((p)=>{
+    const seg = document.createElement('div');
+    seg.className = 'seg ' + p.type;
+    seg.dataset.index = PHASES.indexOf(p);
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    seg.appendChild(fill);
+    segmentsEl.appendChild(seg);
+  });
+  
+  roundLabelEl.textContent = `${Math.round(userConfig.warmup/60)}' cal. · ${userConfig.rounds}×(${userConfig.intensity}"/${userConfig.recovery}") · ${Math.round(userConfig.cooldown/60)}' trote`;
+  timerEl.textContent = fmt(TOTAL_SECONDS);
+  lockTimerDisplay.textContent = fmt(TOTAL_SECONDS);
+}
 
 // ---------- DOM refs ----------
 const appContent = document.getElementById('appContent');
 const phaseLabelEl = document.getElementById('phaseLabel');
 const roundLabelEl = document.getElementById('roundLabel');
 const timerEl = document.getElementById('timer');
+const calDisplay = document.getElementById('calDisplay');
 const segmentsEl = document.getElementById('segments');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const testBtn = document.getElementById('testBtn');
-const wakeWarning = document.getElementById('wakeWarning');
+const configBtn = document.getElementById('configBtn');
+const configModal = document.getElementById('configModal');
+const saveCfgBtn = document.getElementById('saveCfgBtn');
+const cancelCfgBtn = document.getElementById('cancelCfgBtn');
 const lockBtn = document.getElementById('lockBtn');
 const lockOverlay = document.getElementById('lockOverlay');
 const lockTimerDisplay = document.getElementById('lockTimerDisplay');
 const lockPhaseDisplay = document.getElementById('lockPhaseDisplay');
+const lockCalDisplay = document.getElementById('lockCalDisplay');
 const unlockBtn = document.getElementById('unlockBtn');
 const unlockProgress = document.getElementById('unlockProgress');
-
-// build segment bars
-PHASES.filter(p=>p.type!=='end').forEach((p,idx)=>{
-  const seg = document.createElement('div');
-  seg.className = 'seg ' + p.type;
-  seg.dataset.index = PHASES.indexOf(p);
-  const fill = document.createElement('div');
-  fill.className = 'fill';
-  seg.appendChild(fill);
-  segmentsEl.appendChild(seg);
-});
 
 // ---------- State ----------
 let phaseIndex = -1;
@@ -429,6 +614,8 @@ let running = false;
 let wakeLock = null;
 let beepedSecond = null;
 let isLocked = false;
+let totalCaloriesBurned = 0;
+let lastTickTime = 0;
 
 function fmt(sec){
   sec = Math.max(0, Math.ceil(sec));
@@ -457,7 +644,7 @@ function say(text){
   speechSynthesis.speak(u);
 }
 
-// ---------- Beep ----------
+// ---------- Beep & Vibration ----------
 let audioCtx = null;
 function beep(freq=880, duration=0.12){
   try{
@@ -473,41 +660,24 @@ function beep(freq=880, duration=0.12){
     osc.stop(audioCtx.currentTime + duration);
   }catch(e){}
 }
+function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
 
-// ---------- Vibration ----------
-function vibrate(pattern){
-  if(navigator.vibrate) navigator.vibrate(pattern);
-}
-
-// ---------- Wake Lock ----------
+// ---------- Wake Lock & Fullscreen ----------
 async function requestWakeLock(){
   if('wakeLock' in navigator && running){
-    try{
-        wakeLock = await navigator.wakeLock.request('screen');
-        wakeWarning.style.display = 'none';
-    }catch(e){ wakeWarning.style.display = 'block'; }
+    try{ wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
   }
 }
-document.addEventListener('visibilitychange', () => {
-  if(running && document.visibilityState === 'visible' && (!wakeLock || wakeLock.released)) requestWakeLock();
-});
-
-// ---------- Fullscreen Management ----------
 function toggleFullscreen(activate) {
   if (!document.fullscreenEnabled) return;
-  
-  if (activate) {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(()=>{});
-    }
-  } else {
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(()=>{});
-    }
+  if (activate && !document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+  } else if (!activate && document.fullscreenElement) {
+    document.exitFullscreen().catch(()=>{});
   }
 }
 
-// ---------- UI update ----------
+// ---------- UI Update ----------
 function updateSegmentsUI(){
   const segEls = segmentsEl.querySelectorAll('.seg');
   const remain = (phaseEndsAt - Date.now())/1000;
@@ -536,11 +706,10 @@ function renderPhase(){
   
   phaseLabelEl.textContent = p.label;
   lockPhaseDisplay.textContent = p.label;
-  
-  roundLabelEl.textContent = p.round ? `Serie ${p.round} de 8` : (p.type==='end' ? 'Buen trabajo' : '');
+  roundLabelEl.textContent = p.round ? `Serie ${p.round} de ${userConfig.rounds}` : (p.type==='end' ? 'Buen trabajo' : '');
 }
 
-// ---------- Phase transitions ----------
+// ---------- Phase Transitions & Tick ----------
 function startPhase(idx){
   phaseIndex = idx;
   const p = PHASES[phaseIndex];
@@ -557,14 +726,28 @@ function startPhase(idx){
     return;
   }
   phaseEndsAt = Date.now() + p.duration*1000;
-  if(!tickHandle) tickHandle = setInterval(tick, 250);
+  lastTickTime = Date.now();
+  if(!tickHandle) tickHandle = setInterval(tick, 200);
 }
 
 function tick(){
   const p = PHASES[phaseIndex];
-  const remain = (phaseEndsAt - Date.now())/1000;
+  const now = Date.now();
+  const deltaSec = (now - lastTickTime) / 1000;
+  lastTickTime = now;
+
+  // Cálculo en tiempo real de calorías
+  if(p.type !== 'end' && METS[p.type]) {
+    const met = METS[p.type];
+    const calPerSec = (met * 3.5 * userConfig.weight) / (200 * 60);
+    totalCaloriesBurned += calPerSec * deltaSec;
+    const roundedCal = Math.floor(totalCaloriesBurned);
+    calDisplay.textContent = roundedCal;
+    lockCalDisplay.textContent = `🔥 ${roundedCal} kcal`;
+  }
+
+  const remain = (phaseEndsAt - now)/1000;
   const timeStr = fmt(remain);
-  
   timerEl.textContent = timeStr;
   lockTimerDisplay.textContent = timeStr;
   
@@ -584,14 +767,16 @@ function tick(){
 
 // ---------- Controls ----------
 async function start(){
+  configBtn.disabled = true; // Desactivar config durante sesión
   if(phaseIndex === -1){
     running = true;
+    totalCaloriesBurned = 0;
+    calDisplay.textContent = '0';
     startBtn.disabled = true;
     pauseBtn.disabled = false;
     resetBtn.disabled = false;
     silentAudio.play().catch(()=>{});
     await requestWakeLock();
-    // Intenta poner pantalla completa al empezar
     toggleFullscreen(true);
     startPhase(0);
   } else if(remainingAtPause !== null){
@@ -600,7 +785,8 @@ async function start(){
     pauseBtn.disabled = false;
     phaseEndsAt = Date.now() + remainingAtPause*1000;
     remainingAtPause = null;
-    if(!tickHandle) tickHandle = setInterval(tick, 250);
+    lastTickTime = Date.now();
+    if(!tickHandle) tickHandle = setInterval(tick, 200);
     say('Reanudando');
     await requestWakeLock();
     toggleFullscreen(true);
@@ -617,7 +803,7 @@ function pause(){
   startBtn.disabled = false;
   startBtn.textContent = 'Reanudar';
   pauseBtn.disabled = true;
-  toggleFullscreen(false); // Sale de pantalla completa en pausa
+  toggleFullscreen(false);
 }
 
 function stop(finished){
@@ -625,6 +811,7 @@ function stop(finished){
   clearInterval(tickHandle);
   tickHandle = null;
   silentAudio.pause();
+  configBtn.disabled = false;
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
   toggleFullscreen(false);
   startBtn.disabled = finished ? true : false;
@@ -647,34 +834,65 @@ function reset(){
   phaseIndex = -1;
   remainingAtPause = null;
   running = false;
+  totalCaloriesBurned = 0;
+  calDisplay.textContent = '0';
+  lockCalDisplay.textContent = '🔥 0 kcal';
+  configBtn.disabled = false;
+  
   startBtn.disabled = false;
   startBtn.textContent = 'Empezar';
   pauseBtn.disabled = true;
   resetBtn.disabled = true;
   document.documentElement.style.removeProperty('--phase-color');
+  
   phaseLabelEl.textContent = 'Preparado';
   lockPhaseDisplay.textContent = 'Preparado';
   phaseLabelEl.style.color = '';
-  roundLabelEl.textContent = "10' calentamiento · 8×(30\"/90\") · 10' trote";
-  timerEl.textContent = fmt(TOTAL_SECONDS);
-  lockTimerDisplay.textContent = fmt(TOTAL_SECONDS);
-  timerEl.style.color = '';
-  segmentsEl.querySelectorAll('.seg').forEach(seg=>{
-    seg.querySelector('.fill').style.width = '0%';
-  });
+  
+  initWorkoutPlan();
 }
 
-// ---------- Screen Lock Overlay Logic - MEJORADA ----------
+// ---------- Config Modal Logic ----------
+configBtn.addEventListener('click', () => {
+  document.getElementById('cfgWeight').value = userConfig.weight;
+  document.getElementById('cfgRounds').value = userConfig.rounds;
+  document.getElementById('cfgWarmup').value = userConfig.warmup;
+  document.getElementById('cfgIntensity').value = userConfig.intensity;
+  document.getElementById('cfgRecovery').value = userConfig.recovery;
+  document.getElementById('cfgCooldown').value = userConfig.cooldown;
+  configModal.classList.add('active');
+});
+
+cancelCfgBtn.addEventListener('click', () => {
+  configModal.classList.remove('active');
+});
+
+saveCfgBtn.addEventListener('click', () => {
+  userConfig = {
+    weight: parseFloat(document.getElementById('cfgWeight').value) || 70,
+    rounds: parseInt(document.getElementById('cfgRounds').value, 10) || 8,
+    warmup: parseInt(document.getElementById('cfgWarmup').value, 10) || 0,
+    intensity: parseInt(document.getElementById('cfgIntensity').value, 10) || 30,
+    recovery: parseInt(document.getElementById('cfgRecovery').value, 10) || 90,
+    cooldown: parseInt(document.getElementById('cfgCooldown').value, 10) || 0
+  };
+  
+  localStorage.setItem('hiit_config', JSON.stringify(userConfig));
+  configModal.classList.remove('active');
+  reset();
+});
+
+// ---------- Screen Lock Overlay Logic ----------
 let unlockTimer = null;
 let unlockStartTime = 0;
-const UNLOCK_HOLD_MS = 1600; // Un poco más largo para seguridad
+const UNLOCK_HOLD_MS = 1600;
 
 function setLockState(locked) {
     isLocked = locked;
     if(locked) {
         lockOverlay.classList.add('active');
         appContent.classList.add('blur-bg');
-        if(running) toggleFullscreen(true); // Asegura pantalla completa al bloquear corriendo
+        if(running) toggleFullscreen(true);
     } else {
         lockOverlay.classList.remove('active');
         appContent.classList.remove('blur-bg');
@@ -682,20 +900,14 @@ function setLockState(locked) {
 }
 
 lockBtn.addEventListener('click', () => setLockState(true));
-
-// Intentar bloquear gestos de deslizamiento (swipes) en el overlay
 lockOverlay.addEventListener('touchmove', (e) => {
-    if(isLocked) {
-        if(e.touches.length > 1) return; // Permitir zoom multi-touch si acaso
-        e.preventDefault(); // Bloquea el scroll y gestos de un dedo
-    }
+    if(isLocked && e.touches.length === 1) e.preventDefault();
 }, {passive: false});
 
 function startUnlockProgress(e) {
-  e.preventDefault(); // Crucial para evitar toques fantasmas
+  e.preventDefault();
   if(!isLocked) return;
-  
-  vibrate(40); // Feedback táctil inicial
+  vibrate(40);
   unlockStartTime = Date.now();
   unlockBtn.classList.add('pressing');
   unlockProgress.style.height = '0%';
@@ -728,12 +940,10 @@ function endUnlockPress() {
 unlockBtn.addEventListener('touchstart', startUnlockProgress, {passive: false});
 unlockBtn.addEventListener('touchend', endUnlockPress);
 unlockBtn.addEventListener('touchcancel', endUnlockPress);
-// Soporte para ratón (pruebas en PC)
 unlockBtn.addEventListener('mousedown', startUnlockProgress);
 unlockBtn.addEventListener('mouseup', endUnlockPress);
 unlockBtn.addEventListener('mouseleave', endUnlockPress);
 
-// Botones principales
 startBtn.addEventListener('click', start);
 pauseBtn.addEventListener('click', pause);
 resetBtn.addEventListener('click', reset);
@@ -743,9 +953,8 @@ testBtn.addEventListener('click', ()=>{
   vibrate(150);
 });
 
-// Inicializar tiempos
-timerEl.textContent = fmt(TOTAL_SECONDS);
-lockTimerDisplay.textContent = fmt(TOTAL_SECONDS);
+// Inicialización
+initWorkoutPlan();
 </script>
 </body>
 </html>
