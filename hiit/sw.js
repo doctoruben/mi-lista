@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hiit-run-v1';
+const CACHE_NAME = 'hiit-run-v2';
 const ASSETS = [
   '/mi-lista/hiit/index.html',
   '/mi-lista/hiit/manifest.json',
