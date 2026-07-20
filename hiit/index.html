@@ -129,7 +129,6 @@
     font-variant-numeric:tabular-nums;
   }
   
-  /* Widget de Calorías */
   .calories-widget {
     background: var(--card-2);
     border-radius: 12px;
@@ -218,7 +217,6 @@
     cursor: pointer;
   }
   
-  /* MODAL DE CONFIGURACIÓN */
   .modal-overlay {
     display: none;
     position: fixed;
@@ -309,7 +307,6 @@
     cursor: pointer;
   }
 
-  /* Overlay de bloqueo de pantalla */
   .lock-overlay {
     display: none;
     position: fixed;
@@ -414,7 +411,6 @@
     <div class="round-label" id="roundLabel">---</div>
     <div class="timer" id="timer">00:00</div>
 
-    <!-- Widget de Calorías -->
     <div class="calories-widget">
       <span>🔥</span>
       <span class="cal-val" id="calDisplay">0</span>
@@ -444,7 +440,6 @@
   </div>
 </div>
 
-<!-- MODAL DE CONFIGURACIÓN -->
 <div class="modal-overlay" id="configModal">
   <div class="modal">
     <h2>Ajustes de Sesión</h2>
@@ -492,7 +487,6 @@
   </div>
 </div>
 
-<!-- CAPA DE BLOQUEO DE PANTALLA -->
 <div class="lock-overlay" id="lockOverlay">
   <div id="lockTimerDisplay">00:00</div>
   <div id="lockPhaseDisplay">Preparado</div>
@@ -509,14 +503,12 @@
 </div>
 
 <script>
-// ---------- Registrar Service Worker ----------
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/mi-lista/hiit/sw.js');
   });
 }
 
-// ---------- Configuración por defecto / LocalStorage ----------
 const DEFAULT_CONFIG = {
   weight: 75,
   rounds: 8,
@@ -528,7 +520,6 @@ const DEFAULT_CONFIG = {
 
 let userConfig = JSON.parse(localStorage.getItem('hiit_config')) || DEFAULT_CONFIG;
 
-// METs según la fase para cálculo de calorías
 const METS = {
   warmup: 7.0,
   intensity: 12.5,
@@ -536,11 +527,9 @@ const METS = {
   cooldown: 6.0
 };
 
-// ---------- Audio / Keep-Alive ----------
 const silentAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
 silentAudio.loop = true;
 
-// ---------- Build Workout Plan ----------
 let PHASES = [];
 let TOTAL_SECONDS = 0;
 
@@ -565,7 +554,6 @@ function initWorkoutPlan() {
   TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
   document.getElementById('workoutTitle').textContent = `${userConfig.rounds} series intensas`;
   
-  // Reconstruir segmentos visuales
   segmentsEl.innerHTML = '';
   PHASES.filter(p=>p.type!=='end').forEach((p)=>{
     const seg = document.createElement('div');
@@ -582,7 +570,6 @@ function initWorkoutPlan() {
   lockTimerDisplay.textContent = fmt(TOTAL_SECONDS);
 }
 
-// ---------- DOM refs ----------
 const appContent = document.getElementById('appContent');
 const phaseLabelEl = document.getElementById('phaseLabel');
 const roundLabelEl = document.getElementById('roundLabel');
@@ -605,7 +592,6 @@ const lockCalDisplay = document.getElementById('lockCalDisplay');
 const unlockBtn = document.getElementById('unlockBtn');
 const unlockProgress = document.getElementById('unlockProgress');
 
-// ---------- State ----------
 let phaseIndex = -1;
 let phaseEndsAt = 0;
 let remainingAtPause = null;
@@ -613,6 +599,7 @@ let tickHandle = null;
 let running = false;
 let wakeLock = null;
 let beepedSecond = null;
+let lastSpokenMinute = null;
 let isLocked = false;
 let totalCaloriesBurned = 0;
 let lastTickTime = 0;
@@ -624,7 +611,6 @@ function fmt(sec){
   return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
 }
 
-// ---------- Speech ----------
 let esVoice = null;
 function pickVoice(){
   const voices = speechSynthesis.getVoices();
@@ -644,7 +630,6 @@ function say(text){
   speechSynthesis.speak(u);
 }
 
-// ---------- Beep & Vibration ----------
 let audioCtx = null;
 function beep(freq=880, duration=0.12){
   try{
@@ -662,7 +647,6 @@ function beep(freq=880, duration=0.12){
 }
 function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
 
-// ---------- Wake Lock & Fullscreen ----------
 async function requestWakeLock(){
   if('wakeLock' in navigator && running){
     try{ wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
@@ -677,7 +661,6 @@ function toggleFullscreen(activate) {
   }
 }
 
-// ---------- UI Update ----------
 function updateSegmentsUI(){
   const segEls = segmentsEl.querySelectorAll('.seg');
   const remain = (phaseEndsAt - Date.now())/1000;
@@ -709,7 +692,6 @@ function renderPhase(){
   roundLabelEl.textContent = p.round ? `Serie ${p.round} de ${userConfig.rounds}` : (p.type==='end' ? 'Buen trabajo' : '');
 }
 
-// ---------- Phase Transitions & Tick ----------
 function startPhase(idx){
   phaseIndex = idx;
   const p = PHASES[phaseIndex];
@@ -717,6 +699,7 @@ function startPhase(idx){
   say(p.say);
   vibrate(p.type === 'intensity' ? [200,100,200] : p.type === 'recovery' ? [150] : [100]);
   beepedSecond = null;
+  lastSpokenMinute = null;
 
   if(p.type === 'end'){
     timerEl.textContent = '00:00';
@@ -736,7 +719,6 @@ function tick(){
   const deltaSec = (now - lastTickTime) / 1000;
   lastTickTime = now;
 
-  // Cálculo en tiempo real de calorías
   if(p.type !== 'end' && METS[p.type]) {
     const met = METS[p.type];
     const calPerSec = (met * 3.5 * userConfig.weight) / (200 * 60);
@@ -754,6 +736,19 @@ function tick(){
   updateSegmentsUI();
 
   const remainInt = Math.ceil(remain);
+
+  // Mensaje por voz cada minuto en calentamiento y enfriamiento
+  if ((p.type === 'warmup' || p.type === 'cooldown') && remainInt > 0 && remainInt % 60 === 0) {
+    if (lastSpokenMinute !== remainInt && remainInt !== p.duration) { 
+      lastSpokenMinute = remainInt;
+      const minsLeft = Math.floor(remainInt / 60);
+      if (minsLeft > 0) {
+        say(`Quedan ${minsLeft} ${minsLeft === 1 ? 'minuto' : 'minutos'}`);
+      }
+    }
+  }
+
+  // Avisos acústicos finales de fase (3, 2, 1)
   if(remainInt <= 3 && remainInt >= 1 && remainInt !== beepedSecond){
     beepedSecond = remainInt;
     beep(remainInt === 1 ? 1200 : 800);
@@ -765,9 +760,8 @@ function tick(){
   }
 }
 
-// ---------- Controls ----------
 async function start(){
-  configBtn.disabled = true; // Desactivar config durante sesión
+  configBtn.disabled = true;
   if(phaseIndex === -1){
     running = true;
     totalCaloriesBurned = 0;
@@ -852,7 +846,6 @@ function reset(){
   initWorkoutPlan();
 }
 
-// ---------- Config Modal Logic ----------
 configBtn.addEventListener('click', () => {
   document.getElementById('cfgWeight').value = userConfig.weight;
   document.getElementById('cfgRounds').value = userConfig.rounds;
@@ -882,7 +875,6 @@ saveCfgBtn.addEventListener('click', () => {
   reset();
 });
 
-// ---------- Screen Lock Overlay Logic ----------
 let unlockTimer = null;
 let unlockStartTime = 0;
 const UNLOCK_HOLD_MS = 1600;
@@ -948,12 +940,11 @@ startBtn.addEventListener('click', start);
 pauseBtn.addEventListener('click', pause);
 resetBtn.addEventListener('click', reset);
 testBtn.addEventListener('click', ()=>{
-  say('Sonido funcionando.');
+  say('Sonido funcionando. Quedan 5 minutos.');
   beep(880);
   vibrate(150);
 });
 
-// Inicialización
 initWorkoutPlan();
 </script>
 </body>
