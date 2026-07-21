@@ -428,6 +428,33 @@ function beep(freq=880, duration=0.12){
 }
 function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
 
+// ---------- Phase chimes (Web Audio) — reliable even when speechSynthesis is suppressed in background ----------
+function playChime(type){
+  try{
+    const ctx = getAudioCtx();
+    const t0 = ctx.currentTime + 0.02;
+    function tone(freq, start, dur, wave, peak){
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = wave || 'sine';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0+start);
+      g.gain.exponentialRampToValueAtTime(peak || 0.3, t0+start+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+start+dur);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t0+start); osc.stop(t0+start+dur+0.05);
+    }
+    switch(type){
+      case 'warmup': tone(523,0,0.18); tone(659,0.15,0.22); break;
+      case 'intensity': tone(880,0,0.10,'square',0.32); tone(1046,0.12,0.10,'square',0.32); tone(1318,0.24,0.18,'square',0.36); break;
+      case 'recovery': tone(659,0,0.35,'sine',0.26); tone(494,0.25,0.4,'sine',0.22); break;
+      case 'cooldown': tone(784,0,0.2); tone(587,0.18,0.3); break;
+      case 'end': tone(659,0,0.15); tone(784,0.14,0.15); tone(988,0.28,0.15); tone(1318,0.42,0.35); break;
+      case 'minute': tone(740,0,0.12,'sine',0.16); break;
+    }
+  }catch(e){}
+}
+
 // ---------- Generative background music (original, no copyrighted samples) ----------
 let musicTimer = null;
 let musicStep = 0;
@@ -617,6 +644,7 @@ function startPhase(idx){
   const p = PHASES[phaseIndex];
   renderPhase();
   say(p.say);
+  playChime(p.type);
   vibrate(p.type === 'intensity' ? [200,80,200] : p.type === 'recovery' ? [120] : [80]);
   beepedSecond = null;
   lastMinuteAnnounced = (p.type === 'warmup' || p.type === 'cooldown') ? Math.ceil(p.duration/60) : null;
@@ -647,6 +675,7 @@ function tick(){
     if(minutesLeft !== lastMinuteAnnounced && minutesLeft >= 1 && remain > 1){
       lastMinuteAnnounced = minutesLeft;
       say(minutesLeft === 1 ? 'Queda 1 minuto' : `Quedan ${minutesLeft} minutos`);
+      playChime('minute');
       vibrate([60]);
     }
   }
