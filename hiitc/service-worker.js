@@ -1,5 +1,5 @@
-const CACHE_NAME = 'hiit-running-v3';
-const SCOPE = '/mi-lista/hiitc/';
+const CACHE_NAME = 'hiit-running-v4';
+const SCOPE = '/mi-lista/hiit/';
 const ASSETS = [
   SCOPE,
   SCOPE + 'index.html',
