@@ -246,6 +246,16 @@
       <input type="number" id="cfgWeight" min="20" max="250" step="0.5" placeholder="p. ej. 78">
       <div class="hint">Se usa para estimar las calorías quemadas en tiempo real. Es una aproximación (basada en METs típicos), no una medida clínica.</div>
     </div>
+    <div class="field">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="cfgMusic" style="width:16px;height:16px;"> Música motivadora de fondo
+      </label>
+      <div class="hint">Pista generada, sin canciones con copyright. Cambia el ritmo según la fase y ayuda a que los avisos de voz sigan sonando si el móvil pasa a segundo plano.</div>
+    </div>
+    <div class="field">
+      <label for="cfgMusicVol">Volumen de la música</label>
+      <input type="range" id="cfgMusicVol" min="0" max="1" step="0.05">
+    </div>
     <div class="modal-actions">
       <button id="cfgCancel">Cancelar</button>
       <button id="cfgSave">Guardar</button>
@@ -267,7 +277,7 @@ keepAliveAudio.loop = true;
 keepAliveAudio.volume = 0.01;
 
 // ---------- Config (persisted locally) ----------
-const DEFAULT_CFG = { warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, weightKg:null };
+const DEFAULT_CFG = { warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, weightKg:null, musicEnabled:true, musicVolume:0.35 };
 function loadConfig(){
   try{
     const raw = localStorage.getItem('hiit-config');
@@ -328,6 +338,8 @@ const cfgIntensity = document.getElementById('cfgIntensity');
 const cfgRecovery = document.getElementById('cfgRecovery');
 const cfgCooldown = document.getElementById('cfgCooldown');
 const cfgWeight = document.getElementById('cfgWeight');
+const cfgMusic = document.getElementById('cfgMusic');
+const cfgMusicVol = document.getElementById('cfgMusicVol');
 const cfgCancel = document.getElementById('cfgCancel');
 const cfgSave = document.getElementById('cfgSave');
 
@@ -395,26 +407,134 @@ function say(text){
   u.lang = 'es-ES';
   if(esVoice) u.voice = esVoice;
   u.rate = 1; u.pitch = 1;
+  duckMusicDuring(u);
   speechSynthesis.speak(u);
 }
 
 // ---------- Beep ----------
 let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
 function beep(freq=880, duration=0.12){
   try{
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     osc.frequency.value = freq;
     osc.type = 'sine';
-    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    osc.connect(gain).connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain).connect(ctx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.stop(ctx.currentTime + duration);
   }catch(e){}
 }
 function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
+
+// ---------- Generative background music (original, no copyrighted samples) ----------
+let musicTimer = null;
+let musicStep = 0;
+let currentTempo = 100;
+let duckFactor = 1;
+let noiseBuffer = null;
+
+function getNoiseBuffer(ctx){
+  if(noiseBuffer) return noiseBuffer;
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = Math.random()*2-1;
+  noiseBuffer = buf;
+  return buf;
+}
+function playKick(t){
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.exponentialRampToValueAtTime(38, t+0.12);
+  const vol = 0.55 * CFG.musicVolume * duckFactor;
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.16);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t); osc.stop(t+0.18);
+}
+function playHat(t, level){
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuffer(ctx);
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 7000;
+  const gain = ctx.createGain();
+  const vol = level * CFG.musicVolume * duckFactor;
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.04);
+  src.connect(hp).connect(gain).connect(ctx.destination);
+  src.start(t); src.stop(t+0.05);
+}
+function playClap(t){
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuffer(ctx);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.2;
+  const gain = ctx.createGain();
+  const vol = 0.35 * CFG.musicVolume * duckFactor;
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.15);
+  src.connect(bp).connect(gain).connect(ctx.destination);
+  src.start(t); src.stop(t+0.16);
+}
+function playBass(t, freq){
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 500;
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.value = freq;
+  const vol = 0.22 * CFG.musicVolume * duckFactor;
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+  osc.connect(lp).connect(gain).connect(ctx.destination);
+  osc.start(t); osc.stop(t+0.36);
+}
+function musicStepTick(){
+  if(!CFG.musicEnabled){ musicTimer = null; return; }
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime + 0.02;
+  const s = musicStep % 16;
+  if(s % 4 === 0) playKick(t);
+  playHat(t, s % 2 === 0 ? 0.16 : 0.07);
+  if(s === 4 || s === 12) playClap(t);
+  if(s === 0) playBass(t, 98);
+  if(s === 8) playBass(t, 130.8);
+  musicStep++;
+  const stepMs = (60 / currentTempo / 2) * 1000;
+  musicTimer = setTimeout(musicStepTick, stepMs);
+}
+const TEMPO_BY_PHASE = { warmup:100, intensity:146, recovery:112, cooldown:96, end:0 };
+function startMusic(){
+  if(!CFG.musicEnabled || musicTimer) return;
+  musicStep = 0;
+  musicStepTick();
+}
+function stopMusic(){
+  clearTimeout(musicTimer); musicTimer = null;
+}
+function setMusicTempo(type){
+  currentTempo = TEMPO_BY_PHASE[type] || 100;
+}
+function duckMusicDuring(utterance){
+  duckFactor = 0.22;
+  const restore = () => { duckFactor = 1; };
+  utterance.addEventListener('end', restore);
+  utterance.addEventListener('error', restore);
+  setTimeout(restore, 4000); // backstop in case the event never fires
+}
 
 // ---------- Media Session ----------
 function updateMediaSession(label){
@@ -488,6 +608,8 @@ function renderPhase(){
   lockPhaseLabel.textContent = p.label;
   roundLabelEl.textContent = p.round ? `Serie ${p.round} de 8` : (p.type==='end' ? 'Sesión completada' : planSummary());
   updateMediaSession(p.round ? `${p.label} · Serie ${p.round}/8` : p.label);
+  setMusicTempo(p.type);
+  if(p.type === 'end') stopMusic(); else startMusic();
 }
 
 // ---------- Phase transitions ----------
@@ -569,6 +691,7 @@ async function start(){
     say('Reanudando');
     await requestWakeLock();
     requestAppFullscreen();
+    startMusic();
   }
 }
 function pause(){
@@ -579,11 +702,13 @@ function pause(){
   speechSynthesis.cancel();
   startBtn.disabled = false; startBtn.textContent = 'Reanudar'; pauseBtn.disabled = true;
   disengageLock();
+  stopMusic();
 }
 function stop(finished){
   running = false;
   clearInterval(tickHandle); tickHandle = null;
   keepAliveAudio.pause();
+  stopMusic();
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
   startBtn.disabled = finished ? true : false;
   pauseBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false;
@@ -598,6 +723,7 @@ function reset(){
   clearInterval(tickHandle); tickHandle = null;
   speechSynthesis.cancel();
   keepAliveAudio.pause();
+  stopMusic();
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
   phaseIndex = -1; remainingAtPause = null; running = false; kcalAccumulated = 0;
   startBtn.disabled = false; startBtn.textContent = 'Empezar';
@@ -644,6 +770,8 @@ function openSettings(){
   cfgRecovery.value = CFG.recoverySec;
   cfgCooldown.value = CFG.cooldownMin;
   cfgWeight.value = CFG.weightKg || '';
+  cfgMusic.checked = CFG.musicEnabled;
+  cfgMusicVol.value = CFG.musicVolume;
   settingsOverlay.classList.add('active');
 }
 function closeSettings(){ settingsOverlay.classList.remove('active'); }
@@ -655,7 +783,9 @@ cfgSave.addEventListener('click', ()=>{
   const cooldownMin = Math.max(0, parseFloat(cfgCooldown.value) || 0);
   const w = parseFloat(cfgWeight.value);
   const weightKg = (w && w > 0) ? w : null;
-  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, weightKg };
+  const musicEnabled = cfgMusic.checked;
+  const musicVolume = parseFloat(cfgMusicVol.value) || 0;
+  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, weightKg, musicEnabled, musicVolume };
   saveConfig(CFG);
   closeSettings();
   reset();
@@ -670,6 +800,11 @@ testBtn.addEventListener('click', ()=>{
   say('Prueba de voz. Todo listo para correr.');
   beep(880); vibrate(150);
   keepAliveAudio.play().then(()=>setTimeout(()=>keepAliveAudio.pause(),300)).catch(()=>{});
+  if(CFG.musicEnabled){
+    currentTempo = 112;
+    startMusic();
+    setTimeout(stopMusic, 2500);
+  }
 });
 
 timerEl.textContent = fmt(TOTAL_SECONDS);
