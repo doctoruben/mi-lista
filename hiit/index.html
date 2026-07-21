@@ -10,6 +10,7 @@
 <link rel="icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
@@ -196,7 +197,13 @@
     </div>
   </div>
 
-  
+  <div class="note">
+    No bloquees el móvil con el botón de encendido: en muchos navegadores eso pausa el audio y el cronómetro.
+    Al pulsar Empezar, la app pasa a pantalla completa (oculta la barra del navegador y la del sistema).
+    Para mejores resultados, instala la app en tu pantalla de inicio en lugar de abrirla en una pestaña normal.
+    Usa el botón "Bloquear pantalla" para ignorar toques accidentales del bolsillo — mantén pulsado el círculo
+    1,5&nbsp;segundos para desbloquear.
+  </div>
 </div>
 
 <!-- Full-screen touch lock -->
@@ -429,8 +436,26 @@ async function requestWakeLock(){
   }catch(e){ wakeWarning.style.display = 'block'; }
 }
 document.addEventListener('visibilitychange', async ()=>{
-  if(running && document.visibilityState === 'visible' && (!wakeLock || wakeLock.released)){
-    await requestWakeLock();
+  if(running && document.visibilityState === 'visible'){
+    if(!wakeLock || wakeLock.released) await requestWakeLock();
+    if(!document.fullscreenElement) requestAppFullscreen();
+  }
+});
+
+// ---------- Fullscreen (hides browser chrome + most of the system nav bar) ----------
+function requestAppFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if(req) req.call(el).catch(()=>{});
+}
+function exitAppFullscreen(){
+  const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+  if(document.fullscreenElement && exit) exit.call(document).catch(()=>{});
+}
+document.addEventListener('fullscreenchange', ()=>{
+  // if the system kicked us out of fullscreen while a session is running, try to regain it
+  if(running && !document.fullscreenElement){
+    setTimeout(()=>{ if(running) requestAppFullscreen(); }, 300);
   }
 });
 
@@ -532,6 +557,7 @@ async function start(){
     settingsBtn.disabled = true;
     keepAliveAudio.play().catch(()=>{});
     await requestWakeLock();
+    requestAppFullscreen();
     startPhase(0);
     if(autoLockChk.checked) setTimeout(engageLock, 800);
   } else if(remainingAtPause !== null){
@@ -542,6 +568,7 @@ async function start(){
     if(!tickHandle) tickHandle = setInterval(tick, 200);
     say('Reanudando');
     await requestWakeLock();
+    requestAppFullscreen();
   }
 }
 function pause(){
@@ -561,6 +588,7 @@ function stop(finished){
   startBtn.disabled = finished ? true : false;
   pauseBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false;
   disengageLock();
+  if(finished) exitAppFullscreen();
   if(finished){
     phaseLabelEl.textContent = 'Fin de sesión';
     roundLabelEl.textContent = '¡Sesión completada!';
