@@ -160,8 +160,20 @@
   }
   .field .hint{ font-size:11px; color:var(--muted); margin-top:4px; }
   .modal-actions{ display:flex; gap:10px; margin-top:18px; }
-  #cfgCancel{ background:var(--card-2); color:var(--text); }
-  #cfgSave{ background:var(--recovery); color:#04231a; }
+  #cfgCancel, #soundCancel{ background:var(--card-2); color:var(--text); }
+  #cfgSave, #soundSave{ background:var(--recovery); color:#04231a; }
+
+  .sound-group{
+    background:var(--card-2); border-radius:14px; padding:14px 14px 16px; margin-bottom:14px;
+  }
+  .sound-group-title{ font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+  .sound-group .field{ margin-bottom:10px; }
+  .sound-group .field label{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .sound-group .val{ color:var(--text); font-variant-numeric:tabular-nums; }
+  .previewBtn{
+    background:transparent; border:1px solid rgba(255,255,255,.12); color:var(--text);
+    padding:8px 0; font-size:12.5px; font-weight:600; width:100%; border-radius:9px;
+  }
 </style>
 </head>
 <body>
@@ -201,7 +213,6 @@
       ⚠️ Tu navegador no admite mantener la pantalla activa. Deja el móvil con la pantalla encendida durante la sesión.
     </div>
   </div>
-
 
 </div>
 
@@ -259,9 +270,79 @@
       <label for="cfgMusicVol">Volumen de la música</label>
       <input type="range" id="cfgMusicVol" min="0" max="1" step="0.05">
     </div>
+    <div class="field">
+      <button id="openSoundTuning" type="button" style="background:var(--card-2); color:var(--text); width:100%;">🎚️ Ajustar sonidos por fase</button>
+    </div>
     <div class="modal-actions">
       <button id="cfgCancel">Cancelar</button>
       <button id="cfgSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sound tuning sub-modal -->
+<div id="soundOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Ajustar sonidos</h2>
+    <div class="hint" style="margin-bottom:16px; text-align:center;">
+      Velocidad = ritmo de la música. Intensidad = volumen/energía del ritmo y del pitido de esa fase.
+    </div>
+
+    <div class="sound-group" data-phase="warmup">
+      <div class="sound-group-title" style="color:var(--warmup);">Calentamiento</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">104 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x1.00</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="sound-group" data-phase="intensity">
+      <div class="sound-group-title" style="color:var(--intensity);">Intensidad máxima</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">172 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x1.35</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="sound-group" data-phase="recovery">
+      <div class="sound-group-title" style="color:var(--recovery);">Recuperación</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">80 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x0.50</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="sound-group" data-phase="cooldown">
+      <div class="sound-group-title" style="color:var(--cooldown);">Trote suave / enfriamiento</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">100 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x1.00</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="modal-actions">
+      <button id="soundCancel">Cancelar</button>
+      <button id="soundSave">Guardar</button>
     </div>
   </div>
 </div>
@@ -280,13 +361,28 @@ keepAliveAudio.loop = true;
 keepAliveAudio.volume = 0.01;
 
 // ---------- Config (persisted locally) ----------
-const DEFAULT_CFG = { warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, rounds:8, weightKg:null, musicEnabled:true, musicVolume:0.35 };
+const DEFAULT_CFG = {
+  warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, rounds:8, weightKg:null,
+  musicEnabled:true, musicVolume:0.35,
+  soundTuning: {
+    warmup:    { tempo:104, energy:1.0 },
+    intensity: { tempo:172, energy:1.35 },
+    recovery:  { tempo:80,  energy:0.5 },
+    cooldown:  { tempo:100, energy:1.0 }
+  }
+};
 function loadConfig(){
   try{
     const raw = localStorage.getItem('hiit-config');
-    if(!raw) return {...DEFAULT_CFG};
-    return {...DEFAULT_CFG, ...JSON.parse(raw)};
-  }catch(e){ return {...DEFAULT_CFG}; }
+    if(!raw) return JSON.parse(JSON.stringify(DEFAULT_CFG));
+    const parsed = JSON.parse(raw);
+    const merged = {...DEFAULT_CFG, ...parsed};
+    merged.soundTuning = {...DEFAULT_CFG.soundTuning, ...(parsed.soundTuning || {})};
+    for(const key of Object.keys(DEFAULT_CFG.soundTuning)){
+      merged.soundTuning[key] = {...DEFAULT_CFG.soundTuning[key], ...((parsed.soundTuning||{})[key] || {})};
+    }
+    return merged;
+  }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_CFG)); }
 }
 function saveConfig(cfg){ localStorage.setItem('hiit-config', JSON.stringify(cfg)); }
 let CFG = loadConfig();
@@ -347,6 +443,13 @@ const cfgMusic = document.getElementById('cfgMusic');
 const cfgMusicVol = document.getElementById('cfgMusicVol');
 const cfgCancel = document.getElementById('cfgCancel');
 const cfgSave = document.getElementById('cfgSave');
+const openSoundTuningBtn = document.getElementById('openSoundTuning');
+
+const soundOverlay = document.getElementById('soundOverlay');
+const soundGroups = soundOverlay.querySelectorAll('.sound-group');
+const soundCancel = document.getElementById('soundCancel');
+const soundSave = document.getElementById('soundSave');
+let soundTuningSnapshot = null;
 
 function renderSegments(){
   segmentsEl.innerHTML = '';
@@ -445,13 +548,16 @@ function playChime(type){
   try{
     const ctx = getAudioCtx();
     const t0 = ctx.currentTime + 0.02;
+    const tuning = CFG.soundTuning[type];
+    const energyMult = (tuning && tuning.energy) || 1;
     function tone(freq, start, dur, wave, peak){
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       osc.type = wave || 'sine';
       osc.frequency.value = freq;
+      const p = (peak || 0.3) * energyMult;
       g.gain.setValueAtTime(0.0001, t0+start);
-      g.gain.exponentialRampToValueAtTime(peak || 0.3, t0+start+0.02);
+      g.gain.exponentialRampToValueAtTime(p, t0+start+0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, t0+start+dur);
       osc.connect(g).connect(ctx.destination);
       osc.start(t0+start); osc.stop(t0+start+dur+0.05);
@@ -484,9 +590,8 @@ function getNoiseBuffer(ctx){
   return buf;
 }
 function phaseEnergy(){
-  if(currentPhaseType === 'intensity') return 1.35;
-  if(currentPhaseType === 'recovery') return 0.5;
-  return 1;
+  const t = CFG.soundTuning[currentPhaseType];
+  return (t && t.energy) || 1;
 }
 function playKick(t){
   const ctx = getAudioCtx();
@@ -570,7 +675,6 @@ function musicStepTick(){
   const stepMs = (60 / currentTempo / 2) * 1000;
   musicTimer = setTimeout(musicStepTick, stepMs);
 }
-const TEMPO_BY_PHASE = { warmup:104, intensity:172, recovery:80, cooldown:100, end:0 };
 function startMusic(){
   if(!CFG.musicEnabled || musicTimer) return;
   musicStep = 0;
@@ -581,7 +685,8 @@ function stopMusic(){
 }
 function setMusicTempo(type){
   currentPhaseType = type;
-  currentTempo = TEMPO_BY_PHASE[type] || 100;
+  const t = CFG.soundTuning[type];
+  currentTempo = (t && t.tempo) || 100;
 }
 function duckMusicDuring(utterance){
   duckFactor = 0.22;
@@ -845,12 +950,71 @@ cfgSave.addEventListener('click', ()=>{
   const weightKg = (w && w > 0) ? w : null;
   const musicEnabled = cfgMusic.checked;
   const musicVolume = parseFloat(cfgMusicVol.value) || 0;
-  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, rounds, weightKg, musicEnabled, musicVolume };
+  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, rounds, weightKg, musicEnabled, musicVolume, soundTuning: CFG.soundTuning };
   saveConfig(CFG);
   closeSettings();
   reset();
 });
 settingsBtn.addEventListener('click', openSettings);
+
+// ---------- Sound tuning sub-modal ----------
+function refreshSoundGroupUI(groupEl){
+  const phase = groupEl.dataset.phase;
+  const tuning = CFG.soundTuning[phase];
+  const tempoInput = groupEl.querySelector('.tempo');
+  const energyInput = groupEl.querySelector('.energy');
+  tempoInput.value = tuning.tempo;
+  energyInput.value = tuning.energy;
+  groupEl.querySelector('.tempoVal').textContent = `${tuning.tempo} BPM`;
+  groupEl.querySelector('.energyVal').textContent = `x${tuning.energy.toFixed(2)}`;
+}
+soundGroups.forEach(groupEl=>{
+  const phase = groupEl.dataset.phase;
+  const tempoInput = groupEl.querySelector('.tempo');
+  const energyInput = groupEl.querySelector('.energy');
+  tempoInput.addEventListener('input', ()=>{
+    CFG.soundTuning[phase].tempo = parseFloat(tempoInput.value);
+    groupEl.querySelector('.tempoVal').textContent = `${tempoInput.value} BPM`;
+  });
+  energyInput.addEventListener('input', ()=>{
+    CFG.soundTuning[phase].energy = parseFloat(energyInput.value);
+    groupEl.querySelector('.energyVal').textContent = `x${parseFloat(energyInput.value).toFixed(2)}`;
+  });
+  groupEl.querySelector('.previewBtn').addEventListener('click', ()=>{
+    const savedType = currentPhaseType, savedTempo = currentTempo, savedEnabled = CFG.musicEnabled;
+    currentPhaseType = phase;
+    currentTempo = CFG.soundTuning[phase].tempo;
+    CFG.musicEnabled = true;
+    playChime(phase);
+    startMusic();
+    setTimeout(()=>{
+      stopMusic();
+      currentPhaseType = savedType;
+      currentTempo = savedTempo;
+      CFG.musicEnabled = savedEnabled;
+    }, 1800);
+  });
+});
+function openSoundTuning(){
+  soundTuningSnapshot = JSON.parse(JSON.stringify(CFG.soundTuning));
+  soundGroups.forEach(refreshSoundGroupUI);
+  settingsOverlay.classList.remove('active');
+  soundOverlay.classList.add('active');
+}
+function closeSoundTuning(){
+  stopMusic();
+  soundOverlay.classList.remove('active');
+  settingsOverlay.classList.add('active');
+}
+openSoundTuningBtn.addEventListener('click', openSoundTuning);
+soundCancel.addEventListener('click', ()=>{
+  CFG.soundTuning = soundTuningSnapshot;
+  closeSoundTuning();
+});
+soundSave.addEventListener('click', ()=>{
+  saveConfig(CFG);
+  closeSoundTuning();
+});
 
 startBtn.addEventListener('click', start);
 pauseBtn.addEventListener('click', pause);
