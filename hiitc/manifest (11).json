@@ -1,0 +1,38 @@
+{
+  "name": "HIIT Running",
+  "short_name": "HIIT",
+  "description": "Cronómetro con avisos de voz para sesiones de HIIT corriendo: calentamiento, 8 series de intensidad/recuperación y trote suave.",
+  "start_url": "/mi-lista/hiit/index.html",
+  "scope": "/mi-lista/hiit/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
