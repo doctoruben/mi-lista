@@ -163,7 +163,7 @@
 
 <div class="app">
   <div class="eyebrow">Sesión de carrera</div>
-  <h1>HIIT · 8 series</h1>
+  <h1 id="mainTitle">HIIT · 8 series</h1>
 
   <div class="card">
     <div class="phase-label" id="phaseLabel">Preparado</div>
@@ -197,7 +197,7 @@
     </div>
   </div>
 
- 
+
 </div>
 
 <!-- Full-screen touch lock -->
@@ -230,6 +230,10 @@
     <div class="field">
       <label for="cfgRecovery">Recuperación (segundos)</label>
       <input type="number" id="cfgRecovery" min="5" max="600" step="5">
+    </div>
+    <div class="field">
+      <label for="cfgRounds">Número de series (intensidad/recuperación)</label>
+      <input type="number" id="cfgRounds" min="1" max="30" step="1">
     </div>
     <div class="field">
       <label for="cfgCooldown">Trote suave / enfriamiento (minutos)</label>
@@ -271,7 +275,7 @@ keepAliveAudio.loop = true;
 keepAliveAudio.volume = 0.01;
 
 // ---------- Config (persisted locally) ----------
-const DEFAULT_CFG = { warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, weightKg:null, musicEnabled:true, musicVolume:0.35 };
+const DEFAULT_CFG = { warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, rounds:8, weightKg:null, musicEnabled:true, musicVolume:0.35 };
 function loadConfig(){
   try{
     const raw = localStorage.getItem('hiit-config');
@@ -293,8 +297,8 @@ function kcalForSeconds(type, seconds){
 function buildPhases(cfg){
   const phases = [];
   phases.push({type:'warmup', duration:cfg.warmupMin*60, label:'Calentamiento', say:'Empezando calentamiento'});
-  for(let i=1;i<=8;i++){
-    phases.push({type:'intensity', duration:cfg.intensitySec, label:'Intensidad máxima', round:i, say:`Serie ${i} de 8. Intensidad máxima.`});
+  for(let i=1;i<=cfg.rounds;i++){
+    phases.push({type:'intensity', duration:cfg.intensitySec, label:'Intensidad máxima', round:i, say:`Serie ${i} de ${cfg.rounds}. Intensidad máxima.`});
     phases.push({type:'recovery', duration:cfg.recoverySec, label:'Recuperación', round:i, say:'Recuperación.'});
   }
   phases.push({type:'cooldown', duration:cfg.cooldownMin*60, label:'Trote suave', say:'Trote suave.'});
@@ -309,6 +313,7 @@ const phaseLabelEl = document.getElementById('phaseLabel');
 const roundLabelEl = document.getElementById('roundLabel');
 const timerEl = document.getElementById('timer');
 const kcalRowEl = document.getElementById('kcalRow');
+const mainTitleEl = document.getElementById('mainTitle');
 const segmentsEl = document.getElementById('segments');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
@@ -330,6 +335,7 @@ const settingsOverlay = document.getElementById('settingsOverlay');
 const cfgWarmup = document.getElementById('cfgWarmup');
 const cfgIntensity = document.getElementById('cfgIntensity');
 const cfgRecovery = document.getElementById('cfgRecovery');
+const cfgRounds = document.getElementById('cfgRounds');
 const cfgCooldown = document.getElementById('cfgCooldown');
 const cfgWeight = document.getElementById('cfgWeight');
 const cfgMusic = document.getElementById('cfgMusic');
@@ -350,9 +356,10 @@ function renderSegments(){
   });
 }
 function planSummary(){
-  return `${CFG.warmupMin}' calentamiento · 8×(${CFG.intensitySec}"/${CFG.recoverySec}") · ${CFG.cooldownMin}' trote suave`;
+  return `${CFG.warmupMin}' calentamiento · ${CFG.rounds}×(${CFG.intensitySec}"/${CFG.recoverySec}") · ${CFG.cooldownMin}' trote suave`;
 }
 renderSegments();
+mainTitleEl.textContent = `HIIT · ${CFG.rounds} series`;
 roundLabelEl.textContent = planSummary();
 
 // ---------- State ----------
@@ -445,10 +452,10 @@ function playChime(type){
       osc.start(t0+start); osc.stop(t0+start+dur+0.05);
     }
     switch(type){
-      case 'warmup': tone(523,0,0.18); tone(659,0.15,0.22); break;
-      case 'intensity': tone(880,0,0.10,'square',0.32); tone(1046,0.12,0.10,'square',0.32); tone(1318,0.24,0.18,'square',0.36); break;
-      case 'recovery': tone(659,0,0.35,'sine',0.26); tone(494,0.25,0.4,'sine',0.22); break;
-      case 'cooldown': tone(784,0,0.2); tone(587,0.18,0.3); break;
+      case 'warmup': tone(523,0,0.20,'sine',0.32); tone(659,0.17,0.26,'sine',0.32); break;
+      case 'intensity': tone(880,0,0.08,'square',0.42); tone(1046,0.09,0.08,'square',0.42); tone(1318,0.18,0.08,'square',0.44); tone(1568,0.27,0.24,'square',0.48); break;
+      case 'recovery': tone(659,0,0.5,'sine',0.20); tone(494,0.42,0.65,'sine',0.16); break;
+      case 'cooldown': tone(784,0,0.22,'sine',0.3); tone(587,0.19,0.32,'sine',0.28); break;
       case 'end': tone(659,0,0.15); tone(784,0.14,0.15); tone(988,0.28,0.15); tone(1318,0.42,0.35); break;
       case 'minute': tone(740,0,0.12,'sine',0.16); break;
     }
@@ -459,6 +466,7 @@ function playChime(type){
 let musicTimer = null;
 let musicStep = 0;
 let currentTempo = 100;
+let currentPhaseType = 'warmup';
 let duckFactor = 1;
 let noiseBuffer = null;
 
@@ -470,6 +478,11 @@ function getNoiseBuffer(ctx){
   noiseBuffer = buf;
   return buf;
 }
+function phaseEnergy(){
+  if(currentPhaseType === 'intensity') return 1.35;
+  if(currentPhaseType === 'recovery') return 0.5;
+  return 1;
+}
 function playKick(t){
   const ctx = getAudioCtx();
   const osc = ctx.createOscillator();
@@ -477,7 +490,7 @@ function playKick(t){
   osc.type = 'sine';
   osc.frequency.setValueAtTime(150, t);
   osc.frequency.exponentialRampToValueAtTime(38, t+0.12);
-  const vol = 0.55 * CFG.musicVolume * duckFactor;
+  const vol = 0.55 * CFG.musicVolume * duckFactor * phaseEnergy();
   gain.gain.setValueAtTime(vol, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t+0.16);
   osc.connect(gain).connect(ctx.destination);
@@ -490,7 +503,7 @@ function playHat(t, level){
   const hp = ctx.createBiquadFilter();
   hp.type = 'highpass'; hp.frequency.value = 7000;
   const gain = ctx.createGain();
-  const vol = level * CFG.musicVolume * duckFactor;
+  const vol = level * CFG.musicVolume * duckFactor * phaseEnergy();
   gain.gain.setValueAtTime(vol, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t+0.04);
   src.connect(hp).connect(gain).connect(ctx.destination);
@@ -503,7 +516,7 @@ function playClap(t){
   const bp = ctx.createBiquadFilter();
   bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.2;
   const gain = ctx.createGain();
-  const vol = 0.35 * CFG.musicVolume * duckFactor;
+  const vol = 0.35 * CFG.musicVolume * duckFactor * phaseEnergy();
   gain.gain.setValueAtTime(vol, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t+0.15);
   src.connect(bp).connect(gain).connect(ctx.destination);
@@ -517,7 +530,7 @@ function playBass(t, freq){
   const gain = ctx.createGain();
   osc.type = 'sawtooth';
   osc.frequency.value = freq;
-  const vol = 0.22 * CFG.musicVolume * duckFactor;
+  const vol = 0.22 * CFG.musicVolume * duckFactor * phaseEnergy();
   gain.gain.setValueAtTime(vol, t);
   gain.gain.exponentialRampToValueAtTime(0.001, t+0.35);
   osc.connect(lp).connect(gain).connect(ctx.destination);
@@ -528,16 +541,31 @@ function musicStepTick(){
   const ctx = getAudioCtx();
   const t = ctx.currentTime + 0.02;
   const s = musicStep % 16;
-  if(s % 4 === 0) playKick(t);
-  playHat(t, s % 2 === 0 ? 0.16 : 0.07);
-  if(s === 4 || s === 12) playClap(t);
-  if(s === 0) playBass(t, 98);
-  if(s === 8) playBass(t, 130.8);
+
+  if(currentPhaseType === 'intensity'){
+    // fast, dense, driving — kick on every beat, tight hats, frequent claps, busy bass
+    if(s % 2 === 0) playKick(t);
+    playHat(t, 0.22);
+    if(s === 4 || s === 8 || s === 12) playClap(t);
+    if(s % 4 === 0) playBass(t, s % 8 === 0 ? 98 : 130.8);
+  } else if(currentPhaseType === 'recovery'){
+    // sparse, soft, spacious — no kick, gentle hat, no clap, slow pad-like bass
+    if(s === 0 || s === 8) playBass(t, 82.4);
+    if(s === 4 || s === 12) playHat(t, 0.06);
+  } else {
+    // warmup / cooldown — steady, normal, moderate energy
+    if(s % 4 === 0) playKick(t);
+    playHat(t, s % 2 === 0 ? 0.15 : 0.06);
+    if(s === 4 || s === 12) playClap(t);
+    if(s === 0) playBass(t, 98);
+    if(s === 8) playBass(t, 130.8);
+  }
+
   musicStep++;
   const stepMs = (60 / currentTempo / 2) * 1000;
   musicTimer = setTimeout(musicStepTick, stepMs);
 }
-const TEMPO_BY_PHASE = { warmup:100, intensity:146, recovery:112, cooldown:96, end:0 };
+const TEMPO_BY_PHASE = { warmup:104, intensity:172, recovery:80, cooldown:100, end:0 };
 function startMusic(){
   if(!CFG.musicEnabled || musicTimer) return;
   musicStep = 0;
@@ -547,6 +575,7 @@ function stopMusic(){
   clearTimeout(musicTimer); musicTimer = null;
 }
 function setMusicTempo(type){
+  currentPhaseType = type;
   currentTempo = TEMPO_BY_PHASE[type] || 100;
 }
 function duckMusicDuring(utterance){
@@ -626,9 +655,9 @@ function renderPhase(){
   const p = PHASES[phaseIndex];
   document.documentElement.style.setProperty('--phase-color', colorFor(p.type));
   phaseLabelEl.textContent = p.label;
-  lockPhaseLabel.textContent = p.label;
-  roundLabelEl.textContent = p.round ? `Serie ${p.round} de 8` : (p.type==='end' ? 'Sesión completada' : planSummary());
-  updateMediaSession(p.round ? `${p.label} · Serie ${p.round}/8` : p.label);
+  lockPhaseLabel.textContent = p.round ? `${p.label} · Serie ${p.round}/${CFG.rounds}` : p.label;
+  roundLabelEl.textContent = p.round ? `Serie ${p.round} de ${CFG.rounds}` : (p.type==='end' ? 'Sesión completada' : planSummary());
+  updateMediaSession(p.round ? `${p.label} · Serie ${p.round}/${CFG.rounds}` : p.label);
   setMusicTempo(p.type);
   if(p.type === 'end') stopMusic(); else startMusic();
 }
@@ -756,6 +785,7 @@ function reset(){
   PHASES = buildPhases(CFG);
   TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
   renderSegments();
+  mainTitleEl.textContent = `HIIT · ${CFG.rounds} series`;
   roundLabelEl.textContent = planSummary();
   timerEl.textContent = fmt(TOTAL_SECONDS); timerEl.style.color = '';
   updateKcalDisplay(0);
@@ -791,6 +821,7 @@ function openSettings(){
   cfgWarmup.value = CFG.warmupMin;
   cfgIntensity.value = CFG.intensitySec;
   cfgRecovery.value = CFG.recoverySec;
+  cfgRounds.value = CFG.rounds;
   cfgCooldown.value = CFG.cooldownMin;
   cfgWeight.value = CFG.weightKg || '';
   cfgMusic.checked = CFG.musicEnabled;
@@ -803,12 +834,13 @@ cfgSave.addEventListener('click', ()=>{
   const warmupMin = Math.max(0, parseFloat(cfgWarmup.value) || 0);
   const intensitySec = Math.max(5, parseFloat(cfgIntensity.value) || DEFAULT_CFG.intensitySec);
   const recoverySec = Math.max(5, parseFloat(cfgRecovery.value) || DEFAULT_CFG.recoverySec);
+  const rounds = Math.max(1, Math.min(30, parseInt(cfgRounds.value) || DEFAULT_CFG.rounds));
   const cooldownMin = Math.max(0, parseFloat(cfgCooldown.value) || 0);
   const w = parseFloat(cfgWeight.value);
   const weightKg = (w && w > 0) ? w : null;
   const musicEnabled = cfgMusic.checked;
   const musicVolume = parseFloat(cfgMusicVol.value) || 0;
-  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, weightKg, musicEnabled, musicVolume };
+  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, rounds, weightKg, musicEnabled, musicVolume };
   saveConfig(CFG);
   closeSettings();
   reset();
