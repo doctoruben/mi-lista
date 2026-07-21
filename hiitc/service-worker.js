@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hiit-running-v1';
+const CACHE_NAME = 'hiit-running-v2';
 const SCOPE = '/mi-lista/hiit/';
 const ASSETS = [
   SCOPE,
