@@ -1,16 +1,24 @@
-const CACHE_NAME = 'hiit-running-vk';
+const CACHE_NAME = 'hiit-running-v13';
 const SCOPE = '/mi-lista/hiit/';
 const ASSETS = [
   SCOPE,
   SCOPE + 'index.html',
   SCOPE + 'manifest.json',
+  SCOPE + 'voice-clips.js',
   SCOPE + 'icon-192.png',
   SCOPE + 'icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await Promise.all(ASSETS.map(async (url) => {
+        const response = await fetch(url, { cache: 'reload' });
+        if (response && response.ok) {
+          await cache.put(url, response);
+        }
+      }));
+    }).then(() => self.skipWaiting())
   );
 });
 
