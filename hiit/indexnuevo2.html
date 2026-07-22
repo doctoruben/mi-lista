@@ -224,15 +224,12 @@
       <label for="autoLock">Bloquear automáticamente al empezar</label>
     </div>
 
-    <div class="testrow">
-      <button id="testBtn">Probar voz y sonido</button>
-    </div>
+   
 
     <div class="wake-warning" id="wakeWarning">
       ⚠️ Tu navegador no admite mantener la pantalla activa. Deja el móvil con la pantalla encendida durante la sesión.
     </div>
   </div>
-
 
 </div>
 
@@ -962,6 +959,7 @@ async function start(){
     remainingAtPause = null;
     if(!tickHandle) tickHandle = setInterval(tick, 200);
     sayResume();
+    keepAliveAudio.play().catch(()=>{});
     await requestWakeLock();
     requestAppFullscreen();
     startMusic();
@@ -976,6 +974,7 @@ function pause(){
   startBtn.disabled = false; startBtn.textContent = 'Reanudar'; pauseBtn.disabled = true;
   disengageLock();
   stopMusic();
+  keepAliveAudio.pause();
   if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 }
 function stop(finished){
