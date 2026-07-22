@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>HIIT Running</title>
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --card-2:#233047;
+    --text:#e2e8f0;
+    --muted:#7c8aa5;
+    --warmup:#38bdf8;
+    --intensity:#f43f5e;
+    --recovery:#34d399;
+    --cooldown:#38bdf8;
+    --end:#facc15;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:20px;
+    overscroll-behavior:none;
+  }
+  .app{ width:100%; max-width:420px; }
+  .eyebrow{
+    font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); text-align:center; margin-bottom:6px;
+  }
+  h1{
+    font-family:'Bebas Neue',sans-serif; font-size:34px; letter-spacing:.03em;
+    text-align:center; margin:0 0 22px; color:var(--text);
+  }
+  .card{
+    background:var(--card); border-radius:20px; padding:26px 22px 22px;
+    box-shadow:0 20px 40px -20px rgba(0,0,0,.6); border:1px solid rgba(255,255,255,.04);
+  }
+  .phase-label{
+    text-align:center; font-size:15px; font-weight:600; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--phase-color, var(--muted));
+    margin-bottom:2px; transition:color .3s ease;
+  }
+  .round-label{ text-align:center; font-size:13px; color:var(--muted); min-height:18px; margin-bottom:6px; }
+  .timer{
+    font-family:'Space Mono',monospace; font-weight:700; font-size:78px;
+    text-align:center; line-height:1; letter-spacing:-.02em;
+    color:var(--phase-color, var(--text)); transition:color .3s ease;
+    margin:8px 0 6px; font-variant-numeric:tabular-nums;
+  }
+  .kcal-row{
+    text-align:center; font-size:13px; color:var(--muted); margin-bottom:18px;
+    min-height:18px;
+  }
+  .kcal-row b{ color:var(--text); font-variant-numeric:tabular-nums; }
+  .kcal-row a{ color:var(--warmup); text-decoration:underline; cursor:pointer; }
+
+  .segments{ display:flex; gap:3px; margin-bottom:22px; height:8px; }
+  .seg{ flex:1; background:var(--card-2); border-radius:3px; overflow:hidden; position:relative; }
+  .seg.warmup, .seg.cooldown{flex-grow:2;}
+  .seg .fill{ position:absolute; left:0; top:0; bottom:0; width:0%; border-radius:3px; }
+  .seg.warmup .fill, .seg.cooldown .fill{background:var(--warmup);}
+  .seg.intensity .fill{background:var(--intensity);}
+  .seg.recovery .fill{background:var(--recovery);}
+  .seg.completed .fill{width:100% !important;}
+
+  .controls{ display:flex; gap:10px; }
+  button{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:15px; border:none;
+    border-radius:12px; padding:15px 0; flex:1; cursor:pointer;
+    transition:transform .1s ease, opacity .2s ease;
+  }
+  button:active{transform:scale(.97);}
+  #startBtn{background:var(--recovery); color:#04231a;}
+  #pauseBtn{background:var(--card-2); color:var(--text);}
+  #resetBtn{background:var(--card-2); color:var(--text);}
+  #lockBtn{background:var(--card-2); color:var(--text);}
+  #settingsBtn{background:var(--card-2); color:var(--text);}
+  #historyBtn{background:var(--card-2); color:var(--text);}
+  button:disabled{opacity:.35; cursor:default;}
+  .row2{ display:flex; gap:10px; margin-top:10px; }
+
+  .options{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:16px; font-size:13px; color:var(--muted);
+  }
+  .options input{ width:16px; height:16px; }
+
+  .testrow{ text-align:center; margin-top:10px; }
+  .testrow button{
+    background:none; color:var(--muted); font-size:12px; padding:6px 10px;
+    text-decoration:underline; flex:none;
+  }
+  .note{ margin-top:18px; font-size:11.5px; line-height:1.5; color:var(--muted); text-align:center; padding:0 6px; }
+  .wake-warning{ display:none; margin-top:10px; font-size:11.5px; color:#fbbf24; text-align:center; }
+
+  /* ---- Lock overlay ---- */
+  #lockOverlay{
+    position:fixed; inset:0; background:rgba(15,23,42,.94);
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    z-index:999; padding:24px; text-align:center; touch-action:none;
+  }
+  #lockOverlay.active{ display:flex; }
+  .lock-phase{
+    font-size:14px; text-transform:uppercase; letter-spacing:.08em; font-weight:600;
+    color:var(--phase-color, var(--muted)); margin-bottom:4px;
+  }
+  .lock-timer{
+    font-family:'Space Mono',monospace; font-weight:700; font-size:64px;
+    color:var(--phase-color, var(--text)); margin-bottom:6px; font-variant-numeric:tabular-nums;
+  }
+  .lock-kcal{ font-size:13px; color:var(--muted); margin-bottom:22px; }
+  .lock-hint{
+    width:120px; height:120px; border-radius:50%; border:3px solid var(--card-2);
+    display:flex; align-items:center; justify-content:center; font-size:36px;
+    position:relative; margin-bottom:18px;
+  }
+  .lock-text{ font-size:13px; color:var(--muted); max-width:240px; }
+
+  /* ---- Settings modal ---- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,23,42,.85);
+    display:none; align-items:flex-start; justify-content:center; z-index:998; padding:20px;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .modal-overlay.active{ display:flex; }
+  .modal-card{
+    background:var(--card); border-radius:18px; padding:24px 22px; width:100%; max-width:360px;
+    border:1px solid rgba(255,255,255,.06);
+    margin:auto 0;
+    max-height:calc(100vh - 40px);
+    max-height:calc(100dvh - 40px);
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  .modal-card h2{
+    font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:.03em; margin:0 0 18px; text-align:center;
+  }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px; }
+  .field input{
+    width:100%; background:var(--card-2); border:1px solid rgba(255,255,255,.06); color:var(--text);
+    border-radius:10px; padding:11px 12px; font-size:15px; font-family:'Inter',sans-serif;
+  }
+  .field .hint{ font-size:11px; color:var(--muted); margin-top:4px; }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; }
+  #cfgCancel, #soundCancel{ background:var(--card-2); color:var(--text); }
+  #cfgSave, #soundSave{ background:var(--recovery); color:#04231a; }
+
+  .sound-group{
+    background:var(--card-2); border-radius:14px; padding:14px 14px 16px; margin-bottom:14px;
+  }
+  .sound-group-title{ font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
+  .sound-group .field{ margin-bottom:10px; }
+  .sound-group .field label{ display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .sound-group .val{ color:var(--text); font-variant-numeric:tabular-nums; }
+  .previewBtn{
+    background:transparent; border:1px solid rgba(255,255,255,.12); color:var(--text);
+    padding:8px 0; font-size:12.5px; font-weight:600; width:100%; border-radius:9px;
+  }
+
+  .history-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card-2); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+  }
+  .history-item .h-date{ font-size:12.5px; color:var(--text); font-weight:600; }
+  .history-item .h-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .history-item .h-kcal{ font-size:15px; font-weight:700; color:var(--intensity); white-space:nowrap; }
+  .history-empty{ text-align:center; color:var(--muted); font-size:13px; padding:20px 0; }
+  #historyClear{ background:var(--card-2); color:#f87171; }
+  #historyClose{ background:var(--recovery); color:#04231a; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="eyebrow">Sesión de carrera</div>
+  <h1 id="mainTitle">HIIT · 8 series</h1>
+
+  <div class="card">
+    <div class="phase-label" id="phaseLabel">Preparado</div>
+    <div class="round-label" id="roundLabel"></div>
+    <div class="timer" id="timer">36:00</div>
+    <div class="kcal-row" id="kcalRow"></div>
+
+    <div class="segments" id="segments"></div>
+
+    <div class="controls">
+      <button id="startBtn">Empezar</button>
+      <button id="pauseBtn" disabled>Pausa</button>
+      <button id="resetBtn" disabled>Reiniciar</button>
+    </div>
+    <div class="row2">
+      <button id="lockBtn" disabled>🔒 Bloquear pantalla</button>
+      <button id="settingsBtn">⚙️ Configuración</button>
+    </div>
+    <div class="row2">
+      <button id="historyBtn">📊 Historial de sesiones</button>
+    </div>
+
+    <div class="options">
+      <input type="checkbox" id="mainMusicToggle" checked>
+      <label for="mainMusicToggle">Activar música</label>
+    </div>
+    <div class="options">
+      <input type="checkbox" id="autoLock" checked>
+      <label for="autoLock">Bloquear automáticamente al empezar</label>
+    </div>
+
+   
+
+    <div class="wake-warning" id="wakeWarning">
+      ⚠️ Tu navegador no admite mantener la pantalla activa. Deja el móvil con la pantalla encendida durante la sesión.
+    </div>
+  </div>
+
+</div>
+
+<!-- Full-screen touch lock -->
+<div id="lockOverlay">
+  <div class="lock-phase" id="lockPhaseLabel">Calentamiento</div>
+  <div class="lock-timer" id="lockTimer">10:00</div>
+  <div class="lock-kcal" id="lockKcal"></div>
+  <div class="lock-hint" id="lockHint">
+    🔒
+    <svg viewBox="0 0 120 120" width="126" height="126" style="position:absolute;inset:-3px;">
+      <circle cx="60" cy="60" r="58" fill="none" stroke="#34d399" stroke-width="4"
+        stroke-dasharray="364" stroke-dashoffset="364" id="lockRingCircle" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="lock-text">Pantalla bloqueada para evitar toques accidentales.<br>Mantén pulsado 1,5&nbsp;s para desbloquear.</div>
+</div>
+
+<!-- Settings modal -->
+<div id="settingsOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Configuración</h2>
+    <div class="field">
+      <label for="cfgWarmup">Calentamiento (minutos)</label>
+      <input type="number" id="cfgWarmup" min="0" max="60" step="1">
+    </div>
+    <div class="field">
+      <label for="cfgIntensity">Intensidad máxima (segundos)</label>
+      <input type="number" id="cfgIntensity" min="5" max="600" step="5">
+    </div>
+    <div class="field">
+      <label for="cfgRecovery">Recuperación (segundos)</label>
+      <input type="number" id="cfgRecovery" min="5" max="600" step="5">
+    </div>
+    <div class="field">
+      <label for="cfgRounds">Número de series (intensidad/recuperación)</label>
+      <input type="number" id="cfgRounds" min="1" max="30" step="1">
+    </div>
+    <div class="field">
+      <label for="cfgCooldown">Trote suave / enfriamiento (minutos)</label>
+      <input type="number" id="cfgCooldown" min="0" max="60" step="1">
+    </div>
+    <div class="field">
+      <label for="cfgWeight">Tu peso (kg)</label>
+      <input type="number" id="cfgWeight" min="20" max="250" step="0.5" placeholder="p. ej. 78">
+      <div class="hint">Se usa para estimar las calorías quemadas en tiempo real. Es una aproximación (basada en METs típicos), no una medida clínica.</div>
+    </div>
+    <div class="field">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="cfgMusic" style="width:16px;height:16px;"> Música motivadora de fondo
+      </label>
+      <div class="hint">Pista generada, sin canciones con copyright. Cambia el ritmo según la fase. La voz y los sonidos de cada fase suenan igual de bien la tengas activada o no.</div>
+    </div>
+    <div class="field">
+      <label for="cfgMusicVol">Volumen de la música</label>
+      <input type="range" id="cfgMusicVol" min="0" max="1" step="0.05">
+    </div>
+    <div class="field">
+      <button id="openSoundTuning" type="button" style="background:var(--card-2); color:var(--text); width:100%;">🎚️ Ajustar sonidos por fase</button>
+    </div>
+    <div class="modal-actions">
+      <button id="cfgCancel">Cancelar</button>
+      <button id="cfgSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sound tuning sub-modal -->
+<div id="soundOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Ajustar sonidos</h2>
+    <div class="hint" style="margin-bottom:16px; text-align:center;">
+      Velocidad = ritmo de la música. Intensidad = volumen/energía del ritmo y del pitido de esa fase.
+    </div>
+
+    <div class="sound-group" data-phase="warmup">
+      <div class="sound-group-title" style="color:var(--warmup);">Calentamiento</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">104 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x1.00</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="sound-group" data-phase="intensity">
+      <div class="sound-group-title" style="color:var(--intensity);">Intensidad máxima</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">172 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x1.35</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="sound-group" data-phase="recovery">
+      <div class="sound-group-title" style="color:var(--recovery);">Recuperación</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">80 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x0.50</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="sound-group" data-phase="cooldown">
+      <div class="sound-group-title" style="color:var(--cooldown);">Trote suave / enfriamiento</div>
+      <div class="field">
+        <label>Velocidad <span class="val tempoVal">100 BPM</span></label>
+        <input type="range" class="tempo" min="60" max="200" step="2">
+      </div>
+      <div class="field">
+        <label>Intensidad <span class="val energyVal">x1.00</span></label>
+        <input type="range" class="energy" min="0.3" max="2" step="0.05">
+      </div>
+      <button class="previewBtn" type="button">▶ Probar</button>
+    </div>
+
+    <div class="modal-actions">
+      <button id="soundCancel">Cancelar</button>
+      <button id="soundSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- History modal -->
+<div id="historyOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Historial de sesiones</h2>
+    <div id="historyList"></div>
+    <div class="modal-actions">
+      <button id="historyClear">Borrar historial</button>
+      <button id="historyClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="voice-clips.js"></script>
+<script>
+// ---------- Register service worker ----------
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js', {scope:'./'}).catch(()=>{});
+  });
+}
+
+// ---------- Background-friendly quiet audio loop (also enables Android media session) ----------
+const keepAliveAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
+keepAliveAudio.loop = true;
+keepAliveAudio.volume = 0.01;
+
+// ---------- Config (persisted locally) ----------
+const DEFAULT_CFG = {
+  warmupMin:10, intensitySec:30, recoverySec:90, cooldownMin:10, rounds:8, weightKg:null,
+  musicEnabled:true, musicVolume:0.35,
+  soundTuning: {
+    warmup:    { tempo:104, energy:1.0 },
+    intensity: { tempo:172, energy:1.35 },
+    recovery:  { tempo:80,  energy:0.5 },
+    cooldown:  { tempo:100, energy:1.0 }
+  }
+};
+function loadConfig(){
+  try{
+    const raw = localStorage.getItem('hiit-config');
+    if(!raw) return JSON.parse(JSON.stringify(DEFAULT_CFG));
+    const parsed = JSON.parse(raw);
+    const merged = {...DEFAULT_CFG, ...parsed};
+    merged.soundTuning = {...DEFAULT_CFG.soundTuning, ...(parsed.soundTuning || {})};
+    for(const key of Object.keys(DEFAULT_CFG.soundTuning)){
+      merged.soundTuning[key] = {...DEFAULT_CFG.soundTuning[key], ...((parsed.soundTuning||{})[key] || {})};
+    }
+    return merged;
+  }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_CFG)); }
+}
+function saveConfig(cfg){ localStorage.setItem('hiit-config', JSON.stringify(cfg)); }
+let CFG = loadConfig();
+
+// ---------- Session history ----------
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem('hiit-history') || '[]'); }
+  catch(e){ return []; }
+}
+function saveHistoryEntry(entry){
+  const history = loadHistory();
+  history.unshift(entry);
+  if(history.length > 50) history.length = 50;
+  localStorage.setItem('hiit-history', JSON.stringify(history));
+}
+
+// Approximate MET values per phase (used only for the live calorie estimate)
+const MET = { warmup:6, intensity:14, recovery:5, cooldown:6, end:0 };
+function kcalForSeconds(type, seconds){
+  if(!CFG.weightKg) return 0;
+  return (MET[type] * 3.5 * CFG.weightKg / 200) * (seconds/60);
+}
+
+// ---------- Build the workout plan from CFG ----------
+function buildPhases(cfg){
+  const phases = [];
+  phases.push({type:'warmup', duration:cfg.warmupMin*60, label:'Calentamiento', say:'Empezando calentamiento'});
+  for(let i=1;i<=cfg.rounds;i++){
+    phases.push({type:'intensity', duration:cfg.intensitySec, label:'Intensidad máxima', round:i, say:`Serie ${i} de ${cfg.rounds}. Intensidad máxima.`});
+    phases.push({type:'recovery', duration:cfg.recoverySec, label:'Recuperación', round:i, say:'Recuperación.'});
+  }
+  phases.push({type:'cooldown', duration:cfg.cooldownMin*60, label:'Trote suave', say:'Trote suave.'});
+  phases.push({type:'end', duration:0, label:'Fin de sesión', say:'Fin de sesión. Buen trabajo.'});
+  return phases;
+}
+let PHASES = buildPhases(CFG);
+let TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
+
+// ---------- DOM refs ----------
+const phaseLabelEl = document.getElementById('phaseLabel');
+const roundLabelEl = document.getElementById('roundLabel');
+const timerEl = document.getElementById('timer');
+const kcalRowEl = document.getElementById('kcalRow');
+const mainTitleEl = document.getElementById('mainTitle');
+const segmentsEl = document.getElementById('segments');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const lockBtn = document.getElementById('lockBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const historyBtn = document.getElementById('historyBtn');
+const testBtn = document.getElementById('testBtn');
+const wakeWarning = document.getElementById('wakeWarning');
+const autoLockChk = document.getElementById('autoLock');
+const mainMusicToggle = document.getElementById('mainMusicToggle');
+mainMusicToggle.checked = CFG.musicEnabled;
+mainMusicToggle.addEventListener('change', ()=>{
+  CFG.musicEnabled = mainMusicToggle.checked;
+  saveConfig(CFG);
+  if(CFG.musicEnabled){
+    if(running && phaseIndex >= 0 && PHASES[phaseIndex].type !== 'end') startMusic();
+  } else {
+    stopMusic();
+  }
+});
+
+const lockOverlay = document.getElementById('lockOverlay');
+const lockPhaseLabel = document.getElementById('lockPhaseLabel');
+const lockTimer = document.getElementById('lockTimer');
+const lockKcal = document.getElementById('lockKcal');
+const lockHint = document.getElementById('lockHint');
+const lockRingCircle = document.getElementById('lockRingCircle');
+
+const settingsOverlay = document.getElementById('settingsOverlay');
+const cfgWarmup = document.getElementById('cfgWarmup');
+const cfgIntensity = document.getElementById('cfgIntensity');
+const cfgRecovery = document.getElementById('cfgRecovery');
+const cfgRounds = document.getElementById('cfgRounds');
+const cfgCooldown = document.getElementById('cfgCooldown');
+const cfgWeight = document.getElementById('cfgWeight');
+const cfgMusic = document.getElementById('cfgMusic');
+const cfgMusicVol = document.getElementById('cfgMusicVol');
+const cfgCancel = document.getElementById('cfgCancel');
+const cfgSave = document.getElementById('cfgSave');
+const openSoundTuningBtn = document.getElementById('openSoundTuning');
+
+const soundOverlay = document.getElementById('soundOverlay');
+const soundGroups = soundOverlay.querySelectorAll('.sound-group');
+const soundCancel = document.getElementById('soundCancel');
+const soundSave = document.getElementById('soundSave');
+let soundTuningSnapshot = null;
+
+function renderSegments(){
+  segmentsEl.innerHTML = '';
+  PHASES.filter(p=>p.type!=='end').forEach((p)=>{
+    const seg = document.createElement('div');
+    seg.className = 'seg ' + p.type;
+    seg.dataset.index = PHASES.indexOf(p);
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    seg.appendChild(fill);
+    segmentsEl.appendChild(seg);
+  });
+}
+function planSummary(){
+  return `${CFG.warmupMin}' calentamiento · ${CFG.rounds}×(${CFG.intensitySec}"/${CFG.recoverySec}") · ${CFG.cooldownMin}' trote suave`;
+}
+renderSegments();
+mainTitleEl.textContent = `HIIT · ${CFG.rounds} series`;
+roundLabelEl.textContent = planSummary();
+
+// ---------- State ----------
+let phaseIndex = -1;
+let phaseEndsAt = 0;
+let remainingAtPause = null;
+let tickHandle = null;
+let running = false;
+let wakeLock = null;
+let beepedSecond = null;
+let lastMinuteAnnounced = null;
+let kcalAccumulated = 0;
+let sessionStartTime = null;
+let roundsCompleted = 0;
+
+function fmt(sec){
+  sec = Math.max(0, Math.ceil(sec));
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function updateKcalDisplay(totalKcal){
+  if(!CFG.weightKg){
+    kcalRowEl.innerHTML = `<a id="kcalCfgLink">Configura tu peso para ver calorías en vivo</a>`;
+    document.getElementById('kcalCfgLink').addEventListener('click', openSettings);
+    lockKcal.textContent = '';
+  } else {
+    kcalRowEl.innerHTML = `🔥 <b>${Math.round(totalKcal)}</b> kcal (estimado)`;
+    lockKcal.textContent = `🔥 ${Math.round(totalKcal)} kcal`;
+  }
+}
+updateKcalDisplay(0);
+
+// ---------- Pre-recorded voice clips (survive screen lock, unlike speechSynthesis) ----------
+const decodedClipCache = {};
+function getClipBuffer(key){
+  if(decodedClipCache[key]) return decodedClipCache[key];
+  const ctx = getAudioCtx();
+  const promise = fetch(VOICE_CLIPS[key])
+    .then(r => r.arrayBuffer())
+    .then(buf => ctx.decodeAudioData(buf));
+  decodedClipCache[key] = promise;
+  return promise;
+}
+function preloadVoiceClips(){
+  if(!window.VOICE_CLIPS) return;
+  Object.keys(VOICE_CLIPS).forEach(getClipBuffer);
+}
+// numbers 1-60 -> clip key
+function digitClip(n){ return `num${Math.max(1, Math.min(60, Math.round(n)))}`; }
+
+async function playSequence(keys){
+  const ctx = getAudioCtx();
+  const buffers = await Promise.all(keys.map(getClipBuffer));
+  let t = ctx.currentTime + 0.05;
+  const gap = 0.06;
+  buffers.forEach(buf=>{
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    g.gain.value = 1;
+    src.buffer = buf;
+    src.connect(g).connect(ctx.destination);
+    src.start(t);
+    t += buf.duration + gap;
+  });
+  const totalDur = t - (ctx.currentTime + 0.05);
+  duckMusicFor(totalDur);
+  return totalDur;
+}
+function duckMusicFor(seconds){
+  duckFactor = 0.22;
+  clearTimeout(duckMusicFor._timer);
+  duckMusicFor._timer = setTimeout(()=>{ duckFactor = 1; }, (seconds+0.3)*1000);
+}
+
+function sayWarmupStart(){ playSequence(['warmup']); }
+function sayCooldownStart(){ playSequence(['cooldown']); }
+function sayRecoveryStart(){ playSequence(['recovery']); }
+function sayIntensityStart(round, totalRounds){
+  playSequence(['serie', digitClip(round), 'de', digitClip(totalRounds), 'intensity']);
+}
+function sayEnd(){ playSequence(['end']); }
+function sayResume(){ playSequence(['resume']); }
+function sayTest(){ playSequence(['test']); }
+function sayMinutesLeft(n){
+  if(n === 1) playSequence(['queda', 'num1', 'minuto']);
+  else playSequence(['quedan', digitClip(n), 'minutos']);
+}
+
+// ---------- Beep ----------
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
+function beep(freq=880, duration=0.12){
+  try{
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  }catch(e){}
+}
+function vibrate(pattern){ if(navigator.vibrate) navigator.vibrate(pattern); }
+
+// ---------- Phase chimes (Web Audio) — reliable even when speechSynthesis is suppressed in background ----------
+function playChime(type){
+  try{
+    const ctx = getAudioCtx();
+    const t0 = ctx.currentTime + 0.02;
+    const tuning = CFG.soundTuning[type];
+    const energyMult = (tuning && tuning.energy) || 1;
+    function tone(freq, start, dur, wave, peak){
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = wave || 'sine';
+      osc.frequency.value = freq;
+      const p = (peak || 0.3) * energyMult;
+      g.gain.setValueAtTime(0.0001, t0+start);
+      g.gain.exponentialRampToValueAtTime(p, t0+start+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+start+dur);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t0+start); osc.stop(t0+start+dur+0.05);
+    }
+    switch(type){
+      case 'warmup': tone(523,0,0.20,'sine',0.32); tone(659,0.17,0.26,'sine',0.32); break;
+      case 'intensity': tone(880,0,0.08,'square',0.42); tone(1046,0.09,0.08,'square',0.42); tone(1318,0.18,0.08,'square',0.44); tone(1568,0.27,0.24,'square',0.48); break;
+      case 'recovery': tone(659,0,0.5,'sine',0.20); tone(494,0.42,0.65,'sine',0.16); break;
+      case 'cooldown': tone(784,0,0.22,'sine',0.3); tone(587,0.19,0.32,'sine',0.28); break;
+      case 'end': tone(659,0,0.15); tone(784,0.14,0.15); tone(988,0.28,0.15); tone(1318,0.42,0.35); break;
+      case 'minute': tone(740,0,0.12,'sine',0.16); break;
+    }
+  }catch(e){}
+}
+
+// ---------- Generative background music (original, no copyrighted samples) ----------
+let musicTimer = null;
+let musicStep = 0;
+let currentTempo = 100;
+let currentPhaseType = 'warmup';
+let duckFactor = 1;
+let noiseBuffer = null;
+
+function getNoiseBuffer(ctx){
+  if(noiseBuffer) return noiseBuffer;
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = Math.random()*2-1;
+  noiseBuffer = buf;
+  return buf;
+}
+function phaseEnergy(){
+  const t = CFG.soundTuning[currentPhaseType];
+  return (t && t.energy) || 1;
+}
+function playKick(t){
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.exponentialRampToValueAtTime(38, t+0.12);
+  const vol = 0.55 * CFG.musicVolume * duckFactor * phaseEnergy();
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.16);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t); osc.stop(t+0.18);
+}
+function playHat(t, level){
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuffer(ctx);
+  const hp = ctx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 7000;
+  const gain = ctx.createGain();
+  const vol = level * CFG.musicVolume * duckFactor * phaseEnergy();
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.04);
+  src.connect(hp).connect(gain).connect(ctx.destination);
+  src.start(t); src.stop(t+0.05);
+}
+function playClap(t){
+  const ctx = getAudioCtx();
+  const src = ctx.createBufferSource();
+  src.buffer = getNoiseBuffer(ctx);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.2;
+  const gain = ctx.createGain();
+  const vol = 0.35 * CFG.musicVolume * duckFactor * phaseEnergy();
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.15);
+  src.connect(bp).connect(gain).connect(ctx.destination);
+  src.start(t); src.stop(t+0.16);
+}
+function playBass(t, freq){
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 500;
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.value = freq;
+  const vol = 0.22 * CFG.musicVolume * duckFactor * phaseEnergy();
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t+0.35);
+  osc.connect(lp).connect(gain).connect(ctx.destination);
+  osc.start(t); osc.stop(t+0.36);
+}
+function musicStepTick(){
+  if(!CFG.musicEnabled){ musicTimer = null; return; }
+  const ctx = getAudioCtx();
+  const t = ctx.currentTime + 0.02;
+  const s = musicStep % 16;
+
+  if(currentPhaseType === 'intensity'){
+    // fast, dense, driving — kick on every beat, tight hats, frequent claps, busy bass
+    if(s % 2 === 0) playKick(t);
+    playHat(t, 0.22);
+    if(s === 4 || s === 8 || s === 12) playClap(t);
+    if(s % 4 === 0) playBass(t, s % 8 === 0 ? 98 : 130.8);
+  } else if(currentPhaseType === 'recovery'){
+    // sparse, soft, spacious — no kick, gentle hat, no clap, slow pad-like bass
+    if(s === 0 || s === 8) playBass(t, 82.4);
+    if(s === 4 || s === 12) playHat(t, 0.06);
+  } else {
+    // warmup / cooldown — steady, normal, moderate energy
+    if(s % 4 === 0) playKick(t);
+    playHat(t, s % 2 === 0 ? 0.15 : 0.06);
+    if(s === 4 || s === 12) playClap(t);
+    if(s === 0) playBass(t, 98);
+    if(s === 8) playBass(t, 130.8);
+  }
+
+  musicStep++;
+  const stepMs = (60 / currentTempo / 2) * 1000;
+  musicTimer = setTimeout(musicStepTick, stepMs);
+}
+function startMusic(){
+  if(!CFG.musicEnabled || musicTimer) return;
+  musicStep = 0;
+  musicStepTick();
+}
+function stopMusic(){
+  clearTimeout(musicTimer); musicTimer = null;
+}
+function setMusicTempo(type){
+  currentPhaseType = type;
+  const t = CFG.soundTuning[type];
+  currentTempo = (t && t.tempo) || 100;
+}
+
+// ---------- Media Session ----------
+function updateMediaSession(label){
+  if('mediaSession' in navigator){
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: label, artist: 'HIIT Running', album: 'Sesión en curso'
+    });
+    navigator.mediaSession.playbackState = 'playing';
+  }
+}
+function setupMediaSessionHandlers(){
+  if(!('mediaSession' in navigator)) return;
+  try{
+    navigator.mediaSession.setActionHandler('play', () => {
+      if(remainingAtPause !== null) start();
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      if(running) pause();
+    });
+    navigator.mediaSession.setActionHandler('stop', () => {
+      if(phaseIndex !== -1) reset();
+    });
+  }catch(e){}
+}
+setupMediaSessionHandlers();
+
+// ---------- Wake Lock ----------
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeWarning.style.display = 'none';
+    } else { wakeWarning.style.display = 'block'; }
+  }catch(e){ wakeWarning.style.display = 'block'; }
+}
+document.addEventListener('visibilitychange', async ()=>{
+  if(running && document.visibilityState === 'visible'){
+    if(!wakeLock || wakeLock.released) await requestWakeLock();
+    if(!document.fullscreenElement) requestAppFullscreen();
+  }
+});
+
+// ---------- Fullscreen (hides browser chrome + most of the system nav bar) ----------
+function requestAppFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if(req) req.call(el).catch(()=>{});
+}
+function exitAppFullscreen(){
+  const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+  if(document.fullscreenElement && exit) exit.call(document).catch(()=>{});
+}
+document.addEventListener('fullscreenchange', ()=>{
+  // if the system kicked us out of fullscreen while a session is running, try to regain it
+  if(running && !document.fullscreenElement){
+    setTimeout(()=>{ if(running) requestAppFullscreen(); }, 300);
+  }
+});
+
+// ---------- UI update ----------
+function updateSegmentsUI(){
+  segmentsEl.querySelectorAll('.seg').forEach(seg=>{
+    const idx = parseInt(seg.dataset.index,10);
+    const fill = seg.querySelector('.fill');
+    if(idx < phaseIndex){
+      seg.classList.add('completed'); fill.style.width = '100%';
+    } else if(idx === phaseIndex){
+      seg.classList.remove('completed');
+      const p = PHASES[idx];
+      const remain = (phaseEndsAt - Date.now())/1000;
+      const pct = p.duration ? Math.min(100, Math.max(0, (1 - remain/p.duration) * 100)) : 100;
+      fill.style.width = pct + '%';
+    } else {
+      seg.classList.remove('completed'); fill.style.width = '0%';
+    }
+  });
+}
+function colorFor(type){
+  return {warmup:'var(--warmup)', intensity:'var(--intensity)', recovery:'var(--recovery)',
+          cooldown:'var(--cooldown)', end:'var(--end)'}[type] || 'var(--text)';
+}
+function renderPhase(){
+  const p = PHASES[phaseIndex];
+  document.documentElement.style.setProperty('--phase-color', colorFor(p.type));
+  phaseLabelEl.textContent = p.label;
+  lockPhaseLabel.textContent = p.round ? `${p.label} · Serie ${p.round}/${CFG.rounds}` : p.label;
+  roundLabelEl.textContent = p.round ? `Serie ${p.round} de ${CFG.rounds}` : (p.type==='end' ? 'Sesión completada' : planSummary());
+  updateMediaSession(p.round ? `${p.label} · Serie ${p.round}/${CFG.rounds}` : p.label);
+  setMusicTempo(p.type);
+  if(p.type === 'end') stopMusic(); else startMusic();
+}
+
+// ---------- Phase transitions ----------
+function startPhase(idx){
+  // bank the calories from the phase that just finished naturally
+  if(phaseIndex >= 0){
+    const prev = PHASES[phaseIndex];
+    kcalAccumulated += kcalForSeconds(prev.type, prev.duration);
+    if(prev.type === 'intensity') roundsCompleted++;
+  }
+  phaseIndex = idx;
+  const p = PHASES[phaseIndex];
+  renderPhase();
+  if(p.type === 'warmup') sayWarmupStart();
+  else if(p.type === 'intensity') sayIntensityStart(p.round, CFG.rounds);
+  else if(p.type === 'recovery') sayRecoveryStart();
+  else if(p.type === 'cooldown') sayCooldownStart();
+  else if(p.type === 'end') sayEnd();
+  playChime(p.type);
+  vibrate(p.type === 'intensity' ? [200,80,200] : p.type === 'recovery' ? [120] : [80]);
+  beepedSecond = null;
+  lastMinuteAnnounced = (p.type === 'warmup' || p.type === 'cooldown') ? Math.ceil(p.duration/60) : null;
+
+  if(p.type === 'end'){
+    timerEl.textContent = '00:00';
+    lockTimer.textContent = '00:00';
+    updateSegmentsUI();
+    updateKcalDisplay(kcalAccumulated);
+    stop(true);
+    return;
+  }
+  phaseEndsAt = Date.now() + p.duration*1000;
+  if(!tickHandle) tickHandle = setInterval(tick, 200);
+}
+
+function tick(){
+  const p = PHASES[phaseIndex];
+  const remain = (phaseEndsAt - Date.now())/1000;
+  const text = fmt(remain);
+  timerEl.textContent = text;
+  lockTimer.textContent = text;
+  updateSegmentsUI();
+
+  // per-minute voice cue during warmup / cooldown
+  if(p.type === 'warmup' || p.type === 'cooldown'){
+    const minutesLeft = Math.ceil(remain/60);
+    if(minutesLeft !== lastMinuteAnnounced && minutesLeft >= 1 && remain > 1){
+      lastMinuteAnnounced = minutesLeft;
+      sayMinutesLeft(minutesLeft);
+      playChime('minute');
+      vibrate([60]);
+    }
+  }
+
+  const elapsedInPhase = p.duration - Math.max(0, remain);
+  updateKcalDisplay(kcalAccumulated + kcalForSeconds(p.type, elapsedInPhase));
+
+  const remainInt = Math.ceil(remain);
+  if(remainInt <= 3 && remainInt >= 1 && remainInt !== beepedSecond && p.type !== 'end'){
+    beepedSecond = remainInt;
+    beep(remainInt === 1 ? 1100 : 700);
+  }
+  if(remain <= 0){
+    if(phaseIndex + 1 < PHASES.length) startPhase(phaseIndex + 1);
+    else stop(true);
+  }
+}
+
+// ---------- Controls ----------
+async function start(){
+  if(phaseIndex === -1){
+    running = true;
+    startBtn.disabled = true; pauseBtn.disabled = false; resetBtn.disabled = false; lockBtn.disabled = false;
+    settingsBtn.disabled = true; historyBtn.disabled = true;
+    sessionStartTime = Date.now();
+    roundsCompleted = 0;
+    getAudioCtx();
+    preloadVoiceClips();
+    keepAliveAudio.play().catch(()=>{});
+    await requestWakeLock();
+    requestAppFullscreen();
+    startPhase(0);
+    if(autoLockChk.checked) setTimeout(engageLock, 800);
+  } else if(remainingAtPause !== null){
+    running = true;
+    startBtn.disabled = true; pauseBtn.disabled = false;
+    phaseEndsAt = Date.now() + remainingAtPause*1000;
+    remainingAtPause = null;
+    if(!tickHandle) tickHandle = setInterval(tick, 200);
+    sayResume();
+    keepAliveAudio.play().catch(()=>{});
+    await requestWakeLock();
+    requestAppFullscreen();
+    startMusic();
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  }
+}
+function pause(){
+  if(!running || phaseIndex === -1) return;
+  running = false;
+  remainingAtPause = (phaseEndsAt - Date.now())/1000;
+  clearInterval(tickHandle); tickHandle = null;
+  startBtn.disabled = false; startBtn.textContent = 'Reanudar'; pauseBtn.disabled = true;
+  disengageLock();
+  stopMusic();
+  keepAliveAudio.pause();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+}
+function stop(finished){
+  running = false;
+  clearInterval(tickHandle); tickHandle = null;
+  keepAliveAudio.pause();
+  stopMusic();
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
+  startBtn.disabled = finished ? true : false;
+  pauseBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false; historyBtn.disabled = false;
+  disengageLock();
+  if(finished) exitAppFullscreen();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+  if(finished){
+    if(sessionStartTime){
+      saveHistoryEntry({
+        date: new Date().toISOString(),
+        roundsCompleted,
+        roundsPlanned: CFG.rounds,
+        totalDurationSec: Math.round((Date.now() - sessionStartTime)/1000),
+        kcal: Math.round(kcalAccumulated),
+        weightKg: CFG.weightKg
+      });
+      sessionStartTime = null;
+    }
+    phaseLabelEl.textContent = 'Fin de sesión';
+    roundLabelEl.textContent = '¡Sesión completada!';
+  }
+}
+function reset(){
+  clearInterval(tickHandle); tickHandle = null;
+  keepAliveAudio.pause();
+  stopMusic();
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
+  phaseIndex = -1; remainingAtPause = null; running = false; kcalAccumulated = 0;
+  startBtn.disabled = false; startBtn.textContent = 'Empezar';
+  pauseBtn.disabled = true; resetBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false; historyBtn.disabled = false;
+  document.documentElement.style.removeProperty('--phase-color');
+  phaseLabelEl.textContent = 'Preparado'; phaseLabelEl.style.color = '';
+  PHASES = buildPhases(CFG);
+  TOTAL_SECONDS = PHASES.reduce((a,p)=>a+p.duration,0);
+  renderSegments();
+  mainTitleEl.textContent = `HIIT · ${CFG.rounds} series`;
+  roundLabelEl.textContent = planSummary();
+  timerEl.textContent = fmt(TOTAL_SECONDS); timerEl.style.color = '';
+  updateKcalDisplay(0);
+  disengageLock();
+  mainMusicToggle.checked = CFG.musicEnabled;
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+}
+
+// ---------- Touch lock overlay ----------
+function engageLock(){ lockOverlay.classList.add('active'); }
+function disengageLock(){ lockOverlay.classList.remove('active'); resetHold(); }
+let holdTimer = null, holdStart = 0;
+const HOLD_MS = 1500;
+const RING_LEN = 364;
+function startHold(e){
+  e.preventDefault();
+  holdStart = Date.now();
+  lockRingCircle.style.transition = `stroke-dashoffset ${HOLD_MS}ms linear`;
+  lockRingCircle.style.strokeDashoffset = '0';
+  holdTimer = setTimeout(()=>{ disengageLock(); }, HOLD_MS);
+}
+function resetHold(){
+  clearTimeout(holdTimer); holdTimer = null;
+  lockRingCircle.style.transition = 'none';
+  lockRingCircle.style.strokeDashoffset = String(RING_LEN);
+}
+function cancelHold(){ if(Date.now() - holdStart < HOLD_MS){ resetHold(); } }
+lockHint.addEventListener('pointerdown', startHold);
+lockHint.addEventListener('pointerup', cancelHold);
+lockHint.addEventListener('pointerleave', cancelHold);
+lockOverlay.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
+
+// ---------- Settings modal ----------
+function openSettings(){
+  cfgWarmup.value = CFG.warmupMin;
+  cfgIntensity.value = CFG.intensitySec;
+  cfgRecovery.value = CFG.recoverySec;
+  cfgRounds.value = CFG.rounds;
+  cfgCooldown.value = CFG.cooldownMin;
+  cfgWeight.value = CFG.weightKg || '';
+  cfgMusic.checked = CFG.musicEnabled;
+  cfgMusicVol.value = CFG.musicVolume;
+  settingsOverlay.classList.add('active');
+}
+function closeSettings(){ settingsOverlay.classList.remove('active'); }
+cfgCancel.addEventListener('click', closeSettings);
+cfgSave.addEventListener('click', ()=>{
+  const warmupMin = Math.max(0, parseFloat(cfgWarmup.value) || 0);
+  const intensitySec = Math.max(5, parseFloat(cfgIntensity.value) || DEFAULT_CFG.intensitySec);
+  const recoverySec = Math.max(5, parseFloat(cfgRecovery.value) || DEFAULT_CFG.recoverySec);
+  const rounds = Math.max(1, Math.min(30, parseInt(cfgRounds.value) || DEFAULT_CFG.rounds));
+  const cooldownMin = Math.max(0, parseFloat(cfgCooldown.value) || 0);
+  const w = parseFloat(cfgWeight.value);
+  const weightKg = (w && w > 0) ? w : null;
+  const musicEnabled = cfgMusic.checked;
+  const musicVolume = parseFloat(cfgMusicVol.value) || 0;
+  CFG = { warmupMin, intensitySec, recoverySec, cooldownMin, rounds, weightKg, musicEnabled, musicVolume, soundTuning: CFG.soundTuning };
+  saveConfig(CFG);
+  closeSettings();
+  reset();
+});
+settingsBtn.addEventListener('click', openSettings);
+
+// ---------- Sound tuning sub-modal ----------
+function refreshSoundGroupUI(groupEl){
+  const phase = groupEl.dataset.phase;
+  const tuning = CFG.soundTuning[phase];
+  const tempoInput = groupEl.querySelector('.tempo');
+  const energyInput = groupEl.querySelector('.energy');
+  tempoInput.value = tuning.tempo;
+  energyInput.value = tuning.energy;
+  groupEl.querySelector('.tempoVal').textContent = `${tuning.tempo} BPM`;
+  groupEl.querySelector('.energyVal').textContent = `x${tuning.energy.toFixed(2)}`;
+}
+soundGroups.forEach(groupEl=>{
+  const phase = groupEl.dataset.phase;
+  const tempoInput = groupEl.querySelector('.tempo');
+  const energyInput = groupEl.querySelector('.energy');
+  tempoInput.addEventListener('input', ()=>{
+    CFG.soundTuning[phase].tempo = parseFloat(tempoInput.value);
+    groupEl.querySelector('.tempoVal').textContent = `${tempoInput.value} BPM`;
+  });
+  energyInput.addEventListener('input', ()=>{
+    CFG.soundTuning[phase].energy = parseFloat(energyInput.value);
+    groupEl.querySelector('.energyVal').textContent = `x${parseFloat(energyInput.value).toFixed(2)}`;
+  });
+  groupEl.querySelector('.previewBtn').addEventListener('click', ()=>{
+    const savedType = currentPhaseType, savedTempo = currentTempo, savedEnabled = CFG.musicEnabled;
+    currentPhaseType = phase;
+    currentTempo = CFG.soundTuning[phase].tempo;
+    CFG.musicEnabled = true;
+    playChime(phase);
+    startMusic();
+    setTimeout(()=>{
+      stopMusic();
+      currentPhaseType = savedType;
+      currentTempo = savedTempo;
+      CFG.musicEnabled = savedEnabled;
+    }, 1800);
+  });
+});
+function openSoundTuning(){
+  soundTuningSnapshot = JSON.parse(JSON.stringify(CFG.soundTuning));
+  soundGroups.forEach(refreshSoundGroupUI);
+  settingsOverlay.classList.remove('active');
+  soundOverlay.classList.add('active');
+}
+function closeSoundTuning(){
+  stopMusic();
+  soundOverlay.classList.remove('active');
+  settingsOverlay.classList.add('active');
+}
+openSoundTuningBtn.addEventListener('click', openSoundTuning);
+soundCancel.addEventListener('click', ()=>{
+  CFG.soundTuning = soundTuningSnapshot;
+  closeSoundTuning();
+});
+soundSave.addEventListener('click', ()=>{
+  saveConfig(CFG);
+  closeSoundTuning();
+});
+
+// ---------- History modal ----------
+const historyOverlay = document.getElementById('historyOverlay');
+const historyList = document.getElementById('historyList');
+const historyClear = document.getElementById('historyClear');
+const historyClose = document.getElementById('historyClose');
+
+function formatHistoryDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-ES', {day:'2-digit', month:'short'}) + ' · ' +
+         d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+}
+function renderHistory(){
+  const history = loadHistory();
+  if(history.length === 0){
+    historyList.innerHTML = '<div class="history-empty">Aún no hay sesiones registradas.</div>';
+    return;
+  }
+  historyList.innerHTML = history.map(h => `
+    <div class="history-item">
+      <div>
+        <div class="h-date">${formatHistoryDate(h.date)}</div>
+        <div class="h-sub">${h.roundsCompleted}/${h.roundsPlanned} series · ${fmt(h.totalDurationSec)}</div>
+      </div>
+      <div class="h-kcal">${h.kcal > 0 ? '🔥 ' + h.kcal + ' kcal' : ''}</div>
+    </div>
+  `).join('');
+}
+historyBtn.addEventListener('click', ()=>{
+  renderHistory();
+  historyOverlay.classList.add('active');
+});
+historyClose.addEventListener('click', ()=>{
+  historyOverlay.classList.remove('active');
+});
+historyClear.addEventListener('click', ()=>{
+  if(confirm('¿Borrar todo el historial de sesiones? Esta acción no se puede deshacer.')){
+    localStorage.removeItem('hiit-history');
+    renderHistory();
+  }
+});
+
+startBtn.addEventListener('click', start);
+pauseBtn.addEventListener('click', pause);
+resetBtn.addEventListener('click', reset);
+lockBtn.addEventListener('click', engageLock);
+testBtn.addEventListener('click', ()=>{
+  sayTest();
+  beep(880); vibrate(150);
+  keepAliveAudio.play().then(()=>setTimeout(()=>keepAliveAudio.pause(),300)).catch(()=>{});
+  if(CFG.musicEnabled){
+    currentTempo = 112;
+    startMusic();
+    setTimeout(stopMusic, 2500);
+  }
+});
+
+timerEl.textContent = fmt(TOTAL_SECONDS);
+</script>
+</body>
+</html>
