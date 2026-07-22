@@ -94,6 +94,7 @@
   #resetBtn{background:var(--card-2); color:var(--text);}
   #lockBtn{background:var(--card-2); color:var(--text);}
   #settingsBtn{background:var(--card-2); color:var(--text);}
+  #historyBtn{background:var(--card-2); color:var(--text);}
   button:disabled{opacity:.35; cursor:default;}
   .row2{ display:flex; gap:10px; margin-top:10px; }
 
@@ -174,6 +175,17 @@
     background:transparent; border:1px solid rgba(255,255,255,.12); color:var(--text);
     padding:8px 0; font-size:12.5px; font-weight:600; width:100%; border-radius:9px;
   }
+
+  .history-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--card-2); border-radius:12px; padding:12px 14px; margin-bottom:10px;
+  }
+  .history-item .h-date{ font-size:12.5px; color:var(--text); font-weight:600; }
+  .history-item .h-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .history-item .h-kcal{ font-size:15px; font-weight:700; color:var(--intensity); white-space:nowrap; }
+  .history-empty{ text-align:center; color:var(--muted); font-size:13px; padding:20px 0; }
+  #historyClear{ background:var(--card-2); color:#f87171; }
+  #historyClose{ background:var(--recovery); color:#04231a; }
 </style>
 </head>
 <body>
@@ -199,15 +211,20 @@
       <button id="lockBtn" disabled>🔒 Bloquear pantalla</button>
       <button id="settingsBtn">⚙️ Configuración</button>
     </div>
+    <div class="row2">
+      <button id="historyBtn">📊 Historial de sesiones</button>
+    </div>
 
+    <div class="options">
+      <input type="checkbox" id="mainMusicToggle" checked>
+      <label for="mainMusicToggle">Activar música</label>
+    </div>
     <div class="options">
       <input type="checkbox" id="autoLock" checked>
       <label for="autoLock">Bloquear automáticamente al empezar</label>
     </div>
 
-    <div class="testrow">
-      <button id="testBtn">Probar voz y sonido</button>
-    </div>
+   
 
     <div class="wake-warning" id="wakeWarning">
       ⚠️ Tu navegador no admite mantener la pantalla activa. Deja el móvil con la pantalla encendida durante la sesión.
@@ -264,7 +281,7 @@
       <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
         <input type="checkbox" id="cfgMusic" style="width:16px;height:16px;"> Música motivadora de fondo
       </label>
-      <div class="hint">Pista generada, sin canciones con copyright. Cambia el ritmo según la fase y ayuda a que los avisos de voz sigan sonando si el móvil pasa a segundo plano.</div>
+      <div class="hint">Pista generada, sin canciones con copyright. Cambia el ritmo según la fase. La voz y los sonidos de cada fase suenan igual de bien la tengas activada o no.</div>
     </div>
     <div class="field">
       <label for="cfgMusicVol">Volumen de la música</label>
@@ -347,6 +364,19 @@
   </div>
 </div>
 
+<!-- History modal -->
+<div id="historyOverlay" class="modal-overlay">
+  <div class="modal-card">
+    <h2>Historial de sesiones</h2>
+    <div id="historyList"></div>
+    <div class="modal-actions">
+      <button id="historyClear">Borrar historial</button>
+      <button id="historyClose">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="voice-clips.js"></script>
 <script>
 // ---------- Register service worker ----------
 if('serviceWorker' in navigator){
@@ -387,6 +417,18 @@ function loadConfig(){
 function saveConfig(cfg){ localStorage.setItem('hiit-config', JSON.stringify(cfg)); }
 let CFG = loadConfig();
 
+// ---------- Session history ----------
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem('hiit-history') || '[]'); }
+  catch(e){ return []; }
+}
+function saveHistoryEntry(entry){
+  const history = loadHistory();
+  history.unshift(entry);
+  if(history.length > 50) history.length = 50;
+  localStorage.setItem('hiit-history', JSON.stringify(history));
+}
+
 // Approximate MET values per phase (used only for the live calorie estimate)
 const MET = { warmup:6, intensity:14, recovery:5, cooldown:6, end:0 };
 function kcalForSeconds(type, seconds){
@@ -421,9 +463,21 @@ const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const lockBtn = document.getElementById('lockBtn');
 const settingsBtn = document.getElementById('settingsBtn');
+const historyBtn = document.getElementById('historyBtn');
 const testBtn = document.getElementById('testBtn');
 const wakeWarning = document.getElementById('wakeWarning');
 const autoLockChk = document.getElementById('autoLock');
+const mainMusicToggle = document.getElementById('mainMusicToggle');
+mainMusicToggle.checked = CFG.musicEnabled;
+mainMusicToggle.addEventListener('change', ()=>{
+  CFG.musicEnabled = mainMusicToggle.checked;
+  saveConfig(CFG);
+  if(CFG.musicEnabled){
+    if(running && phaseIndex >= 0 && PHASES[phaseIndex].type !== 'end') startMusic();
+  } else {
+    stopMusic();
+  }
+});
 
 const lockOverlay = document.getElementById('lockOverlay');
 const lockPhaseLabel = document.getElementById('lockPhaseLabel');
@@ -480,6 +534,8 @@ let wakeLock = null;
 let beepedSecond = null;
 let lastMinuteAnnounced = null;
 let kcalAccumulated = 0;
+let sessionStartTime = null;
+let roundsCompleted = 0;
 
 function fmt(sec){
   sec = Math.max(0, Math.ceil(sec));
@@ -499,25 +555,60 @@ function updateKcalDisplay(totalKcal){
 }
 updateKcalDisplay(0);
 
-// ---------- Speech ----------
-let esVoice = null;
-function pickVoice(){
-  const voices = speechSynthesis.getVoices();
-  esVoice = voices.find(v=>v.lang && v.lang.toLowerCase().startsWith('es')) || null;
+// ---------- Pre-recorded voice clips (survive screen lock, unlike speechSynthesis) ----------
+const decodedClipCache = {};
+function getClipBuffer(key){
+  if(decodedClipCache[key]) return decodedClipCache[key];
+  const ctx = getAudioCtx();
+  const promise = fetch(VOICE_CLIPS[key])
+    .then(r => r.arrayBuffer())
+    .then(buf => ctx.decodeAudioData(buf));
+  decodedClipCache[key] = promise;
+  return promise;
 }
-if('speechSynthesis' in window){
-  speechSynthesis.onvoiceschanged = pickVoice;
-  pickVoice();
+function preloadVoiceClips(){
+  if(!window.VOICE_CLIPS) return;
+  Object.keys(VOICE_CLIPS).forEach(getClipBuffer);
 }
-function say(text){
-  if(!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'es-ES';
-  if(esVoice) u.voice = esVoice;
-  u.rate = 1; u.pitch = 1;
-  duckMusicDuring(u);
-  speechSynthesis.speak(u);
+// numbers 1-60 -> clip key
+function digitClip(n){ return `num${Math.max(1, Math.min(60, Math.round(n)))}`; }
+
+async function playSequence(keys){
+  const ctx = getAudioCtx();
+  const buffers = await Promise.all(keys.map(getClipBuffer));
+  let t = ctx.currentTime + 0.05;
+  const gap = 0.06;
+  buffers.forEach(buf=>{
+    const src = ctx.createBufferSource();
+    const g = ctx.createGain();
+    g.gain.value = 1;
+    src.buffer = buf;
+    src.connect(g).connect(ctx.destination);
+    src.start(t);
+    t += buf.duration + gap;
+  });
+  const totalDur = t - (ctx.currentTime + 0.05);
+  duckMusicFor(totalDur);
+  return totalDur;
+}
+function duckMusicFor(seconds){
+  duckFactor = 0.22;
+  clearTimeout(duckMusicFor._timer);
+  duckMusicFor._timer = setTimeout(()=>{ duckFactor = 1; }, (seconds+0.3)*1000);
+}
+
+function sayWarmupStart(){ playSequence(['warmup']); }
+function sayCooldownStart(){ playSequence(['cooldown']); }
+function sayRecoveryStart(){ playSequence(['recovery']); }
+function sayIntensityStart(round, totalRounds){
+  playSequence(['serie', digitClip(round), 'de', digitClip(totalRounds), 'intensity']);
+}
+function sayEnd(){ playSequence(['end']); }
+function sayResume(){ playSequence(['resume']); }
+function sayTest(){ playSequence(['test']); }
+function sayMinutesLeft(n){
+  if(n === 1) playSequence(['queda', 'num1', 'minuto']);
+  else playSequence(['quedan', digitClip(n), 'minutos']);
 }
 
 // ---------- Beep ----------
@@ -688,13 +779,6 @@ function setMusicTempo(type){
   const t = CFG.soundTuning[type];
   currentTempo = (t && t.tempo) || 100;
 }
-function duckMusicDuring(utterance){
-  duckFactor = 0.22;
-  const restore = () => { duckFactor = 1; };
-  utterance.addEventListener('end', restore);
-  utterance.addEventListener('error', restore);
-  setTimeout(restore, 4000); // backstop in case the event never fires
-}
 
 // ---------- Media Session ----------
 function updateMediaSession(label){
@@ -705,6 +789,21 @@ function updateMediaSession(label){
     navigator.mediaSession.playbackState = 'playing';
   }
 }
+function setupMediaSessionHandlers(){
+  if(!('mediaSession' in navigator)) return;
+  try{
+    navigator.mediaSession.setActionHandler('play', () => {
+      if(remainingAtPause !== null) start();
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      if(running) pause();
+    });
+    navigator.mediaSession.setActionHandler('stop', () => {
+      if(phaseIndex !== -1) reset();
+    });
+  }catch(e){}
+}
+setupMediaSessionHandlers();
 
 // ---------- Wake Lock ----------
 async function requestWakeLock(){
@@ -778,11 +877,16 @@ function startPhase(idx){
   if(phaseIndex >= 0){
     const prev = PHASES[phaseIndex];
     kcalAccumulated += kcalForSeconds(prev.type, prev.duration);
+    if(prev.type === 'intensity') roundsCompleted++;
   }
   phaseIndex = idx;
   const p = PHASES[phaseIndex];
   renderPhase();
-  say(p.say);
+  if(p.type === 'warmup') sayWarmupStart();
+  else if(p.type === 'intensity') sayIntensityStart(p.round, CFG.rounds);
+  else if(p.type === 'recovery') sayRecoveryStart();
+  else if(p.type === 'cooldown') sayCooldownStart();
+  else if(p.type === 'end') sayEnd();
   playChime(p.type);
   vibrate(p.type === 'intensity' ? [200,80,200] : p.type === 'recovery' ? [120] : [80]);
   beepedSecond = null;
@@ -813,7 +917,7 @@ function tick(){
     const minutesLeft = Math.ceil(remain/60);
     if(minutesLeft !== lastMinuteAnnounced && minutesLeft >= 1 && remain > 1){
       lastMinuteAnnounced = minutesLeft;
-      say(minutesLeft === 1 ? 'Queda 1 minuto' : `Quedan ${minutesLeft} minutos`);
+      sayMinutesLeft(minutesLeft);
       playChime('minute');
       vibrate([60]);
     }
@@ -838,7 +942,11 @@ async function start(){
   if(phaseIndex === -1){
     running = true;
     startBtn.disabled = true; pauseBtn.disabled = false; resetBtn.disabled = false; lockBtn.disabled = false;
-    settingsBtn.disabled = true;
+    settingsBtn.disabled = true; historyBtn.disabled = true;
+    sessionStartTime = Date.now();
+    roundsCompleted = 0;
+    getAudioCtx();
+    preloadVoiceClips();
     keepAliveAudio.play().catch(()=>{});
     await requestWakeLock();
     requestAppFullscreen();
@@ -850,10 +958,12 @@ async function start(){
     phaseEndsAt = Date.now() + remainingAtPause*1000;
     remainingAtPause = null;
     if(!tickHandle) tickHandle = setInterval(tick, 200);
-    say('Reanudando');
+    sayResume();
+    keepAliveAudio.play().catch(()=>{});
     await requestWakeLock();
     requestAppFullscreen();
     startMusic();
+    if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
   }
 }
 function pause(){
@@ -861,10 +971,11 @@ function pause(){
   running = false;
   remainingAtPause = (phaseEndsAt - Date.now())/1000;
   clearInterval(tickHandle); tickHandle = null;
-  speechSynthesis.cancel();
   startBtn.disabled = false; startBtn.textContent = 'Reanudar'; pauseBtn.disabled = true;
   disengageLock();
   stopMusic();
+  keepAliveAudio.pause();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
 }
 function stop(finished){
   running = false;
@@ -873,23 +984,34 @@ function stop(finished){
   stopMusic();
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
   startBtn.disabled = finished ? true : false;
-  pauseBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false;
+  pauseBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false; historyBtn.disabled = false;
   disengageLock();
   if(finished) exitAppFullscreen();
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
   if(finished){
+    if(sessionStartTime){
+      saveHistoryEntry({
+        date: new Date().toISOString(),
+        roundsCompleted,
+        roundsPlanned: CFG.rounds,
+        totalDurationSec: Math.round((Date.now() - sessionStartTime)/1000),
+        kcal: Math.round(kcalAccumulated),
+        weightKg: CFG.weightKg
+      });
+      sessionStartTime = null;
+    }
     phaseLabelEl.textContent = 'Fin de sesión';
     roundLabelEl.textContent = '¡Sesión completada!';
   }
 }
 function reset(){
   clearInterval(tickHandle); tickHandle = null;
-  speechSynthesis.cancel();
   keepAliveAudio.pause();
   stopMusic();
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; }
   phaseIndex = -1; remainingAtPause = null; running = false; kcalAccumulated = 0;
   startBtn.disabled = false; startBtn.textContent = 'Empezar';
-  pauseBtn.disabled = true; resetBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false;
+  pauseBtn.disabled = true; resetBtn.disabled = true; lockBtn.disabled = true; settingsBtn.disabled = false; historyBtn.disabled = false;
   document.documentElement.style.removeProperty('--phase-color');
   phaseLabelEl.textContent = 'Preparado'; phaseLabelEl.style.color = '';
   PHASES = buildPhases(CFG);
@@ -900,6 +1022,8 @@ function reset(){
   timerEl.textContent = fmt(TOTAL_SECONDS); timerEl.style.color = '';
   updateKcalDisplay(0);
   disengageLock();
+  mainMusicToggle.checked = CFG.musicEnabled;
+  if('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
 }
 
 // ---------- Touch lock overlay ----------
@@ -1016,12 +1140,53 @@ soundSave.addEventListener('click', ()=>{
   closeSoundTuning();
 });
 
+// ---------- History modal ----------
+const historyOverlay = document.getElementById('historyOverlay');
+const historyList = document.getElementById('historyList');
+const historyClear = document.getElementById('historyClear');
+const historyClose = document.getElementById('historyClose');
+
+function formatHistoryDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-ES', {day:'2-digit', month:'short'}) + ' · ' +
+         d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+}
+function renderHistory(){
+  const history = loadHistory();
+  if(history.length === 0){
+    historyList.innerHTML = '<div class="history-empty">Aún no hay sesiones registradas.</div>';
+    return;
+  }
+  historyList.innerHTML = history.map(h => `
+    <div class="history-item">
+      <div>
+        <div class="h-date">${formatHistoryDate(h.date)}</div>
+        <div class="h-sub">${h.roundsCompleted}/${h.roundsPlanned} series · ${fmt(h.totalDurationSec)}</div>
+      </div>
+      <div class="h-kcal">${h.kcal > 0 ? '🔥 ' + h.kcal + ' kcal' : ''}</div>
+    </div>
+  `).join('');
+}
+historyBtn.addEventListener('click', ()=>{
+  renderHistory();
+  historyOverlay.classList.add('active');
+});
+historyClose.addEventListener('click', ()=>{
+  historyOverlay.classList.remove('active');
+});
+historyClear.addEventListener('click', ()=>{
+  if(confirm('¿Borrar todo el historial de sesiones? Esta acción no se puede deshacer.')){
+    localStorage.removeItem('hiit-history');
+    renderHistory();
+  }
+});
+
 startBtn.addEventListener('click', start);
 pauseBtn.addEventListener('click', pause);
 resetBtn.addEventListener('click', reset);
 lockBtn.addEventListener('click', engageLock);
 testBtn.addEventListener('click', ()=>{
-  say('Prueba de voz. Todo listo para correr.');
+  sayTest();
   beep(880); vibrate(150);
   keepAliveAudio.play().then(()=>setTimeout(()=>keepAliveAudio.pause(),300)).catch(()=>{});
   if(CFG.musicEnabled){
