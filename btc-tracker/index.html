@@ -421,30 +421,43 @@
   }
 
   async function fetchPrice() {
-    const dot = document.getElementById('status-dot');
-    const txt = document.getElementById('status-text');
-    dot.style.background = '#FAC775';
-    txt.textContent = 'Actualizando...';
-    try {
-      const res = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      currentPriceUSD = parseFloat(data.data.rates.USD);
-      currentPriceEUR = parseFloat(data.data.rates.EUR);
-      document.getElementById('price-eur').textContent = fEUR(currentPriceEUR);
-      document.getElementById('btc-price').textContent = fUSD(currentPriceUSD);
-      dot.style.background = '#639922';
-      txt.textContent = 'Precio en tiempo real';
-      const now = new Date();
-      document.getElementById('last-updated').textContent =
-        'Última actualización: ' + now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES');
-      calculate();
-    } catch (e) {
-      dot.style.background = '#E24B4A';
-      txt.textContent = 'Sin conexión — datos en caché';
-      console.error('fetchPrice:', e);
-    }
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.style.background = '#FAC775';
+  txt.textContent = 'Actualizando...';
+  
+  try {
+    // Peticiones al endpoint /sell de Coinbase
+    const [resEur, resUsd] = await Promise.all([
+      fetch('https://api.coinbase.com/v2/prices/BTC-EUR/sell'),
+      fetch('https://api.coinbase.com/v2/prices/BTC-USD/sell')
+    ]);
+
+    if (!resEur.ok || !resUsd.ok) throw new Error('Error en las respuestas HTTP');
+
+    const dataEur = await resEur.json();
+    const dataUsd = await resUsd.json();
+
+    currentPriceEUR = parseFloat(dataEur.data.amount);
+    currentPriceUSD = parseFloat(dataUsd.data.amount);
+
+    document.getElementById('price-eur').textContent = fEUR(currentPriceEUR);
+    document.getElementById('btc-price').textContent = fUSD(currentPriceUSD);
+    
+    dot.style.background = '#639922';
+    txt.textContent = 'Precio de venta en tiempo real';
+    
+    const now = new Date();
+    document.getElementById('last-updated').textContent =
+      'Última actualización: ' + now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES');
+      
+    calculate();
+  } catch (e) {
+    dot.style.background = '#E24B4A';
+    txt.textContent = 'Sin conexión — datos en caché';
+    console.error('fetchPrice:', e);
   }
+}
 
   // Service Worker
   if ('serviceWorker' in navigator) {
